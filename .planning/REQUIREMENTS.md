@@ -143,22 +143,70 @@ Filled by `gsd-roadmapper`. Each v1 REQ-ID maps to exactly one phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 — INFRA-06 | TBD | Pending |
-| ONBOARD-01 — ONBOARD-06 | TBD | Pending |
-| RECIPE-01 — RECIPE-08 | TBD | Pending |
-| CAPTURE-01 — CAPTURE-07 | TBD | Pending |
-| SHORTLIST-01 — SHORTLIST-05 | TBD | Pending |
-| VOTE-01 — VOTE-05 | TBD | Pending |
-| COOK-01 — COOK-05 | TBD | Pending |
-| ALBUM-01 — ALBUM-03 | TBD | Pending |
-| REALTIME-01 — REALTIME-03 | TBD | Pending |
-| PWA-01 — PWA-04 | TBD | Pending |
+| INFRA-01 | Phase 1 — Foundations (W1) | Pending |
+| INFRA-02 | Phase 1 — Foundations (W1) | Pending |
+| INFRA-03 | Phase 1 — Foundations (W1) | Pending |
+| INFRA-04 | Phase 1 — Foundations (W1) | Pending |
+| INFRA-05 | Phase 1 — Foundations (W1) | Pending |
+| INFRA-06 | Phase 1 — Foundations (W1) | Pending |
+| ONBOARD-01 | Phase 1 — Foundations (W1) | Pending |
+| ONBOARD-02 | Phase 1 — Foundations (W1) | Pending |
+| ONBOARD-03 | Phase 1 — Foundations (W1) | Pending |
+| ONBOARD-04 | Phase 1 — Foundations (W1) | Pending |
+| ONBOARD-05 | Phase 1 — Foundations (W1) | Pending |
+| ONBOARD-06 | Phase 1 — Foundations (W1) | Pending |
+| RECIPE-01 | Phase 1 — Foundations (W1) | Pending |
+| RECIPE-02 | Phase 1 — Foundations (W1) | Pending |
+| RECIPE-03 | Phase 1 — Foundations (W1) | Pending |
+| RECIPE-04 | Phase 1 — Foundations (W1) | Pending |
+| RECIPE-05 | Phase 1 — Foundations (W1) | Pending |
+| RECIPE-06 | Phase 1 — Foundations (W1) | Pending |
+| RECIPE-07 | Phase 1 — Foundations (W1) | Pending |
+| RECIPE-08 | Phase 1 — Foundations (W1) | Pending |
+| CAPTURE-01 | Phase 2 — LLM Capture (W2) | Pending |
+| CAPTURE-02 | Phase 2 — LLM Capture (W2) | Pending |
+| CAPTURE-03 | Phase 2 — LLM Capture (W2) | Pending |
+| CAPTURE-04 | Phase 2 — LLM Capture (W2) | Pending |
+| CAPTURE-05 | Phase 2 — LLM Capture (W2) | Pending |
+| CAPTURE-06 | Phase 2 — LLM Capture (W2) | Pending |
+| CAPTURE-07 | Phase 2 — LLM Capture (W2) | Pending |
+| SHORTLIST-01 | Phase 3 — Decide (W3) | Pending |
+| SHORTLIST-02 | Phase 3 — Decide (W3) | Pending |
+| SHORTLIST-03 | Phase 3 — Decide (W3) | Pending |
+| SHORTLIST-04 | Phase 3 — Decide (W3) | Pending |
+| SHORTLIST-05 | Phase 3 — Decide (W3) | Pending |
+| VOTE-01 | Phase 3 — Decide (W3) | Pending |
+| VOTE-02 | Phase 3 — Decide (W3) | Pending |
+| VOTE-03 | Phase 3 — Decide (W3) | Pending |
+| VOTE-04 | Phase 3 — Decide (W3) | Pending |
+| VOTE-05 | Phase 3 — Decide (W3) | Pending |
+| COOK-01 | Phase 3 — Decide (W3) | Pending |
+| COOK-02 | Phase 3 — Decide (W3) | Pending |
+| COOK-03 | Phase 4 — Polish (W4) | Pending |
+| COOK-04 | Phase 4 — Polish (W4) | Pending |
+| COOK-05 | Phase 4 — Polish (W4) | Pending |
+| ALBUM-01 | Phase 4 — Polish (W4) | Pending |
+| ALBUM-02 | Phase 4 — Polish (W4) | Pending |
+| ALBUM-03 | Phase 4 — Polish (W4) | Pending |
+| REALTIME-01 | Phase 1 — Foundations (W1) | Pending |
+| REALTIME-02 | Phase 1 — Foundations (W1) | Pending |
+| REALTIME-03 | Phase 1 — Foundations (W1) | Pending |
+| PWA-01 | Phase 1 — Foundations (W1) | Pending |
+| PWA-02 | Phase 1 — Foundations (W1) | Pending |
+| PWA-03 | Phase 3 — Decide (W3) | Pending |
+| PWA-04 | Phase 1 — Foundations (W1) | Pending |
 
 **Coverage:**
-- v1 requirements: 46 total
-- Mapped to phases: 0 (roadmapper not yet run)
-- Unmapped: 46 ⚠️ — will resolve to 0 after `gsd-roadmapper` runs
+- v1 requirements: 52 total (enumeration of REQ-ID checkboxes above; supersedes the earlier "46" tally which under-counted)
+- Mapped to phases: 52
+- Unmapped: 0 ✓
+
+**Per-phase breakdown:**
+- Phase 1 — Foundations (W1): 26 (INFRA × 6, ONBOARD × 6, RECIPE × 8, REALTIME × 3, PWA-01/02/04)
+- Phase 2 — LLM Capture (W2): 7 (CAPTURE × 7)
+- Phase 3 — Decide (W3): 13 (SHORTLIST × 5, VOTE × 5, COOK-01, COOK-02, PWA-03)
+- Phase 4 — Polish (W4): 6 (COOK-03/04/05, ALBUM × 3)
 
 ---
 *Requirements defined: 2026-05-05*
-*Last updated: 2026-05-05 after initial definition*
+*Last updated: 2026-05-05 — traceability filled by `gsd-roadmapper`; tally corrected from 46 → 52*
