@@ -31,8 +31,8 @@ The four phases mirror SPEC.md's W1–W4 build plan. Phase boundaries are dogfoo
   5. Any request without a valid `Authorization: Bearer <auth_token>` is rejected with HTTP 401, and the WebSocket client reconnects automatically after a Railway restart
 **Plans**: 12 plans
 - [x] 01-01-shared-vocab-PLAN.md — Locked vocabularies + 5 member-colors mirrored on both sides
-- [ ] 01-02-frontend-scaffold-PLAN.md — Next.js PWA shell on Vercel: next-pwa + next-intl + shadcn primitives + manifest
-- [ ] 01-03-backend-scaffold-PLAN.md — FastAPI + SQLAlchemy 2.0 + Alembic baseline migration deployed to Railway
+- [x] 01-02-frontend-scaffold-PLAN.md — Next.js PWA shell on Vercel: next-pwa + next-intl + shadcn primitives + manifest
+- [x] 01-03-backend-scaffold-PLAN.md — FastAPI + SQLAlchemy 2.0 + Alembic baseline migration deployed to Railway
 - [ ] 01-04-onboarding-backend-PLAN.md — Households router (create/join/preview/me) + invite-code generator + INFRA-06 close
 - [ ] 01-05-realtime-and-ping-backend-PLAN.md — services/realtime broadcast spine + WS endpoint + throwaway pings router
 - [ ] 01-06-onboarding-frontend-PLAN.md — 3-screen onboarding flow with disabled-color-swatch preview
