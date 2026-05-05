@@ -29,7 +29,19 @@ The four phases mirror SPEC.md's W1–W4 build plan. Phase boundaries are dogfoo
   3. User creates 10 recipes via a mix of full form and quick-add; the list view supports text search across title and ingredients; both phones see the same recipe library, and the "À compléter (N)" drafts tab shows quick-add entries
   4. User edits a recipe, attaches up to 4 photos to a recipe (stored in Supabase Storage), and exports the household's full recipe library as a JSON file
   5. Any request without a valid `Authorization: Bearer <auth_token>` is rejected with HTTP 401, and the WebSocket client reconnects automatically after a Railway restart
-**Plans**: TBD
+**Plans**: 12 plans
+- [ ] 01-01-shared-vocab-PLAN.md — Locked vocabularies + 5 member-colors mirrored on both sides
+- [ ] 01-02-frontend-scaffold-PLAN.md — Next.js PWA shell on Vercel: next-pwa + next-intl + shadcn primitives + manifest
+- [ ] 01-03-backend-scaffold-PLAN.md — FastAPI + SQLAlchemy 2.0 + Alembic baseline migration deployed to Railway
+- [ ] 01-04-onboarding-backend-PLAN.md — Households router (create/join/preview/me) + invite-code generator + INFRA-06 close
+- [ ] 01-05-realtime-and-ping-backend-PLAN.md — services/realtime broadcast spine + WS endpoint + throwaway pings router
+- [ ] 01-06-onboarding-frontend-PLAN.md — 3-screen onboarding flow with disabled-color-swatch preview
+- [ ] 01-07-ping-frontend-and-ws-client-PLAN.md — partysocket WS client + ping panel + W1 dogfood gate
+- [ ] 01-08-recipes-backend-PLAN.md — Manual recipe CRUD with ILIKE search, drafts filter, JSON export
+- [ ] 01-09-photo-upload-backend-PLAN.md — Multipart photo upload to Supabase Storage with magic-byte MIME sniff
+- [ ] 01-10-recipes-frontend-read-PLAN.md — Recipe list, search, detail, drafts inbox, settings/export + signed-URL helper
+- [ ] 01-11-recipes-frontend-write-PLAN.md — Recipe new (Rapide+Complète) + edit + PhotoUploader UI
+- [ ] 01-12-dogfood-cleanup-PLAN.md — D-01 ping cleanup gated on the round-trip gate passing
 **UI hint**: yes
 
 ### Phase 2: LLM Capture (W2)
@@ -78,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Decimal phases (e.g. 2.1) 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundations (W1) | 0/TBD | Not started | - |
+| 1. Foundations (W1) | 0/12 | Not started | - |
 | 2. LLM Capture (W2) | 0/TBD | Not started | - |
 | 3. Decide (W3) | 0/TBD | Not started | - |
 | 4. Polish (W4) | 0/TBD | Not started | - |
