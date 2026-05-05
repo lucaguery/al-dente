@@ -58,6 +58,10 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- Phase 01.1 inserted after Phase 1: cookie-auth-and-recovery (URGENT). Driver: dual-phone testing showed iOS Safari evicts `localStorage` across PWA force-quit → reopen, forcing onboarding repeat. Plan migrates auth to same-origin HttpOnly cookies (Vercel rewrite + backend Set-Cookie), adds idempotent rejoin (existing-name → existing token), and a settings screen exposing the household invite code. Must complete before Phase 2 dispatches since Phase 2's recipes routes need the final auth scheme.
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
