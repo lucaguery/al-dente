@@ -16,6 +16,12 @@ const AUTH_KEY = "auth_token";
 const HOUSEHOLD_KEY = "household_id";
 const MEMBER_KEY = "member_id";
 
+// Same-tab notification: the storage event only fires across tabs, but
+// onboarding writes the token and immediately router.replace("/") in the
+// same tab. RealtimeProvider listens for this so it can open the WS as
+// soon as the token lands instead of waiting for the next page load.
+export const AUTH_TOKEN_CHANGED_EVENT = "aldente:auth-token-changed";
+
 export function saveAuthToken(
   token: string,
   householdId: string,
@@ -25,6 +31,7 @@ export function saveAuthToken(
   window.localStorage.setItem(AUTH_KEY, token);
   window.localStorage.setItem(HOUSEHOLD_KEY, householdId);
   window.localStorage.setItem(MEMBER_KEY, memberId);
+  window.dispatchEvent(new Event(AUTH_TOKEN_CHANGED_EVENT));
 }
 
 export function clearAuth(): void {
@@ -32,6 +39,7 @@ export function clearAuth(): void {
   window.localStorage.removeItem(AUTH_KEY);
   window.localStorage.removeItem(HOUSEHOLD_KEY);
   window.localStorage.removeItem(MEMBER_KEY);
+  window.dispatchEvent(new Event(AUTH_TOKEN_CHANGED_EVENT));
 }
 
 export function getAuthToken(): string | null {

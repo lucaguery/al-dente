@@ -28,7 +28,7 @@ import {
   type RealtimeClient,
   type RealtimeStatus,
 } from "@/lib/ws";
-import { getAuthToken } from "@/lib/auth";
+import { AUTH_TOKEN_CHANGED_EVENT, getAuthToken } from "@/lib/auth";
 
 // --- Singleton store ---------------------------------------------------------
 
@@ -94,16 +94,26 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
   // Open the WS lazily once we're on the client and have a token. Running
   // this in an effect (instead of during render) keeps the SSR pass pure
-  // and avoids hydration mismatches.
+  // and avoids hydration mismatches. The root layout doesn't remount when
+  // the user transitions /onboarding/* → /, so we also listen for the
+  // same-tab AUTH_TOKEN_CHANGED_EVENT dispatched by saveAuthToken().
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) return;
-    try {
-      ensureOpen(token);
-    } catch (err) {
-      // NEXT_PUBLIC_WS_BASE missing — log loudly so Vercel deploys notice.
-      console.error("RealtimeProvider: ensureOpen threw", err);
-    }
+    const tryConnect = () => {
+      const token = getAuthToken();
+      if (!token) return;
+      try {
+        ensureOpen(token);
+      } catch (err) {
+        // NEXT_PUBLIC_WS_BASE missing — log loudly so Vercel deploys notice.
+        console.error("RealtimeProvider: ensureOpen threw", err);
+      }
+    };
+    tryConnect();
+    if (typeof window === "undefined") return;
+    window.addEventListener(AUTH_TOKEN_CHANGED_EVENT, tryConnect);
+    return () => {
+      window.removeEventListener(AUTH_TOKEN_CHANGED_EVENT, tryConnect);
+    };
   }, []);
 
   // Reconnect-toast bookkeeping: silent ≤30s, destructive Sonner after.
