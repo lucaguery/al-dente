@@ -16,6 +16,13 @@ const withPWA = withPWAInit({
   // cache: next-pwa defaults only in W1." Do NOT tune further here — Phase 4
   // owns cache strategy tuning.
   register: true,
+  // Activate new SW immediately on next navigation rather than waiting for
+  // all tabs to close — without this, standalone PWA mode on iOS never
+  // picks up updates until Safari is manually cleared.
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
+  },
 });
 
 const withNextIntl = createNextIntlPlugin("./i18n.ts");
