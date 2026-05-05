@@ -18,5 +18,43 @@
   "install": {
     "title": "Installe Al Dente sur ton écran d'accueil",
     "body": "Appuie sur Partager (icône carré + flèche) puis « Sur l'écran d'accueil »."
+  },
+  "onboarding": {
+    "welcome": {
+      "tagline": "Décide ce qu'on mange ensemble.",
+      "create_cta": "Créer un foyer",
+      "join_cta": "Rejoindre un foyer"
+    },
+    "create": {
+      "title": "Nouveau foyer",
+      "household_name_label": "Nom du foyer",
+      "household_name_placeholder": "Notre cuisine",
+      "member_name_label": "Ton prénom",
+      "color_label": "Ta couleur",
+      "submit": "Créer le foyer"
+    },
+    "join": {
+      "title": "Rejoindre un foyer",
+      "code_label": "Code d'invitation",
+      "code_placeholder": "ABC123",
+      "code_helper": "6 caractères donnés par ta partenaire",
+      "member_name_label": "Ton prénom",
+      "color_label": "Ta couleur (les couleurs déjà prises sont grisées)",
+      "submit": "Rejoindre"
+    },
+    "share_code": {
+      "title": "Foyer créé",
+      "body": "Partage ce code avec ta partenaire :",
+      "copy_cta": "Copier le code",
+      "copied_toast": "Copié dans le presse-papier",
+      "done_cta": "J'ai prévenu ma partenaire"
+    },
+    "errors": {
+      "required": "Champ requis",
+      "code_format": "Le code doit faire 6 caractères",
+      "code_not_found": "Ce code n'existe pas. Vérifie auprès de ta partenaire.",
+      "color_taken": "Cette couleur est déjà prise.",
+      "network": "Connexion impossible. Réessaie dans un instant."
+    }
   }
 }
