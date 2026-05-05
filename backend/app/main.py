@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.routers import households
 
 app = FastAPI(title="Al Dente API", version="0.1.0")
 
@@ -28,4 +29,6 @@ def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
-# routers wired in subsequent plans (01-04 households, 01-05 ws + ping, 01-08 recipes)
+# Routers — order is presentational, not load-bearing.
+# 01-04 households (this plan); 01-05 ws + ping; 01-08 recipes (later plans).
+app.include_router(households.router)
