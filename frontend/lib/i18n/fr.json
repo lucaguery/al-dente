@@ -19,6 +19,18 @@
     "title": "Installe Al Dente sur ton écran d'accueil",
     "body": "Appuie sur Partager (icône carré + flèche) puis « Sur l'écran d'accueil »."
   },
+  "ping": {
+    "panel_title": "Test de connexion",
+    "panel_body": "Ce panneau disparaît après le test W1.",
+    "send_cta": "Envoyer un ping",
+    "sending": "Envoi…",
+    "empty": "Aucun ping pour le moment.",
+    "received_from_partner": "depuis ta partenaire",
+    "received_from_self": "envoyé d'ici"
+  },
+  "realtime": {
+    "reconnect_lost": "Connexion temporairement perdue. Les autres modifications apparaîtront dès la reconnexion."
+  },
   "onboarding": {
     "welcome": {
       "tagline": "Décide ce qu'on mange ensemble.",
