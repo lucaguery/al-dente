@@ -33,7 +33,7 @@ The four phases mirror SPEC.md's W1–W4 build plan. Phase boundaries are dogfoo
 - [x] 01-01-shared-vocab-PLAN.md — Locked vocabularies + 5 member-colors mirrored on both sides
 - [x] 01-02-frontend-scaffold-PLAN.md — Next.js PWA shell on Vercel: next-pwa + next-intl + shadcn primitives + manifest
 - [x] 01-03-backend-scaffold-PLAN.md — FastAPI + SQLAlchemy 2.0 + Alembic baseline migration deployed to Railway
-- [ ] 01-04-onboarding-backend-PLAN.md — Households router (create/join/preview/me) + invite-code generator + INFRA-06 close
+- [x] 01-04-onboarding-backend-PLAN.md — Households router (create/join/preview/me) + invite-code generator + INFRA-06 close
 - [ ] 01-05-realtime-and-ping-backend-PLAN.md — services/realtime broadcast spine + WS endpoint + throwaway pings router
 - [ ] 01-06-onboarding-frontend-PLAN.md — 3-screen onboarding flow with disabled-color-swatch preview
 - [ ] 01-07-ping-frontend-and-ws-client-PLAN.md — partysocket WS client + ping panel + W1 dogfood gate
