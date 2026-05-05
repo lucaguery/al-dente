@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
+import { PingPanel } from "@/components/PingPanel";
 
 // Detect "running inside an iOS Safari tab" (i.e. NOT the installed PWA).
 // `navigator.standalone` is true when launched from the home-screen icon;
@@ -26,28 +27,42 @@ function isIosSafariNotInstalled(): boolean {
 // useSyncExternalStore avoids the lint warning about setState-in-effect
 // while still rendering `false` on the server (matching SSR HTML) and the
 // real value on the client after hydration.
-function subscribe() {
+function noopSubscribe() {
   // The detection inputs (UA, navigator.standalone) don't change while the
   // page is open, so no real subscription is needed. Returning a noop
   // unsubscribe is fine.
   return () => {};
 }
 
+function readMemberId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem("member_id");
+}
+
 // Phase-1 home placeholder — UI-SPEC §12 install hint + wordmark + tagline.
 // The real W3 home content lands when the shortlist surfaces are built.
 // Wrapped in <OnboardingGuard> so first-launch users (no auth_token) get
 // redirected to /onboarding/welcome (ONBOARD-06).
+//
+// TODO(productize): D-01 — <PingPanel /> below is the W1 round-trip gate
+// UI and is removed by plan 01-11 once Luca confirms both phones round-
+// trip a ping within ~500ms.
 export default function Home() {
   const t = useTranslations();
   const showInstallHint = useSyncExternalStore(
-    subscribe,
+    noopSubscribe,
     isIosSafariNotInstalled,
     () => false,
+  );
+  const memberId = useSyncExternalStore(
+    noopSubscribe,
+    readMemberId,
+    () => null,
   );
 
   return (
     <OnboardingGuard>
-      <section className="flex flex-col flex-1 items-center justify-center px-6 py-12 gap-6">
+      <section className="flex flex-col flex-1 items-center px-6 py-12 gap-6">
         <header className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-[28px] font-semibold tracking-tight">
             {t("home.title")}
@@ -67,6 +82,11 @@ export default function Home() {
             </p>
           </Card>
         ) : null}
+
+        {/* TODO(productize): D-01 — PingPanel removed by 01-11 after the round-trip gate. */}
+        <div className="w-full self-stretch -mx-6">
+          <PingPanel selfMemberId={memberId} />
+        </div>
       </section>
     </OnboardingGuard>
   );
