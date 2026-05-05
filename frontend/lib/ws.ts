@@ -48,7 +48,13 @@ export function createRealtimeClient(token: string): RealtimeClient {
   // ws://|wss:// URL string and the four reconnect options below.
   // Verified against frontend/node_modules/partysocket/ws-Cg2f-sDL.d.ts
   // (Options type, lines 54-66) at execution time.
-  const url = `${WS_BASE}?token=${encodeURIComponent(token)}`;
+  //
+  // NEXT_PUBLIC_WS_BASE is the host (e.g. `wss://api.example.com`),
+  // mirroring the NEXT_PUBLIC_API_BASE convention in lib/api.ts. The
+  // /ws path lives here so the env var stays a single source of truth
+  // for the host.
+  const trimmed = WS_BASE.replace(/\/+$/, "");
+  const url = `${trimmed}/ws?token=${encodeURIComponent(token)}`;
   const socket = new ReconnectingWebSocket(url, [], {
     minReconnectionDelay: 250,
     maxReconnectionDelay: 5000,
