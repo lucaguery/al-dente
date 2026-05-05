@@ -1,5 +1,7 @@
-"""Pydantic v2 request/response schemas.
+"""Pydantic v2 request/response schemas (separate from SQLAlchemy ORM models).
 
-Schemas are deliberately separate from SQLAlchemy ORM models (``app.models``)
-so the wire format can evolve without leaking column-level details.
+Per CONTEXT.md "Claude's Discretion" — backend folder structure mirrors
+SPEC.md §"Project structure": ``app/schemas/`` holds request/response Pydantic
+types; ``app/models/`` holds SQLAlchemy ORM classes. They are kept separate so
+the wire format can evolve without leaking column-level details.
 """
