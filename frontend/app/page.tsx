@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
+import { OnboardingGuard } from "@/lib/onboarding-guard";
 
 // Detect "running inside an iOS Safari tab" (i.e. NOT the installed PWA).
 // `navigator.standalone` is true when launched from the home-screen icon;
@@ -34,6 +35,8 @@ function subscribe() {
 
 // Phase-1 home placeholder — UI-SPEC §12 install hint + wordmark + tagline.
 // The real W3 home content lands when the shortlist surfaces are built.
+// Wrapped in <OnboardingGuard> so first-launch users (no auth_token) get
+// redirected to /onboarding/welcome (ONBOARD-06).
 export default function Home() {
   const t = useTranslations();
   const showInstallHint = useSyncExternalStore(
@@ -43,26 +46,28 @@ export default function Home() {
   );
 
   return (
-    <section className="flex flex-col flex-1 items-center justify-center px-6 py-12 gap-6">
-      <header className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-[28px] font-semibold tracking-tight">
-          {t("home.title")}
-        </h1>
-        <p className="text-base text-foreground-muted max-w-xs">
-          {t("home.tagline")}
-        </p>
-      </header>
-
-      {showInstallHint ? (
-        <Card className="w-full max-w-sm bg-surface-muted border-border p-4 gap-2">
-          <h2 className="text-sm font-medium leading-5">
-            {t("install.title")}
-          </h2>
-          <p className="text-sm text-foreground-muted leading-5">
-            {t("install.body")}
+    <OnboardingGuard>
+      <section className="flex flex-col flex-1 items-center justify-center px-6 py-12 gap-6">
+        <header className="flex flex-col items-center gap-2 text-center">
+          <h1 className="text-[28px] font-semibold tracking-tight">
+            {t("home.title")}
+          </h1>
+          <p className="text-base text-foreground-muted max-w-xs">
+            {t("home.tagline")}
           </p>
-        </Card>
-      ) : null}
-    </section>
+        </header>
+
+        {showInstallHint ? (
+          <Card className="w-full max-w-sm bg-surface-muted border-border p-4 gap-2">
+            <h2 className="text-sm font-medium leading-5">
+              {t("install.title")}
+            </h2>
+            <p className="text-sm text-foreground-muted leading-5">
+              {t("install.body")}
+            </p>
+          </Card>
+        ) : null}
+      </section>
+    </OnboardingGuard>
   );
 }

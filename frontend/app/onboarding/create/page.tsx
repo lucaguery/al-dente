@@ -1,0 +1,141 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ColorSwatchPicker } from "@/components/ColorSwatchPicker";
+import { api } from "@/lib/api";
+import { saveAuthToken } from "@/lib/auth";
+
+// UI-SPEC §"Surface-by-Surface Pinning" §2 — Onboarding Create.
+// Sticky header (ChevronLeft + title) + 3 fields (household name, member
+// name, color) + sticky bottom CTA. No live JS validation per UI-SPEC
+// §"Interaction Patterns > Forms" — server validates on submit.
+type CreateResponse = {
+  household_id: string;
+  member_id: string;
+  auth_token: string;
+  invite_code: string;
+};
+
+export default function OnboardingCreatePage() {
+  const router = useRouter();
+  const t = useTranslations("onboarding.create");
+  const tCommon = useTranslations("common");
+  const tErrors = useTranslations("onboarding.errors");
+
+  const [householdName, setHouseholdName] = useState("");
+  const [memberName, setMemberName] = useState("");
+  const [color, setColor] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const canSubmit =
+    householdName.trim().length > 0 &&
+    memberName.trim().length > 0 &&
+    color !== null &&
+    !submitting;
+
+  async function onSubmit() {
+    if (!canSubmit || !color) return;
+    setSubmitting(true);
+    try {
+      const res = await api<CreateResponse>("/households", {
+        method: "POST",
+        body: JSON.stringify({
+          household_name: householdName.trim(),
+          member_name: memberName.trim(),
+          color_hex: color,
+        }),
+      });
+      saveAuthToken(res.auth_token, res.household_id, res.member_id);
+      router.replace(
+        `/onboarding/share-code?code=${encodeURIComponent(res.invite_code)}`,
+      );
+    } catch {
+      // 5xx / network → toast (UI-SPEC §"Toast vs inline rules"). 422
+      // surfaces here too; the only fields the UI controls are name+color
+      // (color is constrained by the picker), so a 422 is exceptional.
+      toast.error(tErrors("network"));
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="flex flex-col flex-1 bg-background">
+      <header className="sticky top-0 h-12 px-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={tCommon("back")}
+          onClick={() => router.back()}
+        >
+          <ChevronLeft />
+        </Button>
+        <span className="text-base font-semibold">{t("title")}</span>
+        <span className="w-8" aria-hidden />
+      </header>
+
+      <div className="flex flex-col gap-6 px-6 pt-6 pb-32">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="create-household-name">
+            {t("household_name_label")}
+          </Label>
+          <Input
+            id="create-household-name"
+            value={householdName}
+            onChange={(e) => setHouseholdName(e.target.value)}
+            placeholder={t("household_name_placeholder")}
+            maxLength={60}
+            autoFocus
+            required
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="create-member-name">{t("member_name_label")}</Label>
+          <Input
+            id="create-member-name"
+            value={memberName}
+            onChange={(e) => setMemberName(e.target.value)}
+            maxLength={60}
+            required
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label>{t("color_label")}</Label>
+          <ColorSwatchPicker
+            value={color}
+            onChange={setColor}
+            aria-label={t("color_label")}
+          />
+        </div>
+      </div>
+
+      <div
+        className="fixed bottom-0 inset-x-0 px-6 pb-6 bg-background/80 backdrop-blur-sm"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
+      >
+        <Button
+          className="h-11 w-full"
+          disabled={!canSubmit}
+          onClick={onSubmit}
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="animate-spin h-4 w-4 mr-2" aria-hidden />
+              {tCommon("saving")}
+            </>
+          ) : (
+            t("submit")
+          )}
+        </Button>
+      </div>
+    </section>
+  );
+}
