@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // next-pwa emits minified service-worker bundles into /public on build;
+    // they are not project source and would dominate the lint report.
+    "public/sw.js",
+    "public/workbox-*.js",
+    "public/fallback-*.js",
+    "public/swe-worker-*.js",
   ]),
 ]);
 

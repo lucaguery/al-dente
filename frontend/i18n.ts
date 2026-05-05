@@ -8,5 +8,13 @@ export default getRequestConfig(async () => {
   return {
     locale: "fr",
     messages,
+    // Pin Europe/Paris so server- and client-rendered relative times agree
+    // and `next-intl` doesn't warn about ENVIRONMENT_FALLBACK during build.
+    // Both household phones live in France in v0.1; revisit if the household
+    // ever travels (productize-later).
+    timeZone: "Europe/Paris",
+    // `now` is sourced per request so SSR and CSR render the same instant
+    // for relative-time formatting.
+    now: new Date(),
   };
 });

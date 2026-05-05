@@ -46,6 +46,15 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* UI-SPEC tokens — Phase 1 §Color (60/30/10 surface palette).
+     `--color-border`, `--color-primary`, `--color-destructive` are already
+     declared above via the shadcn neutral preset; we add the two missing
+     UI-SPEC names (surface-muted, foreground-muted) and alias them to
+     shadcn's underlying CSS vars so component refactors stay cheap.
+     Light/dark values are driven by the :root / .dark blocks below. */
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground-muted: var(--foreground-muted);
 }
 
 :root {
@@ -81,6 +90,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* UI-SPEC tokens (Phase 1 §Color) — light mode. */
+  --surface-muted: #f4f4f5; /* zinc-100 */
+  --foreground-muted: #52525b; /* zinc-600 */
 }
 
 .dark {
@@ -115,6 +128,21 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* UI-SPEC tokens (Phase 1 §Color) — dark mode override (.dark class). */
+  --surface-muted: #18181b; /* zinc-900 */
+  --foreground-muted: #a1a1aa; /* zinc-400 */
+}
+
+/* Honor iOS dark mode automatically. The shadcn primitives expect a `.dark`
+   class on the html element; we apply it via the prefers-color-scheme media
+   query so users opting into dark at the OS level get it without any toggle.
+   No manual toggle ships in v0.1 — productize-later. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-muted: #18181b;
+    --foreground-muted: #a1a1aa;
+  }
 }
 
 @layer base {
@@ -123,8 +151,22 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* UI-SPEC §Typography — Geist Sans is the canonical UI font. */
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* UI-SPEC §Motion — `prefers-reduced-motion` is non-negotiable. Replace
+   all animations + transitions with instant render when the user has asked
+   for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
   }
 }
