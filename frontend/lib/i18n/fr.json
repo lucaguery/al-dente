@@ -1,0 +1,22 @@
+{
+  "common": {
+    "saving": "Enregistrement…",
+    "saved": "Enregistré",
+    "cancel": "Annuler",
+    "back": "Retour"
+  },
+  "nav": {
+    "home": "Accueil",
+    "recipes": "Recettes",
+    "drafts": "À compléter",
+    "more": "Plus"
+  },
+  "home": {
+    "title": "Al Dente",
+    "tagline": "Décide ce qu'on mange ensemble."
+  },
+  "install": {
+    "title": "Installe Al Dente sur ton écran d'accueil",
+    "body": "Appuie sur Partager (icône carré + flèche) puis « Sur l'écran d'accueil »."
+  }
+}
