@@ -4,6 +4,7 @@ import { getMessages } from "next-intl/server";
 import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
 import { LocaleProvider } from "@/components/LocaleProvider";
+import { RealtimeProvider } from "@/components/RealtimeProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -56,9 +57,11 @@ export default async function RootLayout({
         }}
       >
         <LocaleProvider messages={messages}>
-          <main className="flex flex-col flex-1 pb-16">{children}</main>
-          <BottomNav />
-          <Toaster />
+          <RealtimeProvider>
+            <main className="flex flex-col flex-1 pb-16">{children}</main>
+            <BottomNav />
+            <Toaster />
+          </RealtimeProvider>
         </LocaleProvider>
       </body>
     </html>
