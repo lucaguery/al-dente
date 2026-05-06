@@ -16,11 +16,11 @@ The router is a thin HTTP adapter; secrets generation lives in
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import current_member, generate_auth_token
+from app.auth import current_member, generate_auth_token, set_auth_cookie
 from app.db import get_db
 from app.models.household import Household
 from app.models.member import Member
@@ -43,12 +43,14 @@ router = APIRouter(prefix="/households", tags=["households"])
 )
 def create_household(
     body: CreateHouseholdRequest,
+    response: Response,
     db: Session = Depends(get_db),
 ) -> OnboardingResponse:
     """Create a household + the creator's member row in one transaction.
 
     ONBOARD-01 / ONBOARD-02. Both inserts share a single commit so the
     household never exists without at least one member (and vice versa).
+    D-02: aldente_auth cookie is set alongside the auth_token body field.
     """
     invite_code = generate_unique_invite_code(db)
     household = Household(name=body.household_name, invite_code=invite_code)
@@ -67,6 +69,7 @@ def create_household(
     db.commit()
     db.refresh(member)
     db.refresh(household)
+    set_auth_cookie(response, member.auth_token)
     return OnboardingResponse(
         household_id=household.id,
         member_id=member.id,
@@ -112,6 +115,7 @@ def household_preview(
 )
 def join_household(
     body: JoinHouseholdRequest,
+    response: Response,
     db: Session = Depends(get_db),
 ) -> OnboardingResponse:
     """Add a member to an existing household via invite code.
@@ -152,6 +156,7 @@ def join_household(
     db.add(member)
     db.commit()
     db.refresh(member)
+    set_auth_cookie(response, member.auth_token)
     return OnboardingResponse(
         household_id=household.id,
         member_id=member.id,
