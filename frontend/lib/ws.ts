@@ -1,23 +1,20 @@
 "use client";
 
 // Reconnecting WebSocket client for the household-scoped /ws spine
-// (01-05 realtime-and-ping-backend). One frame from the backend is shaped
-// {type: string, payload: object} per the wire-frame contract documented
-// in backend/app/services/realtime.py.
+// (01.1 cookie-auth-and-recovery). Auth is now the same-origin
+// `aldente_auth` HttpOnly cookie — the browser attaches it to the WS
+// upgrade request automatically, so this module no longer takes a token
+// parameter or reads from localStorage.
 //
 // Reconnect cadence is locked by 01-CONTEXT.md "Claude's Discretion":
 //   exponential 250ms → 500 → 1000 → 2000 → 5000 (cap 5s, factor=2),
 //   maxRetries = Infinity. The exact numerals 250 / 5000 / Infinity MUST
 //   appear literally in the constructor call so the verify-grep matches.
 //
-// Auth: token is shipped via the `?token=<auth_token>` query string. On
-// close code 1008 (RFC 6455 policy violation = bad/missing token per the
-// 01-05 server contract) we wipe localStorage and route the user back to
-// /onboarding/welcome — there's no point retrying with a dead token.
-//
-// // TODO(productize): the auth_token leaks into Vercel/Railway access
-// logs via the query string (T-01-07-03). When Supabase Auth replaces
-// invite-code (V2-AUTH-01), switch to the `Sec-WebSocket-Protocol` header.
+// On close code 1008 (RFC 6455 policy violation = bad/missing token per
+// the 01.1-01 server contract) we DELETE /api/auth/session to clear
+// the cookie server-side, wipe legacy localStorage, and redirect to
+// /onboarding/welcome.
 
 import { WebSocket as ReconnectingWebSocket } from "partysocket";
 
@@ -40,21 +37,32 @@ export type RealtimeClient = {
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE;
 
-export function createRealtimeClient(token: string): RealtimeClient {
-  if (!WS_BASE) throw new Error("NEXT_PUBLIC_WS_BASE not set");
+const LEGACY_KEYS = ["auth_token", "household_id", "member_id"] as const;
 
-  // partysocket v1.1.x re-exports ReconnectingWebSocket as the named
-  // export `WebSocket` (index.d.ts line 64). It accepts a full
-  // ws://|wss:// URL string and the four reconnect options below.
-  // Verified against frontend/node_modules/partysocket/ws-Cg2f-sDL.d.ts
-  // (Options type, lines 54-66) at execution time.
-  //
-  // NEXT_PUBLIC_WS_BASE is the host (e.g. `wss://api.example.com`),
-  // mirroring the NEXT_PUBLIC_API_BASE convention in lib/api.ts. The
-  // /ws path lives here so the env var stays a single source of truth
-  // for the host.
-  const trimmed = WS_BASE.replace(/\/+$/, "");
-  const url = `${trimmed}/ws?token=${encodeURIComponent(token)}`;
+function buildWsUrl(): string {
+  // Prefer explicit override (local dev pointing direct at Railway).
+  if (WS_BASE && WS_BASE.length > 0) {
+    return `${WS_BASE.replace(/\/+$/, "")}/ws`;
+  }
+  // Same-origin: derive ws(s):// from current page origin.
+  if (typeof window === "undefined") {
+    throw new Error("createRealtimeClient must run in the browser");
+  }
+  const origin = window.location.origin;
+  const wsOrigin = origin.replace(/^http/, "ws"); // http→ws, https→wss
+  return `${wsOrigin}/ws`;
+}
+
+/**
+ * Open a household-scoped WebSocket. Auth travels via the aldente_auth
+ * cookie automatically attached to the same-origin upgrade request.
+ *
+ * The legacy `token` parameter is accepted-but-ignored for backward
+ * compatibility during the in-flight rollout; callers should drop the
+ * argument as part of Plan 05.
+ */
+export function createRealtimeClient(_legacy?: string): RealtimeClient {
+  const url = buildWsUrl();
   const socket = new ReconnectingWebSocket(url, [], {
     minReconnectionDelay: 250,
     maxReconnectionDelay: 5000,
@@ -78,22 +86,31 @@ export function createRealtimeClient(token: string): RealtimeClient {
   socket.addEventListener("open", () => emitStatus("open"));
   socket.addEventListener("close", (ev: { code?: number }) => {
     emitStatus("closed");
-    // 1008 = policy violation = bad/missing token (01-05 server contract).
-    // Don't keep retrying with a dead token. Wipe localStorage and route
-    // back to onboarding — same auth-wipe flow used by lib/api.ts on 401.
-    const code = ev.code;
-    if (code === 1008) {
+    if (ev.code === 1008) {
       socket.close();
       try {
         if (typeof window !== "undefined") {
-          window.localStorage.removeItem("auth_token");
-          window.localStorage.removeItem("household_id");
-          window.localStorage.removeItem("member_id");
+          // Server-side cookie clear via the same path logic as lib/api.ts.
+          // In production (API_BASE=""), /api/auth/session rewrites to Railway.
+          // In local dev (WS_BASE set), skip the /api/ prefix.
+          const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "";
+          const sessionPath =
+            apiBase === "" ? "/api/auth/session" : "/auth/session";
+          void fetch(`${apiBase}${sessionPath}`, {
+            method: "DELETE",
+            credentials: "include",
+          }).catch(() => {});
+          for (const k of LEGACY_KEYS) {
+            try {
+              window.localStorage.removeItem(k);
+            } catch {
+              /* private-mode Safari */
+            }
+          }
           window.location.href = "/onboarding/welcome";
         }
       } catch {
-        // localStorage can throw in private-mode Safari; the redirect is the
-        // critical bit and `window.location.href` does not depend on it.
+        /* redirect is the critical bit */
       }
     }
   });
