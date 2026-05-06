@@ -33,6 +33,7 @@ log = logging.getLogger(__name__)
 
 BUCKET = "recipe-photos"
 MAX_BYTES = 8 * 1024 * 1024  # 8 MiB hard cap (T-01-09-03 mitigation)
+SIGNED_URL_TTL_SECONDS = 60 * 5  # 5 minutes; FE re-fetches on each detail mount (01-10)
 
 
 def detect_mime_and_ext(content: bytes) -> tuple[str, str] | None:
@@ -138,3 +139,29 @@ def upload_recipe_photo(
         len(content),
     )
     return path
+
+
+def create_signed_photo_url(path: str) -> str:
+    """Return a short-lived URL the frontend can drop into ``<img src>``.
+
+    ``path`` must already be the canonical bucket-relative path stored in
+    ``recipes.photo_paths`` (no ``{bucket}/`` prefix). Caller is responsible
+    for authorizing that ``path`` belongs to the requester's household — see
+    ``app/routers/photos.py::signed_photo_url`` (T-01-10-01 mitigation).
+
+    supabase-py returns the signed URL under one of several keys depending on
+    SDK version. We normalize all three known shapes so a minor SDK bump
+    doesn't silently break the read path.
+    """
+    client = _supabase()
+    result = client.storage.from_(BUCKET).create_signed_url(
+        path, SIGNED_URL_TTL_SECONDS
+    )
+    url = (
+        (result or {}).get("signedURL")
+        or (result or {}).get("signedUrl")
+        or ((result or {}).get("data") or {}).get("signedUrl")
+    )
+    if not url:
+        raise RuntimeError(f"unexpected signed-url response: {result!r}")
+    return url

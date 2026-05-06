@@ -31,8 +31,37 @@
   "realtime": {
     "reconnect_lost": "Connexion temporairement perdue. Les autres modifications apparaîtront dès la reconnexion."
   },
+  "recipes": {
+    "tab_title": "Recettes",
+    "search_placeholder": "Chercher par titre ou ingrédient",
+    "search_clear": "Effacer la recherche",
+    "add_cta_aria": "Ajouter une recette",
+    "empty_heading": "Aucune recette pour le moment",
+    "empty_body": "Ajoute ta première recette pour commencer.",
+    "empty_cta": "Ajouter une recette",
+    "no_results_heading": "Aucun résultat pour « {query} »",
+    "no_results_body": "Essaie un autre mot-clé ou vérifie l'orthographe.",
+    "never_cooked": "Jamais cuisinée",
+    "draft_badge": "Brouillon",
+    "back_aria": "Retour",
+    "edit_aria": "Modifier la recette",
+    "no_photo": "Pas encore de photo",
+    "section_ingredients": "Ingrédients",
+    "section_steps": "Étapes",
+    "footer_last_cooked": "Dernière fois : {when}",
+    "footer_cook_count": "Cuisinée {count, plural, =0 {0 fois} one {# fois} other {# fois}}",
+    "detail_404_heading": "Recette introuvable",
+    "detail_404_body": "Cette recette n'existe pas ou a été supprimée.",
+    "detail_404_cta": "Retour aux recettes"
+  },
+  "inbox": {
+    "tab_title": "À compléter",
+    "empty_heading": "Tout est à jour",
+    "empty_body": "Pas de brouillon à compléter. Les recettes ajoutées rapidement atterriront ici."
+  },
   "settings": {
     "title": "Paramètres",
+    "tab_title": "Plus",
     "household_name_label": "Nom du foyer",
     "invite_code_label": "Code d'invitation",
     "invite_code_aria": "Code d'invitation du foyer",
@@ -40,7 +69,11 @@
     "invite_code_copied": "Code copié",
     "invite_code_copy_failed": "Impossible de copier",
     "invite_code_helper": "Partage ce code avec ton partenaire pour qu'il rejoigne le foyer.",
-    "member_label": "Toi"
+    "member_label": "Toi",
+    "export_section_title": "Exporter mes données",
+    "export_body": "Télécharge toutes tes recettes au format JSON. Utile en cas de pépin.",
+    "export_cta": "Télécharger mes recettes",
+    "export_error": "Téléchargement impossible. Réessaie dans un instant."
   },
   "onboarding": {
     "welcome": {

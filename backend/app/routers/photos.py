@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -37,7 +37,12 @@ from app.models.member import Member
 from app.models.recipe import Recipe
 from app.schemas.recipe import RecipeResponse
 from app.services.realtime import broadcast_to_household
-from app.services.storage import MAX_BYTES, upload_recipe_photo
+from app.services.storage import (
+    MAX_BYTES,
+    SIGNED_URL_TTL_SECONDS,
+    create_signed_photo_url,
+    upload_recipe_photo,
+)
 
 router = APIRouter(prefix="/recipes", tags=["recipes-photos"])
 
@@ -127,3 +132,49 @@ async def upload_photo(
         member.household_id, "recipe.updated", payload
     )
     return RecipeResponse.model_validate(recipe)
+
+
+@router.get("/{recipe_id}/photo-url")
+def signed_photo_url(
+    recipe_id: UUID,
+    path: str = Query(..., min_length=1, max_length=300),
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> dict:
+    """RECIPE-04 read counterpart of RECIPE-07 (plan 01-10).
+
+    Returns a 5-minute signed URL the FE drops into ``<img src=...>``. The
+    ``recipe-photos`` bucket is private (Public=OFF), so anonymous reads fail;
+    the FE refreshes the URL on each detail-page mount per
+    ``SIGNED_URL_TTL_SECONDS``.
+
+    Authorization (T-01-10-01 mitigation):
+
+    1. The recipe MUST live in the requester's household — 404 otherwise
+       (matches the 01-08 / 01-09 cross-household policy: 404, not 403, so
+       existence cannot be probed).
+    2. The ``path`` query MUST be one of the values in ``recipe.photo_paths``.
+       Without this check, a member could mint signed URLs for arbitrary
+       bucket objects belonging to OTHER recipes inside the SAME household
+       (or, with knowledge of any uuid layout, ANY object — though in
+       practice household_id is the first segment so cross-household reads
+       were already gated by step 1).
+    """
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
+        )
+    if path not in (recipe.photo_paths or []):
+        # Same 404 shape as a missing recipe — no probe of "is this path on
+        # some other recipe in my household?" answerable.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="path not on recipe"
+        )
+    url = create_signed_photo_url(path)
+    return {"url": url, "expires_in": SIGNED_URL_TTL_SECONDS}
