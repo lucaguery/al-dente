@@ -32,15 +32,18 @@ const withNextIntl = createNextIntlPlugin("./i18n.ts");
 // rewrites() proxy at build/request time. Threat T-01.1-03-01 mitigated.
 const RAILWAY_URL = process.env.RAILWAY_URL;
 if (!RAILWAY_URL) {
-  // T-01.1-03-03: Fail fast — without RAILWAY_URL the rewrites silently 404
-  // and auth breaks. Vercel build env MUST set this; local dev sets it via
-  // .env.local (e.g. http://localhost:8000).
-  throw new Error(
-    "RAILWAY_URL env var is required. Set it in Vercel Project Settings " +
-      "(production) and frontend/.env.local (dev, e.g. http://localhost:8000).",
-  );
+  if (process.env.VERCEL) {
+    // T-01.1-03-03: Fail fast on Vercel — without RAILWAY_URL the rewrites
+    // silently 404 and cookie auth breaks. Set in Vercel Project Settings.
+    throw new Error(
+      "RAILWAY_URL env var is required in Vercel Project Settings.",
+    );
+  }
+  // Local builds: proxy to localhost backend. Set RAILWAY_URL in .env.local
+  // to target a real Railway instance for end-to-end cookie testing.
+  console.warn("RAILWAY_URL not set — rewrites will proxy to http://localhost:8000");
 }
-const RAILWAY_BASE = RAILWAY_URL.replace(/\/+$/, "");
+const RAILWAY_BASE = (RAILWAY_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
   // Pin the workspace root so Turbopack stops inferring the wrong package
