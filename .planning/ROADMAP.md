@@ -49,10 +49,10 @@ The four phases mirror SPEC.md's W1–W4 build plan. Phase boundaries are dogfoo
 **Goal:** [Urgent work - to be planned]
 **Requirements**: TBD
 **Depends on:** Phase 1
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 01.1 to break down)
+- [x] TBD (run /gsd-plan-phase 01.1 to break down) (completed 2026-05-06)
 
 ### Phase 2: LLM Capture (W2)
 **Goal**: Voice (Web Speech → backend → Gemini), photo (multipart → Gemini multimodal), and paste-URL surfaces all create drafts that promote to `status='structured'` via FastAPI `BackgroundTask`, with WebSocket `recipe.promoted` broadcast on status flip. Voice modification of existing recipes (option A) and voice notes on cooking log (option C) are wired. Raw inputs persist in `source_capture` JSONB forever. Dogfood gate: 2 weeks with capture flows; track inbox tidy-up rate.
