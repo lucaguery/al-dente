@@ -17,7 +17,7 @@ The router is a thin HTTP adapter; secrets generation lives in
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth import current_member, generate_auth_token, set_auth_cookie
@@ -137,6 +137,29 @@ def join_household(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="invite_code not found",
         )
+
+    # D-07: idempotent rejoin. Match on name only (case-insensitive, trimmed).
+    # If a member already exists in this household with a matching name,
+    # silently return their existing token + IDs. Color in the body is
+    # ignored on this branch — users may have forgotten which color they
+    # originally picked.
+    normalized_name = body.member_name.strip().lower()
+    existing_member = db.scalar(
+        select(Member).where(
+            Member.household_id == household.id,
+            func.lower(Member.name) == normalized_name,
+        )
+    )
+    if existing_member is not None:
+        set_auth_cookie(response, existing_member.auth_token)
+        return OnboardingResponse(
+            household_id=household.id,
+            member_id=existing_member.id,
+            auth_token=existing_member.auth_token,
+            invite_code=household.invite_code,
+        )
+
+    # Net-new member path — color uniqueness still applies.
     existing_colors = set(
         db.scalars(
             select(Member.color_hex).where(Member.household_id == household.id)
@@ -149,7 +172,7 @@ def join_household(
         )
     member = Member(
         household_id=household.id,
-        name=body.member_name,
+        name=body.member_name.strip(),
         color_hex=body.color_hex,
         auth_token=generate_auth_token(),
     )

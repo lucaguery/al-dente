@@ -12,18 +12,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth_session, households, pings, ws
+from app.routers import households, pings, ws
 
 app = FastAPI(title="Al Dente API", version="0.1.0")
 
 # T-01-03-03 mitigation: explicit allowlist; no "*" wildcard.
-# allow_credentials=True so the aldente_auth cookie can travel cross-origin in local dev
-# (frontend on :3000 → backend on :8000). Production uses Vercel rewrites so calls are
-# same-origin and credentials are same-origin by definition.
+# allow_credentials=False because we use Authorization: Bearer header, not cookies.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
 )
@@ -41,4 +39,3 @@ def healthz() -> dict[str, str]:
 app.include_router(households.router)
 app.include_router(pings.router)
 app.include_router(ws.router)
-app.include_router(auth_session.router)
