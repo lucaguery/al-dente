@@ -1,7 +1,7 @@
 "use client";
 
 // Reconnecting WebSocket client for the household-scoped /ws spine
-// (01-05 realtime-and-ping-backend). One frame from the backend is shaped
+// (01-05 realtime backend). One frame from the backend is shaped
 // {type: string, payload: object} per the wire-frame contract documented
 // in backend/app/services/realtime.py.
 //
