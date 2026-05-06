@@ -40,7 +40,7 @@ def detect_mime_and_ext(content: bytes) -> tuple[str, str] | None:
     """Sniff magic bytes. Returns ``(mime, ext)`` or ``None`` if unrecognized.
 
     Does NOT trust ``Content-Type`` — clients can lie about that header
-    (T-01-09-01). The MIME allowlist (locked for v0.1) is JPEG, PNG, HEIC.
+    (T-01-09-01). The MIME allowlist is JPEG, PNG, HEIC/HEIF, WebP, AVIF.
     """
     if not content:
         return None
@@ -50,11 +50,16 @@ def detect_mime_and_ext(content: bytes) -> tuple[str, str] | None:
     # PNG — 89 50 4E 47 0D 0A 1A 0A
     if content[:8] == b"\x89PNG\r\n\x1a\n":
         return ("image/png", "png")
-    # HEIC/HEIF (iOS native) — variable header but ftyp{brand} sits at offset 4
+    # WebP — RIFF????WEBP
+    if len(content) >= 12 and content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        return ("image/webp", "webp")
+    # HEIC/HEIF/AVIF — ISO Base Media File Format: ftyp{brand} at offset 4
     if len(content) >= 12 and content[4:8] == b"ftyp":
         brand = content[8:12]
-        if brand in (b"heic", b"heix", b"mif1", b"msf1", b"heim", b"hevc"):
+        if brand in (b"heic", b"heix", b"mif1", b"msf1", b"heim", b"hevc", b"heif"):
             return ("image/heic", "heic")
+        if brand in (b"avif", b"avis"):
+            return ("image/avif", "avif")
     return None
 
 
