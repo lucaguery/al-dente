@@ -5,13 +5,13 @@
 // pins the user-facing rule: silent self-healing for ≤30s, then a single
 // destructive Sonner toast surfaces if the WS is still closed.
 //
-// The WS is opened lazily on first mount when getAuthToken() returns
-// non-null. Onboarding routes also rely on this provider being at the
-// layout root — they harmlessly no-op until the user has a token.
+// Phase 01.1: WS is opened only when useSession() reports "authenticated".
+// No token parameter needed — the aldente_auth cookie is attached by the
+// browser on the same-origin WS upgrade request automatically (D-05).
 //
 // Module-level singleton + useSyncExternalStore keeps the connection
 // stable across re-renders and dodges the React-19 set-state-in-effect
-// lint rule (same pattern OnboardingGuard uses for localStorage reads).
+// lint rule.
 
 import {
   createContext,
@@ -28,12 +28,11 @@ import {
   type RealtimeClient,
   type RealtimeStatus,
 } from "@/lib/ws";
-import { AUTH_TOKEN_CHANGED_EVENT, getAuthToken } from "@/lib/auth";
+import { useSession } from "@/components/SessionProvider";
 
 // --- Singleton store ---------------------------------------------------------
 
 let clientSingleton: RealtimeClient | null = null;
-let openedFor: string | null = null; // token used to open clientSingleton
 const subscribers = new Set<() => void>();
 
 function notify() {
@@ -56,19 +55,13 @@ function subscribe(cb: () => void): () => void {
 }
 
 /**
- * Open (or reuse) the singleton WebSocket bound to the given token.
- * If a different token was previously bound (e.g. user re-onboarded), the
- * old client is closed first.
+ * Open (or reuse) the singleton WebSocket.
+ * Cookie-auth era: no token parameter — the aldente_auth cookie is sent
+ * automatically on the same-origin WS upgrade.
  */
-function ensureOpen(token: string): RealtimeClient {
-  if (clientSingleton && openedFor === token) return clientSingleton;
-  if (clientSingleton) {
-    clientSingleton.close();
-    clientSingleton = null;
-    openedFor = null;
-  }
-  clientSingleton = createRealtimeClient(token);
-  openedFor = token;
+function ensureOpen(): RealtimeClient {
+  if (clientSingleton) return clientSingleton;
+  clientSingleton = createRealtimeClient();
   notify();
   return clientSingleton;
 }
@@ -83,6 +76,8 @@ const RECONNECT_TOAST_THRESHOLD_MS = 30_000;
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const t = useTranslations("realtime");
+  const { status } = useSession();
+
   // useSyncExternalStore returns the live singleton (or null on the
   // server / before first mount) without us ever calling setState inside
   // an effect.
@@ -92,29 +87,17 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     getServerSnapshot,
   );
 
-  // Open the WS lazily once we're on the client and have a token. Running
-  // this in an effect (instead of during render) keeps the SSR pass pure
-  // and avoids hydration mismatches. The root layout doesn't remount when
-  // the user transitions /onboarding/* → /, so we also listen for the
-  // same-tab AUTH_TOKEN_CHANGED_EVENT dispatched by saveAuthToken().
+  // Open the WS lazily once the session is authenticated. Re-runs whenever
+  // session status changes (e.g. after onboarding refresh()).
   useEffect(() => {
-    const tryConnect = () => {
-      const token = getAuthToken();
-      if (!token) return;
-      try {
-        ensureOpen(token);
-      } catch (err) {
-        // NEXT_PUBLIC_WS_BASE missing — log loudly so Vercel deploys notice.
-        console.error("RealtimeProvider: ensureOpen threw", err);
-      }
-    };
-    tryConnect();
-    if (typeof window === "undefined") return;
-    window.addEventListener(AUTH_TOKEN_CHANGED_EVENT, tryConnect);
-    return () => {
-      window.removeEventListener(AUTH_TOKEN_CHANGED_EVENT, tryConnect);
-    };
-  }, []);
+    if (status !== "authenticated") return;
+    try {
+      ensureOpen();
+    } catch (err) {
+      // NEXT_PUBLIC_WS_BASE missing — log loudly so Vercel deploys notice.
+      console.error("RealtimeProvider: ensureOpen threw", err);
+    }
+  }, [status]);
 
   // Reconnect-toast bookkeeping: silent ≤30s, destructive Sonner after.
   // First instant the connection became "closed" (or null if currently open).

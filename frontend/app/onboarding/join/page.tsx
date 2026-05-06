@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ColorSwatchPicker } from "@/components/ColorSwatchPicker";
 import { api } from "@/lib/api";
-import { saveAuthToken } from "@/lib/auth";
+import { useSession } from "@/components/SessionProvider";
 
 // UI-SPEC §"Surface-by-Surface Pinning" §3 — Onboarding Join.
 // Code input drives a debounced GET /households/by-code/{code} preview
@@ -41,6 +41,7 @@ function statusOf(err: unknown): number | null {
 
 export default function OnboardingJoinPage() {
   const router = useRouter();
+  const { refresh } = useSession();
   const t = useTranslations("onboarding.join");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("onboarding.errors");
@@ -62,7 +63,7 @@ export default function OnboardingJoinPage() {
     setPreviewPending(true);
     try {
       const preview = await api<PreviewResponse>(
-        `/households/by-code/${encodeURIComponent(currentCode)}`,
+        `/api/households/by-code/${encodeURIComponent(currentCode)}`,
       );
       setTakenColors(preview.taken_colors);
       setCodeError(null);
@@ -109,7 +110,7 @@ export default function OnboardingJoinPage() {
     setSubmitting(true);
     setColorError(null);
     try {
-      const res = await api<JoinResponse>("/households/join", {
+      const res = await api<JoinResponse>("/api/households/join", {
         method: "POST",
         body: JSON.stringify({
           invite_code: code,
@@ -117,7 +118,9 @@ export default function OnboardingJoinPage() {
           color_hex: color,
         }),
       });
-      saveAuthToken(res.auth_token, res.household_id, res.member_id);
+      // res fields available for forward compat but cookie is set by backend
+      void res;
+      await refresh();
       router.replace("/");
     } catch (err) {
       const status = statusOf(err);

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ColorSwatchPicker } from "@/components/ColorSwatchPicker";
 import { api } from "@/lib/api";
-import { saveAuthToken } from "@/lib/auth";
+import { useSession } from "@/components/SessionProvider";
 
 // UI-SPEC §"Surface-by-Surface Pinning" §2 — Onboarding Create.
 // Sticky header (ChevronLeft + title) + 3 fields (household name, member
@@ -25,6 +25,7 @@ type CreateResponse = {
 
 export default function OnboardingCreatePage() {
   const router = useRouter();
+  const { refresh } = useSession();
   const t = useTranslations("onboarding.create");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("onboarding.errors");
@@ -44,7 +45,7 @@ export default function OnboardingCreatePage() {
     if (!canSubmit || !color) return;
     setSubmitting(true);
     try {
-      const res = await api<CreateResponse>("/households", {
+      const res = await api<CreateResponse>("/api/households", {
         method: "POST",
         body: JSON.stringify({
           household_name: householdName.trim(),
@@ -52,7 +53,7 @@ export default function OnboardingCreatePage() {
           color_hex: color,
         }),
       });
-      saveAuthToken(res.auth_token, res.household_id, res.member_id);
+      await refresh();
       router.replace(
         `/onboarding/share-code?code=${encodeURIComponent(res.invite_code)}`,
       );
