@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { RealtimeProvider } from "@/components/RealtimeProvider";
+import { SessionProvider } from "@/components/SessionProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -57,11 +58,13 @@ export default async function RootLayout({
         }}
       >
         <LocaleProvider messages={messages}>
-          <RealtimeProvider>
-            <main className="flex flex-col flex-1 pb-16">{children}</main>
-            <BottomNav />
-            <Toaster />
-          </RealtimeProvider>
+          <SessionProvider>
+            <RealtimeProvider>
+              <main className="flex flex-col flex-1 pb-16">{children}</main>
+              <BottomNav />
+              <Toaster />
+            </RealtimeProvider>
+          </SessionProvider>
         </LocaleProvider>
       </body>
     </html>
