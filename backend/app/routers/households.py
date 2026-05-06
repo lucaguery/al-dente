@@ -30,6 +30,7 @@ from app.schemas.household import (
     HouseholdPublic,
     JoinHouseholdRequest,
     OnboardingResponse,
+    SessionResponse,
 )
 from app.services.invite_codes import generate_unique_invite_code
 
@@ -188,12 +189,16 @@ def join_household(
     )
 
 
-@router.get("/me", response_model=HouseholdPublic)
+@router.get("/me", response_model=SessionResponse)
 def household_me(
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
-) -> HouseholdPublic:
+) -> SessionResponse:
     """Return the bearer's household + roster — closes INFRA-06.
+
+    Phase 01.1: response_model changed to SessionResponse (adds ``me`` field
+    so the frontend SessionProvider knows which member is the requester without
+    a separate round-trip — D-06).
 
     T-01-04-06 mitigation: ``member.household_id`` comes from the
     authenticated member row (NOT a request param), so there's no
@@ -208,9 +213,10 @@ def household_me(
     members = db.scalars(
         select(Member).where(Member.household_id == member.household_id)
     ).all()
-    return HouseholdPublic(
-        id=household.id,
-        name=household.name,
+    return SessionResponse(
+        household_id=household.id,
+        household_name=household.name,
         invite_code=household.invite_code,
+        me=member,
         members=list(members),
     )

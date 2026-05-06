@@ -64,7 +64,7 @@ class JoinHouseholdRequest(BaseModel):
 
 
 class HouseholdPublic(BaseModel):
-    """GET /households/me response shape.
+    """GET /households/me response shape (legacy — kept for backward compat).
 
     ``invite_code`` IS exposed here — the surface is bearer-token-protected, so
     only existing members see it (they need it to share with the partner anyway).
@@ -73,6 +73,23 @@ class HouseholdPublic(BaseModel):
     id: UUID
     name: str
     invite_code: str
+    members: List[MemberPublic]
+
+    model_config = {"from_attributes": True}
+
+
+class SessionResponse(BaseModel):
+    """GET /households/me response — Phase 01.1 cookie-auth.
+
+    Embeds the requester's own member identity (``me``) so the frontend's
+    SessionProvider can render the user's name/color without a second
+    round-trip. Mirrors HouseholdPublic but adds ``me``.
+    """
+
+    household_id: UUID
+    household_name: str
+    invite_code: str
+    me: MemberPublic
     members: List[MemberPublic]
 
     model_config = {"from_attributes": True}
