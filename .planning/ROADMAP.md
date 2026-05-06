@@ -46,18 +46,13 @@ The four phases mirror SPEC.md's W1–W4 build plan. Phase boundaries are dogfoo
 
 ### Phase 01.1: cookie-auth-and-recovery (INSERTED)
 
-**Goal:** Persistent auth across iOS PWA restarts. Migrate auth_token from localStorage to an HttpOnly same-origin aldente_auth cookie via Next.js rewrites; add idempotent rejoin on POST /households/join (case-insensitive name match returns the existing token); add a read-only Settings screen exposing the household invite code + current member name/color. Backend dual-mode (cookie first, Bearer fallback) preserves curl/Postman dev flow.
-**Requirements**: D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08 (CONTEXT.md decisions; no formal REQ-IDs — phase predates REQUIREMENTS.md formalization for urgent inserts)
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
 **Depends on:** Phase 1
-**Plans:** 6 plans
+**Plans:** 0 plans
 
 Plans:
-- [ ] 01.1-01-PLAN.md — Backend cookie auth (dual-mode), DELETE /auth/session, WS cookie-or-token (D-02, D-03, D-05-backend)
-- [ ] 01.1-02-PLAN.md — Idempotent rejoin in POST /households/join (D-07)
-- [ ] 01.1-03-PLAN.md — Frontend Next.js rewrites + RAILWAY_URL env contract + /api/auth/session route (D-01)
-- [ ] 01.1-04-PLAN.md — lib/api.ts + lib/ws.ts + lib/auth.ts cookie migration (D-04, D-05-frontend)
-- [ ] 01.1-05-PLAN.md — SessionProvider + useSession hook; OnboardingGuard, RealtimeProvider, onboarding pages migrated (D-04, D-05-frontend, D-06)
-- [ ] 01.1-06-PLAN.md — Read-only /settings screen + BottomNav wiring + fr.json strings (D-08)
+- [ ] TBD (run /gsd-plan-phase 01.1 to break down)
 
 ### Phase 2: LLM Capture (W2)
 **Goal**: Voice (Web Speech → backend → Gemini), photo (multipart → Gemini multimodal), and paste-URL surfaces all create drafts that promote to `status='structured'` via FastAPI `BackgroundTask`, with WebSocket `recipe.promoted` broadcast on status flip. Voice modification of existing recipes (option A) and voice notes on cooking log (option C) are wired. Raw inputs persist in `source_capture` JSONB forever. Dogfood gate: 2 weeks with capture flows; track inbox tidy-up rate.

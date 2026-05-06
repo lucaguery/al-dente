@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: executing
-stopped_at: Phase 01.1 context gathered
-last_updated: "2026-05-06T07:55:02.943Z"
-last_activity: 2026-05-06 -- Phase 01.1 planning complete
+stopped_at: Phase 1 UI-SPEC approved
+last_updated: "2026-05-05T11:29:30.976Z"
+last_activity: 2026-05-05 -- Phase 1 planning complete
 progress:
-  total_phases: 5
+  total_phases: 4
   completed_phases: 0
-  total_plans: 18
-  completed_plans: 6
-  percent: 33
+  total_plans: 12
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-05)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 01 — foundations-w1
+**Current focus:** Phase 1 — Foundations (W1)
 
 ## Current Position
 
-Phase: 01 (foundations-w1) — EXECUTING
-Plan: 1 of 12
+Phase: 1 of 4 (Foundations — W1)
+Plan: 0 of TBD in current phase
 Status: Ready to execute
-Last activity: 2026-05-06 -- Phase 01.1 planning complete
+Last activity: 2026-05-05 -- Phase 1 planning complete
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -85,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-06T07:30:29.483Z
-Stopped at: Phase 01.1 context gathered
-Resume file: .planning/phases/01.1-cookie-auth-and-recovery/01.1-CONTEXT.md
+Last session: 2026-05-05T10:31:55.839Z
+Stopped at: Phase 1 UI-SPEC approved
+Resume file: .planning/phases/01-foundations-w1/01-UI-SPEC.md
