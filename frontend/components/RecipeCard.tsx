@@ -17,26 +17,29 @@ import type { Recipe } from "@/lib/recipes";
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const t = useTranslations("recipes");
+  // Derive the photo-path key from props; effect runs only when it changes.
+  const firstPath = recipe.photo_paths[0] ?? "";
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    let alive = true;
-    const first = recipe.photo_paths[0];
-    if (!first) {
-      setSrc(null);
+    if (!firstPath) {
+      // No photo on this recipe — `src` is already null at mount; don't
+      // setState here (would trigger a cascading render and trip React
+      // 19's `react-hooks/set-state-in-effect` rule).
       return;
     }
-    getSignedPhotoUrl(recipe.id, first)
+    let alive = true;
+    getSignedPhotoUrl(recipe.id, firstPath)
       .then((url) => {
         if (alive) setSrc(url);
       })
       .catch(() => {
-        if (alive) setSrc(null);
+        // Silent fallback to zinc-100 placeholder; URL state stays null.
       });
     return () => {
       alive = false;
     };
-  }, [recipe.id, recipe.photo_paths]);
+  }, [recipe.id, firstPath]);
 
   return (
     <Link

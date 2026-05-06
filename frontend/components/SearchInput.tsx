@@ -26,21 +26,52 @@ export function SearchInput({ onQueryChange }: Props) {
   const [value, setValue] = useState("");
   const [pending, setPending] = useState(false);
   const timer = useRef<number | null>(null);
-
+  // Stash the latest onQueryChange so we don't re-arm the debounce when the
+  // parent re-creates the callback on every render.
+  const callbackRef = useRef(onQueryChange);
   useEffect(() => {
+    callbackRef.current = onQueryChange;
+  }, [onQueryChange]);
+
+  // Schedule a debounced fetch on every keystroke. We INTENTIONALLY drive
+  // this from the input's onChange handler (not a useEffect on `value`) to
+  // satisfy React 19's `react-hooks/set-state-in-effect` rule — setPending
+  // is event-driven, not effect-driven.
+  const scheduleSearch = (next: string) => {
     if (timer.current != null) window.clearTimeout(timer.current);
     setPending(true);
     timer.current = window.setTimeout(async () => {
       try {
-        await onQueryChange(value);
+        await callbackRef.current(next);
       } finally {
         setPending(false);
       }
     }, DEBOUNCE_MS);
+  };
+
+  // Fire an initial empty-query fetch on mount so the parent gets its first
+  // page of results. We do this via a setTimeout (not a state set) inside
+  // the effect to avoid the cascading-render lint rule.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      void callbackRef.current("");
+    }, 0);
     return () => {
+      window.clearTimeout(id);
       if (timer.current != null) window.clearTimeout(timer.current);
     };
-  }, [value, onQueryChange]);
+  }, []);
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    setValue(next);
+    scheduleSearch(next);
+  };
+
+  const onClear = () => {
+    setValue("");
+    scheduleSearch("");
+  };
 
   return (
     <div className="relative">
@@ -50,7 +81,7 @@ export function SearchInput({ onQueryChange }: Props) {
       />
       <Input
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={onChange}
         placeholder={t("search_placeholder")}
         className="pl-10 pr-10 h-10"
         aria-label={t("search_placeholder")}
@@ -67,7 +98,7 @@ export function SearchInput({ onQueryChange }: Props) {
             size="icon"
             variant="ghost"
             aria-label={t("search_clear")}
-            onClick={() => setValue("")}
+            onClick={onClear}
             className="h-8 w-8"
             type="button"
           >
