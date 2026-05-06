@@ -60,7 +60,13 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
         credentials: "include",
       }).catch(() => {});
       clearLegacyLocalStorage();
-      window.location.href = "/onboarding/welcome";
+      // Don't hard-reload if already on an onboarding page — that would
+      // re-mount SessionProvider and re-trigger fetchSession(), causing an
+      // infinite reload loop. Let OnboardingGuard's router.replace() handle
+      // the redirect from authenticated pages instead.
+      if (!window.location.pathname.startsWith("/onboarding")) {
+        window.location.href = "/onboarding/welcome";
+      }
     }
     throw new Error("unauthorized");
   }
