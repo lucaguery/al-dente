@@ -24,6 +24,7 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
+  buildDirectWsUrl,
   createRealtimeClient,
   type RealtimeClient,
   type RealtimeStatus,
@@ -54,16 +55,30 @@ function subscribe(cb: () => void): () => void {
   };
 }
 
+// In-flight init promise — prevents double-open on React StrictMode double-invoke.
+let initPromise: Promise<RealtimeClient> | null = null;
+
 /**
  * Open (or reuse) the singleton WebSocket.
- * Cookie-auth era: no token parameter — the aldente_auth cookie is sent
- * automatically on the same-origin WS upgrade.
+ *
+ * Tries to connect directly to Railway (bypassing Vercel's proxy, which kills
+ * long-lived WS connections on function timeout). Falls back to the same-origin
+ * Vercel rewrite if the direct-URL fetch fails.
  */
-function ensureOpen(): RealtimeClient {
+async function ensureOpen(): Promise<RealtimeClient> {
   if (clientSingleton) return clientSingleton;
-  clientSingleton = createRealtimeClient();
-  notify();
-  return clientSingleton;
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    const directUrl = await buildDirectWsUrl();
+    clientSingleton = createRealtimeClient(directUrl ?? undefined);
+    notify();
+    return clientSingleton;
+  })();
+  try {
+    return await initPromise;
+  } finally {
+    initPromise = null;
+  }
 }
 
 // --- React surface -----------------------------------------------------------
@@ -91,12 +106,9 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   // session status changes (e.g. after onboarding refresh()).
   useEffect(() => {
     if (status !== "authenticated") return;
-    try {
-      ensureOpen();
-    } catch (err) {
-      // NEXT_PUBLIC_WS_BASE missing — log loudly so Vercel deploys notice.
+    ensureOpen().catch((err) => {
       console.error("RealtimeProvider: ensureOpen threw", err);
-    }
+    });
   }, [status]);
 
   // Reconnect-toast bookkeeping: silent ≤30s, destructive Sonner after.

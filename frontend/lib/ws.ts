@@ -54,16 +54,40 @@ function buildWsUrl(): string {
 }
 
 /**
- * Open a household-scoped WebSocket. Auth travels via the aldente_auth
- * cookie automatically attached to the same-origin upgrade request.
+ * Resolve a direct wss://railway…/ws?token= URL, bypassing the Vercel proxy.
  *
- * The legacy `token` parameter is accepted-but-ignored for backward
- * compatibility during the in-flight rollout; callers should drop the
- * argument as part of Plan 05.
+ * Vercel serverless functions have an execution-time limit; long-lived WS
+ * connections proxied through next.config rewrites get killed on timeout and
+ * partysocket can't reconnect because Vercel won't re-establish the proxy.
+ * Connecting directly to Railway avoids that entirely.
+ *
+ * Returns null on any failure — caller falls back to the same-origin rewrite.
  */
-export function createRealtimeClient(_legacy?: string): RealtimeClient {
-  const url = buildWsUrl();
-  const socket = new ReconnectingWebSocket(url, [], {
+export async function buildDirectWsUrl(): Promise<string | null> {
+  try {
+    const [cfgRes, tokRes] = await Promise.all([
+      fetch("/ws-config"),
+      fetch("/api/auth/ws-token", { credentials: "include" }),
+    ]);
+    if (!cfgRes.ok || !tokRes.ok) return null;
+    const { wsBase } = (await cfgRes.json()) as { wsBase: string | null };
+    const { token } = (await tokRes.json()) as { token: string };
+    if (!wsBase || !token) return null;
+    return `${wsBase}/ws?token=${encodeURIComponent(token)}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Open a household-scoped WebSocket.
+ *
+ * Pass a pre-built URL (e.g. from buildDirectWsUrl) to connect directly to
+ * Railway.  Omit to fall back to the same-origin Vercel rewrite (cookie auth).
+ */
+export function createRealtimeClient(url?: string): RealtimeClient {
+  const resolvedUrl = url ?? buildWsUrl();
+  const socket = new ReconnectingWebSocket(resolvedUrl, [], {
     minReconnectionDelay: 250,
     maxReconnectionDelay: 5000,
     reconnectionDelayGrowFactor: 2,
