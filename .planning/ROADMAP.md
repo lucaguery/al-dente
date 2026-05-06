@@ -49,7 +49,7 @@ The four phases mirror SPEC.md's W1–W4 build plan. Phase boundaries are dogfoo
 **Goal:** [Urgent work - to be planned]
 **Requirements**: TBD
 **Depends on:** Phase 1
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 01.1 to break down)
