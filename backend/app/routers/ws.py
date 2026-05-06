@@ -22,6 +22,7 @@ import logging
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import select
 
+from app.auth import AUTH_COOKIE_NAME
 from app.db import SessionLocal
 from app.services.realtime import registry
 
@@ -41,6 +42,12 @@ async def websocket_endpoint(
 
     # Accept FIRST, then close with 1008 on bad token. T-01-05-01 mitigation.
     await websocket.accept()
+
+    # Cookie wins over ?token= per D-05. Starlette exposes the upgrade
+    # request's cookies on websocket.cookies (a dict[str, str]).
+    cookie_token = websocket.cookies.get(AUTH_COOKIE_NAME)
+    if cookie_token:
+        token = cookie_token
 
     if not token:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
