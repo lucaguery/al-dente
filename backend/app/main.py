@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth_session, exports, households, pings, recipes, ws
+from app.routers import auth_session, exports, households, photos, pings, recipes, ws
 
 app = FastAPI(title="Al Dente API", version="0.1.0")
 
@@ -44,3 +44,4 @@ app.include_router(ws.router)
 app.include_router(auth_session.router)
 app.include_router(recipes.router)  # 01-08
 app.include_router(exports.router)  # 01-08
+app.include_router(photos.router)  # 01-09 — POST /recipes/{id}/photos
