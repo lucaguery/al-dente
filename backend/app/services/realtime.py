@@ -12,8 +12,6 @@ v0.1 event types are (CLAUDE.md "Architecture invariants" #4):
     * ``recipe.promoted``  — capture-pipeline BackgroundTask (W2)
     * ``vote.created``     — votes router (W3)
 
-Plus the W1-only ``ping.created`` event (D-01, deleted in plan 01-12).
-
 Frame shape on the wire (must match frontend ws.ts byte-for-byte; see plan
 01-07): ``{"type": "<event_type>", "payload": {...}}`` JSON-encoded text frame.
 """

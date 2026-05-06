@@ -4,7 +4,6 @@ import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
-import { PingPanel } from "@/components/PingPanel";
 
 // Detect "running inside an iOS Safari tab" (i.e. NOT the installed PWA).
 // `navigator.standalone` is true when launched from the home-screen icon;
@@ -34,30 +33,16 @@ function noopSubscribe() {
   return () => {};
 }
 
-function readMemberId(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("member_id");
-}
-
 // Phase-1 home placeholder — UI-SPEC §12 install hint + wordmark + tagline.
 // The real W3 home content lands when the shortlist surfaces are built.
 // Wrapped in <OnboardingGuard> so first-launch users (no auth_token) get
 // redirected to /onboarding/welcome (ONBOARD-06).
-//
-// TODO(productize): D-01 — <PingPanel /> below is the W1 round-trip gate
-// UI and is removed by plan 01-11 once Luca confirms both phones round-
-// trip a ping within ~500ms.
 export default function Home() {
   const t = useTranslations();
   const showInstallHint = useSyncExternalStore(
     noopSubscribe,
     isIosSafariNotInstalled,
     () => false,
-  );
-  const memberId = useSyncExternalStore(
-    noopSubscribe,
-    readMemberId,
-    () => null,
   );
 
   return (
@@ -82,11 +67,6 @@ export default function Home() {
             </p>
           </Card>
         ) : null}
-
-        {/* TODO(productize): D-01 — PingPanel removed by 01-11 after the round-trip gate. */}
-        <div className="w-full self-stretch -mx-6">
-          <PingPanel selfMemberId={memberId} />
-        </div>
       </section>
     </OnboardingGuard>
   );

@@ -14,7 +14,4 @@ cross-cutting concern:
     * ``recipe.created``  — emitted by routers/recipes.py (plan 01-08, W1)
     * ``recipe.promoted`` — emitted after draft → structured promotion in W2
     * ``vote.created``    — emitted by the votes router in W3
-
-  Plus the throwaway ``ping.created`` event (D-01) that proves the loop
-  end-to-end in W1 before any feature wiring depends on it.
 """
