@@ -1,28 +1,35 @@
-// Fetch wrapper that attaches the bearer token from localStorage and
-// redirects to the onboarding welcome screen on 401 (per UI-SPEC §"Toast
-// vs inline rules" — "API 401: Full-page redirect (no toast)").
+// Fetch wrapper for the cookie-auth era (Phase 01.1).
 //
-// Auth token format and storage are pinned in SPEC.md §Onboarding +
-// CONTEXT.md "Auth-token format". Stored in `localStorage` under the key
-// `auth_token`.
+// Auth is now an HttpOnly same-origin cookie (aldente_auth) set by the backend
+// on POST /households and POST /households/join. The browser attaches it
+// automatically to any same-origin request when `credentials: "include"` is
+// set on fetch. There is no token to read, store, or inject — JS literally
+// cannot see the cookie (T-01-02-03 mitigated by HttpOnly).
 //
-// `// TODO(productize)`: localStorage XSS exposes auth_token (T-01-02-03
-// in plan threat register). v0.1 audience is single-tenant household,
-// no third-party scripts. Hardening (httpOnly cookie + CSRF) lands when
-// Supabase Auth replaces invite-code (V2-AUTH-01).
+// In production NEXT_PUBLIC_API_BASE is "" — calls use relative paths like
+// `/api/households/me` which Vercel rewrites (see frontend/next.config.ts) to
+// the Railway backend. For direct-to-backend local dev, set
+// NEXT_PUBLIC_API_BASE=http://localhost:8000.
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
-const AUTH_TOKEN_KEY = "auth_token";
+// Legacy localStorage keys from the Bearer era — wipe on 401 to prevent any
+// stale data from confusing first-launch detection. Pure cleanup.
+const LEGACY_KEYS = ["auth_token", "household_id", "member_id"] as const;
+
+export function clearLegacyLocalStorage(): void {
+  if (typeof window === "undefined") return;
+  for (const k of LEGACY_KEYS) {
+    try {
+      window.localStorage.removeItem(k);
+    } catch {
+      // localStorage can throw in private-mode Safari; ignore.
+    }
+  }
+}
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const token =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem(AUTH_TOKEN_KEY)
-      : null;
-
   const headers = new Headers(init?.headers);
-  if (token) headers.set("Authorization", `Bearer ${token}`);
   if (
     init?.body &&
     !headers.has("Content-Type") &&
@@ -31,11 +38,28 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set("Content-Type", "application/json");
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers,
+    // Browser auto-attaches the aldente_auth cookie on same-origin requests.
+    // "include" also works cross-origin (local dev → :8000) provided the
+    // backend's CORS allow_credentials is True (set in 01.1-01-PLAN Task 2).
+    credentials: "include",
+  });
 
   if (res.status === 401) {
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem(AUTH_TOKEN_KEY);
+      // Best-effort cookie clear; proceed even if this fails.
+      // In production (API_BASE=""), /api/auth/session rewrites to Railway's
+      // DELETE /auth/session via next.config.ts rewrites (Plan 03).
+      // In local dev (API_BASE="http://localhost:8000"), skip the /api/ prefix.
+      const sessionPath =
+        API_BASE === "" ? "/api/auth/session" : "/auth/session";
+      void fetch(`${API_BASE}${sessionPath}`, {
+        method: "DELETE",
+        credentials: "include",
+      }).catch(() => {});
+      clearLegacyLocalStorage();
       window.location.href = "/onboarding/welcome";
     }
     throw new Error("unauthorized");
@@ -50,5 +74,3 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return undefined as T;
 }
-
-export const __AUTH_TOKEN_KEY = AUTH_TOKEN_KEY;
