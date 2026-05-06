@@ -31,6 +31,17 @@
   "realtime": {
     "reconnect_lost": "Connexion temporairement perdue. Les autres modifications apparaîtront dès la reconnexion."
   },
+  "settings": {
+    "title": "Paramètres",
+    "household_name_label": "Nom du foyer",
+    "invite_code_label": "Code d'invitation",
+    "invite_code_aria": "Code d'invitation du foyer",
+    "invite_code_copy_aria": "Copier le code d'invitation",
+    "invite_code_copied": "Code copié",
+    "invite_code_copy_failed": "Impossible de copier",
+    "invite_code_helper": "Partage ce code avec ton partenaire pour qu'il rejoigne le foyer.",
+    "member_label": "Toi"
+  },
   "onboarding": {
     "welcome": {
       "tagline": "Décide ce qu'on mange ensemble.",
