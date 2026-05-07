@@ -85,10 +85,6 @@
       "no_match_reset": "Réinitialiser les filtres",
       "all_rejected_heading": "Aucune recette ne fait l'unanimité ce soir",
       "all_rejected_body": "Régénère le shortlist avec un autre filtre, ou choisis « Tu décides »."
-    },
-    "finalize_stub": {
-      "heading": "Finalisation à venir",
-      "body": "Cette page arrivera dans la prochaine vague."
     }
   },
   "vote": {
@@ -321,6 +317,35 @@
     "voice_input": {
       "aria_label": "Dicter une note",
       "placeholder": "Dictez via le clavier 🎤 ou tapez votre note…"
+    },
+    "finalize": {
+      "page_title": "Finaliser la cuisson",
+      "submit": "Finaliser",
+      "submitting": "Enregistrement…",
+      "photos_heading": "Photos",
+      "photos_helper": "Optionnel — jusqu'à 4 photos de ton plat.",
+      "rating_heading": "Comment c'était ?",
+      "rating_helper": "Choisis une note pour pouvoir finaliser.",
+      "notes_heading": "Notes",
+      "notes_placeholder": "Comment elle a tourné ? À refaire ? À ajuster ?",
+      "toast_saved": "Bien enregistré.",
+      "save_failed": "Enregistrement impossible. Réessaie.",
+      "save_404": "Cette cuisson n'existe plus.",
+      "save_403": "Tu n'as pas accès à cette cuisson.",
+      "gone_heading": "Cette cuisson n'est plus disponible",
+      "gone_body": "Elle a peut-être déjà été finalisée, ou elle appartient à un autre foyer.",
+      "gone_cta": "Retour à l'accueil"
+    },
+    "rating": {
+      "loved": "Adoré",
+      "loved_helper": "On la refait sans hésiter",
+      "liked": "Bien",
+      "liked_helper": "C'était bon",
+      "disliked": "Passable",
+      "disliked_helper": "On évite la prochaine fois"
+    },
+    "notes": {
+      "helper_keyboard_mic": "Tu peux dicter avec le micro du clavier."
     }
   }
 }

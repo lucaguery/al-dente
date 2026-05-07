@@ -25,6 +25,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { getSignedPhotoUrl } from "@/lib/recipes";
+import {
+  uploadCookingLogPhoto,
+  getCookingLogSignedPhotoUrl,
+} from "@/lib/cooking";
 
 const MAX_PHOTOS = 4;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
@@ -33,13 +37,19 @@ type Props = {
   /** If recipeId is null, photos cannot be uploaded yet (mid-form before save).
    *  In that case the empty slot is disabled — the new-recipe full-form
    *  flow handles photo upload AFTER first save (the user can edit-add later)
-   *  and the quick-add flow uses a simpler picker on /recipes/new. */
+   *  and the quick-add flow uses a simpler picker on /recipes/new.
+   *
+   *  Phase 4 (04-02): when `cookingLogId` is set, the uploader targets the
+   *  cooking-log endpoints (/api/cooking-logs/{id}/photos and
+   *  /api/cooking-logs/{id}/photo-url) instead of the recipe endpoints.
+   *  Both modes share the same UI; only the network call differs. */
   recipeId: string | null;
+  cookingLogId?: string | null;
   paths: string[];
   onChange: (paths: string[]) => void;
 };
 
-export function PhotoUploader({ recipeId, paths, onChange }: Props) {
+export function PhotoUploader({ recipeId, cookingLogId, paths, onChange }: Props) {
   const t = useTranslations("photo_uploader");
   const fileCameraRef = useRef<HTMLInputElement | null>(null);
   const fileLibraryRef = useRef<HTMLInputElement | null>(null);
@@ -53,14 +63,18 @@ export function PhotoUploader({ recipeId, paths, onChange }: Props) {
   // gate by `urls[path]` so empty/missing entries naturally render the
   // zinc placeholder until the fetch resolves.
   useEffect(() => {
-    if (!recipeId || paths.length === 0) {
+    const haveTarget = Boolean(recipeId || cookingLogId);
+    if (!haveTarget || paths.length === 0) {
       return;
     }
     let cancelled = false;
     Promise.all(
-      paths.map(
-        async (p) => [p, await getSignedPhotoUrl(recipeId, p)] as const,
-      ),
+      paths.map(async (p) => {
+        const url = cookingLogId
+          ? await getCookingLogSignedPhotoUrl(cookingLogId, p)
+          : await getSignedPhotoUrl(recipeId as string, p);
+        return [p, url] as const;
+      }),
     )
       .then((entries) => {
         if (!cancelled) setUrls(Object.fromEntries(entries));
@@ -71,44 +85,58 @@ export function PhotoUploader({ recipeId, paths, onChange }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [recipeId, paths]);
+  }, [recipeId, cookingLogId, paths]);
 
   async function uploadFile(f: File) {
-    if (!recipeId) return;
+    const haveTarget = Boolean(recipeId || cookingLogId);
+    if (!haveTarget) return;
     if (paths.length >= MAX_PHOTOS) {
       toast.error(t("error_limit"));
       return;
     }
-    const fd = new FormData();
-    fd.append("file", f);
     setUploading(true);
     try {
-      const res = await fetch(
-        `${API_BASE}/api/recipes/${recipeId}/photos`,
-        {
-          method: "POST",
-          body: fd,
-          credentials: "include",
-        },
-      );
-      if (res.status === 413) {
-        toast.error(t("error_size"));
-        return;
+      if (cookingLogId) {
+        try {
+          const log = await uploadCookingLogPhoto(cookingLogId, f);
+          onChange(log.photo_paths);
+        } catch (e) {
+          const status = (e as Error & { status?: number }).status;
+          if (status === 413) toast.error(t("error_size"));
+          else if (status === 415) toast.error(t("error_type"));
+          else if (status === 409) toast.error(t("error_limit"));
+          else toast.error(t("error_network"));
+        }
+      } else {
+        const fd = new FormData();
+        fd.append("file", f);
+        const res = await fetch(
+          `${API_BASE}/api/recipes/${recipeId}/photos`,
+          {
+            method: "POST",
+            body: fd,
+            credentials: "include",
+          },
+        );
+        if (res.status === 413) {
+          toast.error(t("error_size"));
+          return;
+        }
+        if (res.status === 415) {
+          toast.error(t("error_type"));
+          return;
+        }
+        if (res.status === 409) {
+          toast.error(t("error_limit"));
+          return;
+        }
+        if (!res.ok) {
+          toast.error(t("error_network"));
+          return;
+        }
+        const recipe = (await res.json()) as { photo_paths: string[] };
+        onChange(recipe.photo_paths);
       }
-      if (res.status === 415) {
-        toast.error(t("error_type"));
-        return;
-      }
-      if (res.status === 409) {
-        toast.error(t("error_limit"));
-        return;
-      }
-      if (!res.ok) {
-        toast.error(t("error_network"));
-        return;
-      }
-      const recipe = (await res.json()) as { photo_paths: string[] };
-      onChange(recipe.photo_paths);
     } catch {
       toast.error(t("error_network"));
     } finally {
@@ -185,7 +213,7 @@ export function PhotoUploader({ recipeId, paths, onChange }: Props) {
               <SheetTrigger asChild>
                 <button
                   type="button"
-                  disabled={!recipeId || uploading}
+                  disabled={(!recipeId && !cookingLogId) || uploading}
                   aria-label={t("add_label")}
                   className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center disabled:opacity-50"
                 >
