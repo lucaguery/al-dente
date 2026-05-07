@@ -64,12 +64,12 @@
   --color-surface-rose-100: var(--surface-rose-100);
 
   /* Phase 3 — Decide layer.
-     `--color-validé-tint` is reserved exclusively for the "Validé" winning
+     `--color-valide-tint` is reserved exclusively for the "Validé" winning
      row in the "Tout vu" summary and the cooking-banner background. Hue
      axis h≈145 (emerald) deliberately distinct from the brand-rose accent
      so a "consensus reached" surface reads semantically without competing
      with the primary CTA. Per 03-UI-SPEC.md §"Phase 3 token additions". */
-  --color-validé-tint: var(--validé-tint);
+  --color-valide-tint: var(--valide-tint);
 
   /* Quick-260507-hd0 — single shadow scale.
      Tailwind v4 exposes `--shadow-*` keys as `shadow-*` utilities directly
@@ -129,7 +129,7 @@
   --surface-rose-100: oklch(0.965 0.025 16.5);
 
   /* Phase 3 — Validé tint (light). Faint emerald wash, ≈ emerald-100/20. */
-  --validé-tint: oklch(0.93 0.07 145);
+  --valide-tint: oklch(0.93 0.07 145);
 }
 
 .dark {
@@ -173,7 +173,7 @@
   --surface-rose-100: oklch(0.24 0.03 16.5);
 
   /* Phase 3 — Validé tint (dark). Deeper emerald, ≈ emerald-900/30. */
-  --validé-tint: oklch(0.30 0.06 145);
+  --valide-tint: oklch(0.30 0.06 145);
 }
 
 /* Honor iOS dark mode automatically. The shadcn primitives expect a `.dark`

@@ -59,7 +59,7 @@ function stateClass(state: VoteState): string {
 
 function rowBgClass(state: VoteState): string {
   return state === "valide"
-    ? "bg-validé-tint border-emerald-500/30"
+    ? "bg-valide-tint border-emerald-500/30"
     : "bg-card border-border";
 }
 
