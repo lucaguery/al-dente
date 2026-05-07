@@ -4,26 +4,32 @@
 // Dismissible per session via sessionStorage flag.
 // 03-UI-SPEC.md §Surface 2.
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "dismissed_cold_start_chip";
+const DISMISS_EVENT = "aldente:chip-dismissed";
+
+function subscribe(cb: () => void) {
+  window.addEventListener(DISMISS_EVENT, cb);
+  return () => window.removeEventListener(DISMISS_EVENT, cb);
+}
+
+function getSnapshot(): boolean {
+  try {
+    return window.sessionStorage.getItem(STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export function ColdStartChip() {
   const t = useTranslations("home.cold_start");
   const tCommon = useTranslations("common");
-  const [dismissed, setDismissed] = useState(true); // SSR-safe default
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      setDismissed(window.sessionStorage.getItem(STORAGE_KEY) === "1");
-    } catch {
-      setDismissed(false);
-    }
-  }, []);
+  const dismissed = useSyncExternalStore(subscribe, getSnapshot, () => false);
 
   function handleDismiss() {
     try {
@@ -31,7 +37,7 @@ export function ColdStartChip() {
     } catch {
       // sessionStorage can throw in private-mode Safari; degrade silently.
     }
-    setDismissed(true);
+    window.dispatchEvent(new Event(DISMISS_EVENT));
   }
 
   if (dismissed) return null;

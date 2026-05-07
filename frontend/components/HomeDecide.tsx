@@ -28,7 +28,6 @@ import {
   SHORTLIST_CREATED_DOM_EVENT,
   COOKING_STARTED_DOM_EVENT,
   type Phase3VoteEvent,
-  type Phase3CookingStartedEvent,
 } from "@/components/RealtimeProvider";
 import {
   computeVoteState,
