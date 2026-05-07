@@ -4,7 +4,8 @@
     "saved": "Enregistré",
     "cancel": "Annuler",
     "back": "Retour",
-    "sending": "Envoi…"
+    "sending": "Envoi…",
+    "close": "Fermer"
   },
   "nav": {
     "home": "Accueil",
@@ -17,7 +18,86 @@
     "tagline": "Décide ce qu'on mange ensemble.",
     "hero_question": "On mange quoi ce soir ?",
     "cta_browse": "Voir mes recettes",
-    "cta_add": "Ajouter une recette"
+    "cta_add": "Ajouter une recette",
+    "shortlist": {
+      "empty_heading": "Pas encore de shortlist",
+      "empty_body": "Ton shortlist du jour n'est pas encore prêt. Reviens plus tard ou ajoute des recettes.",
+      "empty_cta": "Ajouter une recette",
+      "vote_yes_aria": "J'aime cette recette",
+      "vote_no_aria": "Pas envie ce soir",
+      "partner_unvoted_aria": "{name} : pas encore voté",
+      "partner_yes_aria": "{name} : oui",
+      "partner_no_aria": "{name} : non",
+      "vote_failed": "Vote impossible. Réessaie.",
+      "vote_offline": "Hors ligne. Ton vote sera envoyé à la reconnexion.",
+      "toast_validé": "Validé : « {title} »",
+      "toast_arrived": "Ton shortlist du jour est prêt."
+    },
+    "summary": {
+      "heading": "Vous avez tout vu",
+      "intro_validated": "Tu commences ?",
+      "intro_pressenti": "Ta partenaire n'a pas encore voté. Tu peux déléguer.",
+      "intro_none": "Aucune recette ne fait l'unanimité ce soir.",
+      "cook_cta": "Je commence à cuisiner",
+      "delegate_cta": "Tu décides",
+      "delegate_helper": "Je vote oui pour les 5",
+      "regenerate_cta": "Régénérer le shortlist",
+      "delegate_failed": "Délégation impossible. Réessaie.",
+      "regenerate_failed": "Impossible de régénérer. Réessaie.",
+      "cook_failed": "Impossible de démarrer la cuisson. Réessaie.",
+      "toast_delegated": "Tu décides ! On regarde ce que ta partenaire en pense.",
+      "toast_cooking_started": "C'est parti ! Bon appétit."
+    },
+    "cooking_banner": {
+      "title": "En train de cuisiner",
+      "finalize": "Finaliser",
+      "skip": "Passer"
+    },
+    "push": {
+      "heading": "Active les notifications",
+      "body": "Pour savoir quand ton shortlist du jour est prêt.",
+      "activate": "Activer",
+      "later": "Pas maintenant",
+      "permission_denied": "Notifications bloquées. Active-les dans les réglages Safari pour recevoir les shortlists.",
+      "subscribe_failed": "Notifications partiellement activées. Réessaie depuis Réglages.",
+      "toast_activated": "Notifications activées."
+    },
+    "cold_start": {
+      "body": "Ajoute plus de recettes pour de meilleures suggestions."
+    },
+    "filters": {
+      "title": "Régénérer le shortlist",
+      "intro": "Ajuste les critères et on te propose 5 recettes.",
+      "cuisine_label": "Cuisine",
+      "cuisine_any": "Toutes",
+      "max_prep_time_label": "Temps maximum (min)",
+      "max_prep_time_placeholder": "30",
+      "exclude_protein_label": "Exclure une protéine",
+      "exclude_protein_none": "Aucune",
+      "required_moods_label": "Humeurs requises",
+      "apply": "Appliquer les filtres",
+      "reset": "Réinitialiser"
+    },
+    "empty": {
+      "no_match_heading": "Aucune recette ne correspond",
+      "no_match_body": "Tes filtres sont peut-être trop restrictifs. Essaie sans cuisine ou augmente le temps de préparation.",
+      "no_match_reset": "Réinitialiser les filtres",
+      "all_rejected_heading": "Aucune recette ne fait l'unanimité ce soir",
+      "all_rejected_body": "Régénère le shortlist avec un autre filtre, ou choisis « Tu décides »."
+    },
+    "finalize_stub": {
+      "heading": "Finalisation à venir",
+      "body": "Cette page arrivera dans la prochaine vague."
+    }
+  },
+  "vote": {
+    "state": {
+      "valide": "Validé",
+      "pressenti": "Pressenti",
+      "conteste": "Contesté",
+      "rejete": "Rejeté",
+      "sans_avis": "Sans avis"
+    }
   },
   "install": {
     "title": "Installe Al Dente sur ton écran d'accueil",
