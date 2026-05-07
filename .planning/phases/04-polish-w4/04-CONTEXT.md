@@ -8,7 +8,7 @@
 
 Phase 4 delivers the **cooking-log finalization layer and v0.1 polish**:
 
-1. **Cooking-log finalization (COOK-03/04/05):** `PUT /cooking-logs/{id}` accepts photos (≤ 4), a required 3-value rating (`loved`/`liked`/`disliked`), and free-text notes (editable via Web Speech). COOK-05: `recipes.last_cooked_at`, `recipes.cook_count`, and a new `recipes.last_cooked_photo_path` are all updated in the **same DB transaction** as the cooking-log finalization. Photo upload mirrors the existing recipe photo pattern via a new `POST /cooking-logs/{id}/photos` endpoint backed by `services/storage.py`.
+1. **Cooking-log finalization (COOK-03/04/05):** `PUT /cooking-logs/{id}` accepts photos (≤ 4), a required 3-value rating (`loved`/`liked`/`disliked`), and free-text notes (dictated via the OS keyboard mic — see D-03 below for the Web Speech caveat). COOK-05: `recipes.last_cooked_at`, `recipes.cook_count`, and a new `recipes.last_cooked_photo_path` are all updated in the **same DB transaction** as the cooking-log finalization. Photo upload mirrors the existing recipe photo pattern via a new `POST /cooking-logs/{id}/photos` endpoint backed by `services/storage.py`.
 
 2. **Recipe card living image:** After a cooking log is finalized with at least one photo, the recipe card in the list and detail view shows the most recent cooking-log photo as its primary image. This is the key Phase 4 UX improvement — recipes become a living record of cooked meals, not just a static form.
 
@@ -27,7 +27,7 @@ Phase 4 delivers the **cooking-log finalization layer and v0.1 polish**:
 
 ### Finalization screen UX
 
-- **D-03:** The finalization screen at `frontend/app/cooking-logs/[id]/finalize/page.tsx` is a **single-scroll page**: photos at top (using `PhotoUploader` adapted for cooking-log context) → 3-value rating picker → notes field with mic button (Web Speech, same as voice capture). Rating is **required** — the "Finaliser" button is disabled until a rating is selected.
+- **D-03:** The finalization screen at `frontend/app/cooking-logs/[id]/finalize/page.tsx` is a **single-scroll page**: photos at top (using `PhotoUploader` adapted for cooking-log context) → 3-value rating picker → **notes field textarea-only with iOS keyboard mic affordance — in-app Web Speech disabled (broken on iOS PWA standalone, per Phase 2 precedent in `frontend/components/VoiceCaptureTab.tsx`)**. The textarea includes helper copy directing users to the OS keyboard mic (`Tu peux dicter avec le micro du clavier.`). This matches the working-on-iOS pattern Phase 2 already shipped — no JS Web Speech API hook, no in-app mic button. Rating is **required** — the "Finaliser" button is disabled until a rating is selected.
 
 - **D-04:** After tapping "Finaliser" (successful `PUT /cooking-logs/{id}`), the app **navigates back to Home** (`router.push("/")`). The "En train de cuisiner" banner disappears on next Home load (active log is now finalized/rating set).
 
@@ -82,6 +82,7 @@ The following are implementation-level choices the planner/executor should decid
 - `.planning/phases/01-foundations-w1/01-CONTEXT.md` — D-02 (photo upload pipeline through backend → Supabase Storage), established `PhotoUploader.tsx` pattern
 - `.planning/phases/01.1-cookie-auth-and-recovery/01.1-CONTEXT.md` — D-01 (Next.js rewrite proxy), D-03 (dual-mode cookie+Bearer). All new endpoints via `/api/...` path.
 - `.planning/phases/03-decide-w3/deferred-items.md` — Phase 3 deferred lint errors: ShortlistCard setState-in-effect, HomeDecide warnings
+- `.planning/phases/02-llm-capture-w2/02-CONTEXT.md` D-Voice — Web Speech broken on iOS PWA standalone (no `result` event); textarea-only is the shipping pattern
 
 ### Existing models and endpoints
 
@@ -93,6 +94,7 @@ The following are implementation-level choices the planner/executor should decid
 ### Existing frontend components
 
 - `frontend/components/PhotoUploader.tsx` — reusable photo upload widget; adapt for cooking-log context (new `POST /cooking-logs/{id}/photos` endpoint)
+- `frontend/components/VoiceCaptureTab.tsx` — Phase 2 precedent: textarea-only with OS-keyboard-mic helper copy. Reference pattern for D-03.
 - `frontend/components/BottomNav.tsx` — 4-tab nav; **no change** to tabs (Home / Recipes / Inbox / Settings stays as-is)
 - `frontend/app/cooking-logs/[id]/finalize/page.tsx` — stub (EmptyState); replace with full finalization UI
 
@@ -122,6 +124,7 @@ The following are implementation-level choices the planner/executor should decid
 - **Sonner toasts:** `toast.success()` on finalization, `toast.error()` on upload failure — established in Phase 2.
 - **`useSyncExternalStore` for external subscriptions:** `PushPermissionBanner.tsx` is the reference implementation for the ShortlistCard lint fix.
 - **`api<T>("/api/...")` with `credentials: "include"`:** All new API calls use this pattern from `lib/api.ts`.
+- **Textarea + OS-keyboard-mic for voice notes:** Phase 2 `VoiceCaptureTab.tsx` is the reference implementation (D-03 caveat).
 
 ### Integration Points
 
@@ -135,7 +138,7 @@ The following are implementation-level choices the planner/executor should decid
 
 - **Recipe card as living record:** The most important Phase 4 UX improvement is that recipe cards show the last cooking-log photo. This is the "oh wow" moment — you scroll your recipe list and see your own food photos. The planner should make this a first-plan deliverable, not a late addition.
 - **Rating picker UX:** Three large tappable cards (❤️ Adoré / 👍 Bien / 😐 Passable) rather than a dropdown or radio buttons — full-width tap targets, mobile-friendly, visually clear. Selected state gets a colored border/tint.
-- **Voice notes on finalize:** Same mic button pattern as voice capture (Phase 2) — tap to start, tap to stop, transcript flows into the notes textarea. No separate "recording" page, just in-place capture.
+- **Voice notes on finalize (revised D-03):** Textarea-only with helper copy `Tu peux dicter avec le micro du clavier.` directing users to the iOS keyboard mic. The Phase 2 D-Voice lesson is canon: in-app Web Speech does not fire `result` events on iOS PWA standalone, so the working delivery is the OS-level keyboard mic in any text field. UI-SPEC may show an in-app mic button — that is the original intent; the platform reality forces textarea-only.
 
 </specifics>
 
@@ -146,6 +149,7 @@ The following are implementation-level choices the planner/executor should decid
 - **`cooking.finalized` WebSocket broadcast** — so the partner's "En train de cuisiner" banner disappears in real-time. Not in requirements but trivial to add; planner can include it.
 - **Per-recipe cooking history timeline** — "you've cooked this 4 times, loved it 3 times." Productize-later.
 - **Wildcard shortlist slot** — SPEC.md productize-later; not in v0.1.
+- **In-app Web Speech for cooking-log notes** — productize-later if iOS PWA standalone ever ships a working SpeechRecognition implementation, or if we wrap the app in Capacitor (V2-DIST-01).
 
 </deferred>
 
@@ -153,3 +157,4 @@ The following are implementation-level choices the planner/executor should decid
 
 *Phase: 04-polish-w4*
 *Context gathered: 2026-05-07*
+*D-03 revised 2026-05-07 to reflect Phase 2 D-Voice iOS PWA standalone breakage; in-app Web Speech disabled, OS keyboard mic used instead.*
