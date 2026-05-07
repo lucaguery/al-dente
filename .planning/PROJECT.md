@@ -98,4 +98,6 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-05 after initialization*
+*Last updated: 2026-05-07 after Phase 3 (Decide W3) completion*
+
+**Phase 3 complete (2026-05-07):** Scoring algorithm (`services/algorithm.py`), APScheduler daily shortlist at 16:00 household-tz, voting state machine computed from `votes` table (5 states), framer-motion swipe deck, "Tu décides" delegation, "Je commence à cuisiner" → CookingLog, Web Push to both phones. Human UAT (physical device push + swipe physics) pending at `phases/03-decide-w3/03-HUMAN-UAT.md`.
