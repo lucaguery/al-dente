@@ -102,6 +102,11 @@ class Recipe(Base):
     # (architecture invariant #3 from CLAUDE.md).
     last_cooked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cook_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    # Phase 4 (D-05): path of the most recent cooking-log photo for this
+    # recipe. Set by PUT /cooking-logs/{id} in the same transaction as
+    # last_cooked_at + cook_count. NULL = never cooked OR most recent log
+    # had no photos.
+    last_cooked_photo_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Phase 2 (CONTEXT.md D-09): non-null on every row, but null `promotion_error`
     # means "no failure (or never attempted)". promotion_attempts increments on every
     # try, including the first.
