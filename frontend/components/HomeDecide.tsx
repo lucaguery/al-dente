@@ -27,6 +27,7 @@ import {
   VOTE_CREATED_DOM_EVENT,
   SHORTLIST_CREATED_DOM_EVENT,
   COOKING_STARTED_DOM_EVENT,
+  COOKING_FINALIZED_DOM_EVENT,
   type Phase3VoteEvent,
 } from "@/components/RealtimeProvider";
 import {
@@ -236,6 +237,16 @@ export function HomeDecide() {
     window.addEventListener(COOKING_STARTED_DOM_EVENT, onCookingStarted);
     return () =>
       window.removeEventListener(COOKING_STARTED_DOM_EVENT, onCookingStarted);
+  }, []);
+
+  // ── Realtime: cooking.finalized — partner finalized the session ─────────
+  useEffect(() => {
+    function onCookingFinalized() {
+      setActiveLog(null);
+    }
+    window.addEventListener(COOKING_FINALIZED_DOM_EVENT, onCookingFinalized);
+    return () =>
+      window.removeEventListener(COOKING_FINALIZED_DOM_EVENT, onCookingFinalized);
   }, []);
 
   // ── Optimistic vote application from the deck ───────────────────────────

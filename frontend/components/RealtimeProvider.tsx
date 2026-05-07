@@ -223,6 +223,18 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     return off;
   }, [client]);
 
+  // Phase 4 — cooking.finalized (partner finalized the cooking session).
+  useEffect(() => {
+    if (!client) return;
+    const off = client.onEvent<Phase4CookingFinalizedEvent>("cooking.finalized", (payload) => {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(COOKING_FINALIZED_DOM_EVENT, { detail: payload }),
+      );
+    });
+    return off;
+  }, [client]);
+
   return (
     <RealtimeContext.Provider value={client}>
       {children}
@@ -267,3 +279,11 @@ export type Phase3CookingStartedEvent = {
 export const VOTE_CREATED_DOM_EVENT = "aldente:vote.created";
 export const SHORTLIST_CREATED_DOM_EVENT = "aldente:shortlist.created";
 export const COOKING_STARTED_DOM_EVENT = "aldente:cooking.started";
+
+export type Phase4CookingFinalizedEvent = {
+  log_id: string;
+  recipe_id: string;
+  rating: "loved" | "liked" | "disliked" | null;
+};
+
+export const COOKING_FINALIZED_DOM_EVENT = "aldente:cooking.finalized";
