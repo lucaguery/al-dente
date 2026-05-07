@@ -32,14 +32,22 @@ function dedupeReplace(prev: Recipe[], next: Recipe): Recipe[] {
   return copy;
 }
 
+// Module-level cache — survives client-side navigations because Next.js App
+// Router keeps JS modules alive in memory. Stale-while-revalidate: seed
+// initial state from this cache so the second visit paints instantly, then
+// the existing fetch silently overwrites with fresh data.
+// IMPORTANT: only the unfiltered full list is cached (query === ""); search
+// results never touch this variable.
+let recipesCache: Recipe[] | null = null;
+
 export default function RecipesPage() {
   const t = useTranslations("recipes");
   const tErr = useTranslations("onboarding.errors");
   const router = useRouter();
   const realtime = useRealtime();
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>(recipesCache ?? []);
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(recipesCache === null);
 
   const handleSearch = useCallback(
     async (q: string) => {
@@ -49,6 +57,9 @@ export default function RecipesPage() {
         : `/api/recipes`;
       try {
         const rows = await api<Recipe[]>(path);
+        if (q.trim() === "") {
+          recipesCache = rows;
+        }
         setRecipes(rows);
       } catch {
         toast.error(tErr("network"));
@@ -69,12 +80,18 @@ export default function RecipesPage() {
   useEffect(() => {
     if (!realtime) return;
     const offCreated = realtime.onEvent<Recipe>("recipe.created", (payload) => {
-      setRecipes((prev) => dedupeReplace(prev, payload));
+      setRecipes((prev) => {
+        const next = dedupeReplace(prev, payload);
+        recipesCache = next;
+        return next;
+      });
     });
     const offUpdated = realtime.onEvent<Recipe>("recipe.updated", (payload) => {
-      setRecipes((prev) =>
-        prev.map((p) => (p.id === payload.id ? payload : p)),
-      );
+      setRecipes((prev) => {
+        const next = prev.map((p) => (p.id === payload.id ? payload : p));
+        recipesCache = next;
+        return next;
+      });
     });
     return () => {
       offCreated();
