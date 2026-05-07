@@ -15,7 +15,7 @@ The four phases mirror SPEC.md's W1–W4 build plan. Phase boundaries are dogfoo
 - [ ] **Phase 1: Foundations (W1)** — Deploy-and-ping skeleton, household onboarding, manual recipe library, realtime sync, PWA install
 - [ ] **Phase 2: LLM Capture (W2)** — Voice / photo / paste-URL surfaces with background draft → structured promotion via Gemini
 - [ ] **Phase 3: Decide (W3)** — Daily shortlist algorithm, asymmetric voting state machine, "Je commence à cuisiner" flow, daily push
-- [ ] **Phase 4: Polish (W4)** — Cooking-log finalization, shared Album, offline tuning, accessibility, productize-later TODO sweep
+- [ ] **Phase 4: Polish (W4)** — Cooking-log finalization, recipe-card living image (last cooking-log photo), Phase-3 lint cleanup, mobile a11y pass. Album cut to v2.
 
 ## Phase Details
 
@@ -81,20 +81,20 @@ Plans:
 **UI hint**: yes
 
 ### Phase 4: Polish (W4)
-**Goal**: Cooking-log finalization (photo upload ≤ 4, 3-value rating `loved`/`liked`/`disliked`, voice-dictated notes), denormalized `last_cooked_at` + `cook_count` updates in the same transaction as the log insert, shared Album masonry grid of cooking-log photos, per-recipe history, offline-mode tuning (service worker cache strategies), accessibility pass, error toasts, and a documented productize-later TODO list. Final dogfood gate: ≥ 2 weeks daily use by both members at end of W4 — the v0.1 definition of done.
-**Depends on**: Phase 3 (CookingLog finalization extends Phase 3's COOK-01 / COOK-02 minimal flow; Album draws from finalized logs with photos)
-**Requirements**: COOK-03, COOK-04, COOK-05, ALBUM-01, ALBUM-02, ALBUM-03
+**Goal**: Cooking-log finalization (photo upload ≤ 4, 3-value rating `loved`/`liked`/`disliked`, notes dictated via the OS keyboard mic — in-app Web Speech disabled per Phase 2 D-Voice iOS PWA standalone breakage), denormalized `last_cooked_at` + `cook_count` + `last_cooked_photo_path` updates in the same transaction as the log finalization (architecture invariant #3, COOK-05), the recipe-card living image (D-05 — recipe cards display the most recent cooking-log photo as their primary thumbnail), Phase-3 deferred lint cleanup (D-09), and a mobile-first accessibility pass (D-08: contrast, 48px tap targets, focus rings). Album / shared masonry grid (ALBUM-01/02/03) is CUT from v0.1 per 04-CONTEXT.md (commit c7ee1f0) — deferred to productize-later. Final dogfood gate: ≥ 2 weeks daily use by both members at end of W4 — the v0.1 definition of done.
+**Depends on**: Phase 3 (CookingLog finalization extends Phase 3's COOK-01 / COOK-02 minimal flow)
+**Requirements**: COOK-03, COOK-04, COOK-05
 **Success Criteria** (what must be TRUE):
-  1. After cooking, the user finalizes the log with up to 4 photos, dictates notes via Web Speech directly into the notes field, and picks a `loved`/`liked`/`disliked` rating; the entry appears in the shared Album within seconds on both phones
-  2. The shared Album renders a masonry grid of cooking-log photos ordered by date desc; each item shows the cook's color, recipe title, rating, and primary photo, and tapping in opens the full log (all photos, notes, rating) plus the source recipe
-  3. On log creation, `recipes.last_cooked_at` and `recipes.cook_count` are updated in the same DB transaction as the `cooking_logs` insert; the recipe detail page reflects the new values immediately
-  4. The user opens the app in airplane mode and the cached recipe library and shell render with no network; reconnect resumes WebSocket sync without manual reload
+  1. After cooking, the user finalizes the log with up to 4 photos, dictates notes via the iOS keyboard mic into the notes textarea, and picks a `loved`/`liked`/`disliked` rating; the entry persists and the home banner clears
+  2. Recipe cards in the recipe library show the most recent cooking-log photo as their primary thumbnail (D-05 living image), falling back to the static recipe photo if no cooking has occurred
+  3. On log finalization, `recipes.last_cooked_at`, `recipes.cook_count`, and `recipes.last_cooked_photo_path` are updated in the same DB transaction as the cooking-log update; the recipe detail page reflects the new values immediately
+  4. The user opens the app in airplane mode and the cached app shell renders with no network; reconnect resumes WebSocket sync without manual reload
   5. Behavioral validation: both household members have used the app daily for ≥ 2 weeks at end of W4 (the v0.1 definition of done)
 **Plans**: 4 plans
-- [ ] 04-01-PLAN.md — Backend cooking-log finalization (PUT /cooking-logs/{id} + photo upload + same-tx denormalized recipe update)
-- [ ] 04-02-PLAN.md — Frontend cooking-log finalization page (RatingPicker + CookingLogFinalize) and recipe-card living image (D-05)
-- [ ] 04-03-PLAN.md — Phase-3 lint cleanup + Album scope reconciliation (ROADMAP / REQUIREMENTS reflect album cut to v2)
-- [ ] 04-04-PLAN.md — UAT gate: a11y polish verification + airplane-mode app-shell test (checkpoint)
+- [ ] 04-01-PLAN.md — Backend cooking-log finalization (PUT /cooking-logs/{id} + POST photos endpoint + same-tx denormalized recipe update)
+- [ ] 04-02-PLAN.md — Frontend cooking-log finalization page (RatingPicker + CookingLogFinalize) and recipe-card living image
+- [ ] 04-03-PLAN.md — Phase-3 lint cleanup + Album scope reconciliation + COOK-04/CAPTURE-07 voice-notes wording reconciliation (this plan)
+- [ ] 04-04-PLAN.md — UAT gate: a11y polish verification + airplane-mode shell test (checkpoint)
 **UI hint**: yes
 
 ## Progress
@@ -111,17 +111,18 @@ Phases execute in numeric order: 1 → 2 → 3 → 4. Decimal phases (e.g. 2.1) 
 
 ## Coverage Summary
 
-**v1 REQ-IDs enumerated in REQUIREMENTS.md:** 52 (INFRA: 6, ONBOARD: 6, RECIPE: 8, CAPTURE: 7, SHORTLIST: 5, VOTE: 5, COOK: 5, ALBUM: 3, REALTIME: 3, PWA: 4)
-**Mapped to phases:** 52
+**v1 REQ-IDs enumerated in REQUIREMENTS.md:** 49 (INFRA: 6, ONBOARD: 6, RECIPE: 8, CAPTURE: 7, SHORTLIST: 5, VOTE: 5, COOK: 5, REALTIME: 3, PWA: 4). ALBUM × 3 cut to v2 per 04-CONTEXT.md (commit c7ee1f0).
+**Mapped to phases:** 49
 **Unmapped:** 0 ✓
+**Cut from v1 (deferred to productize-later):** 3 (ALBUM-01, ALBUM-02, ALBUM-03 → V2-ALBUM-01/02/03 in REQUIREMENTS.md)
 
 **Per-phase mapping:**
 - Phase 1 — Foundations: 26 REQ-IDs (INFRA × 6, ONBOARD × 6, RECIPE × 8, REALTIME × 3, PWA-01/02/04)
 - Phase 2 — LLM Capture: 7 REQ-IDs (CAPTURE × 7)
 - Phase 3 — Decide: 13 REQ-IDs (SHORTLIST × 5, VOTE × 5, COOK-01, COOK-02, PWA-03)
-- Phase 4 — Polish: 6 REQ-IDs (COOK-03/04/05, ALBUM × 3)
+- Phase 4 — Polish: 3 REQ-IDs (COOK-03/04/05). ALBUM × 3 cut to v2 per 04-CONTEXT.md (commit c7ee1f0).
 
-**Note on REQ-ID count discrepancy:** REQUIREMENTS.md's coverage block states "46 total" and the orchestrator prompt referenced 46 atomic REQ-IDs, but enumeration of every checkbox in REQUIREMENTS.md yields 52. The roadmap maps every enumerated REQ-ID. The "46" figure in REQUIREMENTS.md appears to be a stale tally and should be updated to 52 when REQUIREMENTS.md's traceability section is refreshed (handled by this roadmapper run).
+**Note on REQ-ID count history:** REQUIREMENTS.md's coverage block originally stated "46 total" (stale — under-counted). 2026-05-05 enumeration corrected it to 52. 2026-05-07 album cut (this plan, 04-03) reduces v1 scope to 49: 52 historical − 3 ALBUM cuts. The 3 cut REQ-IDs migrate to the v2 section as V2-ALBUM-01/02/03 (rename only — same acceptance text), so the audit trail is preserved.
 
 **Dependency notes:**
 - REALTIME-01..03 sit in Phase 1 (not Phase 3) because the W1 ping-test gate requires household-scoped WebSocket subscribe + broadcast + reconnect-with-backoff working end-to-end before any feature ships. CAPTURE-04 (the `recipe.promoted` event added in W2) extends this existing contract.

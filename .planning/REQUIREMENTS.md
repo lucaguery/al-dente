@@ -5,6 +5,8 @@
 
 > **Source:** Extracted from `SPEC.md` (output of `/grill-me` 2026-05-05). SPEC.md remains the canonical reference for the data model, capture pipeline, scoring algorithm, voting state machine, and onboarding flow. This file is the atomic, testable view used to drive the roadmap.
 
+> **Revision 2026-05-07:** COOK-04 and CAPTURE-07 acceptance text revised to reflect the v0.1 delivery (OS keyboard mic, not in-app Web Speech) per `frontend/components/VoiceCaptureTab.tsx` Phase 2 precedent and `04-CONTEXT.md` D-03. The original SPEC.md option-C intent (Web Speech direct into `notes`) is preserved as productize-later. ALBUM-01/02/03 cut from v1 per `04-CONTEXT.md` (commit c7ee1f0) — moved to v2 as V2-ALBUM-01/02/03; same acceptance text, same audit trail.
+
 ## v1 Requirements
 
 Requirements for v0.1. Each maps to exactly one phase in `ROADMAP.md`.
@@ -48,7 +50,7 @@ Requirements for v0.1. Each maps to exactly one phase in `ROADMAP.md`.
 - [ ] **CAPTURE-04**: When a draft is promoted to `structured`, all connected clients in the household receive a `recipe.promoted` WebSocket event
 - [ ] **CAPTURE-05**: User can voice-modify an existing recipe — `POST /recipes/{id}/voice-modify` returns Gemini-modified fields; the edit form opens pre-filled for review (option A from SPEC.md)
 - [ ] **CAPTURE-06**: Raw inputs (transcript / URL / photo paths) are persisted in `source_capture` JSONB on every recipe row, never discarded
-- [ ] **CAPTURE-07**: Voice notes on the cooking-log finalization screen use the Web Speech API directly into the `notes` text field, with no backend special-casing (option C from SPEC.md)
+- [ ] **CAPTURE-07**: Voice notes on the cooking-log finalization screen flow into the `notes` textarea via the OS keyboard mic affordance (option C from SPEC.md, with the v0.1 caveat: in-app Web Speech is disabled because iOS PWA standalone never fires `SpeechRecognition.onresult` — see Phase 2 D-Voice and `frontend/components/VoiceCaptureTab.tsx`). No backend special-casing; the helper copy `Tu peux dicter avec le micro du clavier.` directs users to the iOS keyboard mic. Productize-later: re-enable in-app Web Speech if iOS adds support OR if we wrap in Capacitor (V2-DIST-01).
 
 ### Daily Shortlist (SHORTLIST)
 
@@ -71,14 +73,8 @@ Requirements for v0.1. Each maps to exactly one phase in `ROADMAP.md`.
 - [ ] **COOK-01**: User can tap "Je commence à cuisiner" on a Validé/Pressenti recipe — `POST /recipes/{id}/cook` creates an immutable `CookingLog` with `cooked_at = now()`
 - [ ] **COOK-02**: An "En train de cuisiner" banner shows on home until the log is finalized or skipped
 - [ ] **COOK-03**: User can finalize the log later with photos (≤ 4), a 3-value rating (`loved`/`liked`/`disliked`), and free-text notes — `PUT /cooking-logs/{id}`
-- [ ] **COOK-04**: User can dictate notes via Web Speech API directly into the notes field on the finalization screen (no backend special-case)
+- [ ] **COOK-04**: User can dictate notes via the OS keyboard dictation affordance (iOS keyboard mic) directly into the notes textarea on the finalization screen — in-app Web Speech is NOT used in v0.1 (broken on iOS PWA standalone, see Phase 2 D-Voice and `frontend/components/VoiceCaptureTab.tsx`). The notes textarea displays helper copy `Tu peux dicter avec le micro du clavier.` directing users to the OS-level mic. No backend special-case; notes are plain text.
 - [ ] **COOK-05**: On log creation, `recipes.last_cooked_at` and `recipes.cook_count` update in the same DB transaction as the `cooking_logs` insert
-
-### Album (ALBUM)
-
-- [ ] **ALBUM-01**: User can view a shared masonry photo grid of all `cooking_logs` with photos, ordered by date desc (`GET /album?limit=50`)
-- [ ] **ALBUM-02**: Each album item shows the cook's color, recipe title, rating, and primary photo
-- [ ] **ALBUM-03**: User can tap into an album item to view the full cooking log (all photos, notes, rating) and the source recipe
 
 ### Realtime (REALTIME)
 
@@ -120,6 +116,14 @@ Deferred to a future milestone. Tracked here so they don't leak into v1 scope. S
 
 - **V2-DIST-01**: Native iOS wrapper via Capacitor (or native rewrite) if PWA polish becomes a complaint
 - **V2-DIST-02**: Push provider beyond Web Push (richer notifications)
+
+### Album (V2-ALBUM)
+
+Cut from v1 per `.planning/phases/04-polish-w4/04-CONTEXT.md` (commit c7ee1f0). Rationale: not useful enough at couple-scale to justify the build cost. Productize-later if dogfood reveals demand.
+
+- **V2-ALBUM-01**: Shared masonry photo grid of `cooking_logs` with photos, ordered by date desc (`GET /album?limit=50`)
+- **V2-ALBUM-02**: Each album item shows cook color, recipe title, rating, and primary photo
+- **V2-ALBUM-03**: Tapping into an album item shows the full cooking log (all photos, notes, rating) and source recipe
 
 ## Out of Scope
 
@@ -185,9 +189,9 @@ Filled by `gsd-roadmapper`. Each v1 REQ-ID maps to exactly one phase.
 | COOK-03 | Phase 4 — Polish (W4) | Pending |
 | COOK-04 | Phase 4 — Polish (W4) | Pending |
 | COOK-05 | Phase 4 — Polish (W4) | Pending |
-| ALBUM-01 | Phase 4 — Polish (W4) | Pending |
-| ALBUM-02 | Phase 4 — Polish (W4) | Pending |
-| ALBUM-03 | Phase 4 — Polish (W4) | Pending |
+| ALBUM-01 | Deferred to v2 (V2-ALBUM-01) | Cut |
+| ALBUM-02 | Deferred to v2 (V2-ALBUM-02) | Cut |
+| ALBUM-03 | Deferred to v2 (V2-ALBUM-03) | Cut |
 | REALTIME-01 | Phase 1 — Foundations (W1) | Pending |
 | REALTIME-02 | Phase 1 — Foundations (W1) | Pending |
 | REALTIME-03 | Phase 1 — Foundations (W1) | Pending |
@@ -197,16 +201,17 @@ Filled by `gsd-roadmapper`. Each v1 REQ-ID maps to exactly one phase.
 | PWA-04 | Phase 1 — Foundations (W1) | Pending |
 
 **Coverage:**
-- v1 requirements: 52 total (enumeration of REQ-ID checkboxes above; supersedes the earlier "46" tally which under-counted)
-- Mapped to phases: 52
+- v1 requirements: 49 total (3 cut to v2 — see Album section)
+- Mapped to phases: 49
 - Unmapped: 0 ✓
+- Cut to v2: 3 (ALBUM-01/02/03)
 
 **Per-phase breakdown:**
 - Phase 1 — Foundations (W1): 26 (INFRA × 6, ONBOARD × 6, RECIPE × 8, REALTIME × 3, PWA-01/02/04)
 - Phase 2 — LLM Capture (W2): 7 (CAPTURE × 7)
 - Phase 3 — Decide (W3): 13 (SHORTLIST × 5, VOTE × 5, COOK-01, COOK-02, PWA-03)
-- Phase 4 — Polish (W4): 6 (COOK-03/04/05, ALBUM × 3)
+- Phase 4 — Polish (W4): 3 (COOK-03/04/05). ALBUM × 3 deferred to v2.
 
 ---
 *Requirements defined: 2026-05-05*
-*Last updated: 2026-05-05 — traceability filled by `gsd-roadmapper`; tally corrected from 46 → 52*
+*Last updated: 2026-05-07 — ALBUM-01/02/03 cut to v2 (per 04-CONTEXT.md commit c7ee1f0); COOK-04 + CAPTURE-07 acceptance text revised to reflect OS-keyboard-mic delivery (Phase 2 D-Voice precedent). Historical: 2026-05-05 traceability filled by `gsd-roadmapper`, tally corrected from 46 → 52.*
