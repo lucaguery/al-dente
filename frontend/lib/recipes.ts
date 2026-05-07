@@ -37,6 +37,10 @@ export type Recipe = {
   cook_count: number;
   created_at: string;
   updated_at: string;
+  // Phase 2 additions (CONTEXT.md D-09): null `promotion_error` means
+  // no failure / never attempted; promotion_attempts increments on every try.
+  promotion_error?: string | null;
+  promotion_attempts?: number;
 };
 
 export type Member = {
