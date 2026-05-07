@@ -220,7 +220,7 @@ async def finalize_cooking_log(
         {
             "log_id": str(log_row.id),
             "recipe_id": str(log_row.recipe_id),
-            "rating": log_row.rating.value if log_row.rating else None,
+            "rating": log_row.rating if log_row.rating else None,
         },
     )
 

@@ -70,7 +70,10 @@ blocked: 2
   reason: "User reported: no it does not work, it says it's impossible"
   severity: major
   test: 6
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "After db.refresh(log_row), SQLAlchemy returns log_row.rating as a plain str ('loved') not a LogRating enum — because the column is mapped_column(String), not Enum(LogRating). Line 222 of cooking_logs.py calls log_row.rating.value which raises AttributeError on str → 500."
+  artifacts:
+    - path: "backend/app/routers/cooking_logs.py"
+      issue: "log_row.rating.value at line 222 — str has no .value attribute after db.refresh()"
+  missing:
+    - "Remove .value from line 222: change `log_row.rating.value if log_row.rating else None` to `log_row.rating if log_row.rating else None`"
   debug_session: ""
