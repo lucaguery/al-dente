@@ -90,7 +90,11 @@ Plans:
   3. On log creation, `recipes.last_cooked_at` and `recipes.cook_count` are updated in the same DB transaction as the `cooking_logs` insert; the recipe detail page reflects the new values immediately
   4. The user opens the app in airplane mode and the cached recipe library and shell render with no network; reconnect resumes WebSocket sync without manual reload
   5. Behavioral validation: both household members have used the app daily for ≥ 2 weeks at end of W4 (the v0.1 definition of done)
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 04-01-PLAN.md — Backend cooking-log finalization (PUT /cooking-logs/{id} + photo upload + same-tx denormalized recipe update)
+- [ ] 04-02-PLAN.md — Frontend cooking-log finalization page (RatingPicker + CookingLogFinalize) and recipe-card living image (D-05)
+- [ ] 04-03-PLAN.md — Phase-3 lint cleanup + Album scope reconciliation (ROADMAP / REQUIREMENTS reflect album cut to v2)
+- [ ] 04-04-PLAN.md — UAT gate: a11y polish verification + airplane-mode app-shell test (checkpoint)
 **UI hint**: yes
 
 ## Progress
