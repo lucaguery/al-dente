@@ -5,7 +5,7 @@ milestone_name: milestone
 status: executing
 stopped_at: Phase 2 context gathered
 last_updated: "2026-05-06T22:39:41.808Z"
-last_activity: 2026-05-06 -- Phase 01.1 execution started
+last_activity: 2026-05-07 -- Completed quick task 260507-g0k: UI polish complet (BottomNav fix + brand rose + home hero + RecipeCard)
 progress:
   total_phases: 5
   completed_phases: 2
@@ -76,6 +76,12 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 None yet.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260507-g0k | UI polish: BottomNav safe-area fix, brand rose #F43F5E, home hero, RecipeCard polish | 2026-05-07 | 1702af2 | [260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe](./quick/260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe/) |
 
 ### Blockers/Concerns
 
