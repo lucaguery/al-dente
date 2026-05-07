@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1
-milestone_name: milestone
-status: complete
-stopped_at: v0.1 milestone archived
+milestone: v0.2
+milestone_name: polish-slow-food-artisanal
+status: defining_requirements
+stopped_at: milestone opened, defining requirements
 last_updated: "2026-05-08T00:00:00.000Z"
 last_activity: 2026-05-08
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 31
-  completed_plans: 31
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-08)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** v0.1 COMPLETE — dogfood gate active (≥ 2 weeks daily use by both members before v0.2 planning begins)
+**Current focus:** v0.2 polish milestone — re-theme every screen to deliver a coherent Slow Food artisanal identity. Design direction locked in `.planning/notes/v0.2-design-direction.md`.
 
 ## Current Position
 
-Phase: v0.1 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Milestone archived. Dogfood gate active.
-Last activity: 2026-05-08
+Status: Defining requirements
+Last activity: 2026-05-08 — Milestone v0.2 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 

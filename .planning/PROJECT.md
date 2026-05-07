@@ -35,9 +35,14 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 - REALTIME × 3 — WebSocket broadcast spine + DOM CustomEvent bridge + exponential reconnect
 - PWA × 4 — Manifest + service worker + Web Push + next-intl French localization
 
-### Active (v0.2 candidates)
+### Active (v0.2 — Polish: Slow Food artisanal identity)
 
-*(None defined yet — run `/gsd-new-milestone` to start planning v0.2)*
+*(Defined via `/gsd-new-milestone` 2026-05-08. Detailed REQ-IDs in `.planning/REQUIREMENTS.md`.)*
+
+- Re-themed design system (tokens, typography, base shadcn primitives in `components/ui/*`)
+- Per-screen polish: capture surfaces, voting + shortlist, recipe detail + cooking log, onboarding + settings
+- Close W4 UI-REVIEW gaps inline as part of the polish pass
+- Demonstrable satisfaction of four design principles on every screen: Design Quality, Originality, Craft, Functionality
 
 ### Out of Scope
 
@@ -90,11 +95,42 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 | 4 waves with dogfood gates between each | Behavioral validation beats feature-completeness | ✅ Validated — W1 gate kept motivation high |
 | DOM CustomEvent bridge for WS → React | Decouples RealtimeProvider from page state | ✅ Validated — clean pattern, used for 6 event types |
 
-## Next Milestone Goals
+## Current Milestone: v0.2 — Polish: Slow Food artisanal identity
 
-*(To be defined via `/gsd-new-milestone` after ≥ 2 weeks dogfood)*
+**Goal:** Re-theme every screen of Al Dente to deliver a coherent Slow Food artisanal identity (warm, intimate, restrained Italian heritage) that demonstrably satisfies the four design principles: Design Quality, Originality, Craft, Functionality.
 
-Candidates based on current v2 backlog:
+**Source of design decisions:** `.planning/notes/v0.2-design-direction.md` — locked output of `/gsd-explore` session (2026-05-08). Every UI-SPEC contract and phase plan must cite this document and resist re-litigating it.
+
+**Target features:**
+
+- Re-themed design system foundation: terracotta accent + cream / ink / warm-gray neutrals replacing rose `#F43F5E` + slate; new display serif replacing Playfair; paper-grain anchor on card surfaces; warm shadows replacing cool box-shadows; tokens consolidated in Tailwind v4 `@theme`
+- Re-themed shadcn primitives in `frontend/components/ui/*` (Button, Input, Card, Dialog, Sheet, etc.) — modified in place rather than vanilla shadcn
+- Per-screen polish: capture surfaces (quick / full / voice / photo / URL), voting + shortlist (swipe deck, vote chips), recipe detail + cooking log finalize, onboarding + settings
+- Close W4 `04-UI-REVIEW.md` gaps inline as part of the polish pass (RatingPicker `transition-transform`, CookingBanner `h-12`, missing offline i18n keys, etc.)
+
+**Anti-patterns (committed in `.planning/notes/v0.2-design-direction.md`):**
+
+No purple gradients on white cards · No unmodified shadcn defaults · No cool grays (slate / zinc) on surfaces · No "lean handmade" overload (paper-grain only, no hand-drawn dividers) · No Geist alone or Geist+Inter pairing · No trattoria theming · No clinical / Vignelli-modernist direction · No themed chrome that fights food photography content
+
+**Key constraints:**
+
+- Polish only — no functional regressions on cookie auth, WebSocket realtime, Gemini capture, scoring, or daily shortlist
+- W4 polish baseline scored 20/24 in Phase 4 UI-REVIEW (`04-UI-REVIEW.md`) — current floor, not from-scratch
+- Typography pairing decision is open — research gated by the question in `.planning/research/questions.md`, answered when the design-system foundation phase plans
+- French-only via `next-intl`; French diacritic rendering on iOS Safari is a hard typography constraint
+- Solo dev, ~1 weekend/week budget — phase scoping reflects that
+- Push to `main` → auto-deploy to Vercel + Railway; no manual `vercel --prod`
+
+**Success criteria (behavioral):**
+
+- After v0.2 ships, every screen demonstrably satisfies the four design principles
+- A retrospective `/gsd-ui-review` on the full app scores ≥ 22/24 across the 6 pillars (raised from W4's 20/24 on Phase-4 surfaces only)
+- The design reads as a coherent whole — not "Phase-4-polished + everything-else-stock"
+
+## Future Milestones (deferred)
+
+Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
+
 - **V2-ALBUM-01/02/03** — Shared cooking-log photo gallery (cut from v0.1)
 - **V2-AUTH-01** — Supabase Auth magic-link migration (removes invite-code fragility)
 - **V2-MODEL-01** — Per-member ratings (richer preference signal)
@@ -115,4 +151,4 @@ Candidates based on current v2 backlog:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-08 — v0.1 shipped. All 49 requirements validated.*
+*Last updated: 2026-05-08 — v0.2 milestone opened. v0.1 (49 requirements) validated and archived.*
