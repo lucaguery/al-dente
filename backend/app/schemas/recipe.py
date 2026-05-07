@@ -144,6 +144,10 @@ class RecipeResponse(BaseModel):
     tags: List[str]
     last_cooked_at: Optional[datetime] = None
     cook_count: int
+    # Phase 4 (D-05): path of the most recent cooking-log photo. Set in same
+    # tx as last_cooked_at + cook_count by PUT /cooking-logs/{id}. NULL =
+    # never cooked OR most recent log had no photos.
+    last_cooked_photo_path: Optional[str] = None
     # Phase 2 (CONTEXT.md D-09 / Plan 02-05): surface promotion telemetry on the
     # wire so RecipeDraftCard can pick processing vs failed variants. Defaults
     # mean older callers (without the migrated columns) still validate.

@@ -146,6 +146,70 @@ def upload_recipe_photo(
     return path
 
 
+def upload_cooking_log_photo(
+    *,
+    household_id: UUID,
+    log_id: UUID,
+    content: bytes,
+) -> str:
+    """Validate, generate a server-side filename, upload, return the storage path.
+
+    Mirrors :func:`upload_recipe_photo` but writes to a different prefix so
+    cooking-log photos and recipe photos do not collide. Same bucket
+    (``recipe-photos``) — couple-scale storage; productize-later if we ever
+    need a separate bucket for retention policies.
+
+    Args:
+        household_id: trust-boundary scope; the on-disk folder root.
+        log_id: cooking log owning the photo (validated household-scoped by caller).
+        content: raw bytes (already size-checked by the router; we re-check
+            here as defense-in-depth).
+
+    Raises:
+        ValueError("oversize") if ``len(content) > MAX_BYTES``.
+        ValueError("unsupported") if the magic bytes don't match an allowed
+            image type.
+
+    Returns:
+        The bucket-relative path
+        ``"cooking-logs/{household_id}/{log_id}/{uuid}.{ext}"``.
+
+    # TODO(productize): D-02 — same egress/presigned-PUT switch as
+    # upload_recipe_photo if Railway egress shows up in metrics.
+    """
+    if len(content) > MAX_BYTES:
+        raise ValueError("oversize")
+    sniffed = detect_mime_and_ext(content)
+    if sniffed is None:
+        raise ValueError("unsupported")
+    mime, ext = sniffed
+
+    # Server-generated filename — client filename never enters the path
+    # (T-04-01-04 path-traversal guard, mirrors T-01-09-02).
+    path = f"cooking-logs/{household_id}/{log_id}/{uuid4()}.{ext}"
+
+    client = _supabase()
+    try:
+        client.storage.from_(BUCKET).upload(
+            path=path,
+            file=content,
+            file_options={"content-type": mime, "upsert": "false"},
+        )
+    except Exception as exc:  # noqa: BLE001 — broad catch is intentional
+        log.exception(
+            "supabase upload failed (cooking_log) path=%s err=%s", path, exc,
+        )
+        raise
+    log.info(
+        "cooking_log_photo.uploaded household=%s log=%s path=%s bytes=%d",
+        household_id,
+        log_id,
+        path,
+        len(content),
+    )
+    return path
+
+
 def create_signed_photo_url(path: str) -> str:
     """Return a short-lived URL the frontend can drop into ``<img src>``.
 
