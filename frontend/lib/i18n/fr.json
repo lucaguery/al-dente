@@ -14,7 +14,10 @@
   },
   "home": {
     "title": "Al Dente",
-    "tagline": "Décide ce qu'on mange ensemble."
+    "tagline": "Décide ce qu'on mange ensemble.",
+    "hero_question": "On mange quoi ce soir ?",
+    "cta_browse": "Voir mes recettes",
+    "cta_add": "Ajouter une recette"
   },
   "install": {
     "title": "Installe Al Dente sur ton écran d'accueil",

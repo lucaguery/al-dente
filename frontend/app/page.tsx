@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
@@ -47,8 +48,8 @@ export default function Home() {
 
   return (
     <OnboardingGuard>
-      <section className="flex flex-col flex-1 items-center px-6 py-12 gap-6">
-        <header className="flex flex-col items-center gap-2 text-center">
+      <section className="flex flex-col flex-1 px-6 py-10 gap-8">
+        <header className="flex flex-col items-center gap-3 text-center pt-4">
           <h1 className="text-[28px] font-semibold tracking-tight">
             {t("home.title")}
           </h1>
@@ -57,8 +58,29 @@ export default function Home() {
           </p>
         </header>
 
+        <div className="flex flex-col items-center gap-3 text-center">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("home.hero_question")}
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-3 max-w-sm w-full mx-auto">
+          <Link
+            href="/recipes"
+            className="flex items-center justify-center h-12 rounded-xl bg-primary text-primary-foreground font-medium tracking-tight shadow-sm active:opacity-90 transition-opacity"
+          >
+            {t("home.cta_browse")}
+          </Link>
+          <Link
+            href="/recipes/new"
+            className="flex items-center justify-center h-12 rounded-xl border border-border bg-card text-foreground font-medium tracking-tight active:bg-surface-muted transition-colors"
+          >
+            {t("home.cta_add")}
+          </Link>
+        </div>
+
         {showInstallHint ? (
-          <Card className="w-full max-w-sm bg-surface-muted border-border p-4 gap-2">
+          <Card className="w-full max-w-sm bg-surface-muted border-border p-4 gap-2 mx-auto">
             <h2 className="text-sm font-medium leading-5">
               {t("install.title")}
             </h2>
