@@ -3,7 +3,8 @@
     "saving": "Enregistrement…",
     "saved": "Enregistré",
     "cancel": "Annuler",
-    "back": "Retour"
+    "back": "Retour",
+    "sending": "Envoi…"
   },
   "nav": {
     "home": "Accueil",
@@ -108,6 +109,51 @@
       "title": "Modifier la recette",
       "submit": "Enregistrer les modifications",
       "saved_toast": "Recette modifiée"
+    },
+    "voice": {
+      "tab_label": "Voix",
+      "idle_helper": "Dicte ta recette en français. On la met en forme automatiquement.",
+      "idle_label": "Appuie pour parler",
+      "recording_label": "Appuie pour arrêter",
+      "send": "Envoyer",
+      "restart": "Recommencer",
+      "transcript_placeholder": "Dictez via le clavier 🎤 ou tapez votre recette…",
+      "transcript_aria": "Transcription de la recette",
+      "submitted_toast": "Recette en cours d'analyse…",
+      "empty_transcript": "Aucune parole détectée. Réessaie."
+    },
+    "photo": {
+      "tab_label": "Photo",
+      "empty_heading": "Photographie la recette",
+      "empty_body": "Ajoute jusqu'à 4 photos. Gemini extrait le titre, les ingrédients et les étapes.",
+      "capture": "Capturer la recette",
+      "submitted_toast": "Photos envoyées. Extraction en cours…",
+      "error_size_total": "Photos trop volumineuses. Limite Gemini : 18 Mo cumulés."
+    },
+    "url": {
+      "tab_label": "URL",
+      "field_label": "URL de la recette",
+      "field_placeholder": "https://…",
+      "helper": "L'extraction automatique arrive bientôt — tu pourras compléter les détails dans la boîte de réception.",
+      "submit": "Ajouter à la boîte de réception",
+      "submitted_toast": "URL ajoutée à la boîte de réception.",
+      "invalid": "URL invalide. Vérifie le format (https://…)."
+    },
+    "promotion": {
+      "in_flight": "Extraction en cours…",
+      "failed_badge": "Échec",
+      "retry": "Réessayer",
+      "retry_aria": "Réessayer l'extraction",
+      "success_toast": "Ta recette « {title} » est prête !"
+    },
+    "voice_modify": {
+      "trigger_aria": "Modifier par la voix",
+      "sheet_title": "Modifier par la voix",
+      "sheet_description": "Tape ou dicte une modification (ex. « remplace les oignons par des échalotes »).",
+      "send": "Envoyer la modification",
+      "restart": "Recommencer",
+      "submitting": "Modification…",
+      "failed": "Modification impossible. Réessaie."
     }
   },
   "photo_uploader": {
@@ -180,6 +226,12 @@
       "code_not_found": "Ce code n'existe pas. Vérifie auprès de ta partenaire.",
       "color_taken": "Cette couleur est déjà prise.",
       "network": "Connexion impossible. Réessaie dans un instant."
+    }
+  },
+  "cooking_log": {
+    "voice_input": {
+      "aria_label": "Dicter une note",
+      "placeholder": "Dictez via le clavier 🎤 ou tapez votre note…"
     }
   }
 }
