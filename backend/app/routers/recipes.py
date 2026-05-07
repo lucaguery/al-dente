@@ -633,5 +633,5 @@ async def delete_recipe(
     db.commit()
 
     await broadcast_to_household(
-        member.household_id, "recipe.deleted", {"id": str(recipe_id)}, db
+        member.household_id, "recipe.deleted", {"id": str(recipe_id)}
     )
