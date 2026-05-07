@@ -8,10 +8,12 @@ REALTIME-02 contract — every mutation that must sync between phones routes
 through ``broadcast_to_household(household_id, event_type, payload)``. The
 v0.1 event types are (CLAUDE.md "Architecture invariants" #4):
 
-    * ``recipe.created``   — routers/recipes.py (W1, plan 01-08)
-    * ``recipe.promoted``  — services/llm.py BackgroundTask (W2 plan 02-02)
-    * ``recipe.updated``   — routers/recipes.py PUT handler (W1, plan 01-08)
-    * ``vote.created``     — votes router (W3)
+    * ``recipe.created``    — routers/recipes.py (W1, plan 01-08)
+    * ``recipe.promoted``   — services/llm.py BackgroundTask (W2 plan 02-02)
+    * ``recipe.updated``    — routers/recipes.py PUT handler (W1, plan 01-08)
+    * ``vote.created``      — routers/votes.py (W3 plan 03-02)
+    * ``shortlist.created`` — services/shortlist.py cron + regenerate (W3 plan 03-02)
+    * ``cooking.started``   — routers/cooking_logs.py (W3 plan 03-02)
 
 Frame shape on the wire (must match frontend ws.ts byte-for-byte; see plan
 01-07): ``{"type": "<event_type>", "payload": {...}}`` JSON-encoded text frame.
