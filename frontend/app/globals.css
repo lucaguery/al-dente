@@ -171,10 +171,9 @@
   :root {
     --surface-muted: #18181b;
     --foreground-muted: #a1a1aa;
-
-    /* Quick-260507-hd0 — match .dark rose surfaces in OS-level dark mode. */
-    --surface-rose-50: oklch(0.20 0.02 16.5);
-    --surface-rose-100: oklch(0.24 0.03 16.5);
+    /* surface-rose-* intentionally NOT overridden here — the `.dark` class
+       handles them. Overriding only some tokens via media query while others
+       stay class-gated causes a split-brain (dark hero on light body). */
   }
 }
 
