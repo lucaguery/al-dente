@@ -42,7 +42,16 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from sqlalchemy import Text, cast, or_, select
 from sqlalchemy.orm import Session
 
@@ -51,12 +60,23 @@ from app.db import get_db
 from app.models.member import Member
 from app.models.recipe import Recipe
 from app.schemas.recipe import (
+    PromotionRetryResponse,
     RecipeFullCreate,
     RecipeQuickCreate,
     RecipeResponse,
     RecipeUpdate,
+    UrlCaptureRequest,
+    VoiceCaptureRequest,
+    VoiceModifyRequest,
+)
+from app.services.llm import (
+    apply_voice_modification,
+    promote_photo_draft,
+    promote_voice_draft,
+    retry_promotion,
 )
 from app.services.realtime import broadcast_to_household
+from app.services.storage import MAX_BYTES, upload_recipe_photo
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
@@ -75,6 +95,11 @@ _UPDATE_FORBIDDEN_FIELDS = frozenset({
     "id",
     "created_at",
 })
+
+# Gemini inline-image cap is 20 MB per request; budget 18 MB for the photos
+# alone (2 MB headroom for prompt text). Phase 2 02-CONTEXT photo upload guard.
+GEMINI_PHOTO_TOTAL_BYTES_CAP = 18 * 1024 * 1024
+MAX_PHOTOS_PER_CAPTURE = 4
 
 
 def _to_response_payload(r: Recipe) -> dict:
@@ -283,3 +308,295 @@ async def update_recipe(
     # NEW event type beyond REALTIME-02's original list — see module docstring.
     await broadcast_to_household(member.household_id, "recipe.updated", payload)
     return RecipeResponse.model_validate(r)
+
+
+# --- Phase 2 capture surfaces (W2, plan 02-02) -----------------------------
+
+
+@router.post(
+    "/voice",
+    response_model=RecipeResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_voice(
+    body: VoiceCaptureRequest,
+    background_tasks: BackgroundTasks,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> RecipeResponse:
+    """CAPTURE-01 — voice capture. Creates a draft synchronously, queues
+    Gemini promotion via BackgroundTask. The promotion task broadcasts
+    ``recipe.promoted`` on success or writes ``promotion_error`` on failure.
+
+    Note: per Phase 2 critical decision, the transcript arrives as plain text
+    (frontend uses a textarea + iOS keyboard dictation). NO Web Speech API.
+    """
+
+    recipe = Recipe(
+        household_id=member.household_id,
+        created_by_member_id=member.id,
+        status="draft",
+        title="(extraction en cours…)",  # placeholder until BackgroundTask promotes
+        # CLAUDE.md invariant 5: raw input persisted forever.
+        source_capture={"type": "voice", "payload": {"transcript": body.transcript}},
+        photo_paths=[],
+        mood=[],
+        seasonality=["spring", "summer", "autumn", "winter"],
+        tags=[],
+    )
+    db.add(recipe)
+    db.commit()
+    db.refresh(recipe)
+
+    # Broadcast the synchronous draft creation so partner phones see the
+    # placeholder card with the spinner state (CONTEXT.md D-07).
+    payload = _to_response_payload(recipe)
+    await broadcast_to_household(member.household_id, "recipe.created", payload)
+
+    # Queue Gemini promotion. The task opens its own SessionLocal — see
+    # services/llm.py and .planning/phases/02-llm-capture-w2/02-RESEARCH.md
+    # §"BackgroundTask + DB Session Pattern".
+    background_tasks.add_task(promote_voice_draft, recipe.id, body.transcript)
+    return RecipeResponse.model_validate(recipe)
+
+
+@router.post(
+    "/photo",
+    response_model=RecipeResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_photo(
+    background_tasks: BackgroundTasks,
+    files: list[UploadFile] = File(...),
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> RecipeResponse:
+    """CAPTURE-02 — photo capture. 1-4 images, each <=8 MB, total <=18 MB.
+    Creates a draft + uploads photos to Supabase Storage + queues Gemini
+    multimodal promotion."""
+
+    if not files or len(files) < 1:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="at least one photo required",
+        )
+    if len(files) > MAX_PHOTOS_PER_CAPTURE:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="at most 4 photos accepted",
+        )
+
+    # Read all bytes up-front; enforce per-file + total caps.
+    # (Photos are small enough that holding them in memory is fine for v0.1.)
+    contents: list[bytes] = []
+    total = 0
+    for f in files:
+        data = await f.read(MAX_BYTES + 1)
+        if len(data) > MAX_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"photo exceeds {MAX_BYTES} bytes",
+            )
+        if not data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="empty photo",
+            )
+        total += len(data)
+        if total > GEMINI_PHOTO_TOTAL_BYTES_CAP:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=(
+                    "combined photo size exceeds Gemini 18 MB cap; "
+                    "use fewer or smaller photos"
+                ),
+            )
+        contents.append(data)
+
+    # Create the draft + persist photos via the existing storage helper.
+    recipe = Recipe(
+        household_id=member.household_id,
+        created_by_member_id=member.id,
+        status="draft",
+        title="(extraction en cours…)",
+        source_capture={"type": "photo", "payload": {"photo_count": len(contents)}},
+        photo_paths=[],
+        mood=[],
+        seasonality=["spring", "summer", "autumn", "winter"],
+        tags=[],
+    )
+    db.add(recipe)
+    db.flush()  # need recipe.id to compute storage path
+
+    try:
+        paths: list[str] = []
+        for content in contents:
+            path = upload_recipe_photo(
+                household_id=member.household_id,
+                recipe_id=recipe.id,
+                content=content,
+            )
+            paths.append(path)
+    except ValueError as exc:
+        db.rollback()
+        if str(exc) == "oversize":
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="oversize",
+            ) from exc
+        if str(exc) == "unsupported":
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="unsupported media",
+            ) from exc
+        raise
+
+    recipe.photo_paths = paths
+    # Persist the photo paths into source_capture too — invariant 5: raw inputs
+    # forever. Gemini retries can re-read these paths and re-download.
+    recipe.source_capture = {
+        "type": "photo",
+        "payload": {"photo_paths": paths, "photo_count": len(paths)},
+    }
+    db.commit()
+    db.refresh(recipe)
+
+    payload = _to_response_payload(recipe)
+    await broadcast_to_household(member.household_id, "recipe.created", payload)
+
+    # Pass the bytes (not paths) to the BackgroundTask — saves a re-download
+    # on the happy path. Failure recovery (retry endpoint) re-downloads.
+    background_tasks.add_task(promote_photo_draft, recipe.id, contents)
+    return RecipeResponse.model_validate(recipe)
+
+
+@router.post(
+    "/url",
+    response_model=RecipeResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_url(
+    body: UrlCaptureRequest,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> RecipeResponse:
+    """CAPTURE-03 — URL paste. NO Gemini call in v0.1; URL is stored in
+    source_capture and the user fills in the rest from the drafts inbox.
+
+    # TODO(productize): URL fetch + Gemini extraction (CAPTURE-03 deferred).
+    """
+
+    # Best-effort URL syntax check — catches obvious typos. Heavy validation
+    # is the frontend's job (see plan 04-03 url tab).
+    url = body.url.strip()
+    if not url.startswith(("http://", "https://")):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="url must start with http:// or https://",
+        )
+
+    # Title placeholder — drafts inbox row shows the URL host as a hint.
+    recipe = Recipe(
+        household_id=member.household_id,
+        created_by_member_id=member.id,
+        status="draft",
+        title=url,  # better than "(extraction…)" since extraction is deferred
+        source_capture={"type": "url", "payload": {"url": url}},
+        photo_paths=[],
+        mood=[],
+        seasonality=["spring", "summer", "autumn", "winter"],
+        tags=[],
+    )
+    db.add(recipe)
+    db.commit()
+    db.refresh(recipe)
+
+    payload = _to_response_payload(recipe)
+    await broadcast_to_household(member.household_id, "recipe.created", payload)
+    return RecipeResponse.model_validate(recipe)
+
+
+@router.post(
+    "/{recipe_id}/voice-modify",
+    # Returns the GeminiExtractedRecipe shape; no Recipe row mutation.
+    response_model=None,
+    status_code=status.HTTP_200_OK,
+)
+def voice_modify(
+    recipe_id: UUID,
+    body: VoiceModifyRequest,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> dict:
+    """CAPTURE-05 — voice modification. Synchronous Gemini call; returns the
+    modified fields to the FE. Does NOT persist — the user reviews via the
+    edit form and saves via PUT /recipes/{id}.
+
+    Cross-household: 404 (consistent with /{id} and /{id} PUT)."""
+
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
+        )
+
+    # Pass the existing recipe as JSON to Gemini. Use the response wire
+    # shape so Gemini sees the same fields the FE renders.
+    recipe_json = _to_response_payload(recipe)
+    try:
+        extracted = apply_voice_modification(recipe_json, body.transcript)
+    except Exception as exc:  # noqa: BLE001 — Gemini errors mapped to 502
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"gemini error: {str(exc)[:200]}",
+        ) from exc
+
+    # Return the parsed shape verbatim — frontend places into edit form.
+    return extracted.model_dump(mode="json")
+
+
+@router.post(
+    "/{recipe_id}/retry-promotion",
+    response_model=PromotionRetryResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def retry_promote(
+    recipe_id: UUID,
+    background_tasks: BackgroundTasks,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> PromotionRetryResponse:
+    """D-09 — retry a failed promotion. Clears promotion_error inline (so
+    the FE can refetch and see the spinner state immediately), then queues
+    retry_promotion which re-reads source_capture and re-runs the appropriate
+    BackgroundTask."""
+
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
+        )
+    # Clear the error optimistically so the FE inbox row swaps from "Échec"
+    # to "Extraction en cours…" (D-07) when it refetches.
+    recipe.promotion_error = None
+    db.commit()
+    db.refresh(recipe)
+
+    # Broadcast the "in flight" state so the partner's inbox row also flips
+    # to spinner. Re-broadcasting recipe.created is the cheapest carrier
+    # (FE inbox handles dedupe-prepend; see frontend/app/inbox/page.tsx).
+    payload = _to_response_payload(recipe)
+    await broadcast_to_household(member.household_id, "recipe.created", payload)
+
+    background_tasks.add_task(retry_promotion, recipe.id)
+    return PromotionRetryResponse(recipe_id=recipe.id, queued=True)

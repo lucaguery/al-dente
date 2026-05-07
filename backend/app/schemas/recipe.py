@@ -148,3 +148,37 @@ class RecipeResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# --- Phase 2 capture surfaces (W2) -----------------------------------------
+
+
+class VoiceCaptureRequest(BaseModel):
+    """POST /recipes/voice body. Transcript text only — frontend collects via
+    textarea (iOS keyboard dictation or manual typing). NO Web Speech API on
+    the wire (see Phase 2 critical decision: textarea-only voice UX)."""
+
+    transcript: str = Field(min_length=1, max_length=10_000)
+
+
+class UrlCaptureRequest(BaseModel):
+    """POST /recipes/url body. URL stored in source_capture verbatim;
+    no Gemini extraction in v0.1 (CAPTURE-03 explicit).
+
+    # TODO(productize): URL fetch + Gemini extraction (CAPTURE-03 deferred).
+    """
+
+    url: str = Field(min_length=1, max_length=2_000)
+
+
+class VoiceModifyRequest(BaseModel):
+    """POST /recipes/{id}/voice-modify body. Same shape as VoiceCaptureRequest."""
+
+    transcript: str = Field(min_length=1, max_length=10_000)
+
+
+class PromotionRetryResponse(BaseModel):
+    """POST /recipes/{id}/retry-promotion response — minimal ack."""
+
+    recipe_id: UUID
+    queued: bool
