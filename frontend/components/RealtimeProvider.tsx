@@ -30,6 +30,7 @@ import {
   type RealtimeStatus,
 } from "@/lib/ws";
 import { useSession } from "@/components/SessionProvider";
+import type { Recipe } from "@/lib/recipes";
 
 // --- Singleton store ---------------------------------------------------------
 
@@ -91,6 +92,7 @@ const RECONNECT_TOAST_THRESHOLD_MS = 30_000;
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const t = useTranslations("realtime");
+  const tPromotion = useTranslations("recipes.promotion");
   const { status } = useSession();
 
   // useSyncExternalStore returns the live singleton (or null on the
@@ -161,6 +163,26 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       dismissReconnectToast();
     };
   }, [client, t]);
+
+  // CAPTURE-04 / D-08: When the backend's BackgroundTask promotes a draft to
+  // structured, every connected client in the household receives a
+  // `recipe.promoted` frame. Both phones surface the toast — the user's own
+  // phone sees a celebration of "their" capture; the partner's phone sees
+  // "your other half added a recipe". Per D-08: NO forced navigation.
+  //
+  // List refetch is the responsibility of the page that mounted: /inbox and
+  // /recipes both subscribe to recipe.created/updated/promoted via their
+  // own onEvent handlers (see Plans 04 and 05). This provider's only
+  // responsibility is the toast.
+  useEffect(() => {
+    if (!client) return;
+    const off = client.onEvent<Recipe>("recipe.promoted", (payload) => {
+      toast.success(
+        tPromotion("success_toast", { title: payload.title }),
+      );
+    });
+    return off;
+  }, [client, tPromotion]);
 
   return (
     <RealtimeContext.Provider value={client}>
