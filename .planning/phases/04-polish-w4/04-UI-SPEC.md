@@ -1,7 +1,8 @@
 ---
 phase: 4
 slug: polish-w4
-status: draft
+status: approved
+reviewed_at: 2026-05-07
 shadcn_initialized: true
 preset: radix-nova (inherited from Phase 1; baseColor neutral, iconLibrary lucide)
 created: 2026-05-07
