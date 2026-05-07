@@ -79,7 +79,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label={t("home")}
-      className="fixed bottom-0 inset-x-0 h-16 bg-surface-muted border-t border-border flex pb-[env(safe-area-inset-bottom)] z-40"
+      className="fixed bottom-0 inset-x-0 min-h-[4rem] bg-surface-muted border-t border-border flex pb-[env(safe-area-inset-bottom)] z-40"
     >
       {TABS.map(({ href, segment: tabSegment, icon: Icon, labelKey }) => {
         const active = segment === tabSegment;
@@ -93,7 +93,7 @@ export function BottomNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={`relative flex flex-col items-center justify-center flex-1 gap-1 text-[10px] font-medium ${
-              active ? "text-foreground" : "text-foreground-muted"
+              active ? "text-primary" : "text-foreground-muted"
             }`}
           >
             {active ? (

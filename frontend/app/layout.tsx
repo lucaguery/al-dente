@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 
 // Next.js 16: themeColor moved from `metadata` to the `viewport` export.
 export const viewport: Viewport = {
-  themeColor: "#0A0A0A",
+  themeColor: "#F43F5E",
   width: "device-width",
   initialScale: 1,
   // viewportFit=cover lets us paint into the iOS notch / home-indicator
@@ -54,13 +54,12 @@ export default async function RootLayout({
         className="min-h-full flex flex-col bg-background text-foreground"
         style={{
           paddingTop: "env(safe-area-inset-top)",
-          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         <LocaleProvider messages={messages}>
           <SessionProvider>
             <RealtimeProvider>
-              <main className="flex flex-col flex-1 pb-16">{children}</main>
+              <main className="flex flex-col flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))]">{children}</main>
               <BottomNav />
               <Toaster />
             </RealtimeProvider>

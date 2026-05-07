@@ -44,7 +44,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="flex gap-4 p-3 bg-background rounded-lg border border-border hover:bg-surface-muted transition-colors"
+      className="flex gap-4 p-3 bg-card rounded-xl border border-border shadow-sm hover:bg-surface-muted active:bg-surface-muted transition-all"
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill
@@ -60,7 +60,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         />
       )}
       <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-        <h3 className="text-base font-semibold leading-6 line-clamp-1">
+        <h3 className="text-base font-semibold leading-6 tracking-tight line-clamp-1">
           {recipe.title}
         </h3>
         <div className="flex items-center gap-2 flex-wrap">
