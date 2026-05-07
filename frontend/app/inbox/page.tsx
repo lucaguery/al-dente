@@ -22,18 +22,29 @@ function dedupePrepend(prev: Recipe[], next: Recipe): Recipe[] {
   return [next, ...prev];
 }
 
+// Module-level cache — survives client-side navigations because Next.js App
+// Router keeps JS modules alive in memory. Stale-while-revalidate: seed
+// initial state from this cache so the second visit paints instantly, then
+// the existing fetch silently overwrites with fresh data. Realtime updates
+// must keep this cache in sync, including dropping recipes whose status
+// flips out of 'draft'.
+let draftsCache: Recipe[] | null = null;
+
 export default function InboxPage() {
   const t = useTranslations("inbox");
   const tErr = useTranslations("onboarding.errors");
   const realtime = useRealtime();
-  const [drafts, setDrafts] = useState<Recipe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [drafts, setDrafts] = useState<Recipe[]>(draftsCache ?? []);
+  const [loading, setLoading] = useState(draftsCache === null);
 
   useEffect(() => {
     let alive = true;
     api<Recipe[]>("/api/recipes?status=draft&limit=200")
       .then((rows) => {
-        if (alive) setDrafts(rows);
+        if (alive) {
+          draftsCache = rows;
+          setDrafts(rows);
+        }
       })
       .catch(() => {
         if (alive) toast.error(tErr("network"));
@@ -51,19 +62,27 @@ export default function InboxPage() {
     if (!realtime) return;
     const offCreated = realtime.onEvent<Recipe>("recipe.created", (payload) => {
       if (payload.status !== "draft") return;
-      setDrafts((prev) => dedupePrepend(prev, payload));
+      setDrafts((prev) => {
+        const next = dedupePrepend(prev, payload);
+        draftsCache = next;
+        return next;
+      });
     });
     const offUpdated = realtime.onEvent<Recipe>("recipe.updated", (payload) => {
       setDrafts((prev) => {
         const exists = prev.some((p) => p.id === payload.id);
+        let next: Recipe[];
         if (payload.status !== "draft") {
           // Flipped to structured/verified → drop from drafts inbox.
-          return exists ? prev.filter((p) => p.id !== payload.id) : prev;
+          next = exists ? prev.filter((p) => p.id !== payload.id) : prev;
+        } else {
+          // Still draft: in-place replace, or insert if we hadn't seen it.
+          next = exists
+            ? prev.map((p) => (p.id === payload.id ? payload : p))
+            : dedupePrepend(prev, payload);
         }
-        // Still draft: in-place replace, or insert if we hadn't seen it.
-        return exists
-          ? prev.map((p) => (p.id === payload.id ? payload : p))
-          : dedupePrepend(prev, payload);
+        draftsCache = next;
+        return next;
       });
     });
     return () => {
