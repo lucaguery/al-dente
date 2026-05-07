@@ -184,6 +184,51 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     return off;
   }, [client, tPromotion]);
 
+  // Phase 3 — vote.created. Re-fire as a window CustomEvent so HomeDecide
+  // (and any future Decide-layer consumer) can subscribe with a plain
+  // `addEventListener` instead of forcing a wider context refactor for v0.1.
+  // Same pattern repeats for shortlist.created and cooking.started below.
+  useEffect(() => {
+    if (!client) return;
+    const off = client.onEvent<Phase3VoteEvent>("vote.created", (payload) => {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(VOTE_CREATED_DOM_EVENT, { detail: payload }),
+      );
+    });
+    return off;
+  }, [client]);
+
+  // Phase 3 — shortlist.created (APScheduler daily job OR /regenerate).
+  useEffect(() => {
+    if (!client) return;
+    const off = client.onEvent<Phase3ShortlistCreatedEvent>(
+      "shortlist.created",
+      (payload) => {
+        if (typeof window === "undefined") return;
+        window.dispatchEvent(
+          new CustomEvent(SHORTLIST_CREATED_DOM_EVENT, { detail: payload }),
+        );
+      },
+    );
+    return off;
+  }, [client]);
+
+  // Phase 3 — cooking.started (partner tapped "Je commence à cuisiner").
+  useEffect(() => {
+    if (!client) return;
+    const off = client.onEvent<Phase3CookingStartedEvent>(
+      "cooking.started",
+      (payload) => {
+        if (typeof window === "undefined") return;
+        window.dispatchEvent(
+          new CustomEvent(COOKING_STARTED_DOM_EVENT, { detail: payload }),
+        );
+      },
+    );
+    return off;
+  }, [client]);
+
   return (
     <RealtimeContext.Provider value={client}>
       {children}
@@ -195,3 +240,36 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 export function useRealtime(): RealtimeClient | null {
   return useContext(RealtimeContext);
 }
+
+// ---------------------------------------------------------------------------
+// Phase 3 — DOM CustomEvent contracts.
+//
+// The provider re-fires three WS events as window-level CustomEvents so any
+// component on the Home tab can subscribe without us threading another React
+// context through the tree. Each payload mirrors the backend's WS frame
+// (services/realtime.py); the frontend never invents fields.
+// ---------------------------------------------------------------------------
+
+export type Phase3VoteEvent = {
+  shortlist_id: string;
+  recipe_id: string;
+  member_id: string;
+  vote: "yes" | "no";
+  state: "valide" | "pressenti" | "conteste" | "rejete" | "sans_avis";
+};
+
+export type Phase3ShortlistCreatedEvent = {
+  shortlist_id: string;
+  date: string;
+  generation: number;
+};
+
+export type Phase3CookingStartedEvent = {
+  log_id: string;
+  recipe_id: string;
+  cooked_by_member_id: string;
+};
+
+export const VOTE_CREATED_DOM_EVENT = "aldente:vote.created";
+export const SHORTLIST_CREATED_DOM_EVENT = "aldente:shortlist.created";
+export const COOKING_STARTED_DOM_EVENT = "aldente:cooking.started";
