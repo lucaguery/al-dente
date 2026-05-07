@@ -166,7 +166,6 @@ export function HomeDecide() {
         ];
         const local = computeVoteState(recipeVotes, MEMBER_COUNT);
         if (local !== payload.state) {
-          // eslint-disable-next-line no-console
           console.warn(
             "vote-state drift: local=%s server=%s",
             local,
@@ -226,7 +225,7 @@ export function HomeDecide() {
 
   // ── Realtime: cooking.started — partner started cooking ─────────────────
   useEffect(() => {
-    function onCookingStarted(_e: Event) {
+    function onCookingStarted() {
       // The payload only contains ids; refetch to get the full record (rating,
       // notes, cooked_at). Cheap call — single GET.
       getActiveCookingLog()

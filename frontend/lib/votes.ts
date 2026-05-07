@@ -91,7 +91,6 @@ if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
   try {
     _selfCheck();
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error("lib/votes.ts:", e);
   }
 }

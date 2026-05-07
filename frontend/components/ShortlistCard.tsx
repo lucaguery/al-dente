@@ -9,7 +9,7 @@
 //
 // 03-UI-SPEC.md §Surface 6 + §Surface 7 + §"Interaction Patterns > Swipe deck"
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   motion,
   useMotionValue,
@@ -42,17 +42,24 @@ export type ShortlistCardProps = {
   isFront: boolean;
 };
 
+// `prefers-reduced-motion` is an external state that can flip at runtime when
+// the user toggles their OS-level setting. Subscribe via useSyncExternalStore
+// so we don't call setState inside an effect (react-hooks/set-state-in-effect),
+// mirroring the pattern in PushPermissionBanner.tsx.
+function subscribePRM(callback: () => void): () => void {
+  if (typeof window === "undefined" || !window.matchMedia) return () => {};
+  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+  mq.addEventListener?.("change", callback);
+  return () => mq.removeEventListener?.("change", callback);
+}
+
+function getPRMSnapshot(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-  return reduced;
+  return useSyncExternalStore(subscribePRM, getPRMSnapshot, () => false);
 }
 
 export function ShortlistCard({
