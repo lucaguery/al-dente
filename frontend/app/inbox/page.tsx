@@ -85,9 +85,28 @@ export default function InboxPage() {
         return next;
       });
     });
+    // Promotion complete → drop from drafts inbox immediately (RealtimeProvider
+    // already shows the success toast; we just need to clean up the local list).
+    const offPromoted = realtime.onEvent<Recipe>("recipe.promoted", (payload) => {
+      setDrafts((prev) => {
+        const next = prev.filter((p) => p.id !== payload.id);
+        draftsCache = next;
+        return next;
+      });
+    });
+    // recipe.deleted broadcast → remove from drafts list if present.
+    const offDeleted = realtime.onEvent<{ id: string }>("recipe.deleted", (payload) => {
+      setDrafts((prev) => {
+        const next = prev.filter((p) => p.id !== payload.id);
+        draftsCache = next;
+        return next;
+      });
+    });
     return () => {
       offCreated();
       offUpdated();
+      offPromoted();
+      offDeleted();
     };
   }, [realtime]);
 

@@ -60,6 +60,7 @@
       "later": "Pas maintenant",
       "permission_denied": "Notifications bloquées. Active-les dans les réglages Safari pour recevoir les shortlists.",
       "subscribe_failed": "Notifications partiellement activées. Réessaie depuis Réglages.",
+      "post_failed": "Notifications activées. Synchronisation avec le serveur échouée, réessaie.",
       "toast_activated": "Notifications activées."
     },
     "cold_start": {
@@ -164,6 +165,11 @@
     "detail_404_heading": "Recette introuvable",
     "detail_404_body": "Cette recette n'existe pas ou a été supprimée.",
     "detail_404_cta": "Retour aux recettes",
+    "delete_recipe": "Supprimer cette recette",
+    "delete_draft": "Supprimer ce brouillon",
+    "delete_confirm": "Supprimer définitivement ?",
+    "delete_success": "Recette supprimée.",
+    "delete_aria": "Supprimer",
     "new": {
       "tab_title": "Nouvelle recette",
       "tab_quick": "Rapide",

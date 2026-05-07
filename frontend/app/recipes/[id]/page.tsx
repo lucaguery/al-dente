@@ -12,7 +12,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, FileQuestion, Mic, Pencil } from "lucide-react";
+import { ChevronLeft, FileQuestion, Mic, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
@@ -20,7 +21,7 @@ import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { VoiceModifySheet } from "@/components/VoiceModifySheet";
 import { api } from "@/lib/api";
 import { formatRelativeFr } from "@/lib/datetime";
-import { getSignedPhotoUrl } from "@/lib/recipes";
+import { deleteRecipe, getSignedPhotoUrl } from "@/lib/recipes";
 import { useRealtime } from "@/components/RealtimeProvider";
 import type { Recipe } from "@/lib/recipes";
 
@@ -36,6 +37,21 @@ export default function RecipeDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [voiceModifyOpen, setVoiceModifyOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!recipe) return;
+    if (!window.confirm(t("delete_confirm"))) return;
+    setDeleting(true);
+    try {
+      await deleteRecipe(recipe.id);
+      toast.success(t("delete_success"));
+      router.replace("/recipes");
+    } catch {
+      toast.error(t("detail_404_body"));
+      setDeleting(false);
+    }
+  }
 
   const refreshPhotoUrls = useCallback(async (r: Recipe) => {
     if (r.photo_paths.length === 0) {
@@ -82,12 +98,21 @@ export default function RecipeDetailPage() {
   // uploads a photo to THIS recipe. Photo URL refresh is also re-driven.
   useEffect(() => {
     if (!realtime || !id) return;
-    return realtime.onEvent<Recipe>("recipe.updated", (payload) => {
+    const offUpdated = realtime.onEvent<Recipe>("recipe.updated", (payload) => {
       if (payload.id !== id) return;
       setRecipe(payload);
       void refreshPhotoUrls(payload);
     });
-  }, [realtime, id, refreshPhotoUrls]);
+    // If the partner deletes this recipe while we're viewing it, navigate away.
+    const offDeleted = realtime.onEvent<{ id: string }>("recipe.deleted", (payload) => {
+      if (payload.id !== id) return;
+      router.replace("/recipes");
+    });
+    return () => {
+      offUpdated();
+      offDeleted();
+    };
+  }, [realtime, id, refreshPhotoUrls, router]);
 
   if (notFound) {
     return (
@@ -178,6 +203,16 @@ export default function RecipeDetailPage() {
               onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
             >
               <Pencil className="h-5 w-5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={t("delete_aria")}
+              disabled={deleting}
+              onClick={handleDelete}
+              className="text-foreground-muted hover:text-destructive"
+            >
+              <Trash2 className="h-5 w-5" />
             </Button>
           </div>
         </header>

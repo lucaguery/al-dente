@@ -93,9 +93,17 @@ export default function RecipesPage() {
         return next;
       });
     });
+    const offDeleted = realtime.onEvent<{ id: string }>("recipe.deleted", (payload) => {
+      setRecipes((prev) => {
+        const next = prev.filter((p) => p.id !== payload.id);
+        recipesCache = next;
+        return next;
+      });
+    });
     return () => {
       offCreated();
       offUpdated();
+      offDeleted();
     };
   }, [realtime]);
 

@@ -52,13 +52,15 @@ from fastapi import (
     UploadFile,
     status,
 )
-from sqlalchemy import Text, cast, or_, select
+from sqlalchemy import Text, cast, delete as sa_delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.auth import current_member
 from app.db import get_db
+from app.models.cooking_log import CookingLog
 from app.models.member import Member
 from app.models.recipe import Recipe
+from app.models.vote import Vote
 from app.schemas.recipe import (
     PromotionRetryResponse,
     RecipeFullCreate,
@@ -600,3 +602,36 @@ async def retry_promote(
 
     background_tasks.add_task(retry_promotion, recipe.id)
     return PromotionRetryResponse(recipe_id=recipe.id, queued=True)
+
+
+@router.delete("/{recipe_id}", status_code=204)
+async def delete_recipe(
+    recipe_id: UUID,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> None:
+    """Hard-delete a recipe and its FK-constrained children (votes, cooking logs).
+
+    Returns 404 for cross-household or missing recipes so existence isn't leaked.
+    Broadcasts recipe.deleted so both clients remove it from their local state.
+    """
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
+        )
+
+    # Delete FK-constrained rows first (no ondelete=CASCADE on these FKs).
+    db.execute(sa_delete(Vote).where(Vote.recipe_id == recipe_id))
+    db.execute(sa_delete(CookingLog).where(CookingLog.recipe_id == recipe_id))
+    db.delete(recipe)
+    db.commit()
+
+    await broadcast_to_household(
+        member.household_id, "recipe.deleted", {"id": str(recipe_id)}, db
+    )

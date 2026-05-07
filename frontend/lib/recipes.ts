@@ -147,6 +147,11 @@ export async function postVoiceModify(
   );
 }
 
+/** Hard-delete a recipe (and its votes/cooking logs). Returns 204 on success. */
+export async function deleteRecipe(recipeId: string): Promise<void> {
+  await api<void>(`/api/recipes/${recipeId}`, { method: "DELETE" });
+}
+
 /** D-09 — POST /api/recipes/{id}/retry-promotion. Backend clears the error
  *  inline (so refetched drafts show the spinner state) and queues retry. */
 export async function postRetryPromotion(

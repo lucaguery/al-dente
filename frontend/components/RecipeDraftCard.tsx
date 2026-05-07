@@ -15,11 +15,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { postRetryPromotion } from "@/lib/recipes";
+import { deleteRecipe, postRetryPromotion } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
 
 export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
@@ -27,6 +27,22 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
   const tPromo = useTranslations("recipes.promotion");
   const tErr = useTranslations("onboarding.errors");
   const [retrying, setRetrying] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!window.confirm(t("delete_confirm"))) return;
+    setDeleting(true);
+    try {
+      await deleteRecipe(recipe.id);
+      toast.success(t("delete_success"));
+      // recipe.deleted realtime event removes this card from the inbox list.
+    } catch {
+      toast.error(tErr("network"));
+      setDeleting(false);
+    }
+  }
 
   const captureType = recipe.source_capture?.type;
   const isProcessing =
@@ -103,6 +119,23 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
           ) : null}
         </div>
       </div>
+      {!isProcessing ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 flex-shrink-0 text-foreground-muted hover:text-destructive"
+          disabled={deleting}
+          onClick={handleDelete}
+          aria-label={t("delete_aria")}
+        >
+          {deleting ? (
+            <Loader2 size={16} className="animate-spin" aria-hidden />
+          ) : (
+            <Trash2 size={16} aria-hidden />
+          )}
+        </Button>
+      ) : null}
     </>
   );
 

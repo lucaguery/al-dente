@@ -67,7 +67,14 @@ export function PushPermissionBanner() {
       } else if (res.reason === "denied") {
         toast(t("permission_denied"));
         setOverrideHidden(true);
+      } else if (res.reason === "missing_key") {
+        // VAPID key not configured — not actionable by user, hide silently.
+        setOverrideHidden(true);
+      } else if (res.reason === "post_failed") {
+        // Subscription registered locally but failed to sync to server.
+        toast.error(t("post_failed"));
       } else {
+        // subscribe_failed or unsupported
         toast.error(t("subscribe_failed"));
       }
     } finally {
