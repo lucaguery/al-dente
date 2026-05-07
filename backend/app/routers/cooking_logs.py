@@ -1,5 +1,6 @@
 """Cooking-logs router — POST /recipes/{id}/cook + GET /cooking-logs/active +
-PUT /cooking-logs/{id} (finalize, COOK-03 + COOK-05).
+PUT /cooking-logs/{id} (finalize, COOK-03 + COOK-05) +
+POST /cooking-logs/{id}/photos + GET /cooking-logs/{id}/photo-url (Phase 4).
 
 COOK-01: "Je commence à cuisiner" creates an immutable CookingLog with
 cooked_at = now(). Phase 4's finalization PUT adds photos, rating, notes
@@ -16,6 +17,11 @@ parent recipe's last_cooked_at, cook_count (only on first finalization),
 and last_cooked_photo_path. Broadcasts both `cooking.finalized` and
 `recipe.updated` so the partner phone refreshes immediately.
 
+Phase 4 photos: POST /cooking-logs/{id}/photos mirrors the recipe-photos
+endpoint (magic-byte sniff, 8 MiB cap, server-side path under
+cooking-logs/{household_id}/{log_id}/), and GET /cooking-logs/{id}/photo-url
+mints short-lived signed URLs scoped to the log.
+
 Per Pattern 7: 409 Conflict if an unfinalized log already exists today.
 """
 from __future__ import annotations
@@ -23,7 +29,7 @@ from __future__ import annotations
 from datetime import date as DateType, datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
@@ -35,6 +41,15 @@ from app.models.recipe import Recipe
 from app.schemas.cooking_log import CookingLogFinalizeRequest, CookingLogResponse
 from app.schemas.recipe import RecipeResponse
 from app.services.realtime import broadcast_to_household
+from app.services.storage import (
+    MAX_BYTES,
+    SIGNED_URL_TTL_SECONDS,
+    create_signed_photo_url,
+    upload_cooking_log_photo,
+)
+
+# SPEC.md: photo_paths ≤ 4 — mirror the recipe rule for cooking-log photos.
+MAX_PHOTOS_PER_COOKING_LOG = 4
 
 # Two prefixes — POST is /recipes/{id}/cook (lives under /recipes for
 # discoverability), GET is /cooking-logs/active. Use one router with no
@@ -210,3 +225,105 @@ async def finalize_cooking_log(
     )
 
     return CookingLogResponse.model_validate(log_row)
+
+
+@router.post(
+    "/cooking-logs/{log_id}/photos",
+    response_model=CookingLogResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_cooking_log_photo_endpoint(
+    log_id: UUID,
+    file: UploadFile = File(...),
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> CookingLogResponse:
+    """Append a photo to a cooking log.
+
+    Mirrors the threat model of backend/app/routers/photos.py:
+      - 404 (not 403) on cross-household / unknown id (T-04-01-03)
+      - magic-byte MIME sniff (T-04-01-04)
+      - server-side path layout cooking-logs/{household_id}/{log_id}/{uuid}.{ext}
+      - 8 MiB hard cap with `read(MAX_BYTES + 1)` overflow detection (T-04-01-05)
+
+    No `recipe.updated` broadcast per upload — finalization (PUT) is the
+    canonical sync point. Mid-finalization photos stream silently.
+    """
+    log_row = db.scalar(
+        select(CookingLog).where(
+            CookingLog.id == log_id,
+            CookingLog.household_id == member.household_id,
+        )
+    )
+    if log_row is None:
+        raise HTTPException(404, "cooking log not found")
+
+    current_paths = list(log_row.photo_paths or [])
+    if len(current_paths) >= MAX_PHOTOS_PER_COOKING_LOG:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="photo limit reached",
+        )
+
+    content = await file.read(MAX_BYTES + 1)
+    if len(content) > MAX_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"file exceeds {MAX_BYTES} bytes",
+        )
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="empty upload"
+        )
+
+    try:
+        path = upload_cooking_log_photo(
+            household_id=member.household_id,
+            log_id=log_row.id,
+            content=content,
+        )
+    except ValueError as exc:
+        if str(exc) == "oversize":
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="oversize",
+            ) from exc
+        if str(exc) == "unsupported":
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="unsupported media",
+            ) from exc
+        raise
+
+    # Reassign list (not in-place append) so SQLAlchemy detects the ARRAY change.
+    log_row.photo_paths = current_paths + [path]
+    db.commit()
+    db.refresh(log_row)
+
+    return CookingLogResponse.model_validate(log_row)
+
+
+@router.get("/cooking-logs/{log_id}/photo-url")
+def cooking_log_signed_photo_url(
+    log_id: UUID,
+    path: str = Query(..., min_length=1, max_length=300),
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Mirror of GET /recipes/{id}/photo-url scoped to a cooking log.
+
+    T-04-01-02 mitigation: validate that ``path`` is in ``log_row.photo_paths``
+    so a member cannot mint signed URLs for arbitrary bucket objects.
+    """
+    log_row = db.scalar(
+        select(CookingLog).where(
+            CookingLog.id == log_id,
+            CookingLog.household_id == member.household_id,
+        )
+    )
+    if log_row is None:
+        raise HTTPException(404, "cooking log not found")
+    if path not in (log_row.photo_paths or []):
+        raise HTTPException(404, "path not on cooking log")
+    url = create_signed_photo_url(path)
+    return {"url": url, "expires_in": SIGNED_URL_TTL_SECONDS}
