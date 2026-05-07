@@ -202,30 +202,24 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   // Phase 3 — shortlist.created (APScheduler daily job OR /regenerate).
   useEffect(() => {
     if (!client) return;
-    const off = client.onEvent<Phase3ShortlistCreatedEvent>(
-      "shortlist.created",
-      (payload) => {
-        if (typeof window === "undefined") return;
-        window.dispatchEvent(
-          new CustomEvent(SHORTLIST_CREATED_DOM_EVENT, { detail: payload }),
-        );
-      },
-    );
+    const off = client.onEvent<Phase3ShortlistCreatedEvent>("shortlist.created", (payload) => {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(SHORTLIST_CREATED_DOM_EVENT, { detail: payload }),
+      );
+    });
     return off;
   }, [client]);
 
   // Phase 3 — cooking.started (partner tapped "Je commence à cuisiner").
   useEffect(() => {
     if (!client) return;
-    const off = client.onEvent<Phase3CookingStartedEvent>(
-      "cooking.started",
-      (payload) => {
-        if (typeof window === "undefined") return;
-        window.dispatchEvent(
-          new CustomEvent(COOKING_STARTED_DOM_EVENT, { detail: payload }),
-        );
-      },
-    );
+    const off = client.onEvent<Phase3CookingStartedEvent>("cooking.started", (payload) => {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(COOKING_STARTED_DOM_EVENT, { detail: payload }),
+      );
+    });
     return off;
   }, [client]);
 
