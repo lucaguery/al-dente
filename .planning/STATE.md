@@ -86,6 +86,7 @@ None yet.
 | 260507-hbw | Module-level SWR cache for /recipes + /inbox — instant nav, silent revalidation | 2026-05-07 | de7ec38 | [260507-hbw-module-level-stale-while-revalidate-cach](./quick/260507-hbw-module-level-stale-while-revalidate-cach/) |
 | 260507-hd0 | Create a beautiful, polished layout for the Al Dente app using frontend-design best practices | 2026-05-07 | 451bb4f | [260507-hd0-create-a-beautiful-polished-layout-for-t](./quick/260507-hd0-create-a-beautiful-polished-layout-for-t/) |
 | 260507-nmi | UAT hotfixes: inbox reactivity (recipe.promoted), recipe hard-delete, push VAPID keys setup | 2026-05-07 | 826cc9e | [260507-nmi-catch-up-with-what-has-been-done](./quick/260507-nmi-catch-up-with-what-has-been-done/) |
+| 260508-1ln | fix audit gaps: cooking.finalized handler + recipe delete broadcast arity | 2026-05-07 | 481d9a6 | [260508-1ln-fix-audit-gaps-cooking-finalized-handler](./quick/260508-1ln-fix-audit-gaps-cooking-finalized-handler/) |
 
 ### Blockers/Concerns
 
