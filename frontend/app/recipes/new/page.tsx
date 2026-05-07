@@ -25,6 +25,9 @@ import { api } from "@/lib/api";
 import { RecipeForm, type RecipeBody } from "@/components/RecipeForm";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import type { Recipe } from "@/lib/recipes";
+import { VoiceCaptureTab } from "@/components/VoiceCaptureTab";
+import { PhotoCaptureTab } from "@/components/PhotoCaptureTab";
+import { UrlCaptureTab } from "@/components/UrlCaptureTab";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
@@ -42,7 +45,11 @@ function Inner() {
   const tCommon = useTranslations("common");
   const tErr = useTranslations("onboarding.errors");
   const tPhoto = useTranslations("photo_uploader");
-  const [tab, setTab] = useState<"quick" | "full">("quick");
+  const tVoice = useTranslations("recipes.voice");
+  const tPhotoTab = useTranslations("recipes.photo");
+  const tUrl = useTranslations("recipes.url");
+  // TODO(productize): support ?tab= URL param to deep-link a tab (UI-SPEC §"5-tab capture surface").
+  const [tab, setTab] = useState<"quick" | "full" | "voice" | "photo" | "url">("quick");
   const [quickTitle, setQuickTitle] = useState("");
   const [quickPhoto, setQuickPhoto] = useState<File | null>(null);
   // Two-stage progress: "title" (POSTing /api/recipes/quick),
@@ -124,7 +131,9 @@ function Inner() {
   return (
     <Tabs
       value={tab}
-      onValueChange={(v) => setTab(v as "quick" | "full")}
+      onValueChange={(v) =>
+        setTab(v as "quick" | "full" | "voice" | "photo" | "url")
+      }
       className="flex flex-col flex-1"
     >
       <header className="sticky top-0 z-10 h-12 px-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border">
@@ -141,12 +150,21 @@ function Inner() {
         <span className="text-base font-semibold">{t("tab_title")}</span>
         <span className="w-10" aria-hidden />
       </header>
-      <TabsList className="mx-6 mt-4 w-auto">
-        <TabsTrigger value="quick" className="flex-1">
+      <TabsList className="mx-6 mt-4 w-auto overflow-x-auto scrollbar-none flex">
+        <TabsTrigger value="quick" className="flex-1 min-w-[64px]">
           {t("tab_quick")}
         </TabsTrigger>
-        <TabsTrigger value="full" className="flex-1">
+        <TabsTrigger value="full" className="flex-1 min-w-[64px]">
           {t("tab_full")}
+        </TabsTrigger>
+        <TabsTrigger value="voice" className="flex-1 min-w-[64px]">
+          {tVoice("tab_label")}
+        </TabsTrigger>
+        <TabsTrigger value="photo" className="flex-1 min-w-[64px]">
+          {tPhotoTab("tab_label")}
+        </TabsTrigger>
+        <TabsTrigger value="url" className="flex-1 min-w-[64px]">
+          {tUrl("tab_label")}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="quick" className="px-6 pt-6 pb-32 flex flex-col gap-6">
@@ -212,6 +230,15 @@ function Inner() {
           title={t("tab_title")}
           withChrome={false}
         />
+      </TabsContent>
+      <TabsContent value="voice">
+        <VoiceCaptureTab />
+      </TabsContent>
+      <TabsContent value="photo">
+        <PhotoCaptureTab />
+      </TabsContent>
+      <TabsContent value="url">
+        <UrlCaptureTab />
       </TabsContent>
     </Tabs>
   );
