@@ -8,6 +8,7 @@ from app.models.cooking_log import CookingLog, LogRating
 from app.models.daily_shortlist import DailyShortlist
 from app.models.household import Household
 from app.models.member import Member
+from app.models.push_subscription import PushSubscription
 from app.models.recipe import Recipe, RecipeStatus
 from app.models.vote import Vote, VoteValue
 
@@ -17,6 +18,7 @@ __all__ = [
     "Household",
     "LogRating",
     "Member",
+    "PushSubscription",
     "Recipe",
     "RecipeStatus",
     "Vote",

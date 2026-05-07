@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     environment: str = "development"
     gemini_api_key: str = ""
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_email: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 

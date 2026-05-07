@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID as PyUUID
 
-from sqlalchemy import String, func
+from sqlalchemy import String, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,6 +27,13 @@ class Household(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String, nullable=False)
     # Regenerable 6-char uppercase alphanumeric (CONTEXT.md "Invite-code format").
     invite_code: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    # Phase 3 (CONTEXT.md "Claude's Discretion") — household timezone for APScheduler
+    # daily-cron CronTrigger. Default Europe/Paris in v0.1 (Luca's household).
+    timezone: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        server_default=text("'Europe/Paris'"),
+    )
 
     members: Mapped[list["Member"]] = relationship(  # noqa: F821 — forward ref resolved at mapping time
         back_populates="household",

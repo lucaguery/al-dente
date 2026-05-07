@@ -140,3 +140,17 @@ class Recipe(Base):
             text("last_cooked_at DESC NULLS LAST"),
         ),
     )
+
+    def days_since_cooked(self) -> int:
+        """Days since the most recent cook, or 999 if never cooked.
+
+        Used by services/algorithm.py for the recency-scoring term:
+        score += 1.5 * min(days / 14.0, 1.0). Capped semantics intentional —
+        a recipe never cooked is "fully fresh" but capped (any > 14 maps to 1.0).
+        """
+        from datetime import datetime, timezone
+        if self.last_cooked_at is None:
+            return 999
+        now = datetime.now(timezone.utc)
+        delta = now - self.last_cooked_at
+        return delta.days

@@ -15,4 +15,7 @@ dependencies = [
     "sqlalchemy>=2.0",
     "supabase>=2.0",
     "uvicorn[standard]>=0.46.0",
+    "apscheduler>=3.11",
+    "pywebpush>=2.3",
+    "py-vapid>=1.9",
 ]
