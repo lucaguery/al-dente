@@ -102,6 +102,14 @@ class Recipe(Base):
     # (architecture invariant #3 from CLAUDE.md).
     last_cooked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cook_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    # Phase 2 (CONTEXT.md D-09): non-null on every row, but null `promotion_error`
+    # means "no failure (or never attempted)". promotion_attempts increments on every
+    # try, including the first.
+    # TODO(productize): retry cap — lock the card after N failed promotion_attempts.
+    promotion_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    promotion_attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
