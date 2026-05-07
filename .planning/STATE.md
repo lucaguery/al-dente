@@ -4,7 +4,7 @@ milestone: v0.1
 milestone_name: milestone
 status: executing
 stopped_at: Phase 3 context gathered
-last_updated: "2026-05-07T14:24:45.416Z"
+last_updated: "2026-05-07T15:00:37.502Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 5
@@ -85,6 +85,7 @@ None yet.
 | 260507-g0k | UI polish: BottomNav safe-area fix, brand rose #F43F5E, home hero, RecipeCard polish | 2026-05-07 | 1702af2 | [260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe](./quick/260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe/) |
 | 260507-hbw | Module-level SWR cache for /recipes + /inbox — instant nav, silent revalidation | 2026-05-07 | de7ec38 | [260507-hbw-module-level-stale-while-revalidate-cach](./quick/260507-hbw-module-level-stale-while-revalidate-cach/) |
 | 260507-hd0 | Create a beautiful, polished layout for the Al Dente app using frontend-design best practices | 2026-05-07 | 451bb4f | [260507-hd0-create-a-beautiful-polished-layout-for-t](./quick/260507-hd0-create-a-beautiful-polished-layout-for-t/) |
+| 260507-nmi | UAT hotfixes: inbox reactivity (recipe.promoted), recipe hard-delete, push VAPID keys setup | 2026-05-07 | 826cc9e | [260507-nmi-catch-up-with-what-has-been-done](./quick/260507-nmi-catch-up-with-what-has-been-done/) |
 
 ### Blockers/Concerns
 
@@ -94,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T12:06:49.833Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-decide-w3/03-CONTEXT.md
+Last session: 2026-05-07T15:00:37.502Z
+Stopped at: Quick task 260507-nmi complete — UAT hotfixes shipped (inbox reactivity, delete, push VAPID)
+Resume file: .planning/quick/260507-nmi-catch-up-with-what-has-been-done/260507-nmi-SUMMARY.md
