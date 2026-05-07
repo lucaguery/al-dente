@@ -35,6 +35,7 @@ export type Recipe = {
   tags: string[];
   last_cooked_at?: string | null;
   cook_count: number;
+  last_cooked_photo_path?: string | null;
   created_at: string;
   updated_at: string;
   // Phase 2 additions (CONTEXT.md D-09): null `promotion_error` means
