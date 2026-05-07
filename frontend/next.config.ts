@@ -23,6 +23,11 @@ const withPWA = withPWAInit({
     skipWaiting: true,
     clientsClaim: true,
   },
+  // Phase 3 (PWA-03): bundle the custom worker that handles `push` and
+  // `notificationclick` events. The main sw.js auto-imports it via
+  // importScripts. Source dir is frontend/worker (TypeScript is fine).
+  customWorkerSrc: "worker",
+  customWorkerDest: "public",
 });
 
 const withNextIntl = createNextIntlPlugin("./i18n.ts");

@@ -20,6 +20,7 @@ import { ShortlistDeck } from "@/components/ShortlistDeck";
 import { VoteSummary } from "@/components/VoteSummary";
 import { CookingBanner } from "@/components/CookingBanner";
 import { ColdStartChip } from "@/components/ColdStartChip";
+import { PushPermissionBanner } from "@/components/PushPermissionBanner";
 import { RegenerateSheet } from "@/components/RegenerateSheet";
 import { useSession } from "@/components/SessionProvider";
 import {
@@ -335,6 +336,7 @@ export function HomeDecide() {
   if (shortlist === null) {
     return (
       <div className="flex flex-col flex-1">
+        <PushPermissionBanner />
         {cookingBannerVisible && activeLog && (
           <CookingBanner
             logId={activeLog.id}
@@ -377,6 +379,7 @@ export function HomeDecide() {
 
   return (
     <div className="flex flex-col flex-1">
+      <PushPermissionBanner />
       {cookingBannerVisible && activeLog && (
         <CookingBanner
           logId={activeLog.id}
