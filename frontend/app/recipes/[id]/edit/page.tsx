@@ -19,7 +19,27 @@ import {
   type RecipeBody,
 } from "@/components/RecipeForm";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
-import type { Recipe } from "@/lib/recipes";
+import type { GeminiExtractedRecipe, Recipe } from "@/lib/recipes";
+
+// CAPTURE-05 / D-11: voice-modify prefill. After POST /recipes/{id}/voice-modify
+// returns, VoiceModifySheet stores the result in sessionStorage and routes here.
+// We read once and clear the entry — page refresh should NOT re-apply Gemini's
+// output. No diff UI in v0.1 (D-11 explicit); user just lands on a pre-filled
+// edit form merged with whatever fields were already on the recipe.
+const PREFILL_KEY = "voice-modify-prefill";
+
+function readPrefill(): GeminiExtractedRecipe | null {
+  if (typeof window === "undefined") return null;
+  const raw = sessionStorage.getItem(PREFILL_KEY);
+  if (raw == null) return null;
+  // T-02-05-01 mitigation: corrupt JSON falls back to no prefill.
+  sessionStorage.removeItem(PREFILL_KEY);
+  try {
+    return JSON.parse(raw) as GeminiExtractedRecipe;
+  } catch {
+    return null;
+  }
+}
 
 export default function RecipeEditPage() {
   return (
@@ -41,10 +61,32 @@ function Inner() {
   useEffect(() => {
     if (!id) return;
     let alive = true;
+    // Read sessionStorage prefill ONCE on mount and clear it. If present,
+    // we merge it onto the loaded recipe before running recipeToFormValues
+    // so the form opens with Gemini's modified values pre-applied.
+    const prefill = readPrefill();
     api<Recipe>(`/api/recipes/${id}`)
       .then((r) => {
         if (!alive) return;
-        setInitial(recipeToFormValues(r));
+        const merged: Recipe = prefill
+          ? {
+              ...r,
+              ...prefill,
+              // Preserve recipe arrays when prefill omits them; Gemini may
+              // return an empty array intentionally, so only fall back to
+              // the recipe's value when prefill's value is null/undefined.
+              mood:
+                prefill.mood !== undefined && prefill.mood !== null
+                  ? prefill.mood
+                  : r.mood,
+              seasonality:
+                prefill.seasonality !== undefined &&
+                prefill.seasonality !== null
+                  ? prefill.seasonality
+                  : r.seasonality,
+            }
+          : r;
+        setInitial(recipeToFormValues(merged));
         setOrigStatus(r.status);
       })
       .catch(() => {

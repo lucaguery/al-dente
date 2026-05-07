@@ -144,6 +144,11 @@ class RecipeResponse(BaseModel):
     tags: List[str]
     last_cooked_at: Optional[datetime] = None
     cook_count: int
+    # Phase 2 (CONTEXT.md D-09 / Plan 02-05): surface promotion telemetry on the
+    # wire so RecipeDraftCard can pick processing vs failed variants. Defaults
+    # mean older callers (without the migrated columns) still validate.
+    promotion_error: Optional[str] = None
+    promotion_attempts: int = 0
     created_at: datetime
     updated_at: datetime
 

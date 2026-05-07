@@ -12,11 +12,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, FileQuestion, Pencil } from "lucide-react";
+import { ChevronLeft, FileQuestion, Mic, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
+import { VoiceModifySheet } from "@/components/VoiceModifySheet";
 import { api } from "@/lib/api";
 import { formatRelativeFr } from "@/lib/datetime";
 import { getSignedPhotoUrl } from "@/lib/recipes";
@@ -25,6 +26,7 @@ import type { Recipe } from "@/lib/recipes";
 
 export default function RecipeDetailPage() {
   const t = useTranslations("recipes");
+  const tVoiceModify = useTranslations("recipes.voice_modify");
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -33,6 +35,7 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [voiceModifyOpen, setVoiceModifyOpen] = useState(false);
 
   const refreshPhotoUrls = useCallback(async (r: Recipe) => {
     if (r.photo_paths.length === 0) {
@@ -159,14 +162,24 @@ export default function RecipeDetailPage() {
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            aria-label={t("edit_aria")}
-            onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
-          >
-            <Pencil className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={tVoiceModify("trigger_aria")}
+              onClick={() => setVoiceModifyOpen(true)}
+            >
+              <Mic className="h-5 w-5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={t("edit_aria")}
+              onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
+            >
+              <Pencil className="h-5 w-5" />
+            </Button>
+          </div>
         </header>
 
         {/* Hero — photo gallery or empty placeholder */}
@@ -254,6 +267,11 @@ export default function RecipeDetailPage() {
           </p>
         </div>
       </section>
+      <VoiceModifySheet
+        recipeId={recipe.id}
+        open={voiceModifyOpen}
+        onOpenChange={setVoiceModifyOpen}
+      />
     </OnboardingGuard>
   );
 }
