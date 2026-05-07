@@ -51,7 +51,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body
-        className="min-h-full flex flex-col bg-background text-foreground"
+        className="min-h-dvh flex flex-col bg-background text-foreground"
         style={{
           paddingTop: "env(safe-area-inset-top)",
         }}

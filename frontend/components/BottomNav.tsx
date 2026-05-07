@@ -79,7 +79,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label={t("home")}
-      className="fixed bottom-0 inset-x-0 min-h-[4rem] bg-surface-muted border-t border-border flex pb-[env(safe-area-inset-bottom)] z-40"
+      className="fixed bottom-0 inset-x-0 min-h-[4rem] bg-card/85 backdrop-blur-md border-t border-border flex pb-[env(safe-area-inset-bottom)] z-40"
     >
       {TABS.map(({ href, segment: tabSegment, icon: Icon, labelKey }) => {
         const active = segment === tabSegment;
@@ -92,21 +92,21 @@ export function BottomNav() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`relative flex flex-col items-center justify-center flex-1 gap-1 text-[10px] font-medium ${
+            className={`relative flex flex-col items-center justify-center flex-1 gap-1 text-[11px] font-medium transition-colors duration-150 ${
               active ? "text-primary" : "text-foreground-muted"
             }`}
           >
             {active ? (
               <span
                 aria-hidden
-                className="absolute top-0 h-0.5 w-8 bg-primary rounded-b-full"
+                className="absolute top-0 h-0.5 w-10 bg-primary rounded-b-full"
               />
             ) : null}
             <Icon size={24} aria-hidden />
             <span className="flex items-center gap-1">
               {t(labelKey)}
               {showBadge ? (
-                <span className="text-[10px] tabular-nums">
+                <span className="text-[11px] tabular-nums">
                   ({draftCount})
                 </span>
               ) : null}

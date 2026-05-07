@@ -44,7 +44,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="flex gap-4 p-3 bg-card rounded-xl border border-border shadow-sm hover:bg-surface-muted active:bg-surface-muted transition-all"
+      className="flex gap-4 p-3 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150"
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill
