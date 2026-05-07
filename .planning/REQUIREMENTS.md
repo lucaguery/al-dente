@@ -90,47 +90,55 @@ Explicitly excluded for v0.2. Documented to prevent scope creep.
 
 ## Traceability
 
-Filled by roadmapper during phase creation.
+Filled by roadmapper during phase creation (2026-05-08).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DESIGN-01 | TBD | Pending |
-| DESIGN-02 | TBD | Pending |
-| DESIGN-03 | TBD | Pending |
-| DESIGN-04 | TBD | Pending |
-| DESIGN-05 | TBD | Pending |
-| DESIGN-06 | TBD | Pending |
-| DESIGN-07 | TBD | Pending |
-| DESIGN-08 | TBD | Pending |
-| CAPTURE-08 | TBD | Pending |
-| CAPTURE-09 | TBD | Pending |
-| CAPTURE-10 | TBD | Pending |
-| CAPTURE-11 | TBD | Pending |
-| CAPTURE-12 | TBD | Pending |
-| CAPTURE-13 | TBD | Pending |
-| DECIDE-01 | TBD | Pending |
-| DECIDE-02 | TBD | Pending |
-| DECIDE-03 | TBD | Pending |
-| DECIDE-04 | TBD | Pending |
-| DECIDE-05 | TBD | Pending |
-| COOK-06 | TBD | Pending |
-| COOK-07 | TBD | Pending |
-| COOK-08 | TBD | Pending |
-| COOK-09 | TBD | Pending |
-| COOK-10 | TBD | Pending |
-| COOK-11 | TBD | Pending |
-| COOK-12 | TBD | Pending |
-| ONBOARD-07 | TBD | Pending |
-| ONBOARD-08 | TBD | Pending |
-| ONBOARD-09 | TBD | Pending |
-| ONBOARD-10 | TBD | Pending |
-| ONBOARD-11 | TBD | Pending |
+| DESIGN-01 | Phase 5 | Pending |
+| DESIGN-02 | Phase 5 | Pending |
+| DESIGN-03 | Phase 5 | Pending |
+| DESIGN-04 | Phase 5 | Pending |
+| DESIGN-05 | Phase 5 | Pending |
+| DESIGN-06 | Phase 5 | Pending |
+| DESIGN-07 | Phase 5 | Pending |
+| DESIGN-08 | Phase 5 | Pending |
+| CAPTURE-08 | Phase 6 | Pending |
+| CAPTURE-09 | Phase 6 | Pending |
+| CAPTURE-10 | Phase 6 | Pending |
+| CAPTURE-11 | Phase 6 | Pending |
+| CAPTURE-12 | Phase 6 | Pending |
+| CAPTURE-13 | Phase 6 | Pending |
+| DECIDE-01 | Phase 7 | Pending |
+| DECIDE-02 | Phase 7 | Pending |
+| DECIDE-03 | Phase 7 | Pending |
+| DECIDE-04 | Phase 7 | Pending |
+| DECIDE-05 | Phase 7 | Pending |
+| COOK-06 | Phase 8 | Pending |
+| COOK-07 | Phase 8 | Pending |
+| COOK-08 | Phase 8 | Pending |
+| COOK-09 | Phase 8 | Pending |
+| COOK-10 | Phase 8 | Pending |
+| COOK-11 | Phase 8 | Pending |
+| COOK-12 | Phase 8 | Pending |
+| ONBOARD-07 | Phase 9 | Pending |
+| ONBOARD-08 | Phase 9 | Pending |
+| ONBOARD-09 | Phase 9 | Pending |
+| ONBOARD-10 | Phase 9 | Pending |
+| ONBOARD-11 | Phase 9 | Pending |
 
 **Coverage:**
 - v0.2 requirements: 31 total
-- Mapped to phases: 0 (filled by roadmap)
-- Unmapped: 31 ⚠️ (will be 0 after roadmap)
+- Mapped to phases: 31 ✓
+- Unmapped: 0
+- Duplicates: 0
+
+**Per-phase counts:**
+- Phase 5 (Design system foundation): 8 requirements (DESIGN × 8)
+- Phase 6 (Capture surfaces polish): 6 requirements (CAPTURE × 6)
+- Phase 7 (Decide polish): 5 requirements (DECIDE × 5)
+- Phase 8 (Cook polish): 7 requirements (COOK × 7)
+- Phase 9 (Onboarding + identity polish): 5 requirements (ONBOARD × 5)
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-08 — v0.2 milestone opened*
+*Last updated: 2026-05-08 — v0.2 roadmap traceability filled by roadmapper (5 phases, 31 mappings)*
