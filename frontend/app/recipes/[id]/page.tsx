@@ -54,6 +54,12 @@ export default function RecipeDetailPage() {
   }
 
   const refreshPhotoUrls = useCallback(async (r: Recipe) => {
+    // TODO(productize): D-05 living image extends to the detail-page hero
+    // once we surface r.last_cooked_photo_path here. The path needs the
+    // cooking-log signed-URL helper (path layout cooking-logs/...). For v0.1
+    // the living image surfaces on RecipeCard list view only — the detail
+    // page keeps the existing recipe.photo_paths gallery. See 04-CONTEXT.md
+    // and 04-02-PLAN.md objective for the scope rationale.
     if (r.photo_paths.length === 0) {
       setPhotoUrls([]);
       return;

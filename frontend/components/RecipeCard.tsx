@@ -13,12 +13,18 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeFr } from "@/lib/datetime";
 import { getSignedPhotoUrl } from "@/lib/recipes";
+import { getCookingLogSignedPhotoUrl } from "@/lib/cooking";
 import type { Recipe } from "@/lib/recipes";
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const t = useTranslations("recipes");
   // Derive the photo-path key from props; effect runs only when it changes.
-  const firstPath = recipe.photo_paths[0] ?? "";
+  // D-05 living image: prefer the most recent cooking-log photo over the
+  // canonical recipe photo so the library list reflects "your own food".
+  const firstPath =
+    recipe.last_cooked_photo_path ??
+    recipe.photo_paths[0] ??
+    "";
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -29,7 +35,26 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
       return;
     }
     let alive = true;
-    getSignedPhotoUrl(recipe.id, firstPath)
+    // D-05: living image — the path may be either a recipe photo
+    // (recipes/{id}/{uuid}.ext) or a cooking-log photo
+    // (cooking-logs/{household_id}/{log_id}/{uuid}.ext). The cooking-log
+    // path needs the cooking-log signed-URL endpoint because the
+    // recipe-photo endpoint validates path-on-recipe (T-04-01-02).
+    // We don't have logId in props, so we extract it from the path itself —
+    // safe because the path layout is server-controlled (see
+    // backend/app/services/storage.py upload_cooking_log_photo). Layout:
+    // cooking-logs/{household_id}/{log_id}/{uuid}.{ext} — segs[2] = log_id.
+    const isCookingLogPath = firstPath.startsWith("cooking-logs/");
+    const urlPromise = isCookingLogPath
+      ? (async () => {
+          const segs = firstPath.split("/");
+          // segs[0] = "cooking-logs", segs[1] = household_id, segs[2] = log_id
+          const logId = segs[2];
+          if (!logId) throw new Error("malformed cooking-log path");
+          return getCookingLogSignedPhotoUrl(logId, firstPath);
+        })()
+      : getSignedPhotoUrl(recipe.id, firstPath);
+    urlPromise
       .then((url) => {
         if (alive) setSrc(url);
       })
