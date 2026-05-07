@@ -12,4 +12,4 @@ in ``app.main``. Routers are thin HTTP adapters — domain logic lives in
     * ``cooking_logs``  — start cooking + active session lookup (plan 03-02)
 """
 
-from app.routers import cooking_logs, shortlist, votes  # noqa: F401
+from app.routers import cooking_logs, push, shortlist, votes  # noqa: F401

@@ -7,6 +7,11 @@ the wire format can evolve without leaking column-level details.
 """
 
 from app.schemas.cooking_log import CookingLogResponse  # noqa: F401
+from app.schemas.push import (  # noqa: F401
+    PushSubscribeResponse,
+    PushSubscriptionKeys,
+    PushSubscriptionRequest,
+)
 from app.schemas.shortlist import (  # noqa: F401
     RegenerateRequest,
     ShortlistResponse,
