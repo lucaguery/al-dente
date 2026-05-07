@@ -9,7 +9,8 @@ through ``broadcast_to_household(household_id, event_type, payload)``. The
 v0.1 event types are (CLAUDE.md "Architecture invariants" #4):
 
     * ``recipe.created``   — routers/recipes.py (W1, plan 01-08)
-    * ``recipe.promoted``  — capture-pipeline BackgroundTask (W2)
+    * ``recipe.promoted``  — services/llm.py BackgroundTask (W2 plan 02-02)
+    * ``recipe.updated``   — routers/recipes.py PUT handler (W1, plan 01-08)
     * ``vote.created``     — votes router (W3)
 
 Frame shape on the wire (must match frontend ws.ts byte-for-byte; see plan
