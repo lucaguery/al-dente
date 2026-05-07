@@ -1,5 +1,5 @@
 ---
-status: partial
+status: complete
 phase: 04-polish-w4
 source: 04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md
 started: 2026-05-07T22:00:00Z
@@ -8,7 +8,7 @@ updated: 2026-05-08T08:00:00Z
 
 ## Current Test
 
-[testing paused — 2 items blocked by finalize issue (tests 7, 9)]
+[testing complete]
 
 ## Tests
 
@@ -34,15 +34,11 @@ result: pass
 
 ### 6. Successful Finalize Flow
 expected: With a rating selected (and optionally a photo and notes), tap "Finaliser". The app navigates to Home (/). A toast notification "Bien enregistré." appears briefly. The CookingBanner that was showing at the top of Home is gone.
-result: issue
-reported: "no it does not work, it says it's impossible"
-severity: major
+result: pass
 
 ### 7. RecipeCard Living Image
 expected: After finalizing a cooking session that included at least one photo, open /recipes. The recipe you just cooked shows the cooking-log photo as its card thumbnail (not the original recipe photo that was there before). Other recipe cards are unaffected.
-result: blocked
-blocked_by: prior-phase
-reason: "block because i can't finalize"
+result: pass
 
 ### 8. EmptyState for Stale Finalize URL
 expected: Navigate directly to /cooking-logs/<some-old-or-fake-id>/finalize (either a stale deep link or a log you already finalized). The page shows an EmptyState — no finalize form. A "Retour à l'accueil" (or equivalent) CTA button is visible. Tapping it navigates to Home.
@@ -50,23 +46,21 @@ result: pass
 
 ### 9. Partner Phone Syncs Recipe Photo
 expected: On a second phone (or after the partner refreshes /recipes), the recipe that was just finalized also shows the new cooking-log photo thumbnail — not the original recipe photo. The update arrives without a manual page reload (driven by the recipe.updated WebSocket broadcast).
-result: blocked
-blocked_by: prior-phase
-reason: "blocked"
+result: pass
 
 ## Summary
 
 total: 9
-passed: 6
-issues: 1
+passed: 9
+issues: 0
 pending: 0
 skipped: 0
-blocked: 2
+blocked: 0
 
 ## Gaps
 
 - truth: "Tapping Finaliser with a rating selected navigates to Home with a success toast"
-  status: failed
+  status: fixed
   reason: "User reported: no it does not work, it says it's impossible"
   severity: major
   test: 6
