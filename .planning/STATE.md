@@ -82,6 +82,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260507-g0k | UI polish: BottomNav safe-area fix, brand rose #F43F5E, home hero, RecipeCard polish | 2026-05-07 | 1702af2 | [260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe](./quick/260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe/) |
+| 260507-hbw | Module-level SWR cache for /recipes + /inbox — instant nav, silent revalidation | 2026-05-07 | de7ec38 | [260507-hbw-module-level-stale-while-revalidate-cach](./quick/260507-hbw-module-level-stale-while-revalidate-cach/) |
 
 ### Blockers/Concerns
 
