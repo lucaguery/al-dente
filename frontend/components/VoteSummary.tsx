@@ -46,14 +46,25 @@ type RowState = {
   partnerVote: "yes" | "no" | undefined;
 };
 
-function stateClass(state: VoteState): string {
+// Phase 7 / DECIDE-03 — 5-state vote-chip pill class strings.
+// Locked color mapping per 07-UI-SPEC §"Color > Vote-chip color mapping".
+// Pill shape contract (all 5 states): inline-flex items-center rounded-full
+// px-2.5 py-0.5 text-sm font-medium h-8. Read-only state indicators (NOT
+// tap targets); the D-08 48px floor explicitly excludes non-interactive chrome.
+function chipClass(state: VoteState): string {
+  const base =
+    "inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium h-8 w-fit";
   switch (state) {
     case "valide":
-      return "text-emerald-700 dark:text-emerald-300";
+      return `${base} bg-[var(--color-valide-tint)] text-foreground border border-emerald-500/30`;
     case "pressenti":
-      return "text-amber-700 dark:text-amber-300";
-    default:
-      return "text-foreground-muted";
+      return `${base} bg-primary/15 text-primary border border-primary/40`;
+    case "conteste":
+      return `${base} bg-destructive/10 text-destructive/80 border border-destructive/30`;
+    case "rejete":
+      return `${base} bg-muted text-muted-foreground line-through`;
+    case "sans_avis":
+      return `${base} bg-transparent text-muted-foreground border border-border`;
   }
 }
 
@@ -112,7 +123,7 @@ export function VoteSummary({
 
   return (
     <div className="flex flex-col flex-1 px-6 pt-6 pb-24 gap-6">
-      <h2 className="text-xl font-semibold leading-7">{t("heading")}</h2>
+      <h2 className="text-title">{t("heading")}</h2>
 
       <div className="flex flex-col gap-3">
         {rows.map((row) => (
@@ -124,9 +135,7 @@ export function VoteSummary({
               <span className="text-base font-semibold leading-6 line-clamp-1">
                 {row.recipe.title}
               </span>
-              <span
-                className={`text-sm font-medium leading-5 ${stateClass(row.state)}`}
-              >
+              <span className={chipClass(row.state)}>
                 {tState(row.state)}
               </span>
             </div>
@@ -193,7 +202,7 @@ export function VoteSummary({
         <Button
           type="button"
           variant="ghost"
-          className="h-11"
+          className="h-12"
           onClick={onRegenerate}
         >
           <RotateCw size={16} className="mr-2" />
