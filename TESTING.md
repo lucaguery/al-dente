@@ -1,21 +1,32 @@
 # Testing — Al Dente
 
-**Goal:** Make the shipped v0.1 / v0.2 PWA testable end-to-end on a fresh checkout via a one-command synthetic seed and a committed Playwright suite. From a clean clone, a green run is **4 commands**.
+**Goal:** Make the shipped v0.1 / v0.2 PWA testable end-to-end on a fresh checkout via a one-command synthetic seed and a committed Playwright suite. From a clean clone, a green run is **4 bootstrap commands** plus a one-time env-file load (≤ 5 total per ROADMAP success criterion #1).
 
 This document is the entry point for v0.2.1 testing. It is NOT a tutorial — it assumes Docker, Node 24+, and `uv` are already on your `$PATH` (see `.planning/phases/10-e2e-test-infrastructure/10-RESEARCH.md` for the full env-availability matrix). Every command is local-only; `feedback_no_manual_vercel_deploy.md` applies — this milestone never touches Railway, Vercel, or production Supabase.
 
-## Quick start (4 commands)
+## Quick start
 
 Run from the repo root after a fresh `git clone`:
 
 ```bash
+# (one-time per shell session) load the test env contract — sets ENVIRONMENT=test,
+# DATABASE_URL_TEST, SEED_AUTH_TOKEN, NEXT_PUBLIC_API_BASE. Without this, alembic +
+# seed will resolve your dev `backend/.env` and try to hit production Supabase.
+set -a; source .env.test.example; set +a
+
+# (1) test Postgres on :5433
 docker compose -f docker-compose.test.yml up -d
+# (2) backend deps + schema + seed
 (cd backend && uv sync && uv run alembic upgrade head && uv run seed)
+# (3) frontend deps + Chromium
 (cd frontend && npm ci && npx playwright install --with-deps chromium)
+# (4) run the suite
 (cd frontend && npm run test:e2e)
 ```
 
-Total wall-clock on a clean machine: ~3-5 minutes (mostly Playwright Chromium download + Next.js first compile). Subsequent runs reuse the volume + the install: ~60-90 seconds.
+> **Why the env load is its own step:** pydantic-settings auto-loads `backend/.env` (your dev file with the prod Supabase URL). The `ENVIRONMENT=test` switch in `backend/app/config.py` only fires when `ENVIRONMENT` is explicitly `test` in the process env — it does NOT auto-prefer `.env.test.example`. The seed CLI's hard-refusal guard (T-10-01, plan 10-03) will stop you cold if the URL doesn't contain `aldente_test`, but you'll burn time on alembic first. Sourcing the file is the cleanest path. If you prefer, copy `.env.test.example` to `.env.test` (git-ignored) once and source that instead.
+
+Total wall-clock on a clean machine: ~3-5 minutes (mostly Playwright Chromium download + Next.js first compile). Subsequent runs reuse the volume + the install: ~60-90 seconds. The env load takes < 1ms.
 
 The HTML report opens automatically on first failure (and is regenerated under `frontend/playwright-report/` on every run). To open it manually after a green run:
 
@@ -25,14 +36,14 @@ The HTML report opens automatically on first failure (and is regenerated under `
 
 ## Environment variables
 
-All variables live in `.env.test.example` at the repo root (committed, no secrets). Copy to `.env.test` (git-ignored) if you need to override defaults. The 4 variables and where each is consumed:
+All four variables live in `.env.test.example` at the repo root (committed, no secrets). Nothing reads this file automatically — you load it with `set -a; source .env.test.example; set +a` once per shell session (Quick Start step 0). Copy it to `.env.test` (git-ignored) if you need to keep local overrides.
 
-| Variable | Default | Consumed by | Purpose |
-|----------|---------|-------------|---------|
-| `ENVIRONMENT` | `test` | `backend/app/config.py`, `backend/app/services/llm.py`, `backend/app/services/storage.py`, `backend/app/cli/seed.py` | Switches backend into test mode: DB pointer, LLM stub, storage stub, seed guard |
+| Variable | Value in `.env.test.example` | Consumed by | Purpose |
+|----------|------------------------------|-------------|---------|
+| `ENVIRONMENT` | `test` | `backend/app/config.py`, `backend/app/services/llm.py`, `backend/app/services/storage.py`, `backend/app/cli/seed.py` | Switches backend into test mode: DB pointer, LLM stub, storage stub, seed guard. **Without this set in the process env, `backend/.env` (your dev file) wins and alembic + seed target production Supabase.** |
 | `DATABASE_URL_TEST` | `postgresql+psycopg2://postgres:postgres@localhost:5433/aldente_test` | `backend/app/config.py` (overwrites `database_url` when `ENVIRONMENT=test`) | Test Postgres connection string. **MANDATORY** — the seed CLI HARD-REFUSES to run unless `aldente_test` appears in the resolved URL (T-10-05 mitigation, see plan 10-03) |
 | `SEED_AUTH_TOKEN` | `test-token-luca` | `backend/app/cli/seed.py` (sets `Member.auth_token`); `frontend/playwright.config.ts` (injects as Bearer header on the `seeded` Playwright project) | Single source of truth for the test member's auth token. Bearer header bypasses onboarding for all specs except `invite-code-happy-path.spec.ts` (which exercises the real cookie flow under the `fresh` project) |
-| `NEXT_PUBLIC_API_BASE` | `http://localhost:8000` | Frontend `npm run dev` (via `playwright.config.ts` webServer.env) | Points the Next.js dev server at the test backend rather than production |
+| `NEXT_PUBLIC_API_BASE` | `http://localhost:8000` | Frontend `npm run dev` (via `playwright.config.ts` webServer.env) | Points the Next.js dev server at the test backend rather than production. **Note:** `playwright.config.ts:107` pins this to `''` for its own webServer (so the Next.js `/api/*` rewrite proxies to the local backend); the value in `.env.test.example` is for ad-hoc `npm run dev` outside Playwright. |
 
 **Setting overrides:** prefer exporting in your shell. Example:
 
@@ -102,6 +113,19 @@ PGPASSWORD=postgres psql -h localhost -p 5433 -U postgres -d aldente_test
 ```
 
 ## Troubleshooting
+
+### alembic / seed tries to connect to `aws-1-eu-central-1.pooler.supabase.com`
+**Symptom:** `uv run alembic upgrade head` (or `uv run seed`) fails with `psycopg2.OperationalError: connection to server at "aws-1-...pooler.supabase.com" ... Connection refused`.
+**Cause:** `ENVIRONMENT=test` is not in the process env, so `backend/app/config.py`'s switch never fires and pydantic-settings loads `backend/.env` (your dev file with the prod Supabase URL). The free-tier project may also be paused.
+**Fix:** From the repo root, load the test env contract before running anything:
+
+```bash
+set -a; source .env.test.example; set +a
+echo $ENVIRONMENT  # should print: test
+echo $DATABASE_URL_TEST  # should contain: aldente_test
+```
+
+Then re-run from step 1 of the Quick start. The seed's hard-refusal guard (T-10-01) will stop you cold if the URL still resolves to anything other than `aldente_test` — that's the safety net working as intended.
 
 ### Docker port conflict on 5433
 **Symptom:** `docker compose -f docker-compose.test.yml up -d` fails with `bind: address already in use` for port 5433.
