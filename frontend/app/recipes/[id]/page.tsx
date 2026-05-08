@@ -16,6 +16,7 @@ import { ChevronLeft, FileQuestion, Mic, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/EmptyState";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { VoiceModifySheet } from "@/components/VoiceModifySheet";
@@ -223,32 +224,28 @@ export default function RecipeDetailPage() {
           </div>
         </header>
 
-        {/* Hero — photo gallery or empty placeholder */}
+        {/* Hero — full-bleed photo + paper-grain overlay strip OR no-photo Card fallback */}
         {photoUrls.length > 0 ? (
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-6 py-4">
-            {photoUrls.map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element -- signed URL
-              <img
-                key={i}
-                src={url}
-                alt=""
-                className="h-64 w-64 rounded-lg object-cover snap-start flex-shrink-0"
-              />
-            ))}
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
+            <img
+              src={photoUrls[0]}
+              alt=""
+              className="aspect-[4/3] w-full rounded-b-2xl object-cover"
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-card/85 backdrop-blur-sm paper-grain px-6 py-4 rounded-b-2xl">
+              <h1 className="text-display text-foreground">{recipe.title}</h1>
+            </div>
           </div>
         ) : (
-          <div className="mx-6 my-4 h-44 rounded-lg bg-surface-muted flex items-center justify-center text-sm text-foreground-muted">
-            {t("no_photo")}
-          </div>
+          <Card className="paper-grain shadow-card mx-6 my-4 px-6 py-6">
+            <h1 className="text-display text-foreground">{recipe.title}</h1>
+          </Card>
         )}
 
-        <div className="px-6 flex flex-col gap-6 pb-24">
-          <h1 className="text-[28px] font-semibold tracking-tight leading-tight">
-            {recipe.title}
-          </h1>
-
-          {/* Meta row: cuisine, moods, protein, prep/servings */}
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="px-6 flex flex-col gap-6 pb-24 mt-6">
+          {/* Metadata pill row — cuisine, moods, protein, prep/servings */}
+          <div className="flex flex-wrap gap-2 items-center">
             {recipe.cuisine ? (
               <Badge variant="secondary">{recipe.cuisine}</Badge>
             ) : null}
