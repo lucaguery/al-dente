@@ -140,7 +140,7 @@ export function PhotoCaptureTab() {
                   type="button"
                   aria-label={tUploader("remove_label")}
                   onClick={() => removeFile(slot.idx)}
-                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-foreground/80 text-background flex items-center justify-center"
+                  className="absolute top-1 right-1 h-7 w-7 rounded-full bg-foreground/80 text-background flex items-center justify-center before:absolute before:-inset-2.5 before:content-['']"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -155,7 +155,7 @@ export function PhotoCaptureTab() {
                     type="button"
                     disabled={submitting}
                     aria-label={tUploader("add_label")}
-                    className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center disabled:opacity-50"
+                    className="paper-grain h-24 w-24 rounded-lg border-2 border-dashed border-primary/30 flex items-center justify-center disabled:opacity-50"
                   >
                     <Plus className="h-6 w-6 text-muted-foreground" />
                   </button>
@@ -167,7 +167,7 @@ export function PhotoCaptureTab() {
                   <div className="flex flex-col gap-2 p-4 pt-0">
                     <Button
                       variant="secondary"
-                      className="h-11"
+                      className="h-12"
                       onClick={() => fileCameraRef.current?.click()}
                     >
                       <Camera className="h-4 w-4 mr-2" />
@@ -175,7 +175,7 @@ export function PhotoCaptureTab() {
                     </Button>
                     <Button
                       variant="secondary"
-                      className="h-11"
+                      className="h-12"
                       onClick={() => fileLibraryRef.current?.click()}
                     >
                       <ImageIcon className="h-4 w-4 mr-2" />
@@ -218,7 +218,7 @@ export function PhotoCaptureTab() {
 
       <Button
         type="button"
-        className="h-11 w-full"
+        className="h-12 w-full"
         disabled={files.length === 0 || submitting}
         onClick={submit}
       >

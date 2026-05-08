@@ -200,7 +200,7 @@ export function PhotoUploader({ recipeId, cookingLogId, paths, onChange }: Props
                 type="button"
                 aria-label={t("remove_label")}
                 onClick={() => removePhoto(slot.path)}
-                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-foreground/80 text-background flex items-center justify-center"
+                className="absolute top-1 right-1 h-7 w-7 rounded-full bg-foreground/80 text-background flex items-center justify-center before:absolute before:-inset-2.5 before:content-['']"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -215,7 +215,7 @@ export function PhotoUploader({ recipeId, cookingLogId, paths, onChange }: Props
                   type="button"
                   disabled={(!recipeId && !cookingLogId) || uploading}
                   aria-label={t("add_label")}
-                  className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center disabled:opacity-50"
+                  className="paper-grain h-24 w-24 rounded-lg border-2 border-dashed border-primary/30 flex items-center justify-center disabled:opacity-50"
                 >
                   <Plus className="h-6 w-6 text-muted-foreground" />
                 </button>
