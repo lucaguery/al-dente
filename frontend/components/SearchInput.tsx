@@ -73,20 +73,26 @@ export function SearchInput({ onQueryChange }: Props) {
     scheduleSearch("");
   };
 
+  // NOTE: paper-grain is intentionally NOT applied to the wrapper.
+  // globals.css `.paper-grain > * { position: relative }` would override the
+  // absolute positioning of the Search icon and the right-side controls,
+  // pushing them out of the input vertically. The Input's own bg + focus
+  // ring carry enough visual texture; the parent surface (recipes/page.tsx
+  // already in a paper-grain context) provides the warm-paper backdrop.
   return (
-    <div className="relative paper-grain rounded-xl">
+    <div className="relative">
       <Search
         aria-hidden
-        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted"
+        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted z-10 pointer-events-none"
       />
       <Input
         value={value}
         onChange={onChange}
         placeholder={t("search_placeholder")}
-        className="pl-10 pr-10 h-12 focus:ring-2 focus:ring-primary/30"
+        className="pl-10 pr-12 h-12 rounded-xl focus:ring-2 focus:ring-primary/30"
         aria-label={t("search_placeholder")}
       />
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center z-10">
         {pending && value.length > 0 ? (
           <Loader2
             aria-hidden
@@ -99,7 +105,7 @@ export function SearchInput({ onQueryChange }: Props) {
             variant="ghost"
             aria-label={t("search_clear")}
             onClick={onClear}
-            className="h-12 w-12"
+            className="h-10 w-10"
             type="button"
           >
             <X className="h-4 w-4" />

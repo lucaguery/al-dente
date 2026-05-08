@@ -12,7 +12,7 @@
 // 03-UI-SPEC.md §"Home tab content tree" + §"Interaction Patterns".
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
@@ -334,9 +334,18 @@ export function HomeDecide() {
 
   // ── Render guards ───────────────────────────────────────────────────────
   // While the session is loading or the initial fetch is in flight, render
-  // nothing. OnboardingGuard upstream already gates "unauthenticated".
+  // a centered terracotta spinner so the screen never reads as blank on
+  // first paint (especially noticeable on cold launch from PWA standalone).
+  // OnboardingGuard upstream already gates "unauthenticated".
   if (!shortlistLoaded || !me || !partner) {
-    return null;
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center px-6">
+        <Loader2
+          aria-hidden
+          className="h-8 w-8 animate-spin text-primary"
+        />
+      </div>
+    );
   }
 
   const cookingBannerVisible = activeLog !== null && !bannerSkipped;
