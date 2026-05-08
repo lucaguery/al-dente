@@ -292,6 +292,48 @@
     line-height: 1.4;
     color: var(--foreground-muted);
   }
+
+  /* Phase 5 paper-grain texture (DESIGN-04). Single SVG asset at
+     /textures/paper-grain.svg (Plan 02), surfaced via ::before pseudo so the
+     noise sits behind content without affecting layout. The blend mode
+     `multiply` darkens the cream surface (paper fibers absorbing light)
+     rather than overlaying gray (which would read as dust). 6% opacity is
+     the "subtle warm noise" target — perceptible up close, invisible from
+     across the room. `border-radius: inherit` makes the overlay respect the
+     parent's corner radius so the grain doesn't leak past rounded card
+     edges. Applied by Plan 05 to Card / Dialog / Sheet / Popover content
+     only — never to full-page backgrounds, buttons, or chrome.
+     Per UI-SPEC §Paper-Grain "CSS application" verbatim. */
+  .paper-grain {
+    position: relative;
+  }
+  .paper-grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url('/textures/paper-grain.svg');
+    background-repeat: repeat;
+    background-size: 240px 240px;
+    opacity: 0.06;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
+  .paper-grain > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Phase 5 dark-mode paper-grain override (DESIGN-04). In dark mode the
+   physical metaphor inverts — paper fibers catch light against a dark
+   surface — so opacity raises to 10% and blend mode flips to `overlay` to
+   lighten rather than darken. Lives outside `@layer utilities` so its
+   cascade weight matches other `.dark` overrides elsewhere. */
+.dark .paper-grain::before {
+  opacity: 0.10;
+  mix-blend-mode: overlay;
 }
 
 /* UI-SPEC §Motion — `prefers-reduced-motion` is non-negotiable. Replace
