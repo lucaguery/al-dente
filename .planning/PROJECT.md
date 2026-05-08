@@ -18,6 +18,8 @@ Both household members have a fully working app installed on their iPhones. The 
 
 **v0.2 Phase 6 shipped** — 2026-05-08. Capture surfaces polished: 5-tab capture entry (Quick / Full / Voice / Photo / URL) and the drafts inbox now consume the Phase 5 design system (paper-grain on Card surfaces, terracotta accents, Fraunces display + IBM Plex Sans body). PhotoUploader CAPTURE-11 W4 tap-target gap closed (sheet `Caméra` / `Photothèque` at h-12, X-overlay 28px chrome + 48px hit-pad). D-Voice deviation now anchored by a persistent paper-grain Card with Fraunces italic headline. Drafts inbox uses framer-motion `AnimatePresence` for `recipe.created` slideUp + `recipe.promoted` Badge cross-fade. Phase 5 deferrals closed (font-heading → font-display sweep, alias removal in globals.css, transitions import in /styleguide). Code review: 0 critical / 0 warning remaining (all 3 warnings auto-fixed). UI audit 22/24 (meets target).
 
+**v0.2 Phase 7 shipped** — 2026-05-08. Decide flow polished: HomeDecide gets a Fraunces-italic display-serif date header (locale-aware via `Intl.DateTimeFormat('fr-FR')`); ShortlistCard now reads as "photo printed onto a recipe card" via paper-grain frame + `rounded-t-2xl` photo + warm shadows; framer-motion `springSnap` (240/28/1.1) gives the swipe deck a paper-physics feel without rewriting the gesture; the 5 computed vote states (Validé / Pressenti / Contesté / Rejeté / Sans avis) now have a locked color story (emerald reserved for Validé, terracotta for "leaning yes", muted destructive for active dispute, neutral for off-the-table, ghost border for pending); the "Tu décides" delegation surface and the ColdStartChip body now mirror the Phase 6 D-Voice callout pattern. DECIDE-05 W4 ColdStartChip dismiss raised to h-12. DECIDE-03 token reconciliation closed via 1-line invariant-lock comment at `--color-valide-tint`. Code review: 0 critical / 0 warning. UI audit 22/24 (matches target). ShortlistDeck.tsx unchanged at 141 LOC (no structural rewrite).
+
 **Behavioral validation gate:** ≥ 2 weeks of daily use by both members (the v0.1 definition of done per SPEC.md). This is the next observable milestone before v0.2 planning begins.
 
 **Infrastructure:** Next.js 16 PWA on Vercel + FastAPI on Railway + Supabase Postgres + Storage. Auto-deploy on push to `main`. Free-tier hosting throughout.
@@ -45,7 +47,8 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 - ✅ **Phase 5 complete** — Re-themed design system foundation: tokens (terracotta + warm-cream + warm-taupe + ink), Fraunces + IBM Plex Sans typography, paper-grain texture anchor, warm two-layer shadows, motion language (`--ease-craft` + 150/280ms durations), 10/15 shadcn primitives re-themed, dev-only `/styleguide` acceptance gate. UI audit 23/24 (DESIGN-01..08 validated)
 - ✅ **Phase 6 complete** — All 5 capture surfaces + drafts inbox polished to the Slow Food artisanal system. CAPTURE-11 W4 tap-target gap closed (PhotoUploader sheet h-12 + 48px X-overlay hit-pad). D-Voice persistent callout (paper-grain Card + Fraunces italic headline) reinforces the keyboard-mic deviation. Drafts inbox uses AnimatePresence for `recipe.created` slideUp and `recipe.promoted` Badge cross-fade. Phase 5 font-heading deferrals closed. UI audit 22/24 (CAPTURE-08..13 validated)
-- Per-screen polish: voting + shortlist (Phase 7), recipe detail + cooking log (Phase 8), onboarding + settings + identity (Phase 9)
+- ✅ **Phase 7 complete** — Decide flow polished: Fraunces-italic date header on HomeDecide; ShortlistCard paper-grain frame + rounded-t-2xl photo + springSnap (240/28/1.1) for paper-physics swipe feel; 5-state vote-chip color story locked (emerald Validé / terracotta Pressenti / muted destructive Contesté / muted Rejeté / ghost Sans avis); "Tu décides" delegation Card mirrors the Phase 6 D-Voice callout. DECIDE-05 ColdStartChip dismiss raised to h-12. DECIDE-03 token reconciliation closed via invariant-lock comment. UI audit 22/24 (DECIDE-01..05 validated). ShortlistDeck unchanged at 141 LOC.
+- Per-screen polish: recipe detail + cooking log (Phase 8), onboarding + settings + identity (Phase 9)
 - Close W4 UI-REVIEW gaps inline as part of the polish pass
 - Demonstrable satisfaction of four design principles on every screen: Design Quality, Originality, Craft, Functionality
 
@@ -158,4 +161,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-08 — v0.2 Phase 6 (Capture surfaces polish) shipped at 22/24 UI score. CAPTURE-08..13 validated; W4 PhotoUploader gap closed. Phases 7–9 (decide / cook / onboarding polish) pending.*
+*Last updated: 2026-05-08 — v0.2 Phase 7 (Decide polish) shipped at 22/24 UI score. DECIDE-01..05 validated; W4 ColdStartChip gap closed; springSnap motion preset + 5-state vote-chip story locked. Phases 8–9 (cook / onboarding polish) pending.*
