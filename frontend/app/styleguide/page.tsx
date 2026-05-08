@@ -11,7 +11,7 @@ import { ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { toast } from "sonner";
 
-import { variants } from "@/lib/motion";
+import { variants, transitions } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
