@@ -97,7 +97,11 @@ export default function InboxPage() {
       });
     });
     // recipe.deleted broadcast → remove from drafts list if present.
-    const offDeleted = realtime.onEvent<{ id: string }>("recipe.deleted", (payload) => {
+    // Backend emits the full Recipe row per the realtime contract (services/realtime.py),
+    // matching the symmetry of recipe.created / recipe.updated / recipe.promoted. Typing
+    // this as Recipe (rather than `{ id: string }`) keeps client/server in lockstep so a
+    // future handler that depends on, e.g., `household_id` won't silently break.
+    const offDeleted = realtime.onEvent<Recipe>("recipe.deleted", (payload) => {
       setDrafts((prev) => {
         const next = prev.filter((p) => p.id !== payload.id);
         draftsCache = next;
