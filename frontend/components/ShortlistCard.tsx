@@ -27,6 +27,7 @@ import {
   SWIPE_THRESHOLD_PX,
   SWIPE_VELOCITY_PX_S,
 } from "@/lib/swipe-tokens";
+import { transitions } from "@/lib/motion";
 import type { Recipe } from "@/lib/recipes";
 import type { VoteValue } from "@/lib/votes";
 
@@ -128,14 +129,15 @@ export function ShortlistCard({
       }
       onDragEnd={dragEnabled ? handleDragEnd : undefined}
       whileTap={dragEnabled ? { cursor: "grabbing" } : undefined}
+      transition={isFront && !reducedMotion ? transitions.springSnap : undefined}
       className={
         isFront
-          ? "absolute inset-0 bg-card border border-border rounded-2xl shadow-card-hover overflow-hidden flex flex-col touch-pan-y"
-          : "absolute inset-0 bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col scale-[0.94] translate-y-3 opacity-60 pointer-events-none"
+          ? "absolute inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card-hover overflow-hidden flex flex-col touch-pan-y"
+          : "absolute inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col scale-[0.94] translate-y-3 opacity-60 pointer-events-none"
       }
     >
       {/* Photo region */}
-      <div className="relative aspect-[4/3] bg-surface-muted">
+      <div className="relative aspect-[4/3] bg-surface-muted rounded-t-2xl overflow-hidden">
         {primaryPhoto ? (
           // Note: photo_paths are bucket-relative; consumer (Plan 04) supplies signed URLs via
           // a wrapping component if needed. For now, render directly — placeholder behavior.

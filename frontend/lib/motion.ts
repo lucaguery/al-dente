@@ -17,6 +17,11 @@ export const durations = {
 export const transitions = {
   fast: { duration: durations.fast, ease: easeCraft } satisfies Transition,
   normal: { duration: durations.normal, ease: easeCraft } satisfies Transition,
+  // Phase 7 — paper-physics card snap-back. Slightly higher mass than the
+  // Framer Motion default reads as "card on a counter," not "rubber band."
+  // The spring damps naturally without an explicit bounce parameter.
+  // Per 07-UI-SPEC §Motion + 07-CONTEXT §"Swipe Deck Physics".
+  springSnap: { type: "spring", stiffness: 240, damping: 28, mass: 1.1 } satisfies Transition,
 } as const;
 
 export const variants = {
