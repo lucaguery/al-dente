@@ -197,6 +197,11 @@ def extract_from_transcript(transcript: str) -> GeminiExtractedRecipe:
     on the recipe row.
     """
 
+    # D-04 — deterministic test mode: skip Gemini, return canned data.
+    if settings.environment == "test":
+        from app.services.llm_fixtures import canned_voice_recipe
+        return canned_voice_recipe(transcript)
+
     response = _gemini().models.generate_content(
         model=_GEMINI_MODEL,
         contents=[_EXTRACT_PROMPT_VOICE, transcript],
@@ -219,6 +224,11 @@ def extract_from_photos(photo_bytes_list: list[bytes]) -> GeminiExtractedRecipe:
     here because Gemini auto-detects from the magic bytes regardless of the
     declared MIME — we just need a vaguely-image hint in the part metadata.
     """
+
+    # D-04 — deterministic test mode: skip Gemini, return canned data.
+    if settings.environment == "test":
+        from app.services.llm_fixtures import canned_photo_recipe
+        return canned_photo_recipe(len(photo_bytes_list))
 
     if not photo_bytes_list:
         raise ValueError("at least one photo required")
@@ -255,6 +265,11 @@ def apply_voice_modification(
     `recipe_json` is server-derived (read from the DB filtered by
     `member.household_id`) — never client-supplied (T-02-01-05 mitigation).
     """
+
+    # D-04 — deterministic test mode: skip Gemini, return canned data.
+    if settings.environment == "test":
+        from app.services.llm_fixtures import canned_modified_recipe
+        return canned_modified_recipe(recipe_json, transcript)
 
     response = _gemini().models.generate_content(
         model=_GEMINI_MODEL,
