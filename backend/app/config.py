@@ -11,6 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     database_url: str
+    database_url_test: str = ""  # Phase 10 D-02 — test-mode override
     cors_allowed_origins: str = "http://localhost:3000"
     supabase_url: str = ""
     supabase_service_role_key: str = ""
@@ -28,3 +29,9 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore[call-arg]
+
+# D-02 — switch URL in-place when in test mode. db.py and alembic/env.py both
+# read settings.database_url, so this single overwrite covers both paths
+# (Pitfall 6 mitigation — single field, single access path).
+if settings.environment == "test" and settings.database_url_test:
+    settings.database_url = settings.database_url_test
