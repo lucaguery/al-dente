@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 
 // Next.js 16: themeColor moved from `metadata` to the `viewport` export.
 export const viewport: Viewport = {
-  themeColor: "#F43F5E",
+  themeColor: "#C8553D",
   width: "device-width",
   initialScale: 1,
   // viewportFit=cover lets us paint into the iOS notch / home-indicator
