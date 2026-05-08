@@ -13,7 +13,7 @@ Patch milestone: one-command synthetic seed + committed Playwright suite coverin
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
-| 10 | E2E test infrastructure & synthetic seed | 6/7 | In Progress|  |
+| 10 | E2E test infrastructure & synthetic seed | 7/7 | Complete    | 2026-05-08 |
 
 ### Phase 10 — E2E test infrastructure & synthetic seed
 

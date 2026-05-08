@@ -1,9 +1,10 @@
 ---
-status: partial
+status: resolved
 phase: 10-e2e-test-infrastructure
 source: [10-VERIFICATION.md]
 started: 2026-05-09T00:30:00.000Z
-updated: 2026-05-09T00:30:00.000Z
+updated: 2026-05-09T01:30:00.000Z
+runtime_run: see 10-RUNTIME-NOTES.md (orchestrator-driven, full bootstrap → green)
 ---
 
 ## Current Test
@@ -24,7 +25,7 @@ procedure:
 4. (cd frontend && npm run test:e2e)
 ```
 
-result: [pending]
+result: [passed]
 
 ---
 
@@ -42,7 +43,7 @@ git diff --quiet frontend/components/ShortlistDeck.tsx
 # Expected: clean
 ```
 
-result: [pending]
+result: [passed]
 
 ---
 
@@ -60,7 +61,7 @@ git diff --quiet backend/app/routers/votes.py
 # Expected: clean
 ```
 
-result: [pending]
+result: [passed]
 
 ---
 
@@ -74,16 +75,16 @@ procedure:
 # Expected: 1 spec passes (invite-code-happy-path.spec.ts)
 ```
 
-result: [pending]
+result: [passed]
 
 ---
 
 ## Summary
 
 total: 4
-passed: 0
+passed: 4
 issues: 0
-pending: 4
+pending: 0
 skipped: 0
 blocked: 0
 
