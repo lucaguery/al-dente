@@ -139,7 +139,7 @@ export function CookingLogFinalize({ logId }: Props) {
       <header className="flex flex-col gap-1">
         <h1 className="text-title text-foreground">{t("page_title")}</h1>
         <p className="text-base text-foreground-muted line-clamp-1">
-          « {state.recipe.title} »
+          {t("recipe_subhead", { title: state.recipe.title })}
         </p>
       </header>
 
