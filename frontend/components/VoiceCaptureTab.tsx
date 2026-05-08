@@ -25,6 +25,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 import { postVoiceCapture } from "@/lib/recipes";
 
 export function VoiceCaptureTab() {
@@ -62,7 +63,17 @@ export function VoiceCaptureTab() {
 
   return (
     <div className="px-6 pt-6 pb-32 flex flex-col gap-6">
-      <p className="text-sm text-muted-foreground">{t("idle_helper")}</p>
+      {/* D-Voice deviation callout (CAPTURE-10): the keyboard-mic affordance
+          IS this card. iOS PWA standalone has no working browser speech-recognition
+          (D-Voice locked since Phase 2), so we do NOT render an in-app mic
+          button — the user dictates via the OS keyboard mic. The display-serif
+          italic headline at body size sits in the cookbook margin-note register
+          per Phase 6 UI-SPEC §Typography. */}
+      <Card className="paper-grain shadow-card border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-1.5">
+        <span className="font-display italic text-base text-foreground">
+          {t("idle_helper")}
+        </span>
+      </Card>
 
       <Textarea
         aria-label={t("transcript_aria")}
@@ -78,6 +89,7 @@ export function VoiceCaptureTab() {
         <Button
           type="button"
           variant="ghost"
+          className="h-12"
           onClick={handleRestart}
           disabled={!canRestart}
         >
@@ -86,6 +98,7 @@ export function VoiceCaptureTab() {
         <Button
           type="button"
           variant="default"
+          className="h-12"
           onClick={handleSend}
           disabled={!canSend}
         >
