@@ -344,6 +344,21 @@
     position: relative;
     z-index: 1;
   }
+
+  /* Phase 6 (CAPTURE-09) — hide scrollbar on the 5-tab capture row. Used at
+     `app/recipes/new/page.tsx`'s <TabsList>: the tab strip overflows
+     horizontally on narrow viewports and must scroll without painting a
+     scrollbar (cosmetically inert on iOS Safari, but visible on desktop
+     Safari, Linux browsers, and some Android Chromium configs). Tailwind v4
+     does not ship this utility built-in and the project does not vendor
+     `tailwind-scrollbar-hide`, so the rule is defined here. Canonical
+     spelling: `scrollbar-none` (matches the call site). */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Phase 5 dark-mode paper-grain override (DESIGN-04). In dark mode the
