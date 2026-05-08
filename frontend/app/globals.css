@@ -84,95 +84,102 @@
 }
 
 :root {
-  /* Warm cream theme — hue axis h≈60 gives a barely-warm off-white that reads
-     as "paper" rather than cold clinical white. All neutrals share the same
-     hue axis so the palette feels coherent, not muddy. */
+  /* Phase 5 (Slow Food artisanal) — terracotta primary on warm cream surface.
+     Hue axes: h≈60 on the cream background, h≈50 on warm-taupe neutrals
+     (drifts toward sienna), h≈35 on terracotta accent + faint terracotta
+     wash, h≈145 on the Validé emerald tint. All values per UI-SPEC §Color
+     "Final OKLCH values — light mode" — verbatim. */
   --background: oklch(0.985 0.008 60);
-  --foreground: oklch(0.18 0.01 60);
-  --card: oklch(0.995 0.004 60);
-  --card-foreground: oklch(0.18 0.01 60);
-  --popover: oklch(0.995 0.004 60);
-  --popover-foreground: oklch(0.18 0.01 60);
-  --primary: oklch(0.645 0.246 16.5);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.955 0.008 60);
-  --secondary-foreground: oklch(0.22 0.01 60);
-  --muted: oklch(0.955 0.008 60);
-  --muted-foreground: oklch(0.50 0.01 60);
-  --accent: oklch(0.955 0.008 60);
-  --accent-foreground: oklch(0.22 0.01 60);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.895 0.01 60);
-  --input: oklch(0.895 0.01 60);
-  --ring: oklch(0.645 0.246 16.5);
+  --foreground: oklch(0.22 0.018 50);
+  --card: oklch(0.992 0.006 60);
+  --card-foreground: oklch(0.22 0.018 50);
+  --popover: oklch(0.992 0.006 60);
+  --popover-foreground: oklch(0.22 0.018 50);
+  --primary: oklch(0.595 0.135 35);
+  --primary-foreground: oklch(0.985 0.008 60);
+  --secondary: oklch(0.945 0.012 50);
+  --secondary-foreground: oklch(0.28 0.015 50);
+  --muted: oklch(0.945 0.012 50);
+  --muted-foreground: oklch(0.50 0.014 50);
+  --accent: oklch(0.945 0.012 50);
+  --accent-foreground: oklch(0.28 0.015 50);
+  --destructive: oklch(0.55 0.20 25);
+  --border: oklch(0.88 0.012 50);
+  --input: oklch(0.88 0.012 50);
+  --ring: oklch(0.595 0.135 35);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.75rem;
-  --sidebar: oklch(0.975 0.006 60);
-  --sidebar-foreground: oklch(0.18 0.01 60);
-  --sidebar-primary: oklch(0.22 0.01 60);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.955 0.008 60);
-  --sidebar-accent-foreground: oklch(0.22 0.01 60);
-  --sidebar-border: oklch(0.895 0.01 60);
-  --sidebar-ring: oklch(0.645 0.246 16.5);
+  --sidebar: oklch(0.975 0.01 50);
+  --sidebar-foreground: oklch(0.22 0.018 50);
+  --sidebar-primary: oklch(0.28 0.015 50);
+  --sidebar-primary-foreground: oklch(0.985 0.008 60);
+  --sidebar-accent: oklch(0.945 0.012 50);
+  --sidebar-accent-foreground: oklch(0.28 0.015 50);
+  --sidebar-border: oklch(0.88 0.012 50);
+  --sidebar-ring: oklch(0.595 0.135 35);
 
-  /* UI-SPEC tokens — warm-tinted equivalents of zinc-100/zinc-600. */
-  --surface-muted: oklch(0.955 0.008 60);
-  --foreground-muted: oklch(0.50 0.01 60);
+  /* UI-SPEC tokens — warm-taupe equivalents (h≈50). */
+  --surface-muted: oklch(0.945 0.012 50);
+  --foreground-muted: oklch(0.50 0.014 50);
 
-  /* Brand-rose tint scale (light mode) — unchanged. */
-  --surface-rose-50: oklch(0.985 0.012 16.5);
-  --surface-rose-100: oklch(0.965 0.025 16.5);
+  /* Token names retained from v0.1 (`--surface-rose-*`); values shifted from
+     rose (h=16.5°) to faint terracotta wash (h≈35°) per UI-SPEC §Color
+     "Token preservation matrix". Cleanup of the legacy "rose" name is
+     deferred to Phase 6+. */
+  --surface-rose-50: oklch(0.97 0.022 35);
+  --surface-rose-100: oklch(0.94 0.045 35);
 
-  /* Phase 3 — Validé tint (light). Faint emerald wash, ≈ emerald-100/20. */
+  /* Phase 3 — Validé tint (light). Faint emerald wash, unchanged. */
   --valide-tint: oklch(0.93 0.07 145);
 }
 
 .dark {
-  /* Warm dark — same h≈60 hue axis as light mode, just very low lightness.
-     Cards read as lifted surfaces because background is warmer/darker. */
-  --background: oklch(0.14 0.012 60);
-  --foreground: oklch(0.96 0.006 60);
-  --card: oklch(0.19 0.01 60);
-  --card-foreground: oklch(0.96 0.006 60);
-  --popover: oklch(0.19 0.01 60);
-  --popover-foreground: oklch(0.96 0.006 60);
-  --primary: oklch(0.72 0.19 16.5);
-  --primary-foreground: oklch(0.14 0.012 60);
-  --secondary: oklch(0.24 0.01 60);
-  --secondary-foreground: oklch(0.96 0.006 60);
-  --muted: oklch(0.24 0.01 60);
-  --muted-foreground: oklch(0.68 0.008 60);
-  --accent: oklch(0.24 0.01 60);
-  --accent-foreground: oklch(0.96 0.006 60);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.19 16.5);
+  /* Phase 5 (Slow Food artisanal) — same hue axes as light mode, inverted
+     lightness. Background drifts toward terracotta-neighborhood (h≈50)
+     rather than cream-axis. Cards lift via warmer tone, not shadow. All
+     values per UI-SPEC §Color "Final OKLCH values — dark mode" verbatim. */
+  --background: oklch(0.16 0.012 50);
+  --foreground: oklch(0.94 0.008 50);
+  --card: oklch(0.21 0.014 50);
+  --card-foreground: oklch(0.94 0.008 50);
+  --popover: oklch(0.21 0.014 50);
+  --popover-foreground: oklch(0.94 0.008 50);
+  --primary: oklch(0.70 0.13 35);
+  --primary-foreground: oklch(0.16 0.012 50);
+  --secondary: oklch(0.26 0.012 50);
+  --secondary-foreground: oklch(0.94 0.008 50);
+  --muted: oklch(0.26 0.012 50);
+  --muted-foreground: oklch(0.66 0.010 50);
+  --accent: oklch(0.26 0.012 50);
+  --accent-foreground: oklch(0.94 0.008 50);
+  --destructive: oklch(0.65 0.18 25);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.70 0.13 35);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.19 0.01 60);
-  --sidebar-foreground: oklch(0.96 0.006 60);
-  --sidebar-primary: oklch(0.72 0.19 16.5);
-  --sidebar-primary-foreground: oklch(0.14 0.012 60);
-  --sidebar-accent: oklch(0.24 0.01 60);
-  --sidebar-accent-foreground: oklch(0.96 0.006 60);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.72 0.19 16.5);
+  --sidebar: oklch(0.21 0.014 50);
+  --sidebar-foreground: oklch(0.94 0.008 50);
+  --sidebar-primary: oklch(0.70 0.13 35);
+  --sidebar-primary-foreground: oklch(0.16 0.012 50);
+  --sidebar-accent: oklch(0.26 0.012 50);
+  --sidebar-accent-foreground: oklch(0.94 0.008 50);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.70 0.13 35);
 
-  --surface-muted: oklch(0.22 0.01 60);
-  --foreground-muted: oklch(0.68 0.008 60);
-  --surface-rose-50: oklch(0.20 0.02 16.5);
-  --surface-rose-100: oklch(0.24 0.03 16.5);
+  --surface-muted: oklch(0.24 0.012 50);
+  --foreground-muted: oklch(0.66 0.010 50);
+  --surface-rose-50: oklch(0.22 0.025 35);
+  --surface-rose-100: oklch(0.27 0.045 35);
 
-  /* Phase 3 — Validé tint (dark). Deeper emerald, ≈ emerald-900/30. */
+  /* Phase 3 — Validé tint (dark). Deeper emerald, unchanged. */
   --valide-tint: oklch(0.30 0.06 145);
 }
 
@@ -182,8 +189,8 @@
    No manual toggle ships in v0.1 — productize-later. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --surface-muted: oklch(0.22 0.01 60);
-    --foreground-muted: oklch(0.68 0.008 60);
+    --surface-muted: oklch(0.24 0.012 50);
+    --foreground-muted: oklch(0.66 0.010 50);
     /* surface-rose-* intentionally NOT overridden here — the `.dark` class
        handles them. Overriding only some tokens via media query while others
        stay class-gated causes a split-brain (dark hero on light body). */
