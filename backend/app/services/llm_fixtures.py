@@ -1,0 +1,89 @@
+"""Phase 10 D-04 — canned GeminiExtractedRecipe values for test mode.
+
+These shapes match what real Gemini returns for a French dictation; they're
+the same vocabulary literals the production code uses (mirror of enums).
+
+Architecture invariant #5 (raw inputs preserved) means callers still record
+the transcript / photo paths in source_capture; only the LLM extraction
+result is canned.
+"""
+
+from typing import Any
+
+from app.services.llm import (
+    GeminiExtractedRecipe,
+    GeminiIngredient,
+)
+
+
+def canned_voice_recipe(transcript: str) -> GeminiExtractedRecipe:
+    """Deterministic 'risotto' shape; ignores transcript content.
+
+    The transcript is preserved in source_capture by the caller; we don't
+    need to vary the output by transcript for v0.2.1 specs.
+    """
+    return GeminiExtractedRecipe(
+        title="Risotto aux champignons (test)",
+        ingredients=[
+            GeminiIngredient(name="riz arborio", quantity=300.0, unit="g"),
+            GeminiIngredient(name="champignons", quantity=400.0, unit="g"),
+            GeminiIngredient(name="bouillon de légumes", quantity=1.0, unit="L"),
+            GeminiIngredient(name="parmesan", quantity=50.0, unit="g"),
+        ],
+        steps=[
+            "Faire revenir l'oignon dans le beurre.",
+            "Ajouter le riz et nacrer.",
+            "Mouiller au bouillon louche par louche.",
+            "Incorporer les champignons et le parmesan.",
+        ],
+        prep_time_minutes=35,
+        servings=2,
+        cuisine="italian",
+        mood=["comfort"],
+        main_protein="none",
+        seasonality=["autumn", "winter"],
+    )
+
+
+def canned_photo_recipe(photo_count: int) -> GeminiExtractedRecipe:
+    """Deterministic 'tarte tatin' shape for photo capture spec."""
+    return GeminiExtractedRecipe(
+        title="Tarte Tatin (test)",
+        ingredients=[
+            GeminiIngredient(name="pommes", quantity=6.0, unit=None),
+            GeminiIngredient(name="sucre", quantity=150.0, unit="g"),
+            GeminiIngredient(name="beurre", quantity=80.0, unit="g"),
+            GeminiIngredient(name="pâte feuilletée", quantity=1.0, unit=None),
+        ],
+        steps=[
+            "Caraméliser le sucre avec le beurre.",
+            "Disposer les pommes.",
+            "Couvrir de pâte feuilletée.",
+            "Cuire 30 minutes à 200°C.",
+        ],
+        prep_time_minutes=60,
+        servings=6,
+        cuisine="french",
+        mood=["celebratory", "comfort"],
+        main_protein="none",
+        seasonality=["autumn"],
+    )
+
+
+def canned_modified_recipe(
+    recipe_json: dict[str, Any], transcript: str
+) -> GeminiExtractedRecipe:
+    """Echo the input recipe but mark prep_time_minutes as +10 to simulate a modification."""
+    return GeminiExtractedRecipe(
+        title=recipe_json.get("title", "Recette modifiée (test)"),
+        ingredients=[
+            GeminiIngredient(**i) for i in (recipe_json.get("ingredients") or [])
+        ] or None,
+        steps=recipe_json.get("steps"),
+        prep_time_minutes=(recipe_json.get("prep_time_minutes") or 30) + 10,
+        servings=recipe_json.get("servings"),
+        cuisine=recipe_json.get("cuisine"),
+        mood=recipe_json.get("mood") or [],
+        main_protein=recipe_json.get("main_protein"),
+        seasonality=recipe_json.get("seasonality") or [],
+    )
