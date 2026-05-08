@@ -13,8 +13,7 @@ import { Card } from "@/components/ui/card";
 // user shouldn't undo creation by going back. Done CTA replaces history
 // (router.replace) so back from `/` doesn't bounce here.
 // Phase 9 retheme: paper-grain body Card + Fraunces italic display title
-// + Fraunces italic terracotta invite-code identity signature
-// (`font-display italic text-3xl tracking-widest text-primary`) — this
+// + Fraunces italic terracotta invite-code identity signature — this
 // exact class string is repeated VERBATIM on the Settings invite-code
 // in Plan 03 for first-touch ↔ re-find consistency. h-12 floor on copy
 // + done buttons.
@@ -58,7 +57,7 @@ function ShareCodeInner() {
             first-touch ↔ re-find consistency. The cookbook-recipe-card-
             number gesture replaces the previous wide-tracked mono
             block. */}
-        <div className="font-display italic text-3xl tracking-widest text-center py-4 text-primary">
+        <div className="font-display italic text-3xl tracking-widest text-primary text-center py-4">
           {code}
         </div>
 
