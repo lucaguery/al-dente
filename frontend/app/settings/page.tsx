@@ -5,12 +5,20 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Copy, Check, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useSession } from "@/components/SessionProvider";
 import { MemberDot } from "@/components/MemberDot";
 
 // Phase 01.1 D-08: read-only settings screen with three blocks (household
 // name, invite code w/ copy, current member). Phase 01-foundations-w1
 // plan 01-10 adds the JSON export section per UI-SPEC §11 / RECIPE-08.
+//
+// Phase 09-03 (v0.2): restructured into three Card surfaces stacked at
+// gap-6 (Membre / Foyer / Sauvegarde mental model) with the Phase 9 identity
+// signature on the invite-code (Fraunces italic terracotta — byte-
+// identical mirror of share-code Plan 02). Tap-targets bumped to the
+// D-08 48px floor. Zero new i18n keys: existing field-labels carry the
+// section meaning per UI-SPEC §"Typography > Settings section title".
 //
 // Export uses raw `fetch()` instead of api<T>() because we need the
 // streamed Blob (not parsed JSON) and the Content-Disposition header.
@@ -96,60 +104,81 @@ export default function SettingsPage() {
         <h1 className="text-base font-semibold">{t("title")}</h1>
       </header>
 
-      <div className="flex flex-col gap-8 px-6 pt-6 pb-24">
-        {/* Household block */}
-        <div className="flex flex-col gap-2">
-          <span className="text-sm text-foreground-muted">
-            {t("household_name_label")}
-          </span>
-          <span className="text-lg font-medium">{session.household_name}</span>
-        </div>
+      <div className="flex flex-col gap-6 px-6 pt-6 pb-24">
 
-        {/* Invite code block — mirrors onboarding/share-code styling so user recognizes it */}
-        <div className="flex flex-col gap-3">
-          <span className="text-sm text-foreground-muted">
-            {t("invite_code_label")}
-          </span>
-          <div className="flex items-center gap-3">
-            <span
-              className="text-[28px] font-mono font-semibold tracking-[0.3em] uppercase"
-              aria-label={t("invite_code_aria")}
-            >
-              {session.invite_code}
-            </span>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onCopy}
-              aria-label={t("invite_code_copy_aria")}
-            >
-              {copied ? <Check size={20} /> : <Copy size={20} />}
-            </Button>
-          </div>
-          <p className="text-sm text-foreground-muted">
-            {t("invite_code_helper")}
-          </p>
-        </div>
-
-        {/* Current member block */}
-        <div className="flex flex-col gap-2">
+        {/* Card 1 — Membre. Member color attribution + name.
+            The "Membre" mental model is delivered by the Card grouping;
+            the existing `settings.member_label` ("Toi") field-label inside
+            carries the section meaning. NO new section-heading string. */}
+        <Card className="paper-grain shadow-card p-6 flex flex-col gap-2">
           <span className="text-sm text-foreground-muted">
             {t("member_label")}
           </span>
           <div className="flex items-center gap-3">
             <MemberDot colorHex={session.me.color_hex} />
-            <span className="text-lg font-medium">{session.me.name}</span>
+            <span className="text-base font-medium">{session.me.name}</span>
           </div>
-        </div>
+        </Card>
 
-        {/* Export block (UI-SPEC §11, RECIPE-08) */}
-        <div className="flex flex-col gap-3">
-          <h2 className="text-base font-semibold">
+        {/* Card 2 — Foyer. Household name + invite-code identity signature + copy affordance.
+            The invite-code rendering MIRRORS share-code (Plan 02) byte-for-byte
+            (Fraunces italic, terracotta, wide tracking — see the className below).
+            This is the single most identity-bearing class string in v0.2 — used
+            twice (share-code first-touch + Settings re-find) for recognition. */}
+        <Card className="paper-grain shadow-card p-6 flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-foreground-muted">
+              {t("household_name_label")}
+            </span>
+            <span className="text-base font-medium">{session.household_name}</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-foreground-muted">
+              {t("invite_code_label")}
+            </span>
+            <div className="flex items-center gap-3">
+              {/* IDENTITY SIGNATURE — verbatim mirror of share-code (Plan 02 §Surface 4).
+                  Replaces the previous monospace 28px wide-tracked uppercase register.
+                  The terracotta + Fraunces italic + wide-tracking combo is the
+                  "this is YOUR household monogram" gesture. */}
+              <span
+                className="font-display italic text-3xl tracking-widest text-primary"
+                aria-label={t("invite_code_aria")}
+              >
+                {session.invite_code}
+              </span>
+              {/* Copy Button — h-12 w-12 (UI-SPEC tap-target audit row).
+                  Bumped from default `size-8`. The Copy → Check icon swap on
+                  the 2-second setTimeout is preserved unchanged. */}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-12 w-12"
+                onClick={onCopy}
+                aria-label={t("invite_code_copy_aria")}
+              >
+                {copied ? <Check size={20} /> : <Copy size={20} />}
+              </Button>
+            </div>
+            <p className="text-sm text-foreground-muted">
+              {t("invite_code_helper")}
+            </p>
+          </div>
+        </Card>
+
+        {/* Card 3 — Sauvegarde. JSON export.
+            Replaces the previous flat block (lines 145-161). The
+            `settings.export_section_title` field-label inside carries the
+            section meaning ("Exporter mes données"). NO new section-heading. */}
+        <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
+          <span className="text-sm text-foreground-muted">
             {t("export_section_title")}
-          </h2>
+          </span>
           <p className="text-sm text-foreground-muted">{t("export_body")}</p>
+          {/* Export CTA — h-12 w-full (UI-SPEC tap-target audit row).
+              Bumped to the 48px D-08 floor. The onExport handler + disabled + aria-busy preserved. */}
           <Button
-            className="h-11 w-full"
+            className="h-12 w-full"
             variant="default"
             onClick={onExport}
             disabled={exporting}
@@ -158,7 +187,8 @@ export default function SettingsPage() {
             <Download className="h-4 w-4 mr-2" />
             {t("export_cta")}
           </Button>
-        </div>
+        </Card>
+
       </div>
     </section>
   );
