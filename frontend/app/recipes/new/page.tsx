@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
@@ -183,8 +184,10 @@ function Inner() {
         {/* RECIPE-02 optional photo. UI-SPEC §10's richer PhotoUploader
             requires a recipe id (post-save), so the quick-add pre-save
             stage uses a simpler native file input. The photo is held in
-            component state and uploaded in step 2 of submitQuick. */}
-        <div className="flex flex-col gap-1.5">
+            component state and uploaded in step 2 of submitQuick.
+            Phase 6 (CAPTURE-08): wrap in paper-grain Card so the row
+            reads as a recipe-card-on-the-counter alongside the form. */}
+        <Card className="paper-grain shadow-card p-4 flex flex-col gap-1.5">
           <Label htmlFor="quick-photo">{tPhoto("add_label")}</Label>
           <input
             id="quick-photo"
@@ -198,10 +201,10 @@ function Inner() {
               {quickPhoto.name}
             </p>
           )}
-        </div>
+        </Card>
         <div className="fixed bottom-16 inset-x-0 px-6 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 bg-background/80 backdrop-blur-sm border-t border-border z-30">
           <Button
-            className="h-11 w-full"
+            className="h-12 w-full"
             disabled={!quickTitle.trim() || quickStage !== null}
             onClick={submitQuick}
           >
