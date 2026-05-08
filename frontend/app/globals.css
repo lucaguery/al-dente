@@ -69,6 +69,7 @@
      axis h≈145 (emerald) deliberately distinct from the brand-rose accent
      so a "consensus reached" surface reads semantically without competing
      with the primary CTA. Per 03-UI-SPEC.md §"Phase 3 token additions". */
+  /* CANONICAL — DO NOT introduce `--color-validé-tint` (with French accent). DECIDE-03 invariant lock. */
   --color-valide-tint: var(--valide-tint);
 
   /* Phase 5 (Slow Food artisanal) — warm two-layer paper-on-wood shadows.
