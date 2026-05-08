@@ -111,6 +111,14 @@ def upload_recipe_photo(
         ``recipes.photo_paths`` and what 01-10 will feed into
         ``create_signed_url`` for the read side.
     """
+    # T-10-06 / Pitfall 8 — deterministic test mode: skip Supabase upload,
+    # return a fake bucket-relative path. Bytes are not validated either —
+    # the canned LLM response (D-04) doesn't need to match anything in object storage.
+    if settings.environment == "test":
+        sniffed = detect_mime_and_ext(content)
+        ext = sniffed[1] if sniffed else "jpg"
+        return f"{household_id}/{recipe_id}/{uuid4()}.{ext}"
+
     if len(content) > MAX_BYTES:
         raise ValueError("oversize")
     sniffed = detect_mime_and_ext(content)
@@ -177,6 +185,13 @@ def upload_cooking_log_photo(
     # TODO(productize): D-02 — same egress/presigned-PUT switch as
     # upload_recipe_photo if Railway egress shows up in metrics.
     """
+    # T-10-06 / Pitfall 8 — deterministic test mode: skip Supabase upload,
+    # return a fake bucket-relative path under the cooking-logs prefix.
+    if settings.environment == "test":
+        sniffed = detect_mime_and_ext(content)
+        ext = sniffed[1] if sniffed else "jpg"
+        return f"cooking-logs/{household_id}/{log_id}/{uuid4()}.{ext}"
+
     if len(content) > MAX_BYTES:
         raise ValueError("oversize")
     sniffed = detect_mime_and_ext(content)
