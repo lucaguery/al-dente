@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ColorSwatchPicker } from "@/components/ColorSwatchPicker";
@@ -17,6 +18,14 @@ import { useSession } from "@/components/SessionProvider";
 // to render the creator's color as a disabled swatch BEFORE submission
 // (ONBOARD-05 client half). T-01-06-06 mitigation: 300ms debounce + only
 // fires when code length === 6.
+// Phase 9 retheme: form-body wrapped in paper-grain Card with Fraunces
+// italic display title; back button bumped to h-12 w-12 + spacer to w-12;
+// submit bumped to the h-12 D-08 floor. The invite-code Input keeps its
+// mono uppercase wide-tracked register — that is the ENTRY-time UX
+// (typing the code) and is INTENTIONALLY DIFFERENT from the read-time
+// Fraunces italic register on share-code + Settings. Form state,
+// debounce, validation, fetchPreview, and error handling preserved
+// verbatim.
 type PreviewResponse = {
   household_name: string;
   taken_colors: string[];
@@ -145,98 +154,105 @@ export default function OnboardingJoinPage() {
         <Button
           size="icon"
           variant="ghost"
+          className="h-12 w-12"
           aria-label={tCommon("back")}
           onClick={() => router.back()}
         >
           <ChevronLeft />
         </Button>
         <span className="text-base font-semibold">{t("title")}</span>
-        <span className="w-8" aria-hidden />
+        <span className="w-12" aria-hidden />
       </header>
 
-      <div className="flex flex-col gap-6 px-6 pt-6 pb-32">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="join-code">{t("code_label")}</Label>
-          <Input
-            id="join-code"
-            value={code}
-            onChange={(e) => {
-              const next = e.target.value
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, "")
-                .slice(0, 6);
-              setCode(next);
-              // Clear preview-derived UI synchronously when the code
-              // is no longer 6 chars; the debounced effect re-fetches
-              // when the user types back to length 6.
-              if (next.length !== 6) {
-                setTakenColors([]);
-                setCodeError(null);
-              }
-            }}
-            placeholder={t("code_placeholder")}
-            maxLength={6}
-            inputMode="text"
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            autoFocus
-            required
-            aria-invalid={codeError !== null}
-            aria-describedby={codeError ? "join-code-error" : undefined}
-            className="text-center font-mono tracking-[0.3em] uppercase"
-          />
-          {codeError ? (
-            <p
-              id="join-code-error"
-              role="alert"
-              className="text-sm text-destructive"
-            >
-              {codeError}
-            </p>
-          ) : (
-            <p className="text-sm text-foreground-muted">{t("code_helper")}</p>
-          )}
-        </div>
+      <div className="px-6 pt-6 pb-32">
+        <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-6">
+          {/* Form-body editorial title — Fraunces italic display register. */}
+          <h2 className="text-display">{t("title")}</h2>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="join-code">{t("code_label")}</Label>
+            <Input
+              id="join-code"
+              value={code}
+              onChange={(e) => {
+                const next = e.target.value
+                  .toUpperCase()
+                  .replace(/[^A-Z0-9]/g, "")
+                  .slice(0, 6);
+                setCode(next);
+                // Clear preview-derived UI synchronously when the code
+                // is no longer 6 chars; the debounced effect re-fetches
+                // when the user types back to length 6.
+                if (next.length !== 6) {
+                  setTakenColors([]);
+                  setCodeError(null);
+                }
+              }}
+              placeholder={t("code_placeholder")}
+              maxLength={6}
+              inputMode="text"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              autoFocus
+              required
+              aria-invalid={codeError !== null}
+              aria-describedby={codeError ? "join-code-error" : undefined}
+              className="text-center font-mono tracking-[0.3em] uppercase"
+            />
+            {codeError ? (
+              <p
+                id="join-code-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {codeError}
+              </p>
+            ) : (
+              <p className="text-sm text-foreground-muted">
+                {t("code_helper")}
+              </p>
+            )}
+          </div>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="join-member-name">{t("member_name_label")}</Label>
-          <Input
-            id="join-member-name"
-            value={memberName}
-            onChange={(e) => setMemberName(e.target.value)}
-            maxLength={60}
-            required
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="join-member-name">{t("member_name_label")}</Label>
+            <Input
+              id="join-member-name"
+              value={memberName}
+              onChange={(e) => setMemberName(e.target.value)}
+              maxLength={60}
+              required
+            />
+          </div>
 
-        <div className="flex flex-col gap-2">
-          <Label>
-            <span className="flex items-center gap-2">
-              {t("color_label")}
-              {previewPending ? (
-                <Loader2
-                  className="h-4 w-4 animate-spin text-foreground-muted"
-                  aria-hidden
-                />
-              ) : null}
-            </span>
-          </Label>
-          <ColorSwatchPicker
-            value={color}
-            onChange={(hex) => {
-              setColor(hex);
-              setColorError(null);
-            }}
-            takenColors={takenColors}
-            aria-label={t("color_label")}
-          />
-          {colorError ? (
-            <p role="alert" className="text-sm text-destructive">
-              {colorError}
-            </p>
-          ) : null}
-        </div>
+          <div className="flex flex-col gap-2">
+            <Label>
+              <span className="flex items-center gap-2">
+                {t("color_label")}
+                {previewPending ? (
+                  <Loader2
+                    className="h-4 w-4 animate-spin text-foreground-muted"
+                    aria-hidden
+                  />
+                ) : null}
+              </span>
+            </Label>
+            <ColorSwatchPicker
+              value={color}
+              onChange={(hex) => {
+                setColor(hex);
+                setColorError(null);
+              }}
+              takenColors={takenColors}
+              aria-label={t("color_label")}
+            />
+            {colorError ? (
+              <p role="alert" className="text-sm text-destructive">
+                {colorError}
+              </p>
+            ) : null}
+          </div>
+        </Card>
       </div>
 
       <div
@@ -244,7 +260,7 @@ export default function OnboardingJoinPage() {
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
       >
         <Button
-          className="h-11 w-full"
+          className="h-12 w-full"
           disabled={!canSubmit}
           onClick={onSubmit}
         >
