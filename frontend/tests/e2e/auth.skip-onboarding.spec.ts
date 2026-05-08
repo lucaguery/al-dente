@@ -15,8 +15,11 @@ test.describe('auth.skip-onboarding', () => {
     // the cleanest authenticated-state probe that doesn't rely on backend
     // data). aria-label "Navigation principale" is verbatim from
     // BottomNav.tsx#85 (no new aria-label added in Phase 10).
-    await expect(
-      page.getByRole('navigation', { name: 'Navigation principale' }),
-    ).toBeVisible();
+    const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+    await expect(nav).toBeVisible();
+    // Catches "BottomNav rendered but pushed offscreen / hidden behind safe-
+    // area inset" regressions — toBeVisible() alone passes on display:block
+    // elements regardless of viewport position.
+    await expect(nav).toBeInViewport();
   });
 });

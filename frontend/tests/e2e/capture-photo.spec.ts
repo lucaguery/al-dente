@@ -14,10 +14,15 @@ const FIXTURE_PATH = path.resolve(
   'risotto.jpg',
 );
 
-// TEST-02 (D-07 photo) — POST /recipes/photo with multipart bytes.
-// services/storage.py (test-mode guard from 10-02) returns a synthetic
-// bucket path without touching Supabase. services/llm.py calls
-// canned_photo_recipe which returns 'Tarte Tatin (test)'.
+// TEST-02 (D-07 photo) — two specs:
+//   1. The HTTP-layer round-trip via /api/recipes/photo (services/storage.py
+//      test-mode guard returns a synthetic bucket path; services/llm.py
+//      canned_photo_recipe returns 'Tarte Tatin (test)'). Proves the backend
+//      contract is honored end-to-end.
+//   2. The UI-layer flow that opens the bottom sheet, picks the file source,
+//      and submits — the path real users actually take. Adds toBeInViewport()
+//      so an offscreen-sheet regression (paper-grain class overriding Tailwind
+//      `fixed` in components/ui/sheet.tsx) surfaces here, not in production.
 //
 // Field-name drift from plan: backend uses `files` (see
 // backend/app/routers/recipes.py:372 `files: list[UploadFile] = File(...)`),
@@ -64,4 +69,38 @@ test.describe('capture-photo', () => {
     expect(promoted.title).toBe('Tarte Tatin (test)');
     expect(promoted.cuisine).toBe('french');
   });
+
+  // eslint-disable-next-line playwright/no-skipped-test -- real product bug surfaced 2026-05-09; see TODO below
+  test.fixme(
+    'photo upload sheet is reachable on iPhone-sized viewports',
+    async ({ page }) => {
+      // TODO(productize): components/ui/sheet.tsx — `paper-grain` class on
+      // SheetContent overrides Tailwind `fixed`, leaving the bottom-sheet
+      // positioned in document flow at top: 702px. On iPhone SE (375x667)
+      // the entire Caméra / Photothèque sheet is offscreen; on iPhone 14
+      // (390x844) only Caméra is partially visible. Diagnosed at runtime
+      // 2026-05-09 via Playwright MCP — see 10-RUNTIME-NOTES.md "Surfaced
+      // product issues" for the root cause analysis. Re-enable this spec
+      // once sheet.tsx drops `paper-grain` (or the .paper-grain rule no
+      // longer wins over `fixed`).
+      await page.goto('/recipes/new');
+      await page.getByRole('tab', { name: 'Photo' }).click();
+
+      const trigger = page.getByRole('button', { name: 'Ajouter une photo' });
+      await expect(trigger).toBeVisible();
+      await expect(trigger).toBeInViewport();
+      await trigger.click();
+
+      // The sheet dialog should appear pinned to the viewport bottom — both
+      // file-source buttons must be reachable without scrolling. This is
+      // exactly the assertion that fails today because of the relative-
+      // positioning regression.
+      const camera = page.getByRole('button', { name: 'Caméra' });
+      const library = page.getByRole('button', { name: 'Photothèque' });
+      await expect(camera).toBeVisible();
+      await expect(camera).toBeInViewport();
+      await expect(library).toBeVisible();
+      await expect(library).toBeInViewport();
+    },
+  );
 });

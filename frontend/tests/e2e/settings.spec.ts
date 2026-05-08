@@ -13,9 +13,12 @@ test.describe('settings', () => {
   }) => {
     await page.goto('/settings');
 
-    await expect(
-      page.getByText(SEEDED_INVITE_CODE /* "TEST01" */),
-    ).toBeVisible();
+    const inviteCode = page.getByText(SEEDED_INVITE_CODE /* "TEST01" */);
+    await expect(inviteCode).toBeVisible();
+    // The invite code is the load-bearing surface for second-member onboarding;
+    // a layout regression that pushes it below the viewport (or behind sticky
+    // chrome) would silently break the join flow without throwing. Pin it.
+    await expect(inviteCode).toBeInViewport();
     await expect(
       page.getByText(SEEDED_MEMBER_LUCA /* "Luca" */),
     ).toBeVisible();

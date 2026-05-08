@@ -70,7 +70,23 @@ export default defineConfig({
         /globalTeardown\.fresh\.ts$/,
       ],
       use: {
+        // iPhone-shape viewport on Chromium. Why not `devices['iPhone 14']`?
+        // That device descriptor defaults to WebKit (Mobile Safari) and we
+        // are Chromium-only per CONTEXT D-06 (no cross-browser coverage in
+        // v0.2.1) — installing WebKit would add ~150MB to the bootstrap.
+        // The 390x844 viewport + isMobile + hasTouch combo is what surfaces
+        // the layout bugs that bite users on the actual production phones.
+        // Concrete example diagnosed via Playwright MCP on 2026-05-09: the
+        // bottom-sheet `position: relative` regression in
+        // `frontend/components/ui/sheet.tsx` (paper-grain class overrides
+        // Tailwind `fixed`) leaves the Caméra/Photothèque sheet entirely
+        // off-screen on a 390x844 viewport. iPhone-size viewport + an
+        // explicit `toBeInViewport()` on critical interactive elements is
+        // the minimum bar to catch this class of bug going forward.
         ...devices['Desktop Chrome'],
+        viewport: { width: 390, height: 844 },
+        isMobile: true,
+        hasTouch: true,
         extraHTTPHeaders: {
           // D-01: Bearer fallback path. Backend's auth.py accepts this verbatim.
           Authorization: `Bearer ${SEED_AUTH_TOKEN}`,

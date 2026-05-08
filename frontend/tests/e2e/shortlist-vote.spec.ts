@@ -87,15 +87,21 @@ test.describe('shortlist-vote', () => {
     // already voted on Ragu bolognese / Coq au vin / Butter chicken /
     // Shawarma per the seed. Tacos au boeuf is the only un-voted recipe
     // for Luca, so it's at the top of the deck.
-    await expect(
-      page.getByRole('heading', { name: SHORTLIST_RECIPES.sansAvis }),
-    ).toBeVisible();
+    const sansAvisHeading = page.getByRole('heading', {
+      name: SHORTLIST_RECIPES.sansAvis,
+    });
+    await expect(sansAvisHeading).toBeVisible();
+    await expect(sansAvisHeading).toBeInViewport();
 
     // Vote yes — verbatim aria-label from frontend/lib/i18n/fr.json#26.
-    await page
+    // toBeInViewport on the thumb button catches the class of bug where the
+    // BottomNav or a sticky CTA covers the swipe action — silent breakage of
+    // the core voting loop on iPhone-sized viewports.
+    const voteYes = page
       .getByRole('button', { name: "J'aime cette recette" })
-      .first()
-      .click();
+      .first();
+    await expect(voteYes).toBeInViewport();
+    await voteYes.click();
 
     // After the vote, the recipe's chip in the summary section should
     // display "Pressenti" (Luca yes, Partner unvoted). Instead of asserting
