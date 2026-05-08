@@ -67,7 +67,11 @@
   3. User sees the 5 vote-chip states (Validé / Pressenti / Contesté / Rejeté / Sans avis) presented with reconciled token naming — spec, CSS variable, and component class all agree on a single name
   4. User opens the "Tu décides" delegation surface and the affordance reads as deliberate, not stock shadcn
   5. User sees a polished cold-start / empty-shortlist state and the ColdStartChip dismiss button now meets the 48px (h-12) tap-target floor
-**Plans:** TBD (via `/gsd-ui-phase` → `/gsd-plan-phase 7`)
+**Plans:** 4 plans
+- [ ] 07-01-PLAN.md — DECIDE-03 token comment lock + DECIDE-05 ColdStartChip retheme + h-12 dismiss
+- [ ] 07-02-PLAN.md — DECIDE-02 springSnap motion preset + ShortlistCard paper-grain + rounded-t photo + springSnap consumer
+- [ ] 07-03-PLAN.md — DECIDE-03 5-state pill chips (chipClass helper) + DECIDE-04 Tu-décides paper-grain delegation Card + h-12 regenerate
+- [ ] 07-04-PLAN.md — DECIDE-01 HomeDecide Fraunces-italic display-serif date header (Intl.DateTimeFormat fr-FR)
 **UI hint:** yes
 
 ### Phase 8: Cook polish
@@ -102,7 +106,7 @@
 |-------|----------------|--------|-----------|
 | 5. Design system foundation | 6/6 | Complete    | 2026-05-08 |
 | 6. Capture surfaces polish | 6/6 | Complete    | 2026-05-08 |
-| 7. Decide polish | 0/0 | Not started | - |
+| 7. Decide polish | 0/4 | Planned | - |
 | 8. Cook polish | 0/0 | Not started | - |
 | 9. Onboarding + identity polish | 0/0 | Not started | - |
 
