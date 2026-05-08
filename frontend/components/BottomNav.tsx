@@ -78,7 +78,11 @@ export function BottomNav() {
 
   return (
     <nav
-      aria-label={t("home")}
+      // TODO(productize): move to nav.aria_label key once a new i18n key is
+      // permissible. Hardcoded interim is acceptable in v0.1 (French-only)
+      // and corrects a pre-existing screen-reader bug where the landmark was
+      // mislabeled as "Accueil" (the Home tab string).
+      aria-label="Navigation principale"
       className="fixed bottom-0 inset-x-0 min-h-[4rem] bg-card/85 backdrop-blur-md border-t border-border flex pb-[env(safe-area-inset-bottom)] z-40"
     >
       {TABS.map(({ href, segment: tabSegment, icon: Icon, labelKey }) => {
