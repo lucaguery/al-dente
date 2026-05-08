@@ -16,9 +16,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { variants } from "@/lib/motion";
 import { deleteRecipe, postRetryPromotion } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
 
@@ -75,7 +77,7 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
   // wraps the inner content in a <div> instead of a <Link> so taps don't
   // navigate away (D-07: in-flight rows are non-tappable).
   const containerClass =
-    "flex gap-4 p-3 bg-background rounded-lg border border-border hover:bg-surface-muted transition-colors";
+    "paper-grain flex gap-4 p-3 bg-background rounded-lg border border-border hover:bg-surface-muted transition-colors";
 
   const inner = (
     <>
@@ -88,9 +90,19 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
           {recipe.title}
         </h3>
         <div className="flex items-center gap-2 flex-wrap">
-          {isManual ? (
-            <Badge variant="secondary">{t("draft_badge")}</Badge>
-          ) : null}
+          <AnimatePresence mode="wait" initial={false}>
+            {isManual ? (
+              <motion.span
+                key="brouillon"
+                variants={variants.fadeIn}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+              >
+                <Badge variant="secondary">{t("draft_badge")}</Badge>
+              </motion.span>
+            ) : null}
+          </AnimatePresence>
           {isProcessing ? (
             <span
               className="flex items-center gap-2 text-sm font-medium text-foreground-muted"
@@ -106,8 +118,7 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
               <Badge variant="destructive">{tPromo("failed_badge")}</Badge>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-8"
+                className="h-12"
                 onClick={handleRetry}
                 disabled={retrying}
                 aria-label={tPromo("retry_aria")}
@@ -124,7 +135,7 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8 flex-shrink-0 text-foreground-muted hover:text-destructive"
+          className="h-12 w-12 flex-shrink-0 text-foreground-muted hover:text-destructive"
           disabled={deleting}
           onClick={handleDelete}
           aria-label={t("delete_aria")}
