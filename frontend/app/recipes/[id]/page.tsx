@@ -129,6 +129,7 @@ export default function RecipeDetailPage() {
             <Button
               size="icon"
               variant="ghost"
+              className="h-12 w-12"
               aria-label={t("back_aria")}
               onClick={() => router.back()}
             >
@@ -154,6 +155,7 @@ export default function RecipeDetailPage() {
             <Button
               size="icon"
               variant="ghost"
+              className="h-12 w-12"
               aria-label={t("back_aria")}
               onClick={() => router.back()}
             >
@@ -189,6 +191,7 @@ export default function RecipeDetailPage() {
           <Button
             size="icon"
             variant="ghost"
+            className="h-12 w-12"
             aria-label={t("back_aria")}
             onClick={() => router.back()}
           >
@@ -198,6 +201,7 @@ export default function RecipeDetailPage() {
             <Button
               size="icon"
               variant="ghost"
+              className="h-12 w-12"
               aria-label={tVoiceModify("trigger_aria")}
               onClick={() => setVoiceModifyOpen(true)}
             >
@@ -206,6 +210,7 @@ export default function RecipeDetailPage() {
             <Button
               size="icon"
               variant="ghost"
+              className="h-12 w-12"
               aria-label={t("edit_aria")}
               onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
             >
@@ -217,7 +222,7 @@ export default function RecipeDetailPage() {
               aria-label={t("delete_aria")}
               disabled={deleting}
               onClick={handleDelete}
-              className="text-foreground-muted hover:text-destructive"
+              className="h-12 w-12 text-foreground-muted hover:text-destructive"
             >
               <Trash2 className="h-5 w-5" />
             </Button>
