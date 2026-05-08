@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { ChefHat, RotateCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { MemberDot } from "@/components/MemberDot";
 import {
   computeVoteState,
@@ -168,35 +169,35 @@ export function VoteSummary({
             </Button>
           </>
         ) : pressentiRow ? (
-          <>
-            <p className="text-sm text-foreground-muted">
+          <Card className="paper-grain shadow-card border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-3">
+            <p className="font-display italic text-base text-foreground">
               {t("intro_pressenti")}
             </p>
             <Button
               type="button"
               variant="default"
-              className="h-14 rounded-2xl"
+              className="h-12 w-full"
               disabled={delegateInFlight}
               onClick={onDelegate}
             >
               {t("delegate_cta")}
             </Button>
-          </>
+          </Card>
         ) : (
-          <>
-            <p className="text-sm text-foreground-muted">
+          <Card className="paper-grain shadow-card border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-3">
+            <p className="font-display italic text-base text-foreground">
               {t("intro_none")}
             </p>
             <Button
               type="button"
               variant="default"
-              className="h-14 rounded-2xl"
+              className="h-12 w-full"
               disabled={delegateInFlight}
               onClick={onDelegate}
             >
               {t("delegate_cta")}
             </Button>
-          </>
+          </Card>
         )}
 
         <Button
