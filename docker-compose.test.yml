@@ -1,0 +1,23 @@
+# Phase 10 D-02 — test-only Postgres, isolated from dev/prod Supabase.
+# Volume name and port (5433, NOT 5432) explicitly NOT colliding with any
+# dev Postgres a developer might have running locally.
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: aldente-postgres-test
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aldente_test
+    volumes:
+      - aldente_test_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d aldente_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  aldente_test_pg_data:

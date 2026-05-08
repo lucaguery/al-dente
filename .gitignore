@@ -2,3 +2,8 @@
 .agents
 .vercel
 .planning/.next-call-count
+
+# Phase 10 — test env files (T-10-02 / T-10-03 mitigation)
+.env.test
+.env.test.local
+!.env.test.example
