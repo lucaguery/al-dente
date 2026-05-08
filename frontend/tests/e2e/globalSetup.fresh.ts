@@ -2,32 +2,31 @@
 // invite-code-happy-path.spec.ts runs. The teardown re-seeds so subsequent
 // `seeded` runs see a populated DB again.
 //
-// We spawn `uv run python -c "..."` rather than installing a Node.js Postgres
-// client in frontend/ — minimum dependency surface, runs against the same
-// SessionLocal the backend uses.
+// Uses `docker exec` against the same postgres-test container the suite
+// already brings up (docker-compose.test.yml) — minimum dependency surface,
+// no Node.js postgres client needed in frontend/.
 import { test as setup } from '@playwright/test';
 import { execSync } from 'child_process';
 
 setup('truncate test DB for invite-code spec', async () => {
-  // CASCADE handles FKs across the 6 tables.
-  // The ENVIRONMENT=test guard in seed.py is mirrored here defensively
-  // (assert "aldente_test" in settings.database_url) — if DATABASE_URL_TEST
-  // is unset / wrong, the assert fires and TRUNCATE never runs.
+  // Sanity guard mirroring the seed CLI's T-10-01 hard-refusal — if the
+  // container points anywhere other than `aldente_test`, abort.
+  const dbName = execSync(
+    'docker exec aldente-postgres-test psql -U postgres -d aldente_test -tAc "SELECT current_database()"',
+    { encoding: 'utf-8' },
+  ).trim();
+  if (dbName !== 'aldente_test') {
+    throw new Error(
+      `globalSetup.fresh.ts refused: expected aldente_test, got ${dbName}`,
+    );
+  }
+
+  // CASCADE handles FKs across the 6 tables. push_subscriptions is included
+  // for completeness even though no spec touches it (TRUNCATE is idempotent).
   execSync(
-    [
-      'cd ../backend',
-      `ENVIRONMENT=test`,
-      `DATABASE_URL=$DATABASE_URL_TEST`,
-      'uv run python -c "',
-      'from sqlalchemy import text',
-      'from app.config import settings',
-      'assert \\"aldente_test\\" in settings.database_url, settings.database_url',
-      'from app.db import SessionLocal',
-      'with SessionLocal() as db:',
-      '    db.execute(text(\\"TRUNCATE households, members, recipes, votes, cooking_logs, daily_shortlists CASCADE\\"))',
-      '    db.commit()',
-      '"',
-    ].join(' && '),
-    { stdio: 'inherit', shell: '/bin/bash' },
+    'docker exec aldente-postgres-test psql -U postgres -d aldente_test -c ' +
+      '"TRUNCATE households, members, recipes, votes, cooking_logs, ' +
+      'daily_shortlists, push_subscriptions CASCADE"',
+    { stdio: 'inherit' },
   );
 });

@@ -20,10 +20,14 @@ test.describe('drafts-inbox', () => {
     const row = page.getByText(title, { exact: true });
     await expect(row).toBeVisible();
 
-    // Click into detail.
+    // Click into detail. Drafts route to the EDIT screen (not the read-only
+    // detail), so the title appears as the value of the "Titre" textbox
+    // instead of in an <h1>. Verified empirically at runtime — assertion
+    // adapted from the original heading expectation.
     await row.click();
     await expect(page).toHaveURL(/\/recipes\/[a-f0-9-]+/);
-    // Detail page renders the title in a heading.
-    await expect(page.getByRole('heading', { name: title })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Titre' })).toHaveValue(
+      title,
+    );
   });
 });

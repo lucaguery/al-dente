@@ -47,7 +47,15 @@ export default defineConfig({
       testMatch: /globalTeardown\.fresh\.ts$/,
     },
 
-    // Bulk: every spec EXCEPT the invite-code happy-path runs with Bearer auth.
+    // Bulk: every spec EXCEPT the invite-code happy-path runs with Bearer auth
+    // AND a pre-set `aldente_auth` cookie. The Bearer header authenticates HTTP
+    // routes (D-01 fallback, see backend/app/auth.py), but the WS upgrade
+    // (backend/app/routers/ws.py) reads ONLY the cookie or `?token=` query —
+    // never the Authorization header. Without the cookie, the WS closes with
+    // 1008 → frontend/lib/ws.ts:113 fires DELETE /api/auth/session and
+    // window.location.href = '/onboarding/welcome', racing every page.goto
+    // assertion to a redirect. The cookie value mirrors SEED_AUTH_TOKEN, so
+    // the backend's current_member finds the seeded member by either path.
     {
       name: 'seeded',
       testMatch: /.*\.spec\.ts$/,
@@ -66,6 +74,21 @@ export default defineConfig({
         extraHTTPHeaders: {
           // D-01: Bearer fallback path. Backend's auth.py accepts this verbatim.
           Authorization: `Bearer ${SEED_AUTH_TOKEN}`,
+        },
+        storageState: {
+          cookies: [
+            {
+              name: 'aldente_auth',
+              value: SEED_AUTH_TOKEN,
+              domain: 'localhost',
+              path: '/',
+              expires: -1,
+              httpOnly: false,
+              secure: false,
+              sameSite: 'Lax',
+            },
+          ],
+          origins: [],
         },
       },
     },

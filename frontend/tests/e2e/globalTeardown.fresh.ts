@@ -6,13 +6,18 @@ import { test as teardown } from '@playwright/test';
 import { execSync } from 'child_process';
 
 teardown('reseed test DB after invite-code spec', async () => {
+  // The webServer block in playwright.config.ts already exports
+  // ENVIRONMENT=test + DATABASE_URL=DATABASE_URL_TEST for the backend
+  // process; we mirror them here so `uv run seed` resolves the same DB.
+  // Note: bash `VAR=value uv run seed` (prefix-style) is the one form
+  // that DOES export to the child process — unlike `VAR=value && uv run`
+  // which only sets it in the parent shell without export.
   execSync(
-    [
-      'cd ../backend',
-      `ENVIRONMENT=test`,
-      `DATABASE_URL=$DATABASE_URL_TEST`,
+    'cd ../backend && ' +
+      'ENVIRONMENT=test ' +
+      `DATABASE_URL=${process.env.DATABASE_URL_TEST ?? 'postgresql+psycopg2://postgres:postgres@localhost:5433/aldente_test'} ` +
+      `DATABASE_URL_TEST=${process.env.DATABASE_URL_TEST ?? 'postgresql+psycopg2://postgres:postgres@localhost:5433/aldente_test'} ` +
       'uv run seed',
-    ].join(' && '),
     { stdio: 'inherit', shell: '/bin/bash' },
   );
 });
