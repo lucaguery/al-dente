@@ -92,25 +92,35 @@ export function BottomNav() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`relative flex flex-col items-center justify-center flex-1 gap-1 text-[11px] font-medium transition-colors duration-150 ${
+            className={`relative flex flex-col items-center justify-center flex-1 gap-1 text-xs font-medium transition-colors duration-fast ease-craft ${
               active ? "text-primary" : "text-foreground-muted"
             }`}
           >
+            {/* Active-state pill wash — bg-primary/8 rounded-full h-10 w-10
+                behind the icon. Mirrors Phase 8 CookingBanner informational-
+                chrome wash at icon-pill density. Replaces the previous 2px
+                top-bar accent. */}
             {active ? (
               <span
                 aria-hidden
-                className="absolute top-0 h-0.5 w-10 bg-primary rounded-b-full"
+                className="absolute inset-x-0 top-2 mx-auto rounded-full h-10 w-10 bg-primary/8 transition-colors duration-fast ease-craft"
               />
             ) : null}
-            <Icon size={24} aria-hidden />
-            <span className="flex items-center gap-1">
-              {t(labelKey)}
-              {showBadge ? (
-                <span className="text-[11px] tabular-nums">
-                  ({draftCount})
-                </span>
-              ) : null}
-            </span>
+            {/* Icon — sits above the wash via z-10 */}
+            <Icon size={24} aria-hidden className="relative z-10" />
+            {/* Label — text-xs (12px / line-height 16px), Phase 5 chrome idiom */}
+            <span className="relative z-10">{t(labelKey)}</span>
+            {/* Inbox-only badge — Pressenti-style pill at h-5 nav-bar density.
+                Mirrors Phase 7 chipClass register (bg-primary/15 + text-primary
+                + border-primary/40) at h-5 min-w-5 px-2. */}
+            {showBadge ? (
+              <span
+                aria-hidden
+                className="absolute top-0 right-1/4 h-5 min-w-5 rounded-full bg-primary/15 text-primary border border-primary/40 text-xs font-medium tabular-nums px-2 flex items-center justify-center z-20"
+              >
+                {draftCount}
+              </span>
+            ) : null}
           </Link>
         );
       })}
