@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Copy, Check, Download } from "lucide-react";
+import Link from "next/link";
+import { Copy, Check, Download, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSession } from "@/components/SessionProvider";
@@ -166,7 +167,22 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        {/* Card 3 — Sauvegarde. JSON export.
+        {/* Card 3 — Historique des cuissons. Nav entry to /cooking-logs (COOK-10
+            from Phase 8). Closes audit MISSING-01 (cooking-log history page
+            had no navigation entry point). Hardcoded French copy is a
+            TODO(productize) — move to nav.cooking_history.* keys in v0.2.1
+            i18n sweep alongside the HomeDecide partner-waiting strings. */}
+        <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
+          <span className="text-sm text-foreground-muted">Historique</span>
+          <Button asChild className="h-12 w-full" variant="ghost">
+            <Link href="/cooking-logs" className="flex items-center justify-between">
+              <span>Voir les cuissons récentes</span>
+              <ChevronRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+        </Card>
+
+        {/* Card 4 — Sauvegarde. JSON export.
             Replaces the previous flat block (lines 145-161). The
             `settings.export_section_title` field-label inside carries the
             section meaning ("Exporter mes données"). NO new section-heading. */}
