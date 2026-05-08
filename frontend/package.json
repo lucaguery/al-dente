@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:reset": "docker compose -f ../docker-compose.test.yml down -v"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
