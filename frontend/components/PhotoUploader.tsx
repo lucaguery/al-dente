@@ -227,7 +227,7 @@ export function PhotoUploader({ recipeId, cookingLogId, paths, onChange }: Props
                 <div className="flex flex-col gap-2 p-4 pt-0">
                   <Button
                     variant="secondary"
-                    className="h-11"
+                    className="h-12"
                     onClick={() => fileCameraRef.current?.click()}
                   >
                     <Camera className="h-4 w-4 mr-2" />
@@ -235,7 +235,7 @@ export function PhotoUploader({ recipeId, cookingLogId, paths, onChange }: Props
                   </Button>
                   <Button
                     variant="secondary"
-                    className="h-11"
+                    className="h-12"
                     onClick={() => fileLibraryRef.current?.click()}
                   >
                     <ImageIcon className="h-4 w-4 mr-2" />

@@ -80,6 +80,10 @@ export function CookingLogFinalize({ logId }: Props) {
 
   async function handleSubmit() {
     if (!rating || state.kind !== "ready") return;
+    if (!navigator.onLine) {
+      toast.error(t("offline"));
+      return;
+    }
     setSubmitting(true);
     try {
       await putFinalizeCookingLog(logId, {

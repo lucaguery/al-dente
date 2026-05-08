@@ -329,6 +329,7 @@
       "notes_heading": "Notes",
       "notes_placeholder": "Comment elle a tourné ? À refaire ? À ajuster ?",
       "toast_saved": "Bien enregistré.",
+      "offline": "Hors ligne. Reconnecte-toi et réessaie.",
       "save_failed": "Enregistrement impossible. Réessaie.",
       "save_404": "Cette cuisson n'existe plus.",
       "save_403": "Tu n'as pas accès à cette cuisson.",

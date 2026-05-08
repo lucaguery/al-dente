@@ -53,7 +53,7 @@ export function CookingBanner({
       <div className="flex items-center gap-2 shrink-0">
         <Link
           href={`/cooking-logs/${logId}/finalize`}
-          className="inline-flex items-center justify-center h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium gap-1"
+          className="inline-flex items-center justify-center h-12 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium gap-1"
         >
           <Sparkles size={16} aria-hidden />
           {t("finalize")}
@@ -62,7 +62,7 @@ export function CookingBanner({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-9 px-3"
+          className="h-12 px-3"
           onClick={onSkip}
         >
           {t("skip")}
