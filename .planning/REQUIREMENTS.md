@@ -41,13 +41,13 @@
 
 (Continues numbering from v0.1's COOK × 5.)
 
-- [ ] **COOK-06**: Recipe detail screen re-themed (hero, ingredient list, instructions, metadata)
-- [ ] **COOK-07**: CookingBanner re-themed AND `Finaliser` link + `Passer` ghost button raised to `h-12` (48px); `Finaliser` converted to `<Button asChild>` instead of raw `<a>` with hand-rolled classes — closes W4 UI-REVIEW gap
-- [ ] **COOK-08**: CookingLogFinalize re-themed AND RatingPicker `transition-transform duration-100` added — closes W4 UI-REVIEW gap (instant snap → 100ms ease)
-- [ ] **COOK-09**: Recipe library / list re-themed (cards, search, filtering, sort)
-- [ ] **COOK-10**: Cooking log history / "what we ate this week" view re-themed
-- [ ] **COOK-11**: `cooking_log.finalize.offline` i18n key added (`Hors ligne. Réessaie une fois connecté.`) + `navigator.onLine` guard in submit handler — closes W4 UI-REVIEW gap
-- [ ] **COOK-12**: `cooking_log.finalize.recipe_subhead` ICU key used for the `« {title} »` pattern — closes W4 next-intl pattern divergence
+- [x] **COOK-06**: Recipe detail screen re-themed (hero, ingredient list, instructions, metadata)
+- [x] **COOK-07**: CookingBanner re-themed AND `Finaliser` link + `Passer` ghost button raised to `h-12` (48px); `Finaliser` converted to `<Button asChild>` instead of raw `<a>` with hand-rolled classes — closes W4 UI-REVIEW gap
+- [x] **COOK-08**: CookingLogFinalize re-themed AND RatingPicker `transition-transform duration-100` added — closes W4 UI-REVIEW gap (instant snap → 100ms ease)
+- [x] **COOK-09**: Recipe library / list re-themed (cards, search, filtering, sort)
+- [x] **COOK-10**: Cooking log history / "what we ate this week" view re-themed
+- [x] **COOK-11**: `cooking_log.finalize.offline` i18n key added (`Hors ligne. Réessaie une fois connecté.`) + `navigator.onLine` guard in submit handler — closes W4 UI-REVIEW gap
+- [x] **COOK-12**: `cooking_log.finalize.recipe_subhead` ICU key used for the `« {title} »` pattern — closes W4 next-intl pattern divergence
 
 ### ONBOARD — Onboarding + settings + identity
 
@@ -113,13 +113,13 @@ Filled by roadmapper during phase creation (2026-05-08).
 | DECIDE-03 | Phase 7 | Complete |
 | DECIDE-04 | Phase 7 | Complete |
 | DECIDE-05 | Phase 7 | Complete |
-| COOK-06 | Phase 8 | Pending |
-| COOK-07 | Phase 8 | Pending |
-| COOK-08 | Phase 8 | Pending |
-| COOK-09 | Phase 8 | Pending |
-| COOK-10 | Phase 8 | Pending |
-| COOK-11 | Phase 8 | Pending |
-| COOK-12 | Phase 8 | Pending |
+| COOK-06 | Phase 8 | Complete |
+| COOK-07 | Phase 8 | Complete |
+| COOK-08 | Phase 8 | Complete |
+| COOK-09 | Phase 8 | Complete |
+| COOK-10 | Phase 8 | Complete |
+| COOK-11 | Phase 8 | Complete |
+| COOK-12 | Phase 8 | Complete |
 | ONBOARD-07 | Phase 9 | Pending |
 | ONBOARD-08 | Phase 9 | Pending |
 | ONBOARD-09 | Phase 9 | Pending |

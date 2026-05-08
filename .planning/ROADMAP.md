@@ -20,7 +20,7 @@
 - [x] **Phase 5: Design system foundation** — Tokens, typography pairing, paper-grain anchor, warm shadows, motion language, and re-themed base shadcn primitives in `components/ui/*` (completed 2026-05-08)
 - [x] **Phase 6: Capture surfaces polish** — Re-theme all 5 capture entrypoints (quick / full / voice / photo / URL) + drafts inbox, close `CAPTURE-11` W4 gap inline (completed 2026-05-08)
 - [x] **Phase 7: Decide polish** — Re-theme daily shortlist, swipe deck, vote chips (5 computed states), "Tu décides" delegation, cold-start state; close `DECIDE-05` W4 gap inline (completed 2026-05-08)
-- [ ] **Phase 8: Cook polish** — Re-theme recipe detail, library, cooking log history, cooking banner + finalize flow; close `COOK-07/08/11/12` W4 gaps inline
+- [x] **Phase 8: Cook polish** — Re-theme recipe detail, library, cooking log history, cooking banner + finalize flow; close `COOK-07/08/11/12` W4 gaps inline (completed 2026-05-08)
 - [ ] **Phase 9: Onboarding + identity polish** — Re-theme household create/join, settings, BottomNav, PWA manifest icon + splash
 
 ## Phase Details
@@ -84,13 +84,13 @@
   3. User taps a RatingPicker card on the finalize screen and the press feedback eases over 100ms (`transition-transform duration-100`) instead of snapping instantly
   4. User attempts to finalize a cooking log while offline and sees the `cooking_log.finalize.offline` toast (`Hors ligne. Réessaie une fois connecté.`) instead of the generic `save_failed` message — guarded by `navigator.onLine` in the submit handler
   5. User sees the recipe subhead on the finalize screen rendered through the `cooking_log.finalize.recipe_subhead` ICU key (`« {title} »`), restoring next-intl conformance
-**Plans:** 6/6 plans created
-- [ ] 08-01-PLAN.md — i18n offline + recipe_subhead ICU keys + CookingLogFinalize subhead routing (COOK-11, COOK-12)
-- [ ] 08-02-PLAN.md — CookingBanner retheme + Finaliser <Button asChild> + h-12 floor (COOK-07)
-- [ ] 08-03-PLAN.md — RatingPicker transition-transform 100ms ease-craft + paper-grain + helper text-sm fold (COOK-08)
-- [ ] 08-04-PLAN.md — Recipe detail full-bleed hero + cookbook gestures + h-12 header buttons (COOK-06)
-- [ ] 08-05-PLAN.md — Recipe library 2-col grid + RecipeCard paper-grain + SearchInput h-12 + Plus h-12 (COOK-09)
-- [ ] 08-06-PLAN.md — Cooking-log history view (NEW route + CookingLogCard component) (COOK-10)
+**Plans:** 6/6 plans complete
+- [x] 08-01-PLAN.md — i18n offline + recipe_subhead ICU keys + CookingLogFinalize subhead routing (COOK-11, COOK-12)
+- [x] 08-02-PLAN.md — CookingBanner retheme + Finaliser <Button asChild> + h-12 floor (COOK-07)
+- [x] 08-03-PLAN.md — RatingPicker transition-transform 100ms ease-craft + paper-grain + helper text-sm fold (COOK-08)
+- [x] 08-04-PLAN.md — Recipe detail full-bleed hero + cookbook gestures + h-12 header buttons (COOK-06)
+- [x] 08-05-PLAN.md — Recipe library 2-col grid + RecipeCard paper-grain + SearchInput h-12 + Plus h-12 (COOK-09)
+- [x] 08-06-PLAN.md — Cooking-log history view (NEW route + CookingLogCard component) (COOK-10)
 **UI hint:** yes
 
 ### Phase 9: Onboarding + identity polish
@@ -113,7 +113,7 @@
 | 5. Design system foundation | 6/6 | Complete    | 2026-05-08 |
 | 6. Capture surfaces polish | 6/6 | Complete    | 2026-05-08 |
 | 7. Decide polish | 4/4 | Complete    | 2026-05-08 |
-| 8. Cook polish | 0/0 | Not started | - |
+| 8. Cook polish | 6/6 | Complete    | 2026-05-08 |
 | 9. Onboarding + identity polish | 0/0 | Not started | - |
 
 ## Coverage
