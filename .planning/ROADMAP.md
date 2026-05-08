@@ -13,7 +13,7 @@ Patch milestone: one-command synthetic seed + committed Playwright suite coverin
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
-| 10 | E2E test infrastructure & synthetic seed | Make the shipped PWA testable on a fresh checkout: idempotent backend seed (`uv run seed`) + committed `@playwright/test` suite under `frontend/tests/` covering every screen and action, with a ≤5-command bootstrap. | TEST-01 · TEST-02 · TEST-03 · TEST-04 | 4 |
+| 10 | E2E test infrastructure & synthetic seed | 6/7 | In Progress|  |
 
 ### Phase 10 — E2E test infrastructure & synthetic seed
 

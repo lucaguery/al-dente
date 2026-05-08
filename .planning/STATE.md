@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: executing
-stopped_at: Phase 10 context gathered
-last_updated: "2026-05-08T21:03:47.786Z"
-last_activity: 2026-05-08 -- Phase 10 planning complete
+stopped_at: Completed 10-06-PLAN.md
+last_updated: "2026-05-08T21:48:43.359Z"
+last_activity: 2026-05-08
 progress:
   total_phases: 11
   completed_phases: 10
   total_plans: 64
-  completed_plans: 58
-  percent: 91
+  completed_plans: 64
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-08 for v0.2.1)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 10 — E2E test infrastructure & synthetic seed (v0.2.1)
+**Current focus:** Phase 10 — e2e-test-infrastructure
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
+Phase: 10 (e2e-test-infrastructure) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
-Last activity: 2026-05-08 -- Phase 10 planning complete
+Last activity: 2026-05-08
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | 8. Cook polish | ✅ | ✅ Complete (v0.2) |
 | 9. Onboarding + identity polish | ✅ | ✅ Complete (v0.2) |
 | 10. E2E test infrastructure | 0/0 | Not started (v0.2.1) |
+| Phase 10 P06 | 3min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,10 @@ Progress: [░░░░░░░░░░] 0%
 ### Decisions
 
 See PROJECT.md Key Decisions table — all 13 v0.1 decisions validated. v0.2 design direction locked in `.planning/notes/v0.2-design-direction.md` (Slow Food artisanal, Italian heritage lean, terracotta + cream + ink palette, paper-grain anchor, typography as signature). v0.2.1 scope decisions captured pre-routing: committed Playwright suite (`@playwright/test`) under `frontend/tests/`, backend Python seed via `uv run seed` CLI entry point, fixed env-overridable test `auth_token`, separate `DATABASE_URL_TEST` to isolate from dev DB, voice/photo/url capture surfaces marked `test.fixme` if not wired (do NOT block on building missing endpoints).
+
+- [Phase 10]: Read invite code from URL search-param (page contract source) instead of regex-scraping the styled monogram <div>; DOM render still asserted via getByText
+- [Phase 10]: Use verbatim French i18n strings from fr.json instead of permissive regex; spec breaks at the spec when a key drifts
+- [Phase 10]: Alice and Bob pick distinct color slots (rose vs amber) so the join endpoint's color-uniqueness check (409) doesn't fire
 
 ### Open Research
 
@@ -92,7 +97,7 @@ None for v0.2.1 — this is QA infrastructure, not new product features. No rese
 
 ## Session Continuity
 
-Last session: 2026-05-08T19:19:38.184Z
-Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-e2e-test-infrastructure/10-CONTEXT.md
+Last session: 2026-05-08T21:48:34.863Z
+Stopped at: Completed 10-06-PLAN.md
+Resume file: None
 Next: `/gsd-discuss-phase 10 --auto` to surface assumptions for Phase 10 (E2E test infrastructure & synthetic seed), then auto-chain into plan + execute.

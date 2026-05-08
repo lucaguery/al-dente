@@ -17,7 +17,7 @@
 
 - [ ] **TEST-03**: Bootstrap runbook + `npm` / `uv` scripts so a fresh checkout reaches a green Playwright run in ≤ 5 commands. Documented in either `README.md` (root or `frontend/`) or a new `TESTING.md`. Commands are real and copy-pasteable (`uv sync && uv run alembic upgrade head && uv run seed && cd frontend && npm install && npm run test:e2e` is the upper-bound sketch — the actual sequence may be shorter via composed scripts). Includes a `npm run test:e2e` script in `frontend/package.json` and a `seed` console-script entry in `backend/pyproject.toml`. Includes a `.env.test.example` (or equivalent) showing the required env vars (`DATABASE_URL_TEST`, `SEED_AUTH_TOKEN`, `PLAYWRIGHT_AUTH_TOKEN`, `NEXT_PUBLIC_API_BASE`).
 
-- [ ] **TEST-04**: Invite-code happy-path Playwright spec — one spec exercises `/onboarding/create` → invite code → `/onboarding/join` end-to-end without using the seeded auth shortcut. Validates that the join flow stays green when the cookie is fresh and that the second member lands in the household authenticated. This is the only spec that mutates onboarding state during the test run; runs in isolation from the seeded data (uses a separate or freshly truncated test DB scope).
+- [x] **TEST-04**: Invite-code happy-path Playwright spec — one spec exercises `/onboarding/create` → invite code → `/onboarding/join` end-to-end without using the seeded auth shortcut. Validates that the join flow stays green when the cookie is fresh and that the second member lands in the household authenticated. This is the only spec that mutates onboarding state during the test run; runs in isolation from the seeded data (uses a separate or freshly truncated test DB scope).
 
 ## Future Requirements (deferred — NOT in v0.2.1 scope)
 
@@ -58,7 +58,7 @@ Filled when ROADMAP.md / phase plans are written.
 | TEST-01 | Phase 10 | Pending |
 | TEST-02 | Phase 10 | Pending |
 | TEST-03 | Phase 10 | Pending |
-| TEST-04 | Phase 10 | Pending |
+| TEST-04 | Phase 10 | Complete |
 
 **Coverage:**
 - v0.2.1 requirements: 4 total
