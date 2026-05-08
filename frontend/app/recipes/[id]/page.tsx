@@ -29,6 +29,7 @@ import type { Recipe } from "@/lib/recipes";
 export default function RecipeDetailPage() {
   const t = useTranslations("recipes");
   const tVoiceModify = useTranslations("recipes.voice_modify");
+  const tErr = useTranslations("onboarding.errors");
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -49,7 +50,7 @@ export default function RecipeDetailPage() {
       toast.success(t("delete_success"));
       router.replace("/recipes");
     } catch {
-      toast.error(t("detail_404_body"));
+      toast.error(tErr("network"));
       setDeleting(false);
     }
   }
