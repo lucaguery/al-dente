@@ -115,6 +115,7 @@ export default function RecipesPage() {
           <Button
             size="icon"
             variant="ghost"
+            className="h-12 w-12"
             aria-label={t("add_cta_aria")}
             onClick={() => router.push("/recipes/new")}
           >
@@ -126,9 +127,9 @@ export default function RecipesPage() {
           <SearchInput onQueryChange={handleSearch} />
         </div>
 
-        <div className="px-6 flex flex-col gap-3 pb-24">
-          {!loading && recipes.length === 0 ? (
-            query.trim().length > 0 ? (
+        {!loading && recipes.length === 0 ? (
+          <div className="px-6 pb-24">
+            {query.trim().length > 0 ? (
               <EmptyState
                 icon={Search}
                 heading={t("no_results_heading", { query })}
@@ -141,11 +142,13 @@ export default function RecipesPage() {
                 body={t("empty_body")}
                 cta={{ label: t("empty_cta"), href: "/recipes/new" }}
               />
-            )
-          ) : (
-            recipes.map((r) => <RecipeCard key={r.id} recipe={r} />)
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="px-6 grid grid-cols-2 gap-3 pb-24 md:grid-cols-3 lg:grid-cols-4">
+            {recipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
+          </div>
+        )}
       </section>
     </OnboardingGuard>
   );
