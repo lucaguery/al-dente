@@ -71,16 +71,35 @@
      with the primary CTA. Per 03-UI-SPEC.md §"Phase 3 token additions". */
   --color-valide-tint: var(--valide-tint);
 
-  /* Quick-260507-hd0 — single shadow scale.
-     Tailwind v4 exposes `--shadow-*` keys as `shadow-*` utilities directly
-     (see node_modules/tailwindcss/theme.css). One resting elevation
-     (`shadow-card`), one pressed/hover (`shadow-card-hover`), one hairline
-     for fixed surfaces (`shadow-nav`). Avoid competing elevations. */
-  --shadow-card: 0 1px 2px 0 rgba(15, 15, 20, 0.04),
-    0 1px 3px 0 rgba(15, 15, 20, 0.06);
-  --shadow-card-hover: 0 2px 4px 0 rgba(15, 15, 20, 0.06),
-    0 4px 8px 0 rgba(15, 15, 20, 0.08);
-  --shadow-nav: 0 -1px 0 0 rgba(15, 15, 20, 0.06);
+  /* Phase 5 (Slow Food artisanal) — warm two-layer paper-on-wood shadows.
+     `rgba(74, 56, 40, *)` is a deep warm-brown — the color of the underlying
+     "wood." On a warm-cream surface this reads as tone-on-tone (paper resting
+     on a kitchen table) rather than cool floating boxes. Two layers
+     reproduce the physical truth: a hairline contact shadow at the edge plus
+     a slightly diffuse ambient shadow underneath. Per UI-SPEC §Shadows. */
+  --shadow-card:
+    0 1px 2px 0 rgba(74, 56, 40, 0.06),
+    0 2px 4px 0 rgba(74, 56, 40, 0.05);
+  --shadow-card-hover:
+    0 1px 2px 0 rgba(74, 56, 40, 0.08),
+    0 4px 10px 0 rgba(74, 56, 40, 0.07);
+  --shadow-nav:
+    0 -1px 0 0 rgba(74, 56, 40, 0.08);
+
+  /* Phase 5 motion tokens (DESIGN-06) — one curve, two durations.
+     Tailwind v4 exposes `--ease-*` and `--duration-*` from @theme as
+     `ease-*` and `duration-*` utilities. The same numbers are re-exported
+     as Framer Motion presets in `frontend/lib/motion.ts` (Plan 04) so CSS
+     transitions and Framer Motion animations stay in lockstep.
+     - ease-craft: high-snap-out curve, "deliberate craftsman placing the
+       object" — accelerates through the first 30%, decelerates smoothly.
+     - duration-fast (150ms): interactive feedback (button press, hover,
+       chip selection, focus ring).
+     - duration-normal (280ms): structural transitions (sheet/dialog,
+       card hover-lift, swipe-deck commit, realtime appear). */
+  --ease-craft: cubic-bezier(0.32, 0.72, 0.0, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 280ms;
 }
 
 :root {
@@ -181,6 +200,26 @@
 
   /* Phase 3 — Validé tint (dark). Deeper emerald, unchanged. */
   --valide-tint: oklch(0.30 0.06 145);
+}
+
+/* Phase 5 dark-mode shadow overrides (DESIGN-05).
+   Intentionally a separate `.dark { ... }` block from the OKLCH color block
+   above so the shadow-color overrides are visually grouped with the shadow
+   tokens themselves — Tailwind v4 / browsers concatenate same-selector
+   rules, so this is purely an organization choice. In dark mode the
+   wood-surface metaphor doesn't apply (surface is implicitly dim); standard
+   near-black shadows read correctly. The hairline above the bottom nav uses
+   a light-alpha so it stays visible against the dark background. Per
+   UI-SPEC §Shadows "Dark-mode shadows". */
+.dark {
+  --shadow-card:
+    0 1px 2px 0 rgba(0, 0, 0, 0.30),
+    0 2px 4px 0 rgba(0, 0, 0, 0.22);
+  --shadow-card-hover:
+    0 1px 2px 0 rgba(0, 0, 0, 0.36),
+    0 4px 10px 0 rgba(0, 0, 0, 0.28);
+  --shadow-nav:
+    0 -1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
 /* Honor iOS dark mode automatically. The shadcn primitives expect a `.dark`
