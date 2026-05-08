@@ -9,14 +9,14 @@
 
 ### DESIGN — Design system foundation
 
-- [ ] **DESIGN-01**: Typography pairing chosen (display serif + body sans) replacing Playfair, loaded via `next/font/google` with `display: swap`, French diacritics verified on iOS Safari at PWA-compressed sizes
-- [ ] **DESIGN-02**: Type scale, weights, line-heights, and letter-spacing defined as Tailwind v4 `@theme` tokens (single source of truth)
-- [ ] **DESIGN-03**: Color palette migrated to Slow Food artisanal — terracotta primary + cream/ink/warm-gray neutrals, replacing rose `#F43F5E` + slate; all v0.1 token names preserved or aliased to avoid component breakage
-- [ ] **DESIGN-04**: Paper-grain texture anchor implemented on card surfaces (CSS + one SVG noise asset), used consistently across all card surfaces, NOT used on full-page backgrounds, buttons, or chrome
-- [ ] **DESIGN-05**: Warm shadow tokens replacing cool box-shadows (paper-on-wood feel, not floating)
-- [ ] **DESIGN-06**: Motion tokens consolidated — one curve, two durations (fast 150ms / normal 280ms); `prefers-reduced-motion` honored
-- [ ] **DESIGN-07**: Base shadcn primitives in `frontend/components/ui/*` re-themed in place (Button, Input, Textarea, Card, Dialog, Sheet, Toast, Skeleton)
-- [ ] **DESIGN-08**: All design tokens consolidated in Tailwind v4 `@theme` directive in `globals.css` — no per-component hardcoded colors, no per-component shadow definitions
+- [x] **DESIGN-01**: Typography pairing chosen (display serif + body sans) replacing Playfair, loaded via `next/font/google` with `display: swap`, French diacritics verified on iOS Safari at PWA-compressed sizes
+- [x] **DESIGN-02**: Type scale, weights, line-heights, and letter-spacing defined as Tailwind v4 `@theme` tokens (single source of truth)
+- [x] **DESIGN-03**: Color palette migrated to Slow Food artisanal — terracotta primary + cream/ink/warm-gray neutrals, replacing rose `#F43F5E` + slate; all v0.1 token names preserved or aliased to avoid component breakage
+- [x] **DESIGN-04**: Paper-grain texture anchor implemented on card surfaces (CSS + one SVG noise asset), used consistently across all card surfaces, NOT used on full-page backgrounds, buttons, or chrome
+- [x] **DESIGN-05**: Warm shadow tokens replacing cool box-shadows (paper-on-wood feel, not floating)
+- [x] **DESIGN-06**: Motion tokens consolidated — one curve, two durations (fast 150ms / normal 280ms); `prefers-reduced-motion` honored
+- [x] **DESIGN-07**: Base shadcn primitives in `frontend/components/ui/*` re-themed in place (Button, Input, Textarea, Card, Dialog, Sheet, Toast, Skeleton)
+- [x] **DESIGN-08**: All design tokens consolidated in Tailwind v4 `@theme` directive in `globals.css` — no per-component hardcoded colors, no per-component shadow definitions
 
 ### CAPTURE — Capture surfaces polish
 
@@ -94,14 +94,14 @@ Filled by roadmapper during phase creation (2026-05-08).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DESIGN-01 | Phase 5 | Pending |
-| DESIGN-02 | Phase 5 | Pending |
-| DESIGN-03 | Phase 5 | Pending |
-| DESIGN-04 | Phase 5 | Pending |
-| DESIGN-05 | Phase 5 | Pending |
-| DESIGN-06 | Phase 5 | Pending |
-| DESIGN-07 | Phase 5 | Pending |
-| DESIGN-08 | Phase 5 | Pending |
+| DESIGN-01 | Phase 5 | Complete |
+| DESIGN-02 | Phase 5 | Complete |
+| DESIGN-03 | Phase 5 | Complete |
+| DESIGN-04 | Phase 5 | Complete |
+| DESIGN-05 | Phase 5 | Complete |
+| DESIGN-06 | Phase 5 | Complete |
+| DESIGN-07 | Phase 5 | Complete |
+| DESIGN-08 | Phase 5 | Complete |
 | CAPTURE-08 | Phase 6 | Pending |
 | CAPTURE-09 | Phase 6 | Pending |
 | CAPTURE-10 | Phase 6 | Pending |

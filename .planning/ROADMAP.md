@@ -17,7 +17,7 @@
 
 ## Phases
 
-- [ ] **Phase 5: Design system foundation** — Tokens, typography pairing, paper-grain anchor, warm shadows, motion language, and re-themed base shadcn primitives in `components/ui/*`
+- [x] **Phase 5: Design system foundation** — Tokens, typography pairing, paper-grain anchor, warm shadows, motion language, and re-themed base shadcn primitives in `components/ui/*` (completed 2026-05-08)
 - [ ] **Phase 6: Capture surfaces polish** — Re-theme all 5 capture entrypoints (quick / full / voice / photo / URL) + drafts inbox, close `CAPTURE-11` W4 gap inline
 - [ ] **Phase 7: Decide polish** — Re-theme daily shortlist, swipe deck, vote chips (5 computed states), "Tu décides" delegation, cold-start state; close `DECIDE-05` W4 gap inline
 - [ ] **Phase 8: Cook polish** — Re-theme recipe detail, library, cooking log history, cooking banner + finalize flow; close `COOK-07/08/11/12` W4 gaps inline
@@ -35,13 +35,13 @@
   3. User sees a subtle paper-grain texture on every card surface in the app (recipe cards, sheets, dialogs) but not on full-page backgrounds, buttons, or chrome
   4. User sees warm shadows underneath cards that read as paper-on-wood rather than the previous cool floating box-shadow
   5. Every shadcn primitive in `components/ui/*` (Button, Input, Textarea, Card, Dialog, Sheet, Toast, Skeleton) reflects the new tokens automatically — no unmodified shadcn defaults remain anywhere in the app
-**Plans:** 2/6 plans executed
+**Plans:** 6/6 plans complete
 - [x] 05-01-PLAN.md — Migrate globals.css tokens (terracotta + warm neutrals + warm shadows + motion CSS tokens + paper-grain utility)
 - [x] 05-02-PLAN.md — Create paper-grain SVG asset at frontend/public/textures/paper-grain.svg
-- [ ] 05-03-PLAN.md — Replace fonts in layout.tsx (Fraunces + IBM Plex Sans + Geist Mono) + rewrite type-scale utilities
-- [ ] 05-04-PLAN.md — Create frontend/lib/motion.ts with framer-motion presets (easeCraft, durations, transitions, variants)
-- [ ] 05-05-PLAN.md — Re-theme all 15 shadcn primitives in components/ui/* (paper-grain on surfaces, warm shadows, ease-craft transitions, terracotta tab indicator)
-- [ ] 05-06-PLAN.md — Create temporary /styleguide acceptance gate route + visual smoke-test checkpoint
+- [x] 05-03-PLAN.md — Replace fonts in layout.tsx (Fraunces + IBM Plex Sans + Geist Mono) + rewrite type-scale utilities
+- [x] 05-04-PLAN.md — Create frontend/lib/motion.ts with framer-motion presets (easeCraft, durations, transitions, variants)
+- [x] 05-05-PLAN.md — Re-theme all 15 shadcn primitives in components/ui/* (paper-grain on surfaces, warm shadows, ease-craft transitions, terracotta tab indicator)
+- [x] 05-06-PLAN.md — Create temporary /styleguide acceptance gate route + visual smoke-test checkpoint
 **UI hint:** yes
 
 ### Phase 6: Capture surfaces polish
@@ -100,7 +100,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Design system foundation | 2/6 | In Progress|  |
+| 5. Design system foundation | 6/6 | Complete    | 2026-05-08 |
 | 6. Capture surfaces polish | 0/0 | Not started | - |
 | 7. Decide polish | 0/0 | Not started | - |
 | 8. Cook polish | 0/0 | Not started | - |
