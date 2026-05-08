@@ -9,12 +9,14 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Inbox } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { RecipeDraftCard } from "@/components/RecipeDraftCard";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { api } from "@/lib/api";
 import { useRealtime } from "@/components/RealtimeProvider";
+import { variants, transitions } from "@/lib/motion";
 import type { Recipe } from "@/lib/recipes";
 
 function dedupePrepend(prev: Recipe[], next: Recipe): Recipe[] {
@@ -125,7 +127,19 @@ export default function InboxPage() {
               body={t("empty_body")}
             />
           ) : (
-            drafts.map((r) => <RecipeDraftCard key={r.id} recipe={r} />)
+            <AnimatePresence initial={false}>
+              {drafts.map((r) => (
+                <motion.div
+                  key={r.id}
+                  variants={variants.slideUp}
+                  initial="hidden"
+                  animate="visible"
+                  exit={{ opacity: 0, transition: transitions.fast }}
+                >
+                  <RecipeDraftCard recipe={r} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           )}
         </div>
       </section>
