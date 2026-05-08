@@ -386,6 +386,18 @@ export function HomeDecide() {
   const showCorpusColdStart =
     shortlist.recipes.length > 0 && shortlist.recipes.length < 10;
 
+  // Phase 7 / DECIDE-01 — display-serif date header above the deck.
+  // Locale-aware via the standard browser Intl API (no new i18n key per
+  // 07-UI-SPEC §"Surface 1" point 3). Lowercase per French convention.
+  // No year — too granular for daily-decide. Example: "vendredi 8 mai".
+  // Computed at render time (NOT module scope) so the date stays current
+  // across a midnight boundary if the app stays open overnight.
+  const formattedDate = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
+
   return (
     <div className="flex flex-col flex-1">
       <PushPermissionBanner />
@@ -397,6 +409,10 @@ export function HomeDecide() {
         />
       )}
       {showCorpusColdStart && <ColdStartChip />}
+
+      <header className="px-6 pt-8 pb-2">
+        <h1 className="text-display text-foreground">{formattedDate}</h1>
+      </header>
 
       {allVoted ? (
         <VoteSummary
