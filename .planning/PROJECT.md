@@ -45,17 +45,20 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 - REALTIME × 3 — WebSocket broadcast spine + DOM CustomEvent bridge + exponential reconnect
 - PWA × 4 — Manifest + service worker + Web Push + next-intl French localization
 
-### Active (v0.2 — Polish: Slow Food artisanal identity)
+### Active (v0.2.1 — E2E test infrastructure)
 
-*(Defined via `/gsd-new-milestone` 2026-05-08. Detailed REQ-IDs in `.planning/REQUIREMENTS.md`.)*
+*(Defined via `/gsd-new-milestone` 2026-05-08. Patch milestone scoped to one phase. Full REQ-IDs in `.planning/REQUIREMENTS.md`. v0.2 requirements archived at `.planning/milestones/v0.2-REQUIREMENTS.md`.)*
 
-- ✅ **Phase 5 complete** — Re-themed design system foundation: tokens (terracotta + warm-cream + warm-taupe + ink), Fraunces + IBM Plex Sans typography, paper-grain texture anchor, warm two-layer shadows, motion language (`--ease-craft` + 150/280ms durations), 10/15 shadcn primitives re-themed, dev-only `/styleguide` acceptance gate. UI audit 23/24 (DESIGN-01..08 validated)
-- ✅ **Phase 6 complete** — All 5 capture surfaces + drafts inbox polished to the Slow Food artisanal system. CAPTURE-11 W4 tap-target gap closed (PhotoUploader sheet h-12 + 48px X-overlay hit-pad). D-Voice persistent callout (paper-grain Card + Fraunces italic headline) reinforces the keyboard-mic deviation. Drafts inbox uses AnimatePresence for `recipe.created` slideUp and `recipe.promoted` Badge cross-fade. Phase 5 font-heading deferrals closed. UI audit 22/24 (CAPTURE-08..13 validated)
-- ✅ **Phase 7 complete** — Decide flow polished: Fraunces-italic date header on HomeDecide; ShortlistCard paper-grain frame + rounded-t-2xl photo + springSnap (240/28/1.1) for paper-physics swipe feel; 5-state vote-chip color story locked (emerald Validé / terracotta Pressenti / muted destructive Contesté / muted Rejeté / ghost Sans avis); "Tu décides" delegation Card mirrors the Phase 6 D-Voice callout. DECIDE-05 ColdStartChip dismiss raised to h-12. DECIDE-03 token reconciliation closed via invariant-lock comment. UI audit 22/24 (DECIDE-01..05 validated). ShortlistDeck unchanged at 141 LOC.
-- ✅ **Phase 8 complete** — Cook-time loop polished: recipe detail full-bleed hero + paper-grain backdrop-blur title strip + terracotta-30 ingredient margin-rule + Fraunces italic step numbers; recipe library is now a 2-col paper-grain RecipeCard grid with paper-grain SearchInput; CookingBanner closed COOK-07 W4 with `<Button asChild>` Finaliser at h-12; RatingPicker closed COOK-08 W4 with 100ms ease-craft press; CookingLogFinalize closed COOK-11 (offline guard + locked toast) and COOK-12 (ICU subhead key); NEW `/cooking-logs` history view + NEW CookingLogCard shipped. 2 new i18n keys (offline + recipe_subhead) — first key additions in v0.2 polish. UI audit 23/24 (matches Phase 5 baseline — best polish-phase score; COOK-06..12 validated).
-- ✅ **Phase 9 complete** — Onboarding + identity polished: 4 onboarding screens (welcome / create / share-code / join) re-themed with paper-grain Cards + Fraunces display titles; Settings reorganized into 3 paper-grain sections with byte-identical Fraunces italic terracotta invite-code display (first-touch ↔ re-find consistency); BottomNav active state migrated to terracotta `bg-primary/8` rounded-pill wash + Pressenti-style inbox badge with cool-gray purge; NEW `app/icon.tsx` + `app/apple-icon.tsx` via Next.js 16 ImageResponse render a wheat-stem food symbol on terracotta — no commissioned art. Phase 5 themeColor deferral fully closed (zero `#F43F5E` anywhere). Two UAT-driven fixes during live validation: SearchInput dropped paper-grain wrapper (icon-positioning regression), HomeDecide gained a partner-waiting Card with invite-code + refresh button (replaces blank-on-load). UI audit 22/24 (ONBOARD-07..11 validated).
-- ✅ **All 31 v0.2 requirements validated** — milestone behaviorally complete pending real-device PWA install + 2-week daily-use validation gate.
-- Demonstrable satisfaction of four design principles on every screen: Design Quality, Originality, Craft, Functionality
+- [ ] **TEST-01**: Backend Python seed script — idempotent `uv run seed` CLI creates one household, one member with a fixed env-overridable `auth_token`, and 20+ recipes spread across the locked enums (Season / Cuisine / Mood / Protein) with cooking_logs + votes so derived state (vote-state computation, `recipes.last_cooked_at`, `recipes.cook_count`) renders non-empty. Imports the Python `Enum` classes directly — no duplicated values.
+- [ ] **TEST-02**: Committed Playwright suite (`@playwright/test`) under `frontend/tests/` covering each screen and each user action: capture (quick / full only — voice / photo / url marked `test.fixme` if not wired), voting, shortlist, recipe detail, cooking log finalize. Specs read the test `auth_token` from env to skip onboarding.
+- [ ] **TEST-03**: Bootstrap runbook + `npm` / `uv` scripts — fresh checkout reaches a green Playwright run in ≤ 5 commands (seed → start backend → start frontend → run Playwright).
+- [ ] **TEST-04**: Invite-code happy-path spec — one Playwright spec exercises `/onboarding/create` → invite code → `/onboarding/join` end-to-end without using the seeded auth shortcut, validating the join flow stays green.
+
+**Out of scope (v0.2.1):** product-code refactors, new product features, voice / photo / url capture if not wired (mark `test.fixme`), production hosting (Railway / Vercel / Supabase prod). Local-only.
+
+### Validated (v0.2 — shipped 2026-05-08)
+
+- ✅ **All 31 v0.2 requirements validated** across Phases 5–9 (DESIGN × 8, CAPTURE × 6, DECIDE × 5, COOK × 7, ONBOARD × 5). Average UI audit 22.4 / 24. Per-phase summaries preserved in `.planning/milestones/v0.2-ROADMAP.md` and the per-phase SUMMARY files. Demonstrable satisfaction of the four design principles (Design Quality, Originality, Craft, Functionality) on every screen. Pending: ≥ 2-week daily-use validation gate.
 
 ### Out of Scope
 
@@ -110,37 +113,38 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 | Fraunces + IBM Plex Sans typography (v0.2 Phase 5) | Slow Food editorial feel; both on Google Fonts; latin+latin-ext subsets clear iOS Safari French diacritic gate | ✅ Validated — visual smoke test approved, UI audit 23/24 |
 | Token preservation via aliases (v0.2 Phase 5) | DESIGN-03: keep all v0.1 token names so component churn stays at zero during the migration | ✅ Validated — 10 primitives re-themed via in-place className edits, no API breakage |
 
-## Current Milestone: v0.2 — Polish: Slow Food artisanal identity
+## Current Milestone: v0.2.1 — E2E test infrastructure
 
-**Goal:** Re-theme every screen of Al Dente to deliver a coherent Slow Food artisanal identity (warm, intimate, restrained Italian heritage) that demonstrably satisfies the four design principles: Design Quality, Originality, Craft, Functionality.
+**Goal:** Make the shipped v0.1 / v0.2 PWA testable end-to-end on a fresh checkout: a one-command synthetic seed and a committed Playwright suite that exercises every screen and action.
 
-**Source of design decisions:** `.planning/notes/v0.2-design-direction.md` — locked output of `/gsd-explore` session (2026-05-08). Every UI-SPEC contract and phase plan must cite this document and resist re-litigating it.
+**Why now:** v0.2 closed without a regression net. Manual UAT on physical iPhones is the only safety we have, and rebuilding household state by hand to test a single flow is slow enough that I avoid it — which means regressions slip in. This milestone fixes that for the rest of v0.2.x and v1.0 work.
 
-**Target features:**
+**Target features (one phase):**
 
-- Re-themed design system foundation: terracotta accent + cream / ink / warm-gray neutrals replacing rose `#F43F5E` + slate; new display serif replacing Playfair; paper-grain anchor on card surfaces; warm shadows replacing cool box-shadows; tokens consolidated in Tailwind v4 `@theme`
-- Re-themed shadcn primitives in `frontend/components/ui/*` (Button, Input, Card, Dialog, Sheet, etc.) — modified in place rather than vanilla shadcn
-- Per-screen polish: capture surfaces (quick / full / voice / photo / URL), voting + shortlist (swipe deck, vote chips), recipe detail + cooking log finalize, onboarding + settings
-- Close W4 `04-UI-REVIEW.md` gaps inline as part of the polish pass (RatingPicker `transition-transform`, CookingBanner `h-12`, missing offline i18n keys, etc.)
+- **Phase 10 — E2E test infrastructure & synthetic seed**
+  - Idempotent backend seed via `uv run seed` (1 household + 1 member with fixed `auth_token` + 20+ recipes spanning the locked enums + cooking_logs + votes for derived state)
+  - Committed `@playwright/test` suite under `frontend/tests/` covering capture (wired surfaces), voting, shortlist, recipe detail, cooking log
+  - Bootstrap runbook + npm / uv scripts so a fresh checkout reaches a green run in ≤ 5 commands
+  - One invite-code happy-path spec that does NOT use the seeded auth shortcut
 
-**Anti-patterns (committed in `.planning/notes/v0.2-design-direction.md`):**
+**Anti-patterns (committed for this milestone):**
 
-No purple gradients on white cards · No unmodified shadcn defaults · No cool grays (slate / zinc) on surfaces · No "lean handmade" overload (paper-grain only, no hand-drawn dividers) · No Geist alone or Geist+Inter pairing · No trattoria theming · No clinical / Vignelli-modernist direction · No themed chrome that fights food photography content
+No product-code refactors during this phase · No new product features · No tests against Railway / Vercel / Supabase prod (local-only) · No drift between `frontend/lib/enums.ts` and the Python `Enum` classes — seed imports the Python enums, never duplicates values · No mocking the database — tests hit a real Postgres seeded by the same migrations product code uses
 
 **Key constraints:**
 
-- Polish only — no functional regressions on cookie auth, WebSocket realtime, Gemini capture, scoring, or daily shortlist
-- W4 polish baseline scored 20/24 in Phase 4 UI-REVIEW (`04-UI-REVIEW.md`) — current floor, not from-scratch
-- Typography pairing decision is open — research gated by the question in `.planning/research/questions.md`, answered when the design-system foundation phase plans
-- French-only via `next-intl`; French diacritic rendering on iOS Safari is a hard typography constraint
-- Solo dev, ~1 weekend/week budget — phase scoping reflects that
-- Push to `main` → auto-deploy to Vercel + Railway; no manual `vercel --prod`
+- Local-only. `DATABASE_URL_TEST` separate from dev DB.
+- Push to `main` is the only deploy path — never run `vercel --prod` or manual Railway deploys.
+- Voice / photo / url capture surfaces that aren't wired yet → mark spec `test.fixme` with TODO and move on. Surface real bugs to me before fixing.
+- Executor scope creep is a known failure mode (see `.planning/STATE.md` accumulated context). Pass prior CONTEXT.md and SUMMARY.md to the executor; tests + seed + scripts only unless a real bug is surfaced and approved.
+- Solo dev, ~1 weekend/week budget — single-phase milestone, ship and move on.
 
 **Success criteria (behavioral):**
 
-- After v0.2 ships, every screen demonstrably satisfies the four design principles
-- A retrospective `/gsd-ui-review` on the full app scores ≥ 22/24 across the 6 pillars (raised from W4's 20/24 on Phase-4 surfaces only)
-- The design reads as a coherent whole — not "Phase-4-polished + everything-else-stock"
+- A teammate (or future-me on a fresh laptop) runs ≤ 5 commands from a clean clone and sees Playwright report all green specs.
+- The seeded household renders the shortlist, vote chips, recipe detail, and cooking log with realistic data (no empty states masking bugs).
+- Re-running `uv run seed` does not double-insert recipes, votes, or cooking logs (idempotency proven by re-running mid-test).
+- A regression introduced into `frontend/components/ShortlistDeck.tsx` or `backend/app/routers/votes.py` is caught by the suite, not by manual UAT.
 
 ## Future Milestones (deferred)
 
@@ -166,4 +170,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-08 — v0.2 milestone polish complete. All 5 phases (5/6/7/8/9) shipped. Average UI audit score 22.4/24 across phases. ONBOARD-07..11 validated; Phase 5 themeColor deferral closed; new PWA identity with wheat-stem food symbol on terracotta; 2 UAT-driven fixes during Phase 9 validation. Pending: milestone audit → complete → cleanup, then ≥2-week daily-use validation gate.*
+*Last updated: 2026-05-08 — v0.2.1 milestone started: E2E test infrastructure (single phase — Phase 10). Goal is a one-command synthetic seed plus a committed Playwright suite covering every shipped screen. v0.2 polish complete (5 phases, 22.4/24 average UI audit) and now in Validated. v0.2 deferred items (i18n sweep on partner-waiting strings, Copy button on partner-waiting Card per `.planning/milestones/v0.2-MILESTONE-AUDIT.md`) intentionally NOT folded into v0.2.1 yet — fold via `/gsd-add-phase` if/when scope warrants.*

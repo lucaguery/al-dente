@@ -1,69 +1,32 @@
-# Requirements: Al Dente — v0.2 Polish (Slow Food artisanal identity)
+# Requirements: Al Dente — v0.2.1 (E2E test infrastructure)
 
 **Defined:** 2026-05-08
 **Core Value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Milestone goal:** Re-theme every screen to deliver a coherent Slow Food artisanal identity (warm, intimate, restrained Italian heritage) that demonstrably satisfies the four design principles: Design Quality, Originality, Craft, Functionality.
-**Source of design decisions:** `.planning/notes/v0.2-design-direction.md`
+**Milestone goal:** Make the shipped v0.1 / v0.2 PWA testable end-to-end on a fresh checkout — one-command synthetic seed plus committed Playwright coverage of every screen and action.
+**Why now:** v0.2 closed without a regression net. Manual UAT on physical iPhones is the only safety we have, and rebuilding household state by hand is slow enough that I avoid it — which means regressions slip in.
+**Source of scope decisions:** Locked with user before routing (committed Playwright suite + Python `uv run seed`).
+**Prior milestone requirements:** archived at `.planning/milestones/v0.2-REQUIREMENTS.md` (31 reqs, all validated).
 
-## v0.2 Requirements
+## v0.2.1 Requirements
 
-### DESIGN — Design system foundation
+### TEST — End-to-end test infrastructure
 
-- [x] **DESIGN-01**: Typography pairing chosen (display serif + body sans) replacing Playfair, loaded via `next/font/google` with `display: swap`, French diacritics verified on iOS Safari at PWA-compressed sizes
-- [x] **DESIGN-02**: Type scale, weights, line-heights, and letter-spacing defined as Tailwind v4 `@theme` tokens (single source of truth)
-- [x] **DESIGN-03**: Color palette migrated to Slow Food artisanal — terracotta primary + cream/ink/warm-gray neutrals, replacing rose `#F43F5E` + slate; all v0.1 token names preserved or aliased to avoid component breakage
-- [x] **DESIGN-04**: Paper-grain texture anchor implemented on card surfaces (CSS + one SVG noise asset), used consistently across all card surfaces, NOT used on full-page backgrounds, buttons, or chrome
-- [x] **DESIGN-05**: Warm shadow tokens replacing cool box-shadows (paper-on-wood feel, not floating)
-- [x] **DESIGN-06**: Motion tokens consolidated — one curve, two durations (fast 150ms / normal 280ms); `prefers-reduced-motion` honored
-- [x] **DESIGN-07**: Base shadcn primitives in `frontend/components/ui/*` re-themed in place (Button, Input, Textarea, Card, Dialog, Sheet, Toast, Skeleton)
-- [x] **DESIGN-08**: All design tokens consolidated in Tailwind v4 `@theme` directive in `globals.css` — no per-component hardcoded colors, no per-component shadow definitions
+- [ ] **TEST-01**: Backend Python seed script — invoked via `uv run seed` (proper CLI entry point in `backend/pyproject.toml`). Idempotent (re-running does NOT double-insert). Creates one household, one member with a fixed env-overridable `auth_token` (default `test-token-luca`, override via `SEED_AUTH_TOKEN`), and 20+ recipes spread across the locked vocabularies (Season × Cuisine × Mood × Protein) so vote / shortlist / library views render with realistic variety. Includes a non-empty `cooking_logs` table with at least 3 finalized entries (different ratings — `loved` / `liked` / `disliked`) and a non-empty `votes` table covering each of the 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis) so derived state on `recipes.last_cooked_at` and `recipes.cook_count` is populated and the vote-state computation has data to test. MUST import the Python `Enum` classes (Season / Cuisine / Mood / Protein) directly from the backend models — no duplicated values (drift-with-`frontend/lib/enums.ts` is the explicit anti-pattern).
 
-### CAPTURE — Capture surfaces polish
+- [ ] **TEST-02**: Committed Playwright suite under `frontend/tests/` using `@playwright/test`. Cover each shipped screen and each user action: capture (quick + full at minimum; voice / photo / url marked `test.fixme` if not wired and a TODO recorded), drafts inbox, daily shortlist (swipe deck — at least vote-yes, vote-no, "Tu décides"), recipe detail, cooking-log create + finalize (rating + notes), recipe library list/search, settings (display invite code). Specs read the seeded `auth_token` from env (`PLAYWRIGHT_AUTH_TOKEN`) and inject it as the same-origin HttpOnly cookie that production uses, skipping onboarding for all specs except the one in TEST-04. Each spec asserts at least one user-visible outcome (DOM text, toast, navigation), not just absence of errors.
 
-(Continues numbering from v0.1's CAPTURE × 7.)
+- [ ] **TEST-03**: Bootstrap runbook + `npm` / `uv` scripts so a fresh checkout reaches a green Playwright run in ≤ 5 commands. Documented in either `README.md` (root or `frontend/`) or a new `TESTING.md`. Commands are real and copy-pasteable (`uv sync && uv run alembic upgrade head && uv run seed && cd frontend && npm install && npm run test:e2e` is the upper-bound sketch — the actual sequence may be shorter via composed scripts). Includes a `npm run test:e2e` script in `frontend/package.json` and a `seed` console-script entry in `backend/pyproject.toml`. Includes a `.env.test.example` (or equivalent) showing the required env vars (`DATABASE_URL_TEST`, `SEED_AUTH_TOKEN`, `PLAYWRIGHT_AUTH_TOKEN`, `NEXT_PUBLIC_API_BASE`).
 
-- [x] **CAPTURE-08**: Quick-add capture surface re-themed with new tokens
-- [x] **CAPTURE-09**: Full-form capture surface re-themed with new tokens
-- [x] **CAPTURE-10**: Voice capture surface re-themed (D-Voice deviation copy preserved; no in-app mic regression)
-- [x] **CAPTURE-11**: Photo capture surface re-themed; PhotoUploader sheet action buttons (`Caméra`, `Photothèque`) raised to `h-12` (48px) — closes W4 UI-REVIEW gap
-- [x] **CAPTURE-12**: URL capture surface re-themed
-- [x] **CAPTURE-13**: Drafts inbox re-themed (`draft` and `structured` recipe states; `recipe.created` and `recipe.promoted` realtime visual states)
+- [ ] **TEST-04**: Invite-code happy-path Playwright spec — one spec exercises `/onboarding/create` → invite code → `/onboarding/join` end-to-end without using the seeded auth shortcut. Validates that the join flow stays green when the cookie is fresh and that the second member lands in the household authenticated. This is the only spec that mutates onboarding state during the test run; runs in isolation from the seeded data (uses a separate or freshly truncated test DB scope).
 
-### DECIDE — Voting + shortlist polish
+## Future Requirements (deferred — NOT in v0.2.1 scope)
 
-- [x] **DECIDE-01**: Daily shortlist screen re-themed with new tokens
-- [x] **DECIDE-02**: Swipe deck (framer-motion) refined with the new motion language (one curve, paper-physics feel)
-- [x] **DECIDE-03**: Vote chip presentation refined for the 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis); `--color-validé-tint` token name reconciled (spec ↔ CSS ↔ implementation single naming)
-- [x] **DECIDE-04**: "Tu décides" delegation surface refined with new tokens
-- [x] **DECIDE-05**: Cold-start / empty-shortlist states polished; ColdStartChip dismiss button raised to `h-12` (48px) — addresses W4 D-10 productize-later note inline
+These are deferred v0.2 polish items captured in `.planning/milestones/v0.2-MILESTONE-AUDIT.md`. They are intentionally NOT folded into v0.2.1 to keep the milestone tight. Fold via `/gsd-add-phase` into v0.2.1 (or a future v0.2.2) when bandwidth allows.
 
-### COOK — Recipe detail + cooking log + library polish
+- **POLISH-01** — i18n sweep on partner-waiting strings (HomeDecide partner-waiting Card and adjacent surfaces still have a few hardcoded strings)
+- **POLISH-02** — Copy-to-clipboard button on the partner-waiting Card invite code (currently displays code but no one-tap copy)
 
-(Continues numbering from v0.1's COOK × 5.)
-
-- [x] **COOK-06**: Recipe detail screen re-themed (hero, ingredient list, instructions, metadata)
-- [x] **COOK-07**: CookingBanner re-themed AND `Finaliser` link + `Passer` ghost button raised to `h-12` (48px); `Finaliser` converted to `<Button asChild>` instead of raw `<a>` with hand-rolled classes — closes W4 UI-REVIEW gap
-- [x] **COOK-08**: CookingLogFinalize re-themed AND RatingPicker `transition-transform duration-100` added — closes W4 UI-REVIEW gap (instant snap → 100ms ease)
-- [x] **COOK-09**: Recipe library / list re-themed (cards, search, filtering, sort)
-- [x] **COOK-10**: Cooking log history / "what we ate this week" view re-themed
-- [x] **COOK-11**: `cooking_log.finalize.offline` i18n key added (`Hors ligne. Réessaie une fois connecté.`) + `navigator.onLine` guard in submit handler — closes W4 UI-REVIEW gap
-- [x] **COOK-12**: `cooking_log.finalize.recipe_subhead` ICU key used for the `« {title} »` pattern — closes W4 next-intl pattern divergence
-
-### ONBOARD — Onboarding + settings + identity
-
-(Continues numbering from v0.1's ONBOARD × 6.)
-
-- [x] **ONBOARD-07**: Household create screen re-themed
-- [x] **ONBOARD-08**: Household join (invite-code entry) screen re-themed
-- [x] **ONBOARD-09**: Settings screen re-themed (member color attribution, household info, invite-code display, copy-to-clipboard affordance)
-- [x] **ONBOARD-10**: PWA manifest icon + splash screen updated to reflect new identity (terracotta background, type-driven monogram or simple food symbol — kept simple, no custom illustration commission)
-- [x] **ONBOARD-11**: BottomNav re-themed (icons, active state, badge styling)
-
-## Future Requirements (deferred — NOT in v0.2 scope)
-
-Candidates from v0.1 v2 backlog and exploration:
-
-### V2 — Backlog (post-v0.2)
+### V2 — Backlog (post-v0.2.x, ongoing)
 
 - **V2-ALBUM-01/02/03** — Shared cooking-log photo gallery (cut from v0.1)
 - **V2-AUTH-01** — Supabase Auth magic-link migration (removes invite-code fragility)
@@ -72,73 +35,40 @@ Candidates from v0.1 v2 backlog and exploration:
 
 ## Out of Scope
 
-Explicitly excluded for v0.2. Documented to prevent scope creep.
+Explicitly excluded for v0.2.1. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Hand-drawn dividers / icons / ornamental glyphs | Texture anchor is paper-grain only (per design direction); higher-effort path captured as seed for revisit |
-| Custom illustrated app icon (commissioned art) | Effort budget — type-driven monogram is sufficient for v0.2 |
-| Functional changes (new features, new flows) | v0.2 is polish only; no regressions to cookie auth, WebSocket realtime, Gemini capture, scoring, daily shortlist |
-| Backend changes | All work is frontend-only |
-| Album / shared photo grid | V2 backlog (cut from v0.1; productize-later) |
-| Per-member rating granularity | V2 backlog |
-| Supabase Auth migration | V2 backlog |
-| Cool-gray surfaces (slate / zinc family) | Anti-pattern committed in design direction |
-| Geist alone or Geist+Inter pairing | Anti-pattern (AI-generated default) |
-| Trattoria theming (checkered patterns, flag colors) | Anti-pattern committed in design direction |
-| Hand-drawn elements outside the paper-grain anchor | Anti-pattern (twee overload) |
+| Product-code refactors during the test phase | This milestone is test infrastructure; refactors live in their own phase. If a real bug surfaces while writing tests, surface it (don't fix inline) and capture it as a follow-up. |
+| New product features | v0.2.1 is QA infra only; no functional additions. |
+| Voice / photo / url capture spec coverage if surfaces aren't wired | Marked `test.fixme` with TODO in the spec. Don't block on building missing endpoints. |
+| Tests against production hosting (Railway / Vercel / Supabase prod) | Local-only — tests use `DATABASE_URL_TEST` against local Postgres or a Supabase branch. Never hits the prod DB. |
+| Mocking the database | Seed populates a real Postgres via the same SQLAlchemy + Alembic schema product code uses. Mocked tests pass against fictional schemas (memory: feedback_no_manual_vercel_deploy is unrelated, but the same family of "test divergence" risk applies). |
+| CI integration (GitHub Actions, Vercel CI checks) | This milestone delivers the local suite. CI hookup can be a follow-up (small) phase once the suite is proven green locally. |
+| Visual-regression / screenshot testing | Out of scope. Playwright assertions only. UI audits remain the job of `/gsd-ui-review`. |
+| Cross-browser coverage (Firefox, Safari) | Chromium-only for v0.2.1 — matches the audience (iOS Safari, but Playwright Chromium is sufficient for behavioral regression). Real-device Safari validation stays manual. |
+| Performance / load testing | Functional E2E only. Performance budget is its own discipline. |
 
 ## Traceability
 
-Filled by roadmapper during phase creation (2026-05-08).
+Filled when ROADMAP.md / phase plans are written.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DESIGN-01 | Phase 5 | Complete |
-| DESIGN-02 | Phase 5 | Complete |
-| DESIGN-03 | Phase 5 | Complete |
-| DESIGN-04 | Phase 5 | Complete |
-| DESIGN-05 | Phase 5 | Complete |
-| DESIGN-06 | Phase 5 | Complete |
-| DESIGN-07 | Phase 5 | Complete |
-| DESIGN-08 | Phase 5 | Complete |
-| CAPTURE-08 | Phase 6 | Complete |
-| CAPTURE-09 | Phase 6 | Complete |
-| CAPTURE-10 | Phase 6 | Complete |
-| CAPTURE-11 | Phase 6 | Complete |
-| CAPTURE-12 | Phase 6 | Complete |
-| CAPTURE-13 | Phase 6 | Complete |
-| DECIDE-01 | Phase 7 | Complete |
-| DECIDE-02 | Phase 7 | Complete |
-| DECIDE-03 | Phase 7 | Complete |
-| DECIDE-04 | Phase 7 | Complete |
-| DECIDE-05 | Phase 7 | Complete |
-| COOK-06 | Phase 8 | Complete |
-| COOK-07 | Phase 8 | Complete |
-| COOK-08 | Phase 8 | Complete |
-| COOK-09 | Phase 8 | Complete |
-| COOK-10 | Phase 8 | Complete |
-| COOK-11 | Phase 8 | Complete |
-| COOK-12 | Phase 8 | Complete |
-| ONBOARD-07 | Phase 9 | Complete |
-| ONBOARD-08 | Phase 9 | Complete |
-| ONBOARD-09 | Phase 9 | Complete |
-| ONBOARD-10 | Phase 9 | Complete |
-| ONBOARD-11 | Phase 9 | Complete |
+| TEST-01 | Phase 10 | Pending |
+| TEST-02 | Phase 10 | Pending |
+| TEST-03 | Phase 10 | Pending |
+| TEST-04 | Phase 10 | Pending |
 
 **Coverage:**
-- v0.2 requirements: 31 total
-- Mapped to phases: 31 ✓
+- v0.2.1 requirements: 4 total
+- Mapped to phases: 4 ✓
 - Unmapped: 0
 - Duplicates: 0
 
 **Per-phase counts:**
-- Phase 5 (Design system foundation): 8 requirements (DESIGN × 8)
-- Phase 6 (Capture surfaces polish): 6 requirements (CAPTURE × 6)
-- Phase 7 (Decide polish): 5 requirements (DECIDE × 5)
-- Phase 8 (Cook polish): 7 requirements (COOK × 7)
-- Phase 9 (Onboarding + identity polish): 5 requirements (ONBOARD × 5)
+- Phase 10 (E2E test infrastructure & synthetic seed): 4 requirements (TEST × 4)
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-08 — v0.2 roadmap traceability filled by roadmapper (5 phases, 31 mappings)*
+*Last updated: 2026-05-08 — v0.2.1 milestone scoped to a single phase (Phase 10). All 4 TEST requirements mapped 1-to-1 to Phase 10. v0.2 requirements archived at `.planning/milestones/v0.2-REQUIREMENTS.md`.*
