@@ -32,7 +32,7 @@ export function CookingBanner({
     <div
       role="region"
       aria-labelledby="cooking-banner-title"
-      className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 min-h-16 rounded-2xl bg-valide-tint border border-border"
+      className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 min-h-16 rounded-2xl bg-primary/8 paper-grain shadow-card border border-border"
     >
       <ChefHat
         size={24}
