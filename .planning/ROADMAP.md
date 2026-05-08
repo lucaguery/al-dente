@@ -21,7 +21,7 @@
 - [x] **Phase 6: Capture surfaces polish** — Re-theme all 5 capture entrypoints (quick / full / voice / photo / URL) + drafts inbox, close `CAPTURE-11` W4 gap inline (completed 2026-05-08)
 - [x] **Phase 7: Decide polish** — Re-theme daily shortlist, swipe deck, vote chips (5 computed states), "Tu décides" delegation, cold-start state; close `DECIDE-05` W4 gap inline (completed 2026-05-08)
 - [x] **Phase 8: Cook polish** — Re-theme recipe detail, library, cooking log history, cooking banner + finalize flow; close `COOK-07/08/11/12` W4 gaps inline (completed 2026-05-08)
-- [ ] **Phase 9: Onboarding + identity polish** — Re-theme household create/join, settings, BottomNav, PWA manifest icon + splash
+- [x] **Phase 9: Onboarding + identity polish** — Re-theme household create/join, settings, BottomNav, PWA manifest icon + splash (completed 2026-05-08)
 
 ## Phase Details
 
@@ -103,11 +103,11 @@
   3. User sees the BottomNav re-themed — icons, active state, and badge styling reflect the warm palette and motion language; cool-gray slate/zinc is gone from this surface
   4. User installs the app via Safari → Add to Home Screen and the home-screen icon shows the new terracotta-backed identity (type-driven monogram or simple food symbol) with a matching splash screen — no rose `#F43F5E` left in the manifest
   5. The four design principles (Design Quality, Originality, Craft, Functionality) hold across the first-touch path and the app reads as a single coherent product end-to-end
-**Plans:** 4 plans
-- [ ] 09-01-PLAN.md — PWA identity (NEW app/icon.tsx + apple-icon.tsx + manifest.json migration + viewport.themeColor closure) — ONBOARD-10 + Phase 5 deferral
-- [ ] 09-02-PLAN.md — Onboarding flow re-theme (welcome + create + share-code + join: paper-grain Cards + Fraunces italic display + h-12 floor) — ONBOARD-07 + ONBOARD-08
-- [ ] 09-03-PLAN.md — Settings 3-section paper-grain Card layout + Fraunces italic terracotta invite-code identity signature — ONBOARD-09
-- [ ] 09-04-PLAN.md — BottomNav re-theme (bg-primary/8 active-pill wash + Pressenti-style inbox badge + cool-gray purge) — ONBOARD-11
+**Plans:** 4/4 plans complete
+- [x] 09-01-PLAN.md — PWA identity (NEW app/icon.tsx + apple-icon.tsx + manifest.json migration + viewport.themeColor closure) — ONBOARD-10 + Phase 5 deferral
+- [x] 09-02-PLAN.md — Onboarding flow re-theme (welcome + create + share-code + join: paper-grain Cards + Fraunces italic display + h-12 floor) — ONBOARD-07 + ONBOARD-08
+- [x] 09-03-PLAN.md — Settings 3-section paper-grain Card layout + Fraunces italic terracotta invite-code identity signature — ONBOARD-09
+- [x] 09-04-PLAN.md — BottomNav re-theme (bg-primary/8 active-pill wash + Pressenti-style inbox badge + cool-gray purge) — ONBOARD-11
 **UI hint:** yes
 
 ## Progress
@@ -118,7 +118,7 @@
 | 6. Capture surfaces polish | 6/6 | Complete    | 2026-05-08 |
 | 7. Decide polish | 4/4 | Complete    | 2026-05-08 |
 | 8. Cook polish | 6/6 | Complete    | 2026-05-08 |
-| 9. Onboarding + identity polish | 0/4 | Ready to execute | - |
+| 9. Onboarding + identity polish | 4/4 | Complete    | 2026-05-08 |
 
 ## Coverage
 

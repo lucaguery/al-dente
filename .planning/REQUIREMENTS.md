@@ -53,11 +53,11 @@
 
 (Continues numbering from v0.1's ONBOARD × 6.)
 
-- [ ] **ONBOARD-07**: Household create screen re-themed
-- [ ] **ONBOARD-08**: Household join (invite-code entry) screen re-themed
-- [ ] **ONBOARD-09**: Settings screen re-themed (member color attribution, household info, invite-code display, copy-to-clipboard affordance)
-- [ ] **ONBOARD-10**: PWA manifest icon + splash screen updated to reflect new identity (terracotta background, type-driven monogram or simple food symbol — kept simple, no custom illustration commission)
-- [ ] **ONBOARD-11**: BottomNav re-themed (icons, active state, badge styling)
+- [x] **ONBOARD-07**: Household create screen re-themed
+- [x] **ONBOARD-08**: Household join (invite-code entry) screen re-themed
+- [x] **ONBOARD-09**: Settings screen re-themed (member color attribution, household info, invite-code display, copy-to-clipboard affordance)
+- [x] **ONBOARD-10**: PWA manifest icon + splash screen updated to reflect new identity (terracotta background, type-driven monogram or simple food symbol — kept simple, no custom illustration commission)
+- [x] **ONBOARD-11**: BottomNav re-themed (icons, active state, badge styling)
 
 ## Future Requirements (deferred — NOT in v0.2 scope)
 
@@ -120,11 +120,11 @@ Filled by roadmapper during phase creation (2026-05-08).
 | COOK-10 | Phase 8 | Complete |
 | COOK-11 | Phase 8 | Complete |
 | COOK-12 | Phase 8 | Complete |
-| ONBOARD-07 | Phase 9 | Pending |
-| ONBOARD-08 | Phase 9 | Pending |
-| ONBOARD-09 | Phase 9 | Pending |
-| ONBOARD-10 | Phase 9 | Pending |
-| ONBOARD-11 | Phase 9 | Pending |
+| ONBOARD-07 | Phase 9 | Complete |
+| ONBOARD-08 | Phase 9 | Complete |
+| ONBOARD-09 | Phase 9 | Complete |
+| ONBOARD-10 | Phase 9 | Complete |
+| ONBOARD-11 | Phase 9 | Complete |
 
 **Coverage:**
 - v0.2 requirements: 31 total
