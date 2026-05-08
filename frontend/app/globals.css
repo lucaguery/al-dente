@@ -56,10 +56,11 @@
   --color-surface-muted: var(--surface-muted);
   --color-foreground-muted: var(--foreground-muted);
 
-  /* Quick-260507-hd0 — brand-rose tint scale.
-     One accent, many tints: derive faint rose surfaces from the brand hue
-     (oklch ~ #F43F5E) instead of introducing a second color. Used as the
-     home hero backdrop and any future "branded surface" treatment. */
+  /* Quick-260507-hd0 (v0.1) → Phase 9 (v0.2): brand tint scale.
+     Variable names retained for v0.1 compatibility; values now resolve to
+     the v0.2 Slow Food terracotta hue (oklch ~ #C8553D) via the :root
+     mappings below. Used as the home hero backdrop and any future
+     "branded surface" treatment. */
   --color-surface-rose-50: var(--surface-rose-50);
   --color-surface-rose-100: var(--surface-rose-100);
 
