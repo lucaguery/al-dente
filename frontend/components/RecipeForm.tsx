@@ -360,7 +360,7 @@ export function RecipeForm({
   const submitBar = (
     <div className="fixed bottom-16 inset-x-0 px-6 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 bg-background/80 backdrop-blur-sm border-t border-border z-30">
       <Button
-        className="h-11 w-full"
+        className="h-12 w-full"
         disabled={!v.title.trim() || submitting}
         onClick={handleSubmit}
       >
