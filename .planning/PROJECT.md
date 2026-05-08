@@ -14,6 +14,8 @@ Eliminate the daily "on mange quoi ?" debate via a shared library, async voting,
 
 Both household members have a fully working app installed on their iPhones. The app covers the full loop from recipe discovery to cooking finalization: capture recipes (voice / photo / URL / manual), let the algorithm propose a daily shortlist, vote asynchronously, start cooking, and log the result with a photo and rating. WebSocket sync keeps both phones in sync within ~200ms.
 
+**v0.2 Phase 5 shipped** — 2026-05-08. Slow Food artisanal token system (terracotta primary at h≈35°, warm-cream + warm-taupe + ink neutrals, two-layer warm-brown shadows, paper-grain texture anchor on card surfaces, motion language with one curve / two durations), Fraunces + IBM Plex Sans typography pairing with French diacritic verification on iOS Safari, 10 shadcn primitives re-themed in place, dev-only `/styleguide` acceptance gate. Visual smoke test approved; UI audit 23/24 (above 22/24 target). Foundation ready for Phases 6–9 to consume.
+
 **Behavioral validation gate:** ≥ 2 weeks of daily use by both members (the v0.1 definition of done per SPEC.md). This is the next observable milestone before v0.2 planning begins.
 
 **Infrastructure:** Next.js 16 PWA on Vercel + FastAPI on Railway + Supabase Postgres + Storage. Auto-deploy on push to `main`. Free-tier hosting throughout.
@@ -39,8 +41,8 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 *(Defined via `/gsd-new-milestone` 2026-05-08. Detailed REQ-IDs in `.planning/REQUIREMENTS.md`.)*
 
-- Re-themed design system (tokens, typography, base shadcn primitives in `components/ui/*`)
-- Per-screen polish: capture surfaces, voting + shortlist, recipe detail + cooking log, onboarding + settings
+- ✅ **Phase 5 complete** — Re-themed design system foundation: tokens (terracotta + warm-cream + warm-taupe + ink), Fraunces + IBM Plex Sans typography, paper-grain texture anchor, warm two-layer shadows, motion language (`--ease-craft` + 150/280ms durations), 10/15 shadcn primitives re-themed, dev-only `/styleguide` acceptance gate. UI audit 23/24 (DESIGN-01..08 validated)
+- Per-screen polish: capture surfaces (Phase 6), voting + shortlist (Phase 7), recipe detail + cooking log (Phase 8), onboarding + settings + identity (Phase 9)
 - Close W4 UI-REVIEW gaps inline as part of the polish pass
 - Demonstrable satisfaction of four design principles on every screen: Design Quality, Originality, Craft, Functionality
 
@@ -94,6 +96,8 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 | 3-value rating (`loved`/`liked`/`disliked`) | Decision-relevant signal only | ✅ Validated — sufficient for shortlist weighting |
 | 4 waves with dogfood gates between each | Behavioral validation beats feature-completeness | ✅ Validated — W1 gate kept motivation high |
 | DOM CustomEvent bridge for WS → React | Decouples RealtimeProvider from page state | ✅ Validated — clean pattern, used for 6 event types |
+| Fraunces + IBM Plex Sans typography (v0.2 Phase 5) | Slow Food editorial feel; both on Google Fonts; latin+latin-ext subsets clear iOS Safari French diacritic gate | ✅ Validated — visual smoke test approved, UI audit 23/24 |
+| Token preservation via aliases (v0.2 Phase 5) | DESIGN-03: keep all v0.1 token names so component churn stays at zero during the migration | ✅ Validated — 10 primitives re-themed via in-place className edits, no API breakage |
 
 ## Current Milestone: v0.2 — Polish: Slow Food artisanal identity
 
@@ -151,4 +155,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-08 — v0.2 milestone opened. v0.1 (49 requirements) validated and archived.*
+*Last updated: 2026-05-08 — v0.2 Phase 5 (Design system foundation) shipped at 23/24 UI score. Fraunces + IBM Plex Sans pairing locked. Phases 6–9 (capture / decide / cook / onboarding polish) pending.*
