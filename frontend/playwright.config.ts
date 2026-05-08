@@ -102,9 +102,12 @@ export default defineConfig({
       timeout: 180_000,                      // Pitfall 1: Next.js 16 cold-start
       reuseExistingServer: !process.env.CI,
       env: {
-        // 01.1 D-04: api.ts uses '' in prod (same-origin via Vercel rewrite); in test
-        // we point at the test backend directly.
-        NEXT_PUBLIC_API_BASE: 'http://localhost:8000',
+        // 01.1 D-04: api.ts uses '' in prod (same-origin via Vercel rewrite). In test
+        // the same '' value lets next.config.ts rewrite `/api/*` → RAILWAY_BASE
+        // (defaults to http://localhost:8000 when RAILWAY_URL is unset). Pointing
+        // this at a bare backend URL bypasses the rewrite, so /api/-prefixed
+        // calls 404 against the backend (which mounts routes WITHOUT /api/).
+        NEXT_PUBLIC_API_BASE: '',
       },
       stdout: 'pipe',
       stderr: 'pipe',
