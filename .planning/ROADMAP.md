@@ -19,7 +19,7 @@
 
 - [x] **Phase 5: Design system foundation** — Tokens, typography pairing, paper-grain anchor, warm shadows, motion language, and re-themed base shadcn primitives in `components/ui/*` (completed 2026-05-08)
 - [x] **Phase 6: Capture surfaces polish** — Re-theme all 5 capture entrypoints (quick / full / voice / photo / URL) + drafts inbox, close `CAPTURE-11` W4 gap inline (completed 2026-05-08)
-- [ ] **Phase 7: Decide polish** — Re-theme daily shortlist, swipe deck, vote chips (5 computed states), "Tu décides" delegation, cold-start state; close `DECIDE-05` W4 gap inline
+- [x] **Phase 7: Decide polish** — Re-theme daily shortlist, swipe deck, vote chips (5 computed states), "Tu décides" delegation, cold-start state; close `DECIDE-05` W4 gap inline (completed 2026-05-08)
 - [ ] **Phase 8: Cook polish** — Re-theme recipe detail, library, cooking log history, cooking banner + finalize flow; close `COOK-07/08/11/12` W4 gaps inline
 - [ ] **Phase 9: Onboarding + identity polish** — Re-theme household create/join, settings, BottomNav, PWA manifest icon + splash
 
@@ -67,11 +67,11 @@
   3. User sees the 5 vote-chip states (Validé / Pressenti / Contesté / Rejeté / Sans avis) presented with reconciled token naming — spec, CSS variable, and component class all agree on a single name
   4. User opens the "Tu décides" delegation surface and the affordance reads as deliberate, not stock shadcn
   5. User sees a polished cold-start / empty-shortlist state and the ColdStartChip dismiss button now meets the 48px (h-12) tap-target floor
-**Plans:** 4 plans
-- [ ] 07-01-PLAN.md — DECIDE-03 token comment lock + DECIDE-05 ColdStartChip retheme + h-12 dismiss
-- [ ] 07-02-PLAN.md — DECIDE-02 springSnap motion preset + ShortlistCard paper-grain + rounded-t photo + springSnap consumer
-- [ ] 07-03-PLAN.md — DECIDE-03 5-state pill chips (chipClass helper) + DECIDE-04 Tu-décides paper-grain delegation Card + h-12 regenerate
-- [ ] 07-04-PLAN.md — DECIDE-01 HomeDecide Fraunces-italic display-serif date header (Intl.DateTimeFormat fr-FR)
+**Plans:** 4/4 plans complete
+- [x] 07-01-PLAN.md — DECIDE-03 token comment lock + DECIDE-05 ColdStartChip retheme + h-12 dismiss
+- [x] 07-02-PLAN.md — DECIDE-02 springSnap motion preset + ShortlistCard paper-grain + rounded-t photo + springSnap consumer
+- [x] 07-03-PLAN.md — DECIDE-03 5-state pill chips (chipClass helper) + DECIDE-04 Tu-décides paper-grain delegation Card + h-12 regenerate
+- [x] 07-04-PLAN.md — DECIDE-01 HomeDecide Fraunces-italic display-serif date header (Intl.DateTimeFormat fr-FR)
 **UI hint:** yes
 
 ### Phase 8: Cook polish
@@ -106,7 +106,7 @@
 |-------|----------------|--------|-----------|
 | 5. Design system foundation | 6/6 | Complete    | 2026-05-08 |
 | 6. Capture surfaces polish | 6/6 | Complete    | 2026-05-08 |
-| 7. Decide polish | 0/4 | Planned | - |
+| 7. Decide polish | 4/4 | Complete    | 2026-05-08 |
 | 8. Cook polish | 0/0 | Not started | - |
 | 9. Onboarding + identity polish | 0/0 | Not started | - |
 

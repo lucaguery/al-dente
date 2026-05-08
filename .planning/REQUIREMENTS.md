@@ -31,11 +31,11 @@
 
 ### DECIDE — Voting + shortlist polish
 
-- [ ] **DECIDE-01**: Daily shortlist screen re-themed with new tokens
-- [ ] **DECIDE-02**: Swipe deck (framer-motion) refined with the new motion language (one curve, paper-physics feel)
-- [ ] **DECIDE-03**: Vote chip presentation refined for the 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis); `--color-validé-tint` token name reconciled (spec ↔ CSS ↔ implementation single naming)
-- [ ] **DECIDE-04**: "Tu décides" delegation surface refined with new tokens
-- [ ] **DECIDE-05**: Cold-start / empty-shortlist states polished; ColdStartChip dismiss button raised to `h-12` (48px) — addresses W4 D-10 productize-later note inline
+- [x] **DECIDE-01**: Daily shortlist screen re-themed with new tokens
+- [x] **DECIDE-02**: Swipe deck (framer-motion) refined with the new motion language (one curve, paper-physics feel)
+- [x] **DECIDE-03**: Vote chip presentation refined for the 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis); `--color-validé-tint` token name reconciled (spec ↔ CSS ↔ implementation single naming)
+- [x] **DECIDE-04**: "Tu décides" delegation surface refined with new tokens
+- [x] **DECIDE-05**: Cold-start / empty-shortlist states polished; ColdStartChip dismiss button raised to `h-12` (48px) — addresses W4 D-10 productize-later note inline
 
 ### COOK — Recipe detail + cooking log + library polish
 
@@ -108,11 +108,11 @@ Filled by roadmapper during phase creation (2026-05-08).
 | CAPTURE-11 | Phase 6 | Complete |
 | CAPTURE-12 | Phase 6 | Complete |
 | CAPTURE-13 | Phase 6 | Complete |
-| DECIDE-01 | Phase 7 | Pending |
-| DECIDE-02 | Phase 7 | Pending |
-| DECIDE-03 | Phase 7 | Pending |
-| DECIDE-04 | Phase 7 | Pending |
-| DECIDE-05 | Phase 7 | Pending |
+| DECIDE-01 | Phase 7 | Complete |
+| DECIDE-02 | Phase 7 | Complete |
+| DECIDE-03 | Phase 7 | Complete |
+| DECIDE-04 | Phase 7 | Complete |
+| DECIDE-05 | Phase 7 | Complete |
 | COOK-06 | Phase 8 | Pending |
 | COOK-07 | Phase 8 | Pending |
 | COOK-08 | Phase 8 | Pending |
