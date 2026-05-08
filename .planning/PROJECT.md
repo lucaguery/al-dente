@@ -16,6 +16,8 @@ Both household members have a fully working app installed on their iPhones. The 
 
 **v0.2 Phase 5 shipped** — 2026-05-08. Slow Food artisanal token system (terracotta primary at h≈35°, warm-cream + warm-taupe + ink neutrals, two-layer warm-brown shadows, paper-grain texture anchor on card surfaces, motion language with one curve / two durations), Fraunces + IBM Plex Sans typography pairing with French diacritic verification on iOS Safari, 10 shadcn primitives re-themed in place, dev-only `/styleguide` acceptance gate. Visual smoke test approved; UI audit 23/24 (above 22/24 target). Foundation ready for Phases 6–9 to consume.
 
+**v0.2 Phase 6 shipped** — 2026-05-08. Capture surfaces polished: 5-tab capture entry (Quick / Full / Voice / Photo / URL) and the drafts inbox now consume the Phase 5 design system (paper-grain on Card surfaces, terracotta accents, Fraunces display + IBM Plex Sans body). PhotoUploader CAPTURE-11 W4 tap-target gap closed (sheet `Caméra` / `Photothèque` at h-12, X-overlay 28px chrome + 48px hit-pad). D-Voice deviation now anchored by a persistent paper-grain Card with Fraunces italic headline. Drafts inbox uses framer-motion `AnimatePresence` for `recipe.created` slideUp + `recipe.promoted` Badge cross-fade. Phase 5 deferrals closed (font-heading → font-display sweep, alias removal in globals.css, transitions import in /styleguide). Code review: 0 critical / 0 warning remaining (all 3 warnings auto-fixed). UI audit 22/24 (meets target).
+
 **Behavioral validation gate:** ≥ 2 weeks of daily use by both members (the v0.1 definition of done per SPEC.md). This is the next observable milestone before v0.2 planning begins.
 
 **Infrastructure:** Next.js 16 PWA on Vercel + FastAPI on Railway + Supabase Postgres + Storage. Auto-deploy on push to `main`. Free-tier hosting throughout.
@@ -42,7 +44,8 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 *(Defined via `/gsd-new-milestone` 2026-05-08. Detailed REQ-IDs in `.planning/REQUIREMENTS.md`.)*
 
 - ✅ **Phase 5 complete** — Re-themed design system foundation: tokens (terracotta + warm-cream + warm-taupe + ink), Fraunces + IBM Plex Sans typography, paper-grain texture anchor, warm two-layer shadows, motion language (`--ease-craft` + 150/280ms durations), 10/15 shadcn primitives re-themed, dev-only `/styleguide` acceptance gate. UI audit 23/24 (DESIGN-01..08 validated)
-- Per-screen polish: capture surfaces (Phase 6), voting + shortlist (Phase 7), recipe detail + cooking log (Phase 8), onboarding + settings + identity (Phase 9)
+- ✅ **Phase 6 complete** — All 5 capture surfaces + drafts inbox polished to the Slow Food artisanal system. CAPTURE-11 W4 tap-target gap closed (PhotoUploader sheet h-12 + 48px X-overlay hit-pad). D-Voice persistent callout (paper-grain Card + Fraunces italic headline) reinforces the keyboard-mic deviation. Drafts inbox uses AnimatePresence for `recipe.created` slideUp and `recipe.promoted` Badge cross-fade. Phase 5 font-heading deferrals closed. UI audit 22/24 (CAPTURE-08..13 validated)
+- Per-screen polish: voting + shortlist (Phase 7), recipe detail + cooking log (Phase 8), onboarding + settings + identity (Phase 9)
 - Close W4 UI-REVIEW gaps inline as part of the polish pass
 - Demonstrable satisfaction of four design principles on every screen: Design Quality, Originality, Craft, Functionality
 
@@ -155,4 +158,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-08 — v0.2 Phase 5 (Design system foundation) shipped at 23/24 UI score. Fraunces + IBM Plex Sans pairing locked. Phases 6–9 (capture / decide / cook / onboarding polish) pending.*
+*Last updated: 2026-05-08 — v0.2 Phase 6 (Capture surfaces polish) shipped at 22/24 UI score. CAPTURE-08..13 validated; W4 PhotoUploader gap closed. Phases 7–9 (decide / cook / onboarding polish) pending.*
