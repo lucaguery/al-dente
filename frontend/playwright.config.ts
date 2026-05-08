@@ -2,11 +2,11 @@
 // + Next.js dev + the two-project Playwright suite.
 // Source: https://playwright.dev/docs/test-webserver (multiple servers)
 //         https://playwright.dev/docs/test-projects (project dependencies)
+//
+// NOTE: Playwright loads this config via its CJS loader, so ESM-only idioms
+// like `import.meta.url` / `fileURLToPath` are not available here even though
+// tsconfig.json declares `module: "esnext"`. Keep imports CJS-compatible.
 import { defineConfig, devices } from '@playwright/test';
-import { fileURLToPath } from 'url';
-import path from 'path';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SEED_AUTH_TOKEN = process.env.SEED_AUTH_TOKEN ?? 'test-token-luca';
 const DATABASE_URL_TEST =
@@ -51,7 +51,12 @@ export default defineConfig({
     {
       name: 'seeded',
       testMatch: /.*\.spec\.ts$/,
+      // NOTE: per-project testIgnore replaces the top-level testIgnore (it does
+      // not merge), so the pre-existing diag.spec.ts / w1-gate.spec.ts must be
+      // re-listed here too — otherwise the seeded project picks them up.
       testIgnore: [
+        /diag\.spec\.ts$/,
+        /w1-gate\.spec\.ts$/,
         /invite-code-happy-path\.spec\.ts$/,
         /globalSetup\.fresh\.ts$/,
         /globalTeardown\.fresh\.ts$/,
