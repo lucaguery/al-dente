@@ -35,9 +35,9 @@
   3. User sees a subtle paper-grain texture on every card surface in the app (recipe cards, sheets, dialogs) but not on full-page backgrounds, buttons, or chrome
   4. User sees warm shadows underneath cards that read as paper-on-wood rather than the previous cool floating box-shadow
   5. Every shadcn primitive in `components/ui/*` (Button, Input, Textarea, Card, Dialog, Sheet, Toast, Skeleton) reflects the new tokens automatically — no unmodified shadcn defaults remain anywhere in the app
-**Plans:** 6 plans
-- [ ] 05-01-PLAN.md — Migrate globals.css tokens (terracotta + warm neutrals + warm shadows + motion CSS tokens + paper-grain utility)
-- [ ] 05-02-PLAN.md — Create paper-grain SVG asset at frontend/public/textures/paper-grain.svg
+**Plans:** 2/6 plans executed
+- [x] 05-01-PLAN.md — Migrate globals.css tokens (terracotta + warm neutrals + warm shadows + motion CSS tokens + paper-grain utility)
+- [x] 05-02-PLAN.md — Create paper-grain SVG asset at frontend/public/textures/paper-grain.svg
 - [ ] 05-03-PLAN.md — Replace fonts in layout.tsx (Fraunces + IBM Plex Sans + Geist Mono) + rewrite type-scale utilities
 - [ ] 05-04-PLAN.md — Create frontend/lib/motion.ts with framer-motion presets (easeCraft, durations, transitions, variants)
 - [ ] 05-05-PLAN.md — Re-theme all 15 shadcn primitives in components/ui/* (paper-grain on surfaces, warm shadows, ease-craft transitions, terracotta tab indicator)
@@ -100,7 +100,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Design system foundation | 0/0 | Not started | - |
+| 5. Design system foundation | 2/6 | In Progress|  |
 | 6. Capture surfaces polish | 0/0 | Not started | - |
 | 7. Decide polish | 0/0 | Not started | - |
 | 8. Cook polish | 0/0 | Not started | - |
