@@ -42,18 +42,18 @@ export function ColdStartChip() {
 
   if (dismissed) return null;
   return (
-    <div className="mx-6 mt-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-rose-50 border border-border">
+    <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-card paper-grain shadow-card border border-border">
       <Sparkles
         size={16}
-        className="text-foreground-muted"
+        className="text-primary"
         aria-hidden
       />
-      <p className="text-sm font-medium leading-5 flex-1">{t("body")}</p>
+      <p className="font-display italic text-sm text-foreground flex-1">{t("body")}</p>
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="h-8 w-8"
+        className="h-12 w-12"
         onClick={handleDismiss}
         aria-label={tCommon("close")}
       >
