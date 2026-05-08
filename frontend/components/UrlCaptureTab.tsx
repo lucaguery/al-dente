@@ -87,7 +87,7 @@ export function UrlCaptureTab() {
 
       <Button
         type="button"
-        className="h-11 w-full"
+        className="h-12 w-full"
         onClick={handleSubmit}
         disabled={!isValid || submitting}
       >
