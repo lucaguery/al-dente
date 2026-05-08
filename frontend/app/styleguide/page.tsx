@@ -251,12 +251,15 @@ export default function StyleguidePage() {
               variants={variants.slideUp}
               initial="hidden"
               animate={slideVisible ? "visible" : "hidden"}
+              transition={slideVisible ? transitions.normal : transitions.fast}
             >
               <Card className="shadow-card">
                 <CardHeader>
                   <CardTitle>« Tagliatelles aux cèpes »</CardTitle>
                   <CardDescription>
-                    Glisse vers le haut sur la courbe ease-craft.
+                    Glisse vers le haut sur la courbe ease-craft. Apparition
+                    sur duration-normal, retrait sur duration-fast — démontre
+                    la composition des presets <code>transitions.*</code>.
                   </CardDescription>
                 </CardHeader>
               </Card>
