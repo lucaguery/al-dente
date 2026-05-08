@@ -22,12 +22,12 @@
 
 (Continues numbering from v0.1's CAPTURE × 7.)
 
-- [ ] **CAPTURE-08**: Quick-add capture surface re-themed with new tokens
-- [ ] **CAPTURE-09**: Full-form capture surface re-themed with new tokens
-- [ ] **CAPTURE-10**: Voice capture surface re-themed (D-Voice deviation copy preserved; no in-app mic regression)
-- [ ] **CAPTURE-11**: Photo capture surface re-themed; PhotoUploader sheet action buttons (`Caméra`, `Photothèque`) raised to `h-12` (48px) — closes W4 UI-REVIEW gap
-- [ ] **CAPTURE-12**: URL capture surface re-themed
-- [ ] **CAPTURE-13**: Drafts inbox re-themed (`draft` and `structured` recipe states; `recipe.created` and `recipe.promoted` realtime visual states)
+- [x] **CAPTURE-08**: Quick-add capture surface re-themed with new tokens
+- [x] **CAPTURE-09**: Full-form capture surface re-themed with new tokens
+- [x] **CAPTURE-10**: Voice capture surface re-themed (D-Voice deviation copy preserved; no in-app mic regression)
+- [x] **CAPTURE-11**: Photo capture surface re-themed; PhotoUploader sheet action buttons (`Caméra`, `Photothèque`) raised to `h-12` (48px) — closes W4 UI-REVIEW gap
+- [x] **CAPTURE-12**: URL capture surface re-themed
+- [x] **CAPTURE-13**: Drafts inbox re-themed (`draft` and `structured` recipe states; `recipe.created` and `recipe.promoted` realtime visual states)
 
 ### DECIDE — Voting + shortlist polish
 
@@ -102,12 +102,12 @@ Filled by roadmapper during phase creation (2026-05-08).
 | DESIGN-06 | Phase 5 | Complete |
 | DESIGN-07 | Phase 5 | Complete |
 | DESIGN-08 | Phase 5 | Complete |
-| CAPTURE-08 | Phase 6 | Pending |
-| CAPTURE-09 | Phase 6 | Pending |
-| CAPTURE-10 | Phase 6 | Pending |
-| CAPTURE-11 | Phase 6 | Pending |
-| CAPTURE-12 | Phase 6 | Pending |
-| CAPTURE-13 | Phase 6 | Pending |
+| CAPTURE-08 | Phase 6 | Complete |
+| CAPTURE-09 | Phase 6 | Complete |
+| CAPTURE-10 | Phase 6 | Complete |
+| CAPTURE-11 | Phase 6 | Complete |
+| CAPTURE-12 | Phase 6 | Complete |
+| CAPTURE-13 | Phase 6 | Complete |
 | DECIDE-01 | Phase 7 | Pending |
 | DECIDE-02 | Phase 7 | Pending |
 | DECIDE-03 | Phase 7 | Pending |

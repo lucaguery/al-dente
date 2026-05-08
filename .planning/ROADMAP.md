@@ -18,7 +18,7 @@
 ## Phases
 
 - [x] **Phase 5: Design system foundation** — Tokens, typography pairing, paper-grain anchor, warm shadows, motion language, and re-themed base shadcn primitives in `components/ui/*` (completed 2026-05-08)
-- [ ] **Phase 6: Capture surfaces polish** — Re-theme all 5 capture entrypoints (quick / full / voice / photo / URL) + drafts inbox, close `CAPTURE-11` W4 gap inline
+- [x] **Phase 6: Capture surfaces polish** — Re-theme all 5 capture entrypoints (quick / full / voice / photo / URL) + drafts inbox, close `CAPTURE-11` W4 gap inline (completed 2026-05-08)
 - [ ] **Phase 7: Decide polish** — Re-theme daily shortlist, swipe deck, vote chips (5 computed states), "Tu décides" delegation, cold-start state; close `DECIDE-05` W4 gap inline
 - [ ] **Phase 8: Cook polish** — Re-theme recipe detail, library, cooking log history, cooking banner + finalize flow; close `COOK-07/08/11/12` W4 gaps inline
 - [ ] **Phase 9: Onboarding + identity polish** — Re-theme household create/join, settings, BottomNav, PWA manifest icon + splash
@@ -54,7 +54,7 @@
   3. User sees the D-Voice deviation copy ("Tu peux dicter avec le micro du clavier.") preserved on the voice capture surface — no in-app Web Speech regression
   4. User sees recipes in the drafts inbox visually distinguish `draft` vs `structured` status and visibly transition when `recipe.created` / `recipe.promoted` realtime events arrive
   5. The four design principles (Design Quality, Originality, Craft, Functionality) are demonstrable on every capture surface and `/gsd-ui-review` can score each pillar against this phase's UI-SPEC
-**Plans:** TBD (via `/gsd-ui-phase` → `/gsd-plan-phase 6`)
+**Plans:** 6/6 plans complete
 **UI hint:** yes
 
 ### Phase 7: Decide polish
@@ -101,7 +101,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. Design system foundation | 6/6 | Complete    | 2026-05-08 |
-| 6. Capture surfaces polish | 0/0 | Not started | - |
+| 6. Capture surfaces polish | 6/6 | Complete    | 2026-05-08 |
 | 7. Decide polish | 0/0 | Not started | - |
 | 8. Cook polish | 0/0 | Not started | - |
 | 9. Onboarding + identity polish | 0/0 | Not started | - |
