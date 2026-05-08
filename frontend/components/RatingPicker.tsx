@@ -80,7 +80,7 @@ export function RatingPicker({ value, onChange }: Props) {
               <span className="text-base font-semibold leading-6">
                 {t(v)}
               </span>
-              <span className="text-xs text-foreground-muted leading-4">
+              <span className="text-sm text-foreground-muted leading-5">
                 {t(`${v}_helper`)}
               </span>
             </div>
