@@ -103,7 +103,11 @@
   3. User sees the BottomNav re-themed — icons, active state, and badge styling reflect the warm palette and motion language; cool-gray slate/zinc is gone from this surface
   4. User installs the app via Safari → Add to Home Screen and the home-screen icon shows the new terracotta-backed identity (type-driven monogram or simple food symbol) with a matching splash screen — no rose `#F43F5E` left in the manifest
   5. The four design principles (Design Quality, Originality, Craft, Functionality) hold across the first-touch path and the app reads as a single coherent product end-to-end
-**Plans:** TBD (via `/gsd-ui-phase` → `/gsd-plan-phase 9`)
+**Plans:** 4 plans
+- [ ] 09-01-PLAN.md — PWA identity (NEW app/icon.tsx + apple-icon.tsx + manifest.json migration + viewport.themeColor closure) — ONBOARD-10 + Phase 5 deferral
+- [ ] 09-02-PLAN.md — Onboarding flow re-theme (welcome + create + share-code + join: paper-grain Cards + Fraunces italic display + h-12 floor) — ONBOARD-07 + ONBOARD-08
+- [ ] 09-03-PLAN.md — Settings 3-section paper-grain Card layout + Fraunces italic terracotta invite-code identity signature — ONBOARD-09
+- [ ] 09-04-PLAN.md — BottomNav re-theme (bg-primary/8 active-pill wash + Pressenti-style inbox badge + cool-gray purge) — ONBOARD-11
 **UI hint:** yes
 
 ## Progress
@@ -114,7 +118,7 @@
 | 6. Capture surfaces polish | 6/6 | Complete    | 2026-05-08 |
 | 7. Decide polish | 4/4 | Complete    | 2026-05-08 |
 | 8. Cook polish | 6/6 | Complete    | 2026-05-08 |
-| 9. Onboarding + identity polish | 0/0 | Not started | - |
+| 9. Onboarding + identity polish | 0/4 | Ready to execute | - |
 
 ## Coverage
 
@@ -131,4 +135,4 @@
 - Behavioral target: retrospective `/gsd-ui-review` on the full app scores ≥ 22/24 (raised from W4's 20/24 on Phase-4 surfaces only). Each phase's success criteria provide the per-pillar handles for that score.
 
 ---
-*Last updated: 2026-05-08 — v0.2 roadmap created (5 phases, 31 requirements mapped).*
+*Last updated: 2026-05-08 — Phase 9 plans created (4 plans, all Wave 1).*
