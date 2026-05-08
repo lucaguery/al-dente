@@ -262,18 +262,31 @@ export default function RecipeDetailPage() {
             ) : null}
           </div>
 
+          {/* Multi-photo carousel — renders photos 2..N when multi-photo (hero already shows photo 1) */}
+          {photoUrls.length > 1 && (
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 -mx-6 px-6 py-4 scrollbar-none">
+              {photoUrls.slice(1).map((url, i) => (
+                // eslint-disable-next-line @next/next/no-img-element -- signed URL
+                <img
+                  key={i}
+                  src={url}
+                  alt=""
+                  className="h-64 w-64 rounded-lg object-cover snap-start flex-shrink-0"
+                />
+              ))}
+            </div>
+          )}
+
           {recipe.ingredients && recipe.ingredients.length > 0 ? (
             <div className="flex flex-col gap-2">
-              <h2 className="text-xl font-semibold">
-                {t("section_ingredients")}
-              </h2>
-              <ul className="flex flex-col gap-2">
+              <h2 className="text-title">{t("section_ingredients")}</h2>
+              <ul className="border-l-2 border-primary/30 pl-4 flex flex-col gap-2 py-1">
                 {recipe.ingredients.map((ing, i) => {
                   const qty = ing.quantity != null ? `${ing.quantity}` : "";
                   const unit = ing.unit ? ` ${ing.unit}` : "";
                   const lead = `${qty}${unit}`.trim();
                   return (
-                    <li key={i} className="text-base">
+                    <li key={i} className="text-base leading-relaxed">
                       {lead ? `${lead} ` : ""}
                       {ing.name}
                     </li>
@@ -285,10 +298,15 @@ export default function RecipeDetailPage() {
 
           {recipe.steps && recipe.steps.length > 0 ? (
             <div className="flex flex-col gap-2">
-              <h2 className="text-xl font-semibold">{t("section_steps")}</h2>
-              <ol className="list-decimal list-inside flex flex-col gap-3 text-base">
+              <h2 className="text-title">{t("section_steps")}</h2>
+              <ol className="flex flex-col gap-3 py-1">
                 {recipe.steps.map((s, i) => (
-                  <li key={i}>{s}</li>
+                  <li key={i} className="flex gap-3">
+                    <span className="font-display italic text-primary/80 text-base shrink-0">
+                      {i + 1}.
+                    </span>
+                    <span className="text-base leading-relaxed">{s}</span>
+                  </li>
                 ))}
               </ol>
             </div>
