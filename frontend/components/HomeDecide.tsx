@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { ShortlistDeck } from "@/components/ShortlistDeck";
 import { VoteSummary } from "@/components/VoteSummary";
@@ -55,7 +56,7 @@ type Member = { id: string; name: string; color_hex: string };
 export function HomeDecide() {
   const tShortlist = useTranslations("home.shortlist");
   const tSummary = useTranslations("home.summary");
-  const { session } = useSession();
+  const { session, refresh: refreshSession } = useSession();
 
   const [shortlist, setShortlist] = useState<ShortlistResponse | null>(null);
   const [shortlistLoaded, setShortlistLoaded] = useState(false);
@@ -333,11 +334,53 @@ export function HomeDecide() {
   }, []);
 
   // ── Render guards ───────────────────────────────────────────────────────
-  // While the session is loading or the initial fetch is in flight, render
-  // a centered terracotta spinner so the screen never reads as blank on
-  // first paint (especially noticeable on cold launch from PWA standalone).
-  // OnboardingGuard upstream already gates "unauthenticated".
-  if (!shortlistLoaded || !me || !partner) {
+  // First-paint loading state — session not yet resolved. OnboardingGuard
+  // upstream already gates "unauthenticated", so this is purely the
+  // network round-trip on cold launch.
+  if (!session || !me) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center px-6">
+        <Loader2
+          aria-hidden
+          className="h-8 w-8 animate-spin text-primary"
+        />
+      </div>
+    );
+  }
+
+  // Household has only the current member (partner has not joined yet, OR
+  // member.joined realtime event missed). Don't spin forever — show the
+  // invite code prominently with an "Actualiser" affordance to refetch the
+  // session manually. This also serves as a useful "share-code redux" once
+  // the user is past onboarding.
+  if (!partner) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center px-6 gap-6">
+        <div className="paper-grain shadow-card border-l-[3px] border-primary/60 rounded-xl p-6 max-w-sm w-full flex flex-col gap-4 bg-card">
+          <p className="font-display italic text-base text-foreground">
+            En attente de ton/ta partenaire…
+          </p>
+          {session.invite_code ? (
+            <p className="font-display italic text-3xl tracking-widest text-primary text-center">
+              {session.invite_code}
+            </p>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-12"
+            onClick={() => {
+              void refreshSession();
+            }}
+          >
+            Actualiser
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!shortlistLoaded) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-6">
         <Loader2
@@ -351,6 +394,9 @@ export function HomeDecide() {
   const cookingBannerVisible = activeLog !== null && !bannerSkipped;
 
   // No shortlist for today — empty state + (always-on) cold-start chip.
+  // Wrap both in a single padded container so the ColdStartChip's mx-6
+  // and the EmptyState card share the same horizontal rhythm (otherwise
+  // the chip floats indented and the EmptyState card sprawls full-width).
   if (shortlist === null) {
     return (
       <div className="flex flex-col flex-1">
@@ -363,15 +409,17 @@ export function HomeDecide() {
           />
         )}
         <ColdStartChip />
-        <EmptyState
-          icon={Sparkles}
-          heading={tShortlist("empty_heading")}
-          body={tShortlist("empty_body")}
-          cta={{
-            href: "/recipes/new",
-            label: tShortlist("empty_cta"),
-          }}
-        />
+        <div className="px-6 mt-6">
+          <EmptyState
+            icon={Sparkles}
+            heading={tShortlist("empty_heading")}
+            body={tShortlist("empty_body")}
+            cta={{
+              href: "/recipes/new",
+              label: tShortlist("empty_cta"),
+            }}
+          />
+        </div>
       </div>
     );
   }
