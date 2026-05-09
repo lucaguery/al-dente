@@ -700,11 +700,65 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 
 ## Exports
 
-**Starting state:** _to be filled in Plan 12-03_
-**Golden path:** _to be filled — JSON export per RECIPE-08 (v0.1)_
+**Starting state:** Carry-over from Plan 12-03 (auditor still member #4 `Auditor`, id `f244600f`, in persistent context). Synthetic household has accumulated to **34 recipes** (up from the seeded 21) due to test-recipe pollution from Plans 02 and 03 probes — visible in the export payload. `cook_count=2` on Coq au vin persists per CL-01 bug. 4 members on roster.
+
+**Surface contract observed:** Settings → "Sauvegarde" Card has a single CTA `Télécharger mes recettes` that triggers `GET /api/households/{household_id}/export.json` with the current `aldente_auth` cookie. Frontend uses raw `fetch()` + `URL.createObjectURL` + synthetic `<a>` click so the response is downloaded as `al-dente-recipes-<hh-uuid>.json`. Backend response is `Content-Type: application/json`, `Content-Disposition: attachment; filename="..."`, Brotli-encoded (`content-encoding: br`).
+
+**Golden path:** Auditor's session → `GET /api/households/9f3b1902.../export.json` → 200 in ~676ms → 97,141 bytes JSON → `{"recipes": [...]}` envelope with **34** entries; first row has all 23 expected `RecipeResponse` fields (id, household_id, status, title, source_capture, photo_paths, ingredients, …, last_cooked_at, cook_count, last_cooked_photo_path, promotion_error, promotion_attempts, created_at, updated_at). No vote / cooking_log rows in the payload (per `exports.py` docstring — "cooking-logs and votes are NOT included"). Schema reasonable. Cross-household isolation verified upstream (path-param mismatch returns 404 per T-01-08-06).
+
 **Probes:**
 
-**Gemini calls in this section:** 0 (Export is deterministic.)
+### nit P-12-E01: Golden export round-trip is clean (regression canary)
+**Severity:** nit (pass-style)
+**Surface:** Exports
+**Probe kind:** golden-path verification
+**Starting state:** authenticated auditor at `/settings`.
+**Repro:**
+1. `fetch('/api/households/{hh}/export.json', { credentials: 'include' })`.
+2. Inspect response headers + body shape.
+**Expected:** 200, attachment headers, top-level `{recipes: [...]}` array, `RecipeResponse` per row, no vote/cooking_log leakage.
+**Actual:** 200 OK, 97,141 bytes, 34 recipes, all 23 RecipeResponse fields present, `Content-Disposition: attachment; filename="al-dente-recipes-9f3b1902-...json"`, Brotli-encoded over the wire. **Backend behaviour matches `exports.py` docstring.** UI-side `Télécharger mes recettes` button (h-12 w-full per Phase 9 D-08 audit) ships and is reachable. **Pass-style.**
+**Screenshot:** `walkthrough-screenshots/exports-json-download.png`
+**Issue:** none — regression canary.
+
+### friction P-12-E02: Offline trigger surfaces correct French toast but the export button is NOT disabled when `navigator.onLine === false`
+**Severity:** friction
+**Surface:** Exports (offline UX)
+**Probe kind:** network
+**Starting state:** authenticated auditor at `/settings`, `Télécharger` CTA visible.
+**Repro:**
+1. Override `window.fetch` to throw `TypeError("Failed to fetch (simulated offline)")` (mimics navigator going offline mid-request).
+2. Dispatch `window.dispatchEvent(new Event('offline'))`.
+3. Click `Télécharger mes recettes`.
+**Expected:** Either button disables on `offline` event (no round-trip), OR clicks land on a clear French error toast that distinguishes network-loss from validation/auth errors.
+**Actual:** Button stays enabled — the `disabled={exporting}` guard at `frontend/app/settings/page.tsx:200` only tracks the in-flight state, not connectivity. After click the `catch { toast.error(t("export_error")) }` branch fires and shows toast `Téléchargement impossible. Réessaie dans un instant.` — copy is correct French + actionable. **The toast is good UX**; the missing affordance is a button-level "you are offline" hint (greyed-out / spinner) before the user even taps. Not blocker — primary action is reachable once online; friction because the user discovers they're offline only after tapping.
+**Screenshot:** `walkthrough-screenshots/exports-offline.png`
+**Issue:** new finding (Plan 05 to file as friction). Cross-cuts P-12-Q03 / Q02 class — capture surfaces have similar patterns.
+
+### friction P-12-E03: Rapid double-click triggers two full 97KB exports — no debounce, no idempotency, no coalescing
+**Severity:** friction
+**Surface:** Exports (race / cost)
+**Probe kind:** racing
+**Starting state:** authenticated auditor at `/settings`; baseline E-01 export passes.
+**Repro:**
+1. `Promise.all([fetch(exportUrl), fetch(exportUrl)])` against `/api/households/{hh}/export.json`.
+2. Inspect both responses.
+**Expected:** Either single coalesced response (e.g. server-side cache hit on the second), or client-side debounce that ignores the second click while the first is in flight (the `disabled={exporting}` guard exists but only blocks UI re-clicks — direct API can still race).
+**Actual:** Both `fetch()` succeed (200, 200). `a.t = 1021ms`, `b.t = 1776ms` — second waits behind the first SQLAlchemy session pool slot but otherwise re-executes the full `SELECT recipes WHERE household_id = ...` + `model_dump` + `json.dumps` cycle. Total payload over the wire: **194,282 bytes** for what should be 97,141. Couple-scale (4 members × occasional export) means cost is theoretical, but the user-visible UX is fine because the `<button disabled>` guard blocks pure UI double-tap. The friction surfaces only via API direct call. **Friction not blocker** — primary action works.
+**Screenshot:** `walkthrough-screenshots/exports-rapid-double.png` (placeholder; the screenshot inherited from E-01 — same UI state).
+**Issue:** new finding (Plan 05 to file as friction). May be deduped with P-12-Q03 family (no-debounce-on-submit cluster).
+
+### nit P-12-E04: Brotli encoding works (regression canary)
+**Severity:** nit (pass-style)
+**Surface:** Exports (transport)
+**Probe kind:** invariant verification
+**Starting state:** any authenticated request.
+**Repro:** observe `content-encoding: br` in response headers.
+**Expected:** Vercel/Railway proxies negotiate brotli for JSON payloads where the client supports it.
+**Actual:** confirmed `content-encoding: br` on `/export.json`. Browsers transparently decompress; the 97KB observed is the *decoded* size. Network transfer is meaningfully smaller. **Pass-style.**
+**Issue:** none — regression canary.
+
+**Gemini calls in this section:** 0 (Export is deterministic; verified via network log — zero `/v1beta/models/gemini` requests during export probes).
 
 ---
 
@@ -737,23 +791,159 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 
 ## Onboarding
 
-**Starting state:** _to be filled in Plan 12-04_
-**Golden path:** _to be filled — references `frontend/tests/e2e/onboarding-create.spec.ts`, `onboarding-join.spec.ts`, `invite-code-happy-path.spec.ts`. Member #4 join flow already exercised in §Realtime Sync._
+**Starting state:** Auditor stays in member-#4 persistent context throughout. Probes that need a fresh prospective-joiner context use an EPHEMERAL Chromium context (separate cookie jar) so the auditor cookie is never overwritten — T-02 mitigation. The 4-member synthetic household has all 4 swatches taken: `#F43F5E` (Luca), `#10B981` (Partner), `#F59E0B` (Joe), `#0EA5E9` (Auditor) — the locked palette has only 4 swatches per `ColorSwatchPicker`, meaning **the household is at capacity** and any further joiner WILL collide on color. This becomes user-visible in O-03 below and cross-cuts §Realtime Sync's plan to spawn member #5.
+
+**Surface contract observed:** `/onboarding/welcome` renders the wordmark + tagline + two paper-grain Cards (`Créer un foyer` / `Rejoindre un foyer`) per `frontend/app/onboarding/welcome/page.tsx`. `/onboarding/join` renders a Card form with: `code` Input (auto-uppercased, alpha-num filtered, max 6 chars per `join/page.tsx#177-181`), `member_name` Input (max 60), color swatch picker (debounced `GET /api/households/by-code/{code}` preview drives disabled swatches at 300ms per T-01-06-06). On submit, `POST /api/households/join` returns 404 (bad code) / 409 (taken color) / 422 (palette mismatch). Idempotent rejoin (D-07): same name → returns existing member's token (per `households.py:142-161`).
+
+**Golden path:** Mirrors `frontend/tests/e2e/invite-code-happy-path.spec.ts` join half. The auditor's join (Plan 12-02) hit this exact path: `welcome` → tap `Rejoindre un foyer` → type `DEMO01` → debounced preview returns `{household_name: "[SYNTHETIC] Démo Al Dente", taken_colors: [...]}` → pick free color → type name → tap submit → `POST /api/households/join` → 201 → `set_auth_cookie` → `router.replace("/")`. **Already verified live in Plan 12-02 — no re-traversal here to honor the "don't log out / don't re-onboard auditor" T-02 rule.**
+
 **Probes:**
 
-**Gemini calls in this section:** 0 (Onboarding is non-AI.)
+### friction P-12-O01: `/onboarding/welcome` is reachable for an authenticated user — no redirect-to-`/`
+**Severity:** friction
+**Surface:** Onboarding (route guard)
+**Probe kind:** invalid-state (deep-link from authenticated session)
+**Starting state:** authenticated auditor (member #4), persistent context.
+**Repro:**
+1. While logged in, navigate directly to `/onboarding/welcome`.
+2. Observe whether OnboardingGuard redirects to `/` (the home decide screen) or renders the welcome surface.
+**Expected:** Authenticated users should not see the onboarding entry point — should auto-redirect to `/` (mirrors `auth.skip-onboarding.spec.ts` behaviour). Otherwise an authenticated user can land on this page from a stale browser tab and click `Rejoindre un foyer`, kicking off a flow that would overwrite their cookie if they completed it (T-02 risk: user destroys their own session).
+**Actual:** `/onboarding/welcome` **renders normally** for the authenticated auditor. URL stays `https://al-dente-pink.vercel.app/onboarding/welcome`; page body contains `Créer un foyer` + `Rejoindre un foyer` Cards. No redirect, no banner ("vous êtes déjà membre de foyer X"), no preventive guard. From here, tapping `Rejoindre` lands on `/onboarding/join` which **also** renders without guard. **The user CAN start a join flow that, on submit, would either (a) idempotent-rejoin if same name (per D-07 households.py:142-161 — silent success, cookie refresh), or (b) re-create as a new member if they pick a different name → cookie overwritten → **original member-#4 session destroyed without confirmation**. Friction not blocker because the destructive path requires the user to type a different name (visible step) — but it's a UX trap.
+**Screenshot:** none captured separately (snippet evidence: `"Al DenteDécide ce qu'on mange ensemble.Créer un foyerRejoindre un foyer"`).
+**Issue:** new finding (Plan 05 to file as friction). Recommend OnboardingGuard at the welcome+join+create routes to redirect authenticated users home, OR a "you are already in {household_name} as {member_name}" banner with explicit "Sign out & re-onboard" CTA.
+
+### nit P-12-O02: Bad invite code (`ZZZZZZ`) surfaces accurate French error in UI
+**Severity:** nit (pass-style)
+**Surface:** Onboarding (error UX)
+**Probe kind:** garbage input
+**Starting state:** Ephemeral context (no auditor cookie); fresh `/onboarding/join`.
+**Repro:**
+1. Type `ZZZZZZ` into the invite-code input.
+2. Wait 300ms (debounce).
+3. Observe error UX.
+**Expected:** Backend returns 404 from `GET /api/households/by-code/ZZZZZZ`; frontend surfaces `t("onboarding.errors.code_not_found")`.
+**Actual:** Backend → `404 {"detail":"invite_code not found"}`. Frontend shows aria-live error: `Ce code n'existe pas. Vérifie auprès de ta partenaire.` — clear, actionable, addresses the user's likely mental model (confused about who has the code). **Pass-style — French copy works.**
+**Screenshot:** `walkthrough-screenshots/onboarding-bad-code.png`
+**Issue:** none — regression canary.
+
+### nit P-12-O03: Lowercase `demo01` in code input correctly auto-uppercases to `DEMO01`
+**Severity:** nit (pass-style)
+**Surface:** Onboarding (input filter)
+**Probe kind:** boundary
+**Starting state:** Auditor's persistent context at `/onboarding/join` (no submit — read input value only).
+**Repro:**
+1. Programmatic `input.fill("demo01")`.
+2. Read `input.value`.
+**Expected:** Per `join/page.tsx#177-181`, the onChange handler runs `e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6)`.
+**Actual:** Input value reads `DEMO01` — uppercase filter works as documented. **Pass-style.**
+**Screenshot:** `walkthrough-screenshots/onboarding-lowercase-code.png`
+**Issue:** none — regression canary.
+
+### blocker P-12-O04: 4-member household is at color-palette capacity — no path for member #5
+**Severity:** blocker
+**Surface:** Onboarding (palette + color collision)
+**Probe kind:** invalid-state (capacity)
+**Starting state:** Synthetic household has 4 members, palette has exactly 4 swatches: `#F43F5E`, `#10B981`, `#F59E0B`, `#0EA5E9`. `GET /api/households/by-code/DEMO01` → `taken_colors: [#F43F5E, #10B981, #F59E0B, #0EA5E9]` (i.e. all four).
+**Repro:**
+1. Ephemeral context. Navigate `/onboarding/join`.
+2. Type `DEMO01` → preview fires → ALL 4 swatches return as taken.
+3. `ColorSwatchPicker` renders all 4 disabled. Submit button stays disabled because `color !== null` never becomes true.
+4. Backend probe (bypass UI): `POST /api/households/join {invite_code: "DEMO01", member_name: "Auditor4-collision-test", color_hex: "#F43F5E"}` → `409 {"detail":"color already taken by another member"}`. Same outcome with any of the 4 hex codes.
+**Expected:** Either (a) the palette has more swatches than the maximum supported household size, OR (b) the UI surfaces a "this household is full" terminal state, OR (c) a productize-later TODO marker explaining the capacity ceiling. Architecture invariant #4 (realtime contract) implies multi-member sync; the spec does not say "max 4 members".
+**Actual:** **Joining is impossible.** The UI is technically correct (no submit affordance because no free color) but the user-visible state is silent failure: typing the code shows `[SYNTHETIC] Démo Al Dente, all four swatches greyed`, the form sits there with a disabled submit, no copy explains why. There is **no error message** distinguishing "you haven't picked a color yet" from "no color is available." The product implicitly caps household size at 4 (the palette length) without ever stating this.
+**Why this matters for the audit pile-up:** Plan 12-04's §Realtime Sync requires spawning member #5 for a two-context probe. Per Plan 12-03's projection, member #5 is the synthetic-household audit baseline going forward. **Currently, member #5 cannot be created via the standard onboarding flow.** The realtime probes in Task 2 below adapt: the second context will idempotent-rejoin as one of the existing 4 (per `households.py:142-161` D-07 idempotent path) rather than create a new member.
+**Screenshot:** `walkthrough-screenshots/onboarding-color-collision.png`
+**Issue:** new finding (Plan 05 to file as **blocker** — primary intended action "join household" is non-functional once the palette is exhausted; affects audit baseline going forward; affects any real 5+-person household). Productize-later marker recommended at `frontend/components/ColorSwatchPicker.tsx` and/or a backend max-members enforcement returning a distinct 422.
+
+### friction P-12-O05: Color collision on join surfaces an error, but the form's "your colour was taken between preview and submit" race still wedges UX
+**Severity:** friction
+**Surface:** Onboarding (race resolution)
+**Probe kind:** racing → invalid-state
+**Starting state:** Ephemeral context, fresh `/onboarding/join`. Imagine: user A previewed `DEMO01` at T0 (3 swatches taken), picked the only free swatch, then user B joined first using that swatch. Now user A submits.
+**Repro:**
+1. Backend fires `POST /api/households/join` with a colour that just-now became taken → `409 {"detail":"color already taken by another member"}`.
+2. Frontend `onSubmit` catch branch (per `join/page.tsx:138-143`) calls `setColorError(tErrors("color_taken"))`, sets `setColor(null)`, and re-fires `fetchPreview(code)`.
+**Expected:** The colour-error toast/inline error explains the race AND the picker re-renders with the previously-free swatch now disabled.
+**Actual:** Backend race-handling is correct (the same-transaction `existing_colors` check in `households.py:163-173` serializes simultaneous joins-with-same-color). Frontend re-fetches preview correctly so the now-taken swatch is greyed out. **However**, with the household at capacity (P-12-O04), this race can leave the user in a state where ALL swatches are now taken — the `colorError` text reads `Couleur déjà prise.` but offers no recovery path; submit stays disabled forever. **Friction layered on the O-04 blocker.**
+**Screenshot:** `walkthrough-screenshots/onboarding-color-collision.png` (shared with O-04).
+**Issue:** new finding (Plan 05 to file). Cross-link with O-04.
+
+**Gemini calls in this section:** 0 (Onboarding is non-AI; verified via network log — zero `/v1beta/models/gemini` requests).
 
 ---
 
 ## Settings
 
-**Starting state:** _to be filled in Plan 12-04_
-**Golden path:** _to be filled — references `frontend/tests/e2e/settings.spec.ts`. Phase 9 reorganized into Membre / Foyer / Sauvegarde sections._
+**Starting state:** Carry-over from Onboarding probes; auditor still member #4 in persistent context. Settings page (`/settings`) renders 4 Cards stacked at gap-6 (Phase 9 D-08 layout): Membre / Foyer / Historique / Sauvegarde. Page title `Paramètres` confirmed.
+
+**Surface contract observed:** Read-only by design, per `frontend/app/settings/page.tsx`. Affordances enumerated live: `[Copier le code d'invitation (button, h-12 w-12)]`, `[Voir les cuissons récentes → /cooking-logs (link)]`, `[Télécharger mes recettes (button, h-12 w-full)]`, plus the bottom-tab nav `[Accueil, Recettes, À compléter (badge=7 — the 7 stuck drafts from Plan 12-02), Plus]`. **There is NO member-name editor**, **NO household-name editor**, **NO color-swatch editor**, and **NO "Quitter le foyer" affordance** in the shipped UI. Backend confirms: `PATCH /api/households/me` returns `405 Method Not Allowed` — the route does not exist.
+
+**Golden path:** Mirrors `frontend/tests/e2e/settings.spec.ts`. Auditor lands at `/settings`, sees Membre Card (color dot + `Auditor`), Foyer Card (`[SYNTHETIC] Démo Al Dente` + `DEMO01` in Fraunces italic terracotta + Copy icon button + helper copy), Historique Card (`Voir les cuissons récentes` → `/cooking-logs`), Sauvegarde Card (`Exporter mes données` body + `Télécharger mes recettes` CTA). Tap targets all at the 48px D-08 floor. **Behaves as documented.**
+
 **Probes:**
 
-> Note (D-06): Phase 9 polish left `POLISH-01` (i18n sweep on partner-waiting strings) and `POLISH-02` (Copy button on invite code) open. If the probe re-surfaces either, cross-link rather than refile.
+### nit P-12-S01: POLISH-02 RESOLVED — Copy button on invite code IS shipped (closes backlog item)
+**Severity:** nit (pass-style; closes backlog cross-link)
+**Surface:** Settings (Foyer Card invite-code section)
+**Probe kind:** invariant verification (cross-link to `POLISH-02` backlog)
+**Starting state:** authenticated auditor at `/settings`.
+**Repro:**
+1. Inspect Foyer Card's invite-code section.
+2. Look for a Copy button.
+**Expected (per backlog):** `POLISH-02` was filed when the Copy button was missing in v0.2. CONTEXT D-06 says cross-link if still present (i.e. still missing).
+**Actual:** **The Copy button SHIPPED.** `frontend/app/settings/page.tsx:154-162` renders a `<Button size="icon" variant="ghost" className="h-12 w-12" onClick={onCopy} aria-label="Copier le code d'invitation">` with the lucide `Copy` icon. Live inspection confirms: 1 button matched, `aria-label="Copier le code d'invitation"`, lucide-copy SVG present, h-12 w-12 (correct tap target), 2-second `Check` icon swap on click via `setCopied(true)` + `setTimeout`. The `onCopy` handler uses `navigator.clipboard.writeText` and shows toast `t("invite_code_copied")` / `t("invite_code_copy_failed")` — i18n keys verified live. **`POLISH-02` should be marked CLOSED in the v0.2.2 backlog tracker** — it was already closed during Phase 9 work but apparently never struck off the list. **Pass-style + backlog hygiene win.**
+**Screenshot:** `walkthrough-screenshots/settings-invite-copy.png`
+**Issue:** none. Cross-link: `POLISH-02` — mark closed during Plan 05 dedupe pass.
 
-**Gemini calls in this section:** 0 (Settings is non-AI.)
+### blocker P-12-S02: Member name is unchangeable post-onboarding — `PATCH /api/households/me` returns 405
+**Severity:** blocker
+**Surface:** Settings (member self-management)
+**Probe kind:** invalid-state / missing-route
+**Starting state:** authenticated auditor; member name is `Auditor`.
+**Repro:**
+1. Inspect Settings affordances live — observe NO member-name input, NO edit pencil, NO `Modifier` button on the Membre Card.
+2. Call backend directly: `PATCH /api/households/me {name: "<200-char-string-with-emoji-and-diacritics>"}`.
+3. Observe response.
+**Expected:** Either a route + UI to update the member's name (per the spec's CRUD model — members own their identity), or a productize-later marker explaining the deferral.
+**Actual:** Backend → `405 Method Not Allowed` — **`PATCH /households/me` is not implemented**. Inspection of `backend/app/routers/households.py` (router file ends at line 223): NO `PATCH` / `PUT` handler on `/households/me`. The only mutating routes are `POST /households` (create) and `POST /households/join` (join). **A user who picks a typo'd name during onboarding has NO recovery path** short of (a) the D-07 idempotent rejoin trick (would require knowing the trick + creates a NEW member with the new name AND leaves the old one as an orphan in the DB), or (b) backend admin intervention. This is silent privilege loss: the user CAN'T fix their own name. **Architecture invariant gap** — the spec's "members own their identity" implication does not hold in v0.1 ship.
+**Why this matters:** Compounds with O-04 (cannot create new members) — once you've onboarded with a typo, you're stuck with it permanently. Audit-relevant: the synthetic household has accumulated 4 audit-prefixed names (`Luca, Partner, Joe, Auditor`) that cannot be cleaned up except by `--teardown`.
+**Screenshot:** `walkthrough-screenshots/settings-long-name.png` (showing the read-only Membre Card; 200-char emoji/diacritic test moot — no input affordance to type into).
+**Issue:** new finding (Plan 05 to file as **blocker** — missing CRUD; user-visible identity lock-in).
+
+### friction P-12-S03: No "Quitter le foyer" path — leaving a household requires backend intervention or `--teardown`
+**Severity:** friction
+**Surface:** Settings (member offboarding)
+**Probe kind:** missing affordance
+**Starting state:** authenticated auditor at `/settings`.
+**Repro:**
+1. Search live DOM for any element containing `Quitter le foyer` substring.
+2. Inspect `households.py` for any `DELETE` route.
+**Expected:** Either (a) explicit "Quitter le foyer" affordance with confirm + cookie clear + redirect to `/onboarding/welcome`, OR (b) productize-later TODO marker explaining the deferral. The CONTEXT D-06 backlog implies this exists somewhere (probe was tagged "If a 'Quitter le foyer' path exists, INSPECT only").
+**Actual:** Live DOM has 0 elements matching `Quitter le foyer`. `households.py` has no `DELETE` / member-removal handler. The user cannot leave their household — once joined, the cookie is the binding and the only "logout" is browser-data clear (which on iPhone PWA is the multi-step Settings → Safari → Clear History sequence). **By design read-only, but undocumented as such.** Couple-scale (the target audience) means this is rarely exercised in practice — but it's friction for the audit (cannot clean up audit-test members) and for users who need to e.g. switch households or recover from a typo'd identity.
+**Issue:** new finding (Plan 05 to file as friction; cross-link with S-02 blocker).
+
+### friction P-12-S04: 200-character + emoji + diacritics member-name probe is moot — no input exists to test
+**Severity:** friction (sub-finding; cross-link to S-02)
+**Surface:** Settings
+**Probe kind:** boundary
+**Starting state:** authenticated auditor at `/settings`.
+**Repro:** Search for any `<input>` corresponding to member name on Settings.
+**Expected (per plan):** Test rendering of `"x"*200 + " 🍝 éèàâç"` member name across surfaces (e.g. inbox card author byline).
+**Actual:** **No member-name input on `/settings`** (P-12-S02 confirms). The boundary probe is unreachable from the UI. Backend-side, the 200-character + emoji string was sent via `PATCH` and rejected with 405 (no route). **A complete probe would require: (1) adding the PATCH route, (2) wiring the UI editor, (3) re-running the boundary test.** Documented here so Plan 14 ranking has the cross-link. **Note:** member-name boundary handling AT ONBOARDING TIME is constrained by `<Input maxLength={60}>` on the join form (see `join/page.tsx:223-224`) — so the 200-char path was already foreclosed at the only writable entry point.
+**Screenshot:** `walkthrough-screenshots/settings-long-name.png` (re-uses S-02's evidence).
+**Issue:** none — cross-link with S-02.
+
+### nit P-12-S05: Hardcoded French copy "Voir les cuissons récentes" / "Historique" violates invariant #6 (next-intl) — `POLISH-01` cluster
+**Severity:** nit (cross-link to `POLISH-01`)
+**Surface:** Settings (Historique Card)
+**Probe kind:** invariant verification
+**Starting state:** authenticated auditor at `/settings`.
+**Repro:** Inspect `frontend/app/settings/page.tsx:175-183` and the rendered Historique Card.
+**Expected:** All user-facing strings flow through `next-intl` per architecture invariant #6.
+**Actual:** Lines 176-179 hardcode `"Historique"` and `"Voir les cuissons récentes"` directly in JSX — confirmed via the file's own comment at lines 172-174: `"Hardcoded French copy is a TODO(productize) — move to nav.cooking_history.* keys in v0.2.1 i18n sweep alongside the HomeDecide partner-waiting strings."` This is the same cluster as `POLISH-01` (i18n sweep on partner-waiting strings). The TODO IS marked in the source. **Cross-link to `POLISH-01`** per D-06 — do NOT refile. **Pass-style on hygiene** (the TODO is honest) but **invariant #6 violation surfaces user-visibly in this Card** until the i18n sweep lands.
+**Issue:** none. Cross-link: `POLISH-01` — extend its scope to include `settings.page.tsx:176-179` Historique Card strings.
+
+**Gemini calls in this section:** 0 (Settings is non-AI; verified via network log).
 
 ---
 
