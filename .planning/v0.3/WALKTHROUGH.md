@@ -764,14 +764,110 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 
 ## Push
 
-**Starting state:** _to be filled in Plan 12-04_
-**Golden path:** _to be filled — service worker `pushManager.subscribe()` against prod backend (D-19)_
+**Starting state:** Carry-over from §Realtime Sync; auditor still member #4 in persistent context. Service worker registered (`scope: https://al-dente-pink.vercel.app/`, active). PushManager + Notification APIs available. **Notification permission = `denied`** in the auditor's persistent profile (consequence of an earlier headless attempt).
 
-> D-19 depth: subscription verification + 1 fired notification round-trip. If the auditor cannot trigger a send programmatically, the operator (Luca) confirms inline ("verified by Luca on YYYY-MM-DD HH:MM, notification arrived in ~Xs").
+**Surface contract (corrected — RESEARCH §Surface 11 + plan body assumed `/settings` but the surface lives on `/` HomeDecide):** The push opt-in is the `PushPermissionBanner` component (`frontend/components/PushPermissionBanner.tsx`), mounted twice on the HomeDecide screen (lines 403 and 460 of `HomeDecide.tsx` — for the deck-active and deck-exhausted recap states). It only RENDERS when ALL of the following hold:
+1. `serviceWorker in navigator` && `PushManager in window` (`canReceivePush` gate).
+2. **iOS gate**: `navigator.standalone === true` — i.e. the user has actually installed the PWA via "Add to Home Screen". Browser-PWA users on iOS are filtered out at this gate.
+3. `Notification.permission === "default"` — neither granted nor denied yet (one-shot UX; if user dismisses or denies, the banner never shows again).
+4. `sessionStorage["dismissed_push_banner_at"]` not set.
+
+The banner heading/body come from `home.push.*` i18n keys; the "Activer" button calls `registerPushSubscription()` from `frontend/lib/push.ts` which: (a) requests Notification permission; (b) calls `pushManager.subscribe({userVisibleOnly: true, applicationServerKey: <VAPID>})`; (c) POSTs the resulting `PushSubscription.toJSON()` to `/api/push/subscribe` with same-origin credentials.
+
+Backend `/api/push/subscribe` (per `backend/app/routers/push.py`): validates the endpoint scheme is `https://` and warns if the host isn't FCM/Mozilla/Apple (defensive only — accepts anyway); upserts on `(member_id)` UNIQUE constraint with `on_conflict_do_update` (idempotent by design). Returns `201 {"ok": true}`. The `/api/push/vapid-public-key` endpoint is the runtime defense-in-depth fetch path.
+
+**Golden path:** A user with iOS PWA installed lands on `/`, sees the rose-tinted PushPermissionBanner with "Activer" CTA, taps Activer, accepts the iOS notification permission prompt, the service worker subscribes against APNs, the resulting endpoint POSTs to `/api/push/subscribe`, and a subsequent application-fired event (e.g. `cron-job` partner-of-cooked-something at 16:00 household-tz) delivers a Web Push message to the iPhone. **Auditor cannot exercise this in headless Chromium** because (a) `navigator.standalone` is undefined → `canReceivePush()` returns false → banner never renders and (b) headless Chromium has no FCM receiver, so `pushManager.subscribe()` errors out with `AbortError: Registration failed - push service not available`. The round-trip step (D-19) therefore requires the **operator's iPhone**.
 
 **Probes:**
 
-**Gemini calls in this section:** 0 (Push is non-AI.)
+### blocker P-12-Pu-01: Headless Chromium cannot subscribe — `pushManager.subscribe()` returns `AbortError: Registration failed - push service not available`
+**Severity:** blocker (for AUDIT — not for product; see notes)
+**Surface:** Push (subscription)
+**Probe kind:** invariant verification (browser environment + push backend availability)
+**Starting state:** auditor's persistent context, SW active, VAPID key fetched live = `BBhi179NvLsIIHzV-POUJe-ObK6Eaq...` (87 chars, valid P-256 length).
+**Repro:**
+1. `await navigator.serviceWorker.ready` → registration with active worker, scope `/`.
+2. `await fetch('/api/push/vapid-public-key')` → 200, public_key returned.
+3. Convert URL-safe base64 to `Uint8Array` (per `lib/push.ts:8-21`).
+4. `await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: arr })`.
+**Expected:** Either a valid `PushSubscription` (with FCM endpoint URL) OR a clear unsupported environment error.
+**Actual:** Subscribe throws **`AbortError: Registration failed - push service not available`**. This is Chromium's headless mode rejection — the browser instance has no embedded push service receiver. **No subscription created; nothing POSTed to `/api/push/subscribe`** (verified via network log: `network-push-reqs` shows zero POST requests to `/api/push/subscribe`). **For AUDIT purposes this is a blocker** — no subscription means no round-trip is possible from this environment. **For PRODUCT purposes this is expected** — real iOS users in installed PWAs get a working APNs receiver. (Per RESEARCH §Risk 3, this exact failure mode was predicted.)
+**Screenshot:** `walkthrough-screenshots/push-subscribe-permission.png`
+**Issue:** none for product. Audit-process note: future audits should run the round-trip check on a real device (operator iPhone). Plan 05 may file a meta-issue requesting an `/api/push/admin-test` endpoint for audit-time round-trip verification.
+
+### friction P-12-Pu-02: No push affordance is visible to authenticated browser-PWA users (iOS gate masks Android/desktop opt-in)
+**Severity:** friction
+**Surface:** Push (UX entry point)
+**Probe kind:** missing affordance / surface-discovery
+**Starting state:** auditor at `/settings` (per RESEARCH §Surface 11 and plan body — both wrongly listed `/settings` as the entry).
+**Repro:**
+1. Navigate `/settings`. Inspect for any `Activer les notifications` button.
+2. Result: **0 push affordances on `/settings`** (verified via DOM scan).
+3. Trace source: `PushPermissionBanner` is mounted on HomeDecide (`/`), not Settings.
+4. Inspect `lib/push.ts:84-95` `canReceivePush()`:
+   ```ts
+   if (isIos && !standalone) return false;
+   ```
+**Expected:** Push opt-in is reachable from the user's Settings page, OR the banner shows on home for any browser-PWA user (Android / desktop) — with the iOS-only restriction documented elsewhere.
+**Actual:**
+- The Settings page has no push affordance at all (RESEARCH/plan documentation drift — these claimed `Settings → enable notifications` but that's wrong).
+- The home banner ALSO doesn't show for: (a) iOS users who haven't installed the PWA (not standalone), (b) any user with `Notification.permission !== "default"` (i.e. anyone who's already granted, denied, or dismissed once).
+- **A user who taps "Plus tard" once (sessionStorage flag) loses access to the banner for the rest of the session.** The next session will re-show it (sessionStorage cleared) but only if permission is still `default`.
+- **There is NO recovery path from the Settings page for a user who later wants to opt in.** The banner is the one-shot affordance.
+**Why this matters (couple-scale impact):** The product's push UX assumes "iOS PWA installed" as the only valid target. Browser-PWA users on Android (per RESEARCH §Risk 3 alternate path) can technically subscribe but the banner is gated by `canReceivePush()` which doesn't restrict Android — but **the iOS-PWA-only banner combined with the missing Settings affordance means a real iOS user who dismissed or denied push has no recovery**. v0.1 ship target is iPhones; this is a known constraint, but it's friction not a blocker because the cron is the primary delivery anyway.
+**Screenshot:** `walkthrough-screenshots/push-subscribe-permission.png`
+**Issue:** new finding (Plan 05 to file as friction). Recommend: add a Settings "Notifications" Card with state-aware UX (Activer / Désactiver / Permission requise — open iOS settings) per the post-v0.1 productize roadmap.
+
+### nit P-12-Pu-03: VAPID key endpoint is reachable, returns a valid P-256 public key (regression canary)
+**Severity:** nit (pass-style)
+**Surface:** Push (defense-in-depth runtime fetch path)
+**Probe kind:** invariant verification
+**Starting state:** authenticated auditor.
+**Repro:** `GET /api/push/vapid-public-key` with cookie credentials.
+**Expected:** 200 with `{public_key: "<P-256 URL-safe base64, 87 chars>"}`.
+**Actual:** 200, `public_key="BBhi179NvLsIIHzV-POUJe-ObK6EaqvViNyTWpXtjhTc8NCZ0o77NfUWXSnaMJyTzJaULFqntJrwhH1WipUq_tE"`, 87 chars (correct length for an uncompressed P-256 point in URL-safe base64). **Pass-style — defense-in-depth path works as documented in `routers/push.py:76-79`.**
+**Issue:** none — regression canary.
+
+### blocker P-12-Pu-04: No programmatic test-fire endpoint exists; round-trip verification REQUIRES operator iPhone (D-19 checkpoint)
+**Severity:** blocker (for AUDIT round-trip)
+**Surface:** Push (round-trip; observability)
+**Probe kind:** invariant verification (audit-only path)
+**Starting state:** auditor with no push subscription (P-12-Pu-01 prevented one).
+**Repro:**
+1. Probe candidate test-fire paths: `POST /api/push/test`, `POST /api/push/send`, `POST /api/push/fire-test`.
+2. Inspect `backend/app/routers/push.py` for any auditor-accessible send route.
+**Expected:** A programmatic way to trigger a test push from a logged-in member (admin or otherwise).
+**Actual:** All three candidate endpoints return `404 Not Found`. The `routers/push.py` file (80 lines total) defines exactly 2 routes: `POST /push/subscribe` and `GET /push/vapid-public-key`. No test-fire / no admin-fire / no echo. **Per D-19 the operator must fire one push from their iPhone manually** — typically by triggering a real product event (e.g. partner-vote at the right hour, or 16:00 household-tz cron firing on its own schedule). **This is the explicit checkpoint case.**
+**Screenshot:** `walkthrough-screenshots/push-resubscribe-idempotent.png` (re-uses earlier shot — there's no UI state to capture).
+**Issue:** new finding (Plan 05 may file): add `POST /api/push/admin-test` (gated to authenticated members; sends a "test notification" to caller's subscription) for future audit + user-side "Test my notifications" diagnostic. Cross-link: this is the same observability gap as the missing Settings push affordance (P-12-Pu-02).
+
+### checkpoint P-12-Pu-05: Round-trip notification verification — operator-confirmation slot
+**Severity:** blocker (until operator-confirmed)
+**Surface:** Push (end-to-end delivery)
+**Probe kind:** operator-assist (D-19 explicit fallback)
+**Starting state:** Auditor cannot subscribe in headless Chromium (Pu-01); no programmatic fire path exists (Pu-04). Operator's iPhone is the round-trip target.
+**Repro (operator side):**
+1. Operator has the al-dente PWA installed on their iPhone (one of the 4 existing members — Luca / Partner / Joe / Auditor; Luca's iPhone is the standard test target).
+2. Operator confirms current Notification.permission state (Settings → Safari → al-dente.app → Notifications, OR via the in-app banner if it still shows).
+3. Operator triggers a real product event that should fire a push (per `backend/app/services/push.py` and the cron at 16:00 household-tz):
+   - **Easy path**: Joe just started a cook on Pad thai tofu (RT-6 above, log id `c7c92195-4aea-4c0a-ae67-51e4a70324d2`). Any product hook that fires a push on cooking.started should reach the operator's iPhone if the operator's subscription is live.
+   - **Cron path**: wait until 16:00 household-tz for the daily shortlist push.
+4. Operator records the round-trip outcome inline below per CONTEXT D-19 format.
+**Expected line (from CONTEXT D-19 verbatim):** `verified by Luca on YYYY-MM-DD HH:MM, notification arrived in ~Ns`.
+**Actual:** _Pending operator confirmation. **CHECKPOINT — see "Awaiting operator confirmation" below.**_
+**Screenshot:** `walkthrough-screenshots/push-subscribe-network.png` (snapshot of the network state at the auditor side; operator-side iPhone screenshot would be a future addition).
+**Issue:** Plan 05 to file a meta-finding only if operator confirms NO round-trip lands within 30s — that would be a real product delivery blocker. If round-trip lands, this becomes pass-style. If operator declines (no iPhone available), the finding stays as `friction-tagged: round-trip pending operator availability` per CONTEXT D-19 ("expected, not a blocker").
+
+**Awaiting operator confirmation:** _Operator: please trigger a real cron / cooking-started / shortlist-related push on your iPhone (member of the synthetic household). Reply with the line `verified by Luca on YYYY-MM-DD HH:MM, notification arrived in ~Ns` OR `no iPhone available — friction-tag the round-trip` and Plan 05 will reconcile._
+
+**Pass-style observations** (regression canaries):
+- Service worker registered + active at scope `/` (verified live).
+- VAPID public key endpoint shipped + returns valid P-256 URL-safe base64.
+- `pushManager` API surface present in the browser instance.
+- `/api/push/subscribe` endpoint exists and is upsert-idempotent per `routers/push.py` source (couldn't be exercised this run because Pu-01 prevented subscription).
+- Auditor identity preserved through all 4 push probes (final check: `Auditor`/id `f244600f`).
+
+**Gemini calls in this section:** 0 (Push is non-AI; verified — only `/api/push/vapid-public-key` and the failed `pushManager.subscribe()` were invoked).
 
 ---
 
