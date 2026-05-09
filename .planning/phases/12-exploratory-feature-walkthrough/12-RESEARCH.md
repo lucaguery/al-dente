@@ -977,22 +977,15 @@ mcp__playwright__browser_navigate(url: "https://<prod-domain>/")  # reload clear
 | A6 | The `gh` CLI is installed and authenticated against `lucaguery/al-dente` | §6 Issue filing | High-impact; mitigation is a pre-flight check in the bootstrap plan (`gh auth status`) |
 | A7 | Member #4's persistent presence (per D-19) does not break the seed's idempotency banner counts | §Risk 5 | Low-impact; banner shows "members removed: 2 or 3" per RUNBOOK.md (verified). The seed only merges the 2 baseline members — additional members are ignored by the merge, kept as-is |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Where's the prod URL pinned?**
-   - What we know: Project is hosted on Vercel; backend on Railway. RUNBOOK doesn't mention the public URL.
-   - What's unclear: The exact `https://<domain>/` for the iPhone walkthrough.
-   - Recommendation: Planner finds this in Vercel dashboard or env config at plan time; alternatively the operator confirms in plan-discussion. Likely format: `https://al-dente-<something>.vercel.app/` OR a custom domain.
+> Each question below is **deliberately deferred to execution time** with an explicit in-plan resolution mechanism. The questions are not blocking for planning — they are blocking for the specific probe they govern, and each probe owns its own resolution step.
 
-2. **Does Playwright MCP support the multi-context pattern via separate sessions in one Claude Code session?**
-   - What we know: `browser_tabs` exists; multi-tab works.
-   - What's unclear: Whether tab cookies are isolated.
-   - Recommendation: Verify in the realtime probe section's Step 0 (§5). Document observed behavior. Fallback documented.
+1. **RESOLVED — Where's the prod URL pinned?** Resolved by Plan 02 Task 1 Step 0 (executor reads Vercel dashboard / `frontend/vercel.json` / homepage redirect at execute-time, OR asks operator at the bootstrap checkpoint). Likely format: `https://al-dente-<something>.vercel.app/` OR custom domain. Probe blocks until URL pinned, so any guess that breaks the audit is caught immediately.
 
-3. **Does the prod /api/recipes/voice endpoint accept multipart audio or only JSON transcripts?**
-   - What we know: `capture-voice.spec.ts:14-23` posts JSON.
-   - What's unclear: Whether prod also accepts a multipart upload — the `walkthrough-inputs/voice/*.m4a` clips would be wasted if not.
-   - Recommendation: Read `backend/app/routers/recipes.py` voice handler at the start of the capture-voice probe section. Adapt canned inputs accordingly (commit `.txt` transcripts as fallback).
+2. **RESOLVED — Does Playwright MCP `browser_tabs` provide cookie isolation across tabs?** Resolved by Plan 04 Task 2 Step 0 (verification probe before the realtime section runs). If tabs share cookies (likely), the executor falls back to two sequential MCP sessions per the documented fallback in §Realtime "Realtime two-context invocation pattern" — each session runs against a clean cookie jar. Either branch produces a valid two-context realtime probe.
+
+3. **RESOLVED — Does the prod `/api/recipes/voice` endpoint accept multipart audio or only JSON transcripts?** Resolved by Plan 02 Task 2 Step 1 (executor reads `backend/app/routers/recipes.py` voice handler before probing — read-only, no edits — and selects the matching canned input). Plan 01 commits `.txt` transcripts as the safer fallback (matches `capture-voice.spec.ts:14-23` JSON shape); `.m4a` clips can be added later if multipart proves supported.
 
 ## Environment Availability
 
