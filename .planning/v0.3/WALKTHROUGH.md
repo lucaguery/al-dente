@@ -632,12 +632,67 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 
 ## History
 
-**Starting state:** _to be filled in Plan 12-03_
-**Golden path:** _to be filled — references `frontend/tests/e2e/cooking-log-history.spec.ts`_
+**Starting state:** Carry-over from Cooking Log probes — auditor finalized the Coq au vin cook (id `80973799`) at 18:10 UTC. Synthetic household has 4+ cooking_logs in DB now (3 seeded + 1 just created + whatever Plan 12-02 may have left). History page is at `/cooking-logs` (URL-only — not surfaced in main nav).
 
-> Note (D-06): The `/cooking-logs` history page renders but never has data because GET `/cooking-logs` (list) is missing (`CL-01`). The history probe documents the user-visible empty state and cross-links `CL-01`.
+**Golden path:** Tap `Plus` in main nav → `/settings`. From settings, find `Voir les cuissons récentes` link → `/cooking-logs`. Page loads, fires `GET /api/cooking-logs?days=14`. Render expected per `cooking-log-history.spec.ts` golden: list of finalized cooks grouped by date, each row showing recipe title, rating chip, optional photo + notes preview. **Per the v0.2.2 backlog (CL-01), the GET endpoint does not exist** — confirmed below.
+
+> Note (D-06): The `/cooking-logs` history page renders but never has data because GET `/cooking-logs` (list) is missing (`CL-01`). Both the list page and the per-log detail page surface this — see H-01 and H-02 below.
 
 **Probes:**
+
+### blocker P-12-H-01: **CL-01 confirmed live** — `GET /api/cooking-logs?days=14` returns 404; page shows "Aucune recette" misleading copy
+**Severity:** blocker (cross-link)
+**Surface:** History (list page)
+**Probe kind:** invalid-state (missing endpoint)
+**Starting state:** Auditor on `/`, navigates to `/cooking-logs` directly.
+**Repro:**
+1. `page.goto("/cooking-logs")`.
+2. Inspect network: page fires `GET /api/cooking-logs?days=14`.
+3. Observe response: `404 Not Found`.
+4. Inspect rendered DOM: `Aucune recette pour le moment / Ajoute ta première recette pour commencer.`
+**Expected:** A list of past cooks (3 seeded + at least 1 from this session). At minimum, a graceful empty-state if there are zero — but the copy should reflect "no cooks yet", not "no recipes".
+**Actual:** API is missing entirely (404, not even an empty list). Frontend's `lib/cookingLogs.ts` (or equivalent) presumably catches the 404 and falls back to its own "no items" view, BUT the empty-state copy says **"Ajoute ta première recette pour commencer"** — this conflates `recipes` with `cooking_logs`. A user with 21 recipes and 4 cooks would see this and think the inventory is gone. **Friction layered on the CL-01 blocker.**
+**Screenshot:** `walkthrough-screenshots/history-empty-due-to-CL-01.png`.
+**Issue:** **`CL-01`** — GET `/api/cooking-logs` (list) endpoint missing. Cross-link per D-06, NOT refiled. **Sub-finding (new, friction):** the empty-state copy "Ajoute ta première recette pour commencer" is wrong-domain — should say "Aucune cuisson enregistrée pour le moment". Plan 05 may file this as a separate friction issue OR fold into the CL-01 fix scope.
+
+### blocker P-12-H-02: Per-log detail route `/cooking-logs/{id}` does NOT exist in Next.js — even valid UUIDs render the framework 404 page
+**Severity:** blocker
+**Surface:** History (per-log detail)
+**Probe kind:** invalid-state (route absent)
+**Starting state:** Auditor has a real, freshly-finalized cooking log id `80973799-57c9-470c-a56b-ba677f18d3e4`.
+**Repro:**
+1. `page.goto("/cooking-logs/80973799-57c9-470c-a56b-ba677f18d3e4")`.
+2. Inspect rendered text: `404 / This page could not be found.` (Next.js framework default — no app shell).
+**Expected:** Detail page rendering the cook's date, rating, notes (the 4000-char-truncated notes from CL-02), photo paths, and a back-link to `/cooking-logs`. Per `cooking-log-history.spec.ts:???` golden the detail route is referenced.
+**Actual:** **No `/cooking-logs/[id]` page exists in `frontend/app/cooking-logs/`** (verified by behavior — Next.js shows the framework default 404 stripped of the chrome, no `Accueil / Recettes / À compléter / Plus` nav). User has no way to view the notes or rating they just saved unless they navigate back to the recipe detail page (which shows aggregate `cook_count` but not per-cook history). **The 5KB notes feature has a UI write path with no read path.**
+**Screenshot:** `walkthrough-screenshots/history-empty-group-headers.png`.
+**Issue:** new finding — Plan 05 to file as **blocker** (write-without-read path; affects CL-04 perception too — the user can't verify their finalize landed). Cross-link CL-01 because both findings together describe the full History UX gap.
+
+### friction P-12-H-03: History page is buried — no main-nav link, only reachable from `/settings` → `Voir les cuissons récentes`
+**Severity:** friction
+**Surface:** History (discoverability)
+**Probe kind:** invalid arrival
+**Starting state:** Auditor on any page.
+**Repro:**
+1. Inspect main nav links: `[/, /recipes, /inbox, /settings]` only.
+2. Inspect `/settings` links: includes `<a href="/cooking-logs">Voir les cuissons récentes</a>`.
+3. Count taps to reach: `Plus → Voir les cuissons récentes` = 2 deliberate taps + cognitive overhead of remembering history lives behind Settings.
+**Expected:** History is a daily-loop primary surface (Phase 12 plan describes it as part of "the daily-use loop"). Should be one tap away.
+**Actual:** Buried behind Settings. Combined with H-01 (page broken anyway) and H-02 (detail route missing), the history feature is effectively decommissioned in v0.2.1 prod despite being a shipped surface per ROADMAP §Phase 12. **Friction now, may be intentional v0.3 bury.**
+**Issue:** new finding — Plan 05 to file as friction (information architecture). Cross-link CL-01 + H-02 for fix-scope sizing.
+
+### nit P-12-H-04: Bad / malformed UUID in URL bar returns clean 404 page with main-app chrome retained
+**Severity:** nit (pass-style)
+**Surface:** History (boundary)
+**Probe kind:** invalid arrival
+**Starting state:** Auditor on `/`.
+**Repro:**
+1. `page.goto("/cooking-logs/00000000-0000-0000-0000-000000000000")` → `404 / Accueil Recettes À compléter Plus` (404 inside app shell — better than H-02's framework default).
+2. `page.goto("/cooking-logs/not-a-uuid")` → same response.
+**Expected:** Some kind of 404. Bonus: app chrome preserved so the user has a recovery affordance.
+**Actual:** Both bad and malformed UUIDs render `404 / This page could not be found. / Accueil Recettes À compléter 7 Plus`. App chrome retained. **Why is this different from H-02?** H-02's `80973799` is also "bad" from Next.js's perspective (no `[id]` route exists), but Next somehow surfaced the framework default page without the chrome — possibly because the `/cooking-logs/[id]/page.tsx` file is missing entirely (so Next never matched a route at all) versus the bad-UUID case where the dynamic-route pattern matched and a `notFound()` was returned within the app shell.
+**Caveat:** the chrome difference between H-02 (no chrome, 404) and H-04 (chrome, 404) is itself a UX inconsistency worth a friction finding. Filed as a sub-bullet on H-02.
+**Issue:** none — pass-style canary, but the chrome discrepancy is folded into H-02.
 
 **Gemini calls in this section:** 0 (History is read-only, non-AI).
 
