@@ -545,6 +545,81 @@ def run_test_seed() -> None:
         )
 
 
+def _gather_synthetic_counts(db) -> dict[str, int]:
+    """D-13 — gather per-table row counts scoped to SYNTHETIC_HOUSEHOLD_ID,
+    plus the count of `synthetic/` Storage objects.
+
+    Used by the post-seed banner so the operator can re-run the seed and
+    eyeball that counts converge (idempotency proof).
+    """
+    from app.services.storage import list_synthetic_storage_count
+
+    recipes_count = db.scalar(
+        select(func.count(Recipe.id)).where(
+            Recipe.household_id == SYNTHETIC_HOUSEHOLD_ID
+        )
+    ) or 0
+    members_count = db.scalar(
+        select(func.count(Member.id)).where(
+            Member.household_id == SYNTHETIC_HOUSEHOLD_ID
+        )
+    ) or 0
+    cooking_logs_count = db.scalar(
+        select(func.count(CookingLog.id)).where(
+            CookingLog.household_id == SYNTHETIC_HOUSEHOLD_ID
+        )
+    ) or 0
+    shortlists_count = db.scalar(
+        select(func.count(DailyShortlist.id)).where(
+            DailyShortlist.household_id == SYNTHETIC_HOUSEHOLD_ID
+        )
+    ) or 0
+    # Vote scope is via shortlist_id -> daily_shortlists.household_id
+    # (Vote has no household_id column).
+    votes_count = db.scalar(
+        select(func.count(Vote.id))
+        .join(DailyShortlist, Vote.shortlist_id == DailyShortlist.id)
+        .where(DailyShortlist.household_id == SYNTHETIC_HOUSEHOLD_ID)
+    ) or 0
+    storage_count = list_synthetic_storage_count()
+    return {
+        "recipes": int(recipes_count),
+        "members": int(members_count),
+        "cooking_logs": int(cooking_logs_count),
+        "votes": int(votes_count),
+        "shortlists": int(shortlists_count),
+        "storage_objects": int(storage_count),
+    }
+
+
+def _print_post_seed_banner(
+    *,
+    household_id: uuid.UUID,
+    invite_code: str,
+    counts: dict[str, int],
+) -> None:
+    """D-13 + D-15 — bordered banner with household ID, invite code, counts.
+    ANSI-bold for the invite code; no color (terminals vary).
+
+    Operator runs the seed twice and eyeballs that the printed counts match —
+    that's the idempotency smoke check (D-13).
+    """
+    border = "=" * 70
+    print(border)
+    print(f"  SYNTHETIC HOUSEHOLD SEEDED — {household_id}")
+    print(f"  Synthetic invite code: \033[1m{invite_code}\033[0m")
+    print(border)
+    print(f"  recipes:                       {counts['recipes']:>4d}")
+    print(f"  members:                       {counts['members']:>4d}")
+    print(f"  cooking_logs:                  {counts['cooking_logs']:>4d}")
+    print(f"  votes:                         {counts['votes']:>4d}")
+    print(f"  shortlists:                    {counts['shortlists']:>4d}")
+    print(f"  storage objects (synthetic/):  {counts['storage_objects']:>4d}")
+    print(border)
+    print("  Idempotency check: re-run this command and confirm counts match.")
+    print(border)
+
+
 def run_prod_synthetic_seed() -> None:
     """Phase 11 — prod-synthetic seed. Idempotent across re-runs (D-10/D-11/D-12).
 
