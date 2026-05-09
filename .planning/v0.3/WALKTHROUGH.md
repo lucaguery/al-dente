@@ -540,12 +540,91 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 
 ## Cooking Log
 
-**Starting state:** _to be filled in Plan 12-03_
-**Golden path:** _to be filled — references `frontend/tests/e2e/cooking-log-create-finalize.spec.ts`_
+**Starting state:** Carry-over from Vote probes — auditor signed in, today's shortlist exists with `Coq au vin` already voted-on, no active cook (`GET /api/cooking-logs/active = null`). 3 seeded historical cooking_logs in DB (ragu -2d, poulet-citron -5d, burger -10d) per RUNBOOK reference.
 
-> Note (D-06): Late-evening cooks may be filtered out by the `TZ-01` Python-local-tz / UTC-DB-date mismatch in `cooking_logs.py:72-78,118-126`. If the probe re-discovers it, cross-link `TZ-01` instead of filing a new issue.
+**Golden path:** From the recap on `/`, the bottom CTA cluster offers `Je commence à cuisiner` (the only path to start a cook from the UI). API: `POST /api/recipes/{recipe_id}/cook` (NOT `POST /api/cooking-logs` as the plan body initially assumed — verified by reading `routers/cooking_logs.py:60-77`). Returns 201 with `{ id, recipe_id, household_id, cooked_by_member_id, cooked_at: <UTC ISO>, photo_paths: [], rating: null, notes: null }`. The `cooking-logs/active` endpoint flips from `null` to the active row. Finalize via `PUT /api/cooking-logs/{log_id}` (NOT `POST .../finalize`) with `{ rating: "loved" | "liked" | "disliked", notes: "..." }`.
+
+> Note (D-06): Late-evening cooks may be filtered out by the `TZ-01` Python-local-tz / UTC-DB-date mismatch in `cooking_logs.py:72-78,118-126`. **TZ-01 surface confirmed** in the probes below — see CL-04.
 
 **Probes:**
+
+### blocker P-12-CL-01: **Re-finalize increments `cook_count` instead of being idempotent** — denormalized field corruption (architecture invariant #3 violated)
+**Severity:** blocker
+**Surface:** Cooking Log (finalize / denorm)
+**Probe kind:** racing → idempotency probe
+**Starting state:** Auditor started a cook on Coq au vin (id `80973799`) and finalized it once with `{rating: "liked", notes: "<5KB string>"}` → 200 returned. Recipe `cook_count` was 1 immediately before this probe (from seed cook -2d? no — seed log was on a different recipe; Coq's cook_count was 0 prior). After first finalize: `cook_count=1`, `last_cooked_at=2026-05-09T18:10Z`.
+**Repro:**
+1. `PUT /api/cooking-logs/{log_id}` with `{rating: "liked", notes: "..."}` → 200, `cook_count=1`.
+2. `PUT /api/cooking-logs/{log_id}` again with `{rating: "disliked", notes: "second pass"}` → 200, returns updated row with new rating + notes.
+3. `GET /api/recipes/{recipe_id}` → observe denormalized `cook_count`.
+**Expected:** Per the docstring at `routers/cooking_logs.py:136-160` — *"Idempotency: re-PUT of an already-finalized log does NOT double-count cook_count (T-04-01-06). The 'is_first_finalize' check is captured BEFORE the rating assignment so subsequent finalizations only refresh last_cooked_at + last_cooked_photo_path."* `cook_count` should stay at 1.
+**Actual:** `cook_count = 2` after the second PUT. The is_first_finalize guard is **not** preventing the increment. This contradicts the comment and the T-04-01-06 mitigation note. **Architecture invariant #3 — `cook_count` and `last_cooked_at` updated in same DB transaction as the cooking_logs insert — is held on first write, but the second write also bumps the counter, violating the idempotency claim.** Real-user impact: a couple finalizing, then re-opening the screen and re-tapping (e.g. to fix a typo in their notes — pattern observed in mobile apps generally) inflates the cook history.
+**Screenshot:** `walkthrough-screenshots/cooking-log-recipe-detail.png` shows `Dernière fois : aujourd'hui · Cuisinée 2 fois` after only one cook today.
+**Issue:** new finding — Plan 05 to file as **blocker** (data corruption: invariant #3 violation; affects scoring algorithm via `cook_count` recency input).
+
+### friction P-12-CL-02: Notes field cap is 4000 chars; UI doesn't surface the limit; long-paste returns 422 with raw Pydantic detail
+**Severity:** friction
+**Surface:** Cooking Log (finalize body)
+**Probe kind:** boundary
+**Starting state:** Active cook in progress, finalize sheet open.
+**Repro:**
+1. Finalize with `notes` of length 5044 chars (5KB plus French diacritics).
+2. Server returns `422 {"detail":[{"type":"string_too_long","loc":["body","notes"],"msg":"String should have at most 4000 characters","input":"AAA…"}]}`.
+**Expected:** UI surfaces the 4000-char cap with a counter, OR truncates client-side gracefully, OR (lower bar) handles 422 with a friendly French toast.
+**Actual:** Backend rejects with raw schema error. Frontend wrapper around `api()` will throw `Error("422 Unprocessable Entity")` (per the bundled `lib/api.ts` proxy seen in `.next/static/chunks/7833-…js`). Generic error swallows the actionable detail. Same UX class as the §Capture — Quick `P-12-Q02` (5KB title) finding from Plan 12-02.
+**Screenshot:** `walkthrough-screenshots/cooking-log-5kb-notes.png`.
+**Issue:** new finding — Plan 05 to file as friction. Cross-link to Q02 (same UX class — "validation surfaces as connection-error toast").
+
+### nit P-12-CL-03: Second-cook-same-day blocked with clean 409 — Pattern 7 holds
+**Severity:** nit (pass-style)
+**Surface:** Cooking Log (concurrency guard)
+**Probe kind:** racing
+**Starting state:** Auditor with one active cook today (Coq au vin, before finalize).
+**Repro:** `POST /api/recipes/{ragu_id}/cook` → response.
+**Expected:** 409 conflict.
+**Actual:** `409 {"detail":"another cooking session is active today"}`. Clean.
+**Issue:** none — pass-style canary for Pattern 7 (one cook per day per household).
+
+### blocker P-12-CL-04: **TZ-01 surface confirmed** — `cooked_at` stored UTC; `func.date(cooked_at) == DateType.today()` mismatches near midnight; cross-link `TZ-01`
+**Severity:** blocker (cross-link)
+**Surface:** Cooking Log (timezone guard)
+**Probe kind:** invalid-state (clock-relative)
+**Starting state:** Auditor in CEST (UTC+2). Cook started at local 20:10 (UTC 18:10).
+**Repro:**
+1. `POST /api/recipes/{id}/cook` returns `cooked_at = 2026-05-09T18:10:37.551448Z` (UTC).
+2. Backend filters today's logs at `routers/cooking_logs.py:72-78` (`get_active_cooking_log`) and `:118-126` (the same query inside `start_cooking`'s 409 guard) using `today = DateType.today()` — Python's local-tz date.
+3. `func.date(cooking_logs.cooked_at) == today` compares the **UTC date** of the column against the **server-local date** of `today`.
+**Expected:** Late-evening user-local cooks (e.g. local 23:30 in CEST = UTC 21:30; UTC date still today, but for a household in UTC-8 the same UTC moment would be 13:30 today and `func.date(cooked_at)` would lag by a day in the next-morning rollover).
+**Actual:** **For the auditor's CEST cook at local 20:10**, both UTC and local dates align so the bug doesn't surface in this run — but the surface is confirmed by code inspection plus the TZ-01 backlog memo. The user-visible failure mode is `"Cette cuisson n'est plus disponible"` for any cook that crossed UTC midnight before the user's local-day rollover. Documented per the plan's instruction (D-06): cross-link to `TZ-01` rather than file new.
+**Backend timezone of Railway:** server runs in UTC by default (Railway containers); `DateType.today()` returns UTC date — this masks the bug for North-American users (always in or behind UTC) and surfaces it for late-evening East-Asia users (whose local dates can be a day ahead of UTC).
+**Screenshot:** `walkthrough-screenshots/cooking-log-near-midnight.png`.
+**Issue:** **`TZ-01`** — `cooking_logs.py:72-78,118-126`. Cross-link, NOT a new GitHub issue (per D-06).
+
+### friction P-12-CL-05: Offline event listener no-op — `dispatchEvent('offline')` doesn't trigger `COOK-11` toast or any UI feedback
+**Severity:** friction
+**Surface:** Cooking Log (offline behavior)
+**Probe kind:** network (synthetic)
+**Starting state:** Auditor on `/` with banner dismissed, no active cook.
+**Repro:**
+1. `page.evaluate(() => window.dispatchEvent(new Event('offline')))`.
+2. Inspect `navigator.onLine` and look for any toast/banner/text containing `hors ligne / offline / connexion`.
+**Expected:** A `COOK-11`-style locked toast (the plan's locked French strings reference one). At minimum, an offline indicator somewhere on the chrome.
+**Actual:** `navigator.onLine` returns `true` (the dispatchEvent doesn't actually flip `navigator.onLine`; that requires a real network state change). No toast / banner / text surfaces. **The frontend does not appear to listen for the `offline` event at all** — no listener anywhere in the captured DOM mutates state in response. This may be a documentation drift (the plan referenced `COOK-11` as a locked toast; the implementation may have been deferred to v0.4) OR Plan 12-04 will surface it from the realtime / push section.
+**Caveat:** the synthetic `dispatchEvent` is an imperfect probe — a real airplane-mode toggle in DevTools (which Playwright supports via `context.setOffline(true)`) would be the proper test. Re-test in Plan 12-04 cross-cutting if realtime resilience is in scope.
+**Screenshot:** `walkthrough-screenshots/cooking-log-finalize-offline.png`.
+**Issue:** new finding — Plan 05 to file as friction (offline UX absent). Cross-cuts with realtime invariant #4 work in Plan 12-04.
+
+### nit P-12-CL-06: Bad UUID + invalid rating both return clean 4xx with explicit reason
+**Severity:** nit (pass-style)
+**Surface:** Cooking Log (boundary)
+**Probe kind:** invalid-state
+**Starting state:** Active cook in progress.
+**Repro:**
+1. `PUT /api/cooking-logs/00000000-0000-0000-0000-000000000000` → `404 {"detail":"cooking log not found"}`.
+2. `PUT /api/cooking-logs/{valid_id}` body `{"rating":"meh"}` → `422 {"type":"enum","msg":"Input should be 'loved', 'liked' or 'disliked'"}`.
+**Expected:** clean 4xx with actionable detail.
+**Actual:** Both clean. Backend boundary handling solid.
+**Issue:** none — pass-style canary.
 
 **Gemini calls in this section:** 0 (Cooking-log creation is non-AI).
 
