@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1
-milestone_name: milestone
-status: executing
-stopped_at: Completed 10-06-PLAN.md
-last_updated: "2026-05-08T23:32:42.593Z"
-last_activity: 2026-05-08
+milestone: v0.2.1
+milestone_name: "E2E test infrastructure"
+status: shipped
+stopped_at: v0.2.1 milestone complete — awaiting next-milestone scope
+last_updated: "2026-05-09T02:15:00.000Z"
+last_activity: 2026-05-09
 progress:
   total_phases: 11
   completed_phases: 11
   total_plans: 64
-  completed_plans: 65
+  completed_plans: 64
   percent: 100
 ---
 
@@ -18,86 +18,72 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-08 for v0.2.1)
+See: .planning/PROJECT.md (updated 2026-05-09 after v0.2.1 milestone)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 10 — e2e-test-infrastructure
+**Current focus:** None — v0.2.1 shipped. Awaiting `/gsd-new-milestone` to scope next direction.
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-08
+Milestone: v0.2.1 (shipped 2026-05-09)
+Phase: None (Phase 10 complete)
+Status: Awaiting next-milestone scope
+Last activity: 2026-05-09
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100% (3 milestones shipped: v0.1 / v0.2 / v0.2.1)
 
 ## Performance Metrics
 
 **Velocity (cumulative):**
 
-- Total plans completed: 90 (57 v0.1 + 26 v0.2)
+- Total plans completed: 90 (57 v0.1 + 26 v0.2 + 7 v0.2.1)
 - v0.1 timeline: 2026-05-05 → 2026-05-08 (3 days, 50 commits, 283 files, ~70,950 insertions)
 - v0.2 timeline: 2026-05-08 (1 day, 26 plans, 31 requirements)
+- v0.2.1 timeline: 2026-05-08 → 2026-05-09 (1 phase, 7 plans, 4 requirements, ~9,431 insertions across 56 files)
 
-**By Phase:**
+**By Milestone:**
 
-| Phase | Plans | Status |
-|-------|-------|--------|
-| 1. Foundations (W1) | 12/12 | ✅ Complete (v0.1) |
-| 01.1. Cookie-auth-and-recovery | 6/6 | ✅ Complete (v0.1) |
-| 2. LLM Capture (W2) | 5/5 | ✅ Complete (v0.1) |
-| 3. Decide (W3) | 5/5 | ✅ Complete (v0.1) |
-| 4. Polish (W4) | 4/4 | ✅ Complete (v0.1) |
-| 5. Design system foundation | ✅ | ✅ Complete (v0.2) |
-| 6. Capture surfaces polish | ✅ | ✅ Complete (v0.2) |
-| 7. Decide polish | ✅ | ✅ Complete (v0.2) |
-| 8. Cook polish | ✅ | ✅ Complete (v0.2) |
-| 9. Onboarding + identity polish | ✅ | ✅ Complete (v0.2) |
-| 10. E2E test infrastructure | 0/0 | Not started (v0.2.1) |
-| Phase 10 P06 | 3min | 1 tasks | 1 files |
+| Milestone | Phases | Status |
+|-----------|--------|--------|
+| v0.1 (W1-W4 + 01.1) | 5 | ✅ Complete |
+| v0.2 (Phases 5-9) | 5 | ✅ Complete |
+| v0.2.1 (Phase 10) | 1 | ✅ Complete |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
-- v0.2.1 milestone started 2026-05-08: single-phase patch milestone (Phase 10) for E2E test infrastructure. Driver: v0.2 closed without a regression net; manual UAT on physical iPhones is the only safety. Deferred v0.2 polish items (i18n sweep on partner-waiting strings, Copy button per `.planning/milestones/v0.2-MILESTONE-AUDIT.md`) intentionally NOT folded — keep milestone scope tight, fold later via `/gsd-add-phase` if needed.
-- v0.2 roadmap created 2026-05-08: 5 phases (5–9), 31 requirements mapped 1-to-1.
-- Phase 5 was foundational and gated Phases 6–9. Phases 6–9 were parallelizable after Phase 5 shipped.
+- v0.2.1 milestone shipped 2026-05-09: single-phase patch milestone (Phase 10) for E2E test infrastructure. The runtime verification surfaced 5 real product issues — see milestones/v0.2.1-ROADMAP.md "Surfaced product issues" — none fixed inline (per `feedback_executor_scope_creep`); filed for v0.2.2 follow-up. Bottom-sheet positioning bug filed at https://github.com/lucaguery/al-dente/issues/1.
+- v0.2 milestone shipped 2026-05-08: 5 phases (5-9), 31 requirements, Slow Food design system locked.
+- v0.1 milestone shipped 2026-05-08: 5 phases (1, 01.1, 2-4), 49 requirements, full PWA loop.
 - W4 UI-REVIEW gaps folded inline into screen-group phases per requirement IDs (CAPTURE-11 → Phase 6; DECIDE-05 → Phase 7; COOK-07/08/11/12 → Phase 8). No separate fix phase.
-- Phase 01.1 inserted after Phase 1: cookie-auth-and-recovery (URGENT, v0.1). Driver: dual-phone testing showed iOS Safari evicts `localStorage` across PWA force-quit → reopen. Migrated auth to same-origin HttpOnly cookies.
-- Album (ALBUM-01/02/03) cut from v0.1 to v2 per 04-CONTEXT.md (commit c7ee1f0) — not useful enough at couple-scale.
+- Phase 01.1 inserted after Phase 1: cookie-auth-and-recovery (URGENT, v0.1). Driver: dual-phone testing showed iOS Safari evicts `localStorage` across PWA force-quit → reopen.
+- Album (ALBUM-01/02/03) cut from v0.1 to v2 per 04-CONTEXT.md — not useful enough at couple-scale.
 
 ### Decisions
 
-See PROJECT.md Key Decisions table — all 13 v0.1 decisions validated. v0.2 design direction locked in `.planning/notes/v0.2-design-direction.md` (Slow Food artisanal, Italian heritage lean, terracotta + cream + ink palette, paper-grain anchor, typography as signature). v0.2.1 scope decisions captured pre-routing: committed Playwright suite (`@playwright/test`) under `frontend/tests/`, backend Python seed via `uv run seed` CLI entry point, fixed env-overridable test `auth_token`, separate `DATABASE_URL_TEST` to isolate from dev DB, voice/photo/url capture surfaces marked `test.fixme` if not wired (do NOT block on building missing endpoints).
+See PROJECT.md Key Decisions table — all 13 v0.1 decisions validated, v0.2 design direction locked, and v0.2.1 test-infrastructure decisions added (Bearer-header auth shortcut + `aldente_auth` storageState cookie for WS upgrades, Docker Postgres on :5433, env-flag stub for Gemini/Storage in test mode, uuid5+merge idempotent seed, iPhone-shape Chromium viewport for mobile-only layout bug detection, `toBeInViewport()` on critical interactive surfaces).
 
-- [Phase 10]: Read invite code from URL search-param (page contract source) instead of regex-scraping the styled monogram <div>; DOM render still asserted via getByText
-- [Phase 10]: Use verbatim French i18n strings from fr.json instead of permissive regex; spec breaks at the spec when a key drifts
-- [Phase 10]: Alice and Bob pick distinct color slots (rose vs amber) so the join endpoint's color-uniqueness check (409) doesn't fire
+### Surfaced product issues (v0.2.1 → v0.2.2 backlog)
+
+- **TZ-01**: Active-cook filter uses Python local-tz date vs UTC DB date in `cooking_logs.py:72-78,118-126`. Late-evening cooks fall through across UTC offset window.
+- **URL-01**: URL extraction is `# TODO(productize)` at `recipes.py:481-490`. Drafts created from URL never promote.
+- **CL-01**: GET /cooking-logs (list) endpoint missing — the `/cooking-logs` history page renders but never has data.
+- **SEED-01**: Seed cross-day idempotency hole at `cli/seed.py:369,405`. Workaround: `docker compose down -v` between days. Already documented in TESTING.md.
+- **WS-01**: WS upgrade reads only cookie / `?token=` — never `Authorization` header. Required Playwright config to set cookie via storageState (already shipped).
+- **Sheet-01** ([#1](https://github.com/lucaguery/al-dente/issues/1)): `paper-grain` class on `SheetContent` overrides Tailwind `fixed`, leaving bottom sheets off-screen on iPhone-sized viewports. `capture-photo.spec.ts` "photo upload sheet is reachable" is `test.fixme` until this lands.
 
 ### Open Research
 
-None for v0.2.1 — this is QA infrastructure, not new product features. No research agents spawned.
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260507-g0k | UI polish: BottomNav safe-area fix, brand rose #F43F5E, home hero, RecipeCard polish | 2026-05-07 | 1702af2 | [260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe](./quick/260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe/) |
-| 260507-hbw | Module-level SWR cache for /recipes + /inbox — instant nav, silent revalidation | 2026-05-07 | de7ec38 | [260507-hbw-module-level-stale-while-revalidate-cach](./quick/260507-hbw-module-level-stale-while-revalidate-cach/) |
-| 260507-hd0 | Create a beautiful, polished layout for the Al Dente app using frontend-design best practices | 2026-05-07 | 451bb4f | [260507-hd0-create-a-beautiful-polished-layout-for-t](./quick/260507-hd0-create-a-beautiful-polished-layout-for-t/) |
-| 260507-nmi | UAT hotfixes: inbox reactivity (recipe.promoted), recipe hard-delete, push VAPID keys setup | 2026-05-07 | 826cc9e | [260507-nmi-catch-up-with-what-has-been-done](./quick/260507-nmi-catch-up-with-what-has-been-done/) |
-| 260508-1ln | fix audit gaps: cooking.finalized handler + recipe delete broadcast arity | 2026-05-07 | 481d9a6 | [260508-1ln-fix-audit-gaps-cooking-finalized-handler](./quick/260508-1ln-fix-audit-gaps-cooking-finalized-handler/) |
+None — between milestones.
 
 ### Blockers/Concerns
 
-- **Executor scope creep is a known failure mode** (memory: feedback_executor_scope_creep). When Phase 10 reaches /gsd-execute-phase, pass prior CONTEXT.md and SUMMARY.md to the executor and use hard scope constraints. Tests + seed + scripts only — don't touch product code unless a real bug surfaces and is approved.
-- **Backend currently a stub per CLAUDE.md** but recent commits show v0.1 wave-1 backend is live (FastAPI + SQLAlchemy + routers). CLAUDE.md is out of date relative to actual code state. Phase 10 discuss/plan should verify actual backend wiring (alembic migrations applied, `DATABASE_URL` resolution, where `Enum` classes live) before writing the seed script.
+- None blocking. The 6 surfaced product issues above are tracked for v0.2.2 (or whichever follow-up milestone scopes them).
 
 ## Session Continuity
 
-Last session: 2026-05-08T21:48:34.863Z
-Stopped at: Completed 10-06-PLAN.md
-Resume file: None
-Next: `/gsd-discuss-phase 10 --auto` to surface assumptions for Phase 10 (E2E test infrastructure & synthetic seed), then auto-chain into plan + execute.
+Last session: 2026-05-09T02:15:00.000Z
+Stopped at: v0.2.1 milestone archived (commit pending)
+Resume file: None — between milestones
+Next: `/gsd-new-milestone` to scope v0.2.2 (close surfaced product issues + v0.2 deferred polish) or v0.3 (new feature direction). Behavioral validation gate (≥ 2 weeks of daily use by both household members per SPEC.md) is still the implicit gate before broader scope decisions.

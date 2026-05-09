@@ -24,7 +24,9 @@ Both household members have a fully working app installed on their iPhones. The 
 
 **v0.2 Phase 9 shipped** — 2026-05-08. Onboarding + identity polished — final v0.2 phase: the 4 onboarding screens (welcome / create / share-code / join) now read as paper-grain Cards with Fraunces display titles + h-12 sticky CTAs; Settings reorganized into 3 paper-grain sections (Membre / Foyer / Sauvegarde) with the same Fraunces italic terracotta invite-code display as the share-code screen (byte-identical class string — first-touch ↔ re-find consistency); BottomNav now shows terracotta `bg-primary/8` rounded-pill active wash and a Pressenti-style inbox badge (Phase 7 chipClass mirror), with all cool-grays purged. NEW `frontend/app/icon.tsx` + `frontend/app/apple-icon.tsx` use Next.js 16 `ImageResponse` to render a simple wheat-stem food-symbol on terracotta `#C8553D` — no commissioned art, no `sharp` dependency. Phase 5 themeColor deferral fully closed: zero `#F43F5E` remains anywhere in `frontend/app/`, `components/`, or `public/`. Two UAT-driven fixes shipped during validation: SearchInput dropped its `paper-grain` wrapper (root cause: `globals.css .paper-grain > * { position: relative }` was overriding absolute icon positioning), and HomeDecide replaced its blank-on-load `return null` with a partner-waiting Card that re-shows the invite code + `Actualiser` button. Code review: 0 critical / 0 warning remaining (1 warning auto-fixed). UI audit 22/24 (meets target).
 
-**Behavioral validation gate:** ≥ 2 weeks of daily use by both members (the v0.1 definition of done per SPEC.md). This is the next observable milestone before v0.2 planning begins.
+**v0.2.1 shipped** — 2026-05-09. E2E test infrastructure: idempotent `uv run seed` CLI populates 1 household + 2 members + 21 recipes + 3 cooking logs + 7 votes covering all 5 computed states (uuid5 + Session.merge upsert; T-10-01 hard-refusal guard against non-test envs). Committed Playwright suite under `frontend/tests/e2e/`: 14 specs across `seeded` (Bearer + storageState cookie) and `fresh` (cookie-only) projects, iPhone-shape Chromium viewport (390×844, isMobile, hasTouch) with `toBeInViewport()` on critical interactive surfaces. 4-command bootstrap runbook (`TESTING.md`). D-12 regression canary verified end-to-end (1-line `HTTPException(500)` injected into `recipes.py:get_recipe` → `recipe-detail.spec.ts` correctly failed → reverted → suite green). 5 documented `test.fixme` markers point at real product gaps surfaced (timezone bug in `cooking_logs.py:72`, URL extraction TODO, missing GET /cooking-logs list, seed cross-day idempotency, sheet-positioning [#1](https://github.com/lucaguery/al-dente/issues/1)). 1 phase, 7 plans, 4 requirements (TEST-01..04).
+
+**Behavioral validation gate:** ≥ 2 weeks of daily use by both members (the v0.1 definition of done per SPEC.md). This is the next observable milestone before broader scope decisions.
 
 **Infrastructure:** Next.js 16 PWA on Vercel + FastAPI on Railway + Supabase Postgres + Storage. Auto-deploy on push to `main`. Free-tier hosting throughout.
 
@@ -45,20 +47,31 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 - REALTIME × 3 — WebSocket broadcast spine + DOM CustomEvent bridge + exponential reconnect
 - PWA × 4 — Manifest + service worker + Web Push + next-intl French localization
 
-### Active (v0.2.1 — E2E test infrastructure)
+### Validated (v0.2.1 — shipped 2026-05-09)
 
-*(Defined via `/gsd-new-milestone` 2026-05-08. Patch milestone scoped to one phase. Full REQ-IDs in `.planning/REQUIREMENTS.md`. v0.2 requirements archived at `.planning/milestones/v0.2-REQUIREMENTS.md`.)*
-
-- [ ] **TEST-01**: Backend Python seed script — idempotent `uv run seed` CLI creates one household, one member with a fixed env-overridable `auth_token`, and 20+ recipes spread across the locked enums (Season / Cuisine / Mood / Protein) with cooking_logs + votes so derived state (vote-state computation, `recipes.last_cooked_at`, `recipes.cook_count`) renders non-empty. Imports the Python `Enum` classes directly — no duplicated values.
-- [ ] **TEST-02**: Committed Playwright suite (`@playwright/test`) under `frontend/tests/` covering each screen and each user action: capture (quick / full only — voice / photo / url marked `test.fixme` if not wired), voting, shortlist, recipe detail, cooking log finalize. Specs read the test `auth_token` from env to skip onboarding.
-- [ ] **TEST-03**: Bootstrap runbook + `npm` / `uv` scripts — fresh checkout reaches a green Playwright run in ≤ 5 commands (seed → start backend → start frontend → run Playwright).
-- [ ] **TEST-04**: Invite-code happy-path spec — one Playwright spec exercises `/onboarding/create` → invite code → `/onboarding/join` end-to-end without using the seeded auth shortcut, validating the join flow stays green.
-
-**Out of scope (v0.2.1):** product-code refactors, new product features, voice / photo / url capture if not wired (mark `test.fixme`), production hosting (Railway / Vercel / Supabase prod). Local-only.
+- ✅ **TEST-01**: Idempotent `uv run seed` CLI — 1 household + 2 members + 21 recipes + 3 cooking logs + 7 votes covering all 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis). Verified end-to-end on a clean Postgres volume.
+- ✅ **TEST-02**: 14 Playwright specs under `frontend/tests/e2e/` (13 `seeded` + 1 `fresh`). 5 documented `test.fixme` markers point at real product gaps surfaced during runtime verification — none block the phase.
+- ✅ **TEST-03**: 4-command bootstrap runbook in `TESTING.md` (docker compose → uv sync+seed → npm install+playwright install → npm run test:e2e). Wall clock ~36s after one-time install.
+- ✅ **TEST-04**: Invite-code happy-path spec runs under the `fresh` project (no Bearer header — real cookie flow). globalSetup truncates 6 tables; teardown re-seeds.
 
 ### Validated (v0.2 — shipped 2026-05-08)
 
 - ✅ **All 31 v0.2 requirements validated** across Phases 5–9 (DESIGN × 8, CAPTURE × 6, DECIDE × 5, COOK × 7, ONBOARD × 5). Average UI audit 22.4 / 24. Per-phase summaries preserved in `.planning/milestones/v0.2-ROADMAP.md` and the per-phase SUMMARY files. Demonstrable satisfaction of the four design principles (Design Quality, Originality, Craft, Functionality) on every screen. Pending: ≥ 2-week daily-use validation gate.
+
+### Active
+
+_None — between milestones. Run `/gsd-new-milestone` to scope next direction._
+
+### Surfaced for follow-up (v0.2.2 backlog)
+
+Real product issues surfaced by Phase 10 runtime verification — not fixed inline per `feedback_executor_scope_creep`:
+
+- **Sheet-01** ([#1](https://github.com/lucaguery/al-dente/issues/1)): bottom sheets render off-screen on iPhone-sized viewports because `paper-grain` overrides Tailwind `fixed` in `components/ui/sheet.tsx:64`. Affects PhotoUploader source picker, VoiceModifySheet, RegenerateSheet. `capture-photo.spec.ts` "photo upload sheet is reachable" is `test.fixme` until this lands.
+- **TZ-01**: Active-cook filter in `cooking_logs.py:72-78,118-126` compares Python local-tz date to UTC DB date. Late-evening cooks fall through across UTC offset window. `cooking-log-create-finalize.spec.ts` is `test.fixme`.
+- **URL-01**: URL extraction is `# TODO(productize)` at `recipes.py:481-490`. Drafts created from URL never promote. `capture-url.spec.ts` promotion assertion is `test.fixme`.
+- **CL-01**: GET /cooking-logs (list) endpoint missing — the `/cooking-logs` history page renders but never has data. `cooking-log-history.spec.ts` titles assertion is `test.fixme`.
+- **SEED-01**: Seed cross-day idempotency hole at `cli/seed.py:369,405`. Workaround: `docker compose down -v` between days.
+- **POLISH-01 / POLISH-02** (carried from v0.2): i18n sweep on partner-waiting strings + Copy button on invite code. See `.planning/milestones/v0.2-MILESTONE-AUDIT.md`.
 
 ### Out of Scope
 
@@ -112,39 +125,15 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 | DOM CustomEvent bridge for WS → React | Decouples RealtimeProvider from page state | ✅ Validated — clean pattern, used for 6 event types |
 | Fraunces + IBM Plex Sans typography (v0.2 Phase 5) | Slow Food editorial feel; both on Google Fonts; latin+latin-ext subsets clear iOS Safari French diacritic gate | ✅ Validated — visual smoke test approved, UI audit 23/24 |
 | Token preservation via aliases (v0.2 Phase 5) | DESIGN-03: keep all v0.1 token names so component churn stays at zero during the migration | ✅ Validated — 10 primitives re-themed via in-place className edits, no API breakage |
+| Bearer-header auth shortcut + storageState cookie for tests (v0.2.1 Phase 10 D-01) | Backend `auth.py` already accepts Bearer as a fallback for local dev; cookie additionally needed because the WS upgrade only reads the cookie / `?token=` (Authorization header is ignored on WS) — without the cookie, ws.ts:113 fires DELETE+redirect, racing every page.goto assertion to onboarding | ✅ Validated — 14/14 specs pass at iPhone-shape Chromium viewport |
+| Docker Postgres on `:5433/aldente_test` for tests (v0.2.1 D-02) | Dev hits Supabase remote; tests need a hermetic local DB with a clean teardown story. Docker for tests is the carve-out from "no Docker Postgres for dev" | ✅ Validated — `docker compose down -v` is the canonical reset; T-10-01 hard-refusal guard prevents seed from targeting non-test DB |
+| Env-flag stub for Gemini + Supabase Storage (v0.2.1 D-04) | The no-mock-DB rule is about the database; external paid APIs need stubs to avoid cost + flake. `if settings.environment == "test":` short-circuits at the service boundary | ✅ Validated — capture-voice / capture-photo specs run end-to-end with deterministic canned data |
+| uuid5 + Session.merge upsert seed (v0.2.1 D-09) | Idempotency is in the success criteria; TRUNCATE+INSERT breaks "re-running mid-test." uuid5 is deterministic across runs and machines | ✅ Validated — same household / member / shortlist UUIDs across re-runs, no duplicate-key errors on second invocation within the same day. Cross-day hole surfaced (SEED-01) — workaround documented |
+| iPhone-shape Chromium viewport for tests (v0.2.1 post-ship) | The PWA ships to two iPhones; testing at desktop-sized viewports masks mobile-only layout bugs (e.g. Sheet-01 [#1](https://github.com/lucaguery/al-dente/issues/1)). 390×844 + isMobile + hasTouch + Chromium catches them while staying under the cross-browser non-goal | ✅ Validated — surfaced the Sheet-01 bug via Playwright MCP, then encoded `toBeInViewport()` assertion that catches future regressions |
 
-## Current Milestone: v0.2.1 — E2E test infrastructure
+## Current Milestone
 
-**Goal:** Make the shipped v0.1 / v0.2 PWA testable end-to-end on a fresh checkout: a one-command synthetic seed and a committed Playwright suite that exercises every screen and action.
-
-**Why now:** v0.2 closed without a regression net. Manual UAT on physical iPhones is the only safety we have, and rebuilding household state by hand to test a single flow is slow enough that I avoid it — which means regressions slip in. This milestone fixes that for the rest of v0.2.x and v1.0 work.
-
-**Target features (one phase):**
-
-- **Phase 10 — E2E test infrastructure & synthetic seed**
-  - Idempotent backend seed via `uv run seed` (1 household + 1 member with fixed `auth_token` + 20+ recipes spanning the locked enums + cooking_logs + votes for derived state)
-  - Committed `@playwright/test` suite under `frontend/tests/` covering capture (wired surfaces), voting, shortlist, recipe detail, cooking log
-  - Bootstrap runbook + npm / uv scripts so a fresh checkout reaches a green run in ≤ 5 commands
-  - One invite-code happy-path spec that does NOT use the seeded auth shortcut
-
-**Anti-patterns (committed for this milestone):**
-
-No product-code refactors during this phase · No new product features · No tests against Railway / Vercel / Supabase prod (local-only) · No drift between `frontend/lib/enums.ts` and the Python `Enum` classes — seed imports the Python enums, never duplicates values · No mocking the database — tests hit a real Postgres seeded by the same migrations product code uses
-
-**Key constraints:**
-
-- Local-only. `DATABASE_URL_TEST` separate from dev DB.
-- Push to `main` is the only deploy path — never run `vercel --prod` or manual Railway deploys.
-- Voice / photo / url capture surfaces that aren't wired yet → mark spec `test.fixme` with TODO and move on. Surface real bugs to me before fixing.
-- Executor scope creep is a known failure mode (see `.planning/STATE.md` accumulated context). Pass prior CONTEXT.md and SUMMARY.md to the executor; tests + seed + scripts only unless a real bug is surfaced and approved.
-- Solo dev, ~1 weekend/week budget — single-phase milestone, ship and move on.
-
-**Success criteria (behavioral):**
-
-- A teammate (or future-me on a fresh laptop) runs ≤ 5 commands from a clean clone and sees Playwright report all green specs.
-- The seeded household renders the shortlist, vote chips, recipe detail, and cooking log with realistic data (no empty states masking bugs).
-- Re-running `uv run seed` does not double-insert recipes, votes, or cooking logs (idempotency proven by re-running mid-test).
-- A regression introduced into `frontend/components/ShortlistDeck.tsx` or `backend/app/routers/votes.py` is caught by the suite, not by manual UAT.
+_None — v0.2.1 shipped 2026-05-09. Awaiting `/gsd-new-milestone` to scope next direction._
 
 ## Future Milestones (deferred)
 
@@ -170,4 +159,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-08 — v0.2.1 milestone started: E2E test infrastructure (single phase — Phase 10). Goal is a one-command synthetic seed plus a committed Playwright suite covering every shipped screen. v0.2 polish complete (5 phases, 22.4/24 average UI audit) and now in Validated. v0.2 deferred items (i18n sweep on partner-waiting strings, Copy button on partner-waiting Card per `.planning/milestones/v0.2-MILESTONE-AUDIT.md`) intentionally NOT folded into v0.2.1 yet — fold via `/gsd-add-phase` if/when scope warrants.*
+*Last updated: 2026-05-09 — v0.2.1 (E2E test infrastructure) shipped. 1 phase, 7 plans, 4 requirements all validated. 14 Playwright specs running on iPhone-shape Chromium viewport with `toBeInViewport()` assertions. 6 product issues surfaced for v0.2.2 backlog (Sheet-01 [#1], TZ-01, URL-01, CL-01, SEED-01, plus carried POLISH-01/02). Awaiting `/gsd-new-milestone` to scope next direction.*
