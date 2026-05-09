@@ -37,7 +37,12 @@ Audit-only milestone. Produce a grounded, evidence-backed assessment of Al Dente
   3. The CLI prints the synthetic household's invite code to stdout in a copy-pasteable form so the operator can join the synthetic env from their own phone.
   4. The seed refuses to run against prod unless an explicit opt-in flag or env var is set (mirrors the v0.2.1 T-10-01 hard-refusal guard pattern), and a runbook committed under `.planning/v0.3/` documents the refresh and teardown procedure.
   5. After the seed runs, the synthetic household contains exactly 2 members + 21 recipes + 3 cooking logs + 7 votes, with the votes producing all 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis) — verifiable by joining from the operator's iPhone.
-**Plans**: TBD
+**Plans**: 5 plans
+  - [ ] 11-01-PLAN.md — Foundation: argparse mode dispatch + prod-environment guard + D-04 symmetric refusal + synthetic-namespace helpers (uuid5, advisory-lock key, scope-assertion wrapper) + storage scope helpers (`synthetic/` prefix, idempotent upload, prefix-scoped teardown).
+  - [ ] 11-02-PLAN.md — Implement `run_prod_synthetic_seed`: advisory lock, household + 2 members + 21 recipes (with `photo_paths` populated), 3 cooking_logs (D-10 sliding dates), shortlist (D-11 sliding key), 7 votes producing all 5 states (D-12), post-seed COUNT-diff banner (D-13/15).
+  - [ ] 11-03-PLAN.md — Curate, resize, and commit 21 properly-licensed JPGs at `backend/app/cli/synthetic_photos/<slug>.jpg` + license-attribution README. Operator checkpoint for photo selection; structural validation for filenames + magic bytes + sizes.
+  - [ ] 11-04-PLAN.md — Implement `run_teardown`: advisory lock + 6 FK-ordered DELETEs (votes -> cooking_logs -> daily_shortlists -> recipes -> members -> households) + scope-guarded `synthetic/` Storage prefix delete + per-table removal banner.
+  - [ ] 11-05-PLAN.md — Operator runbook: `RUNBOOK.md` at repo root (TL;DR / Pre-flight / Banner shapes / Troubleshooting / iPhone join / By-design / Reference) + `.planning/v0.3/RUNBOOK.md` stub satisfying ROADMAP §Phase 11 success criterion 4.
 
 **Threat model (load-bearing — surface in `/gsd-discuss-phase 11`):** This phase writes to the production database. Failure modes include (a) running against prod without intending to, (b) labeling that doesn't visibly distinguish the synthetic household from real users, (c) seed code paths that touch rows outside the synthetic household scope, (d) idempotency bugs that leave orphaned rows on re-run, (e) leaking the synthetic invite code to a real-user pathway. The hard-refusal guard, the household label, and the test-DB-only seed code path must all be reviewed under threat-model framing during planning. Treat this phase's threat-model gate seriously — it is the only phase in v0.3 with non-trivial risk.
 
@@ -91,7 +96,7 @@ Phases execute in numeric order: 11 → 12 → 13 → 14. Phase 13 may run in pa
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 11. Production Synthetic Household | 0/TBD | Not started | - |
+| 11. Production Synthetic Household | 0/5 | Not started | - |
 | 12. Exploratory Feature Walkthrough | 0/TBD | Not started | - |
 | 13. Design Quality & Originality Audit | 0/TBD | Not started | - |
 | 14. Synthesis & Handoff | 0/TBD | Not started | - |
