@@ -145,7 +145,7 @@ Findings that match a known v0.2.2 backlog item are documented but DO NOT genera
 **Expected:** `{name: "tomates", quantity: 4, unit: null}` (or `unit: "pcs"`); rendered as `4 tomates` once.
 **Actual:** `{name: "4 tomates", quantity: 4, unit: "tomates"}` — both the tokenized fields AND the original string preserved as `name`. Frontend renders as `{quantity} {unit} {name}` → `4 tomates 4 tomates`. Same parser also misclassifies `1 oignon rouge` as `{name: "rouge", quantity: 1, unit: "oignon"}` (treats noun head as unit). All Capture — Full submissions with simple "<int> <noun>" lines are affected. **User-visible quality issue.**
 **Screenshot:** `walkthrough-screenshots/capture-full-ingredient-duplication.png`
-**Issue:** new finding (Plan 05 to file). Severity = **blocker** because the recipe view's `Ingrédients` list — the primary readable artifact — is corrupted on a common French shopping-list pattern. (D-01: "primary intended action non-functional even via workaround" — the user can't easily edit out the duplication without re-entering the entire recipe.)
+**Issue:** https://github.com/lucaguery/al-dente/issues/2 (filed Plan 12-05 closing sweep — `audit:walkthrough` label). Severity = **blocker** because the recipe view's `Ingrédients` list — the primary readable artifact — is corrupted on a common French shopping-list pattern. (D-01: "primary intended action non-functional even via workaround" — the user can't easily edit out the duplication without re-entering the entire recipe.)
 **Recipe sample:** `131ce526-6bbc-4a9e-8a34-0ad0760e3bb4` (synthetic household).
 
 ### friction P-12-F02: title-only Full submit creates orphan `structured` recipe with null ingredients/steps
@@ -213,7 +213,7 @@ Findings that match a known v0.2.2 backlog item are documented but DO NOT genera
 **Expected:** either Gemini returns a best-effort recipe shape, OR the BackgroundTask updates the recipe to a terminal state like `status='failed'` with a user-visible explanation ("Pas de recette détectée"). The user must have a recovery path other than the X button.
 **Actual:** the draft remains `status='draft'`, `title='(extraction en cours…)'`, `ingredients=null`, **for at least 3 minutes** (audit didn't wait longer). The inbox card just shows "(extraction en cours…)" with the spinner spinning indefinitely. The user has no way to know whether the model is still trying or has silently failed. Only recovery: delete and start over.
 **Screenshot:** `walkthrough-screenshots/capture-voice-garbled.png`
-**Issue:** new finding (Plan 05 to file). Severity = **blocker** because the primary intended action (a recipe) is not delivered AND the system gives no actionable feedback (D-01: "primary intended action non-functional even via workaround"). The `recipes` model needs a `failed` terminal state OR the worker needs a timeout that surfaces an error in the UI.
+**Issue:** https://github.com/lucaguery/al-dente/issues/3 (filed Plan 12-05 closing sweep — single cross-surface issue covering Voice + Photo; `audit:walkthrough` label). Severity = **blocker** because the primary intended action (a recipe) is not delivered AND the system gives no actionable feedback (D-01: "primary intended action non-functional even via workaround"). The `recipes` model needs a `failed` terminal state OR the worker needs a timeout that surfaces an error in the UI.
 **Recipe sample:** `2e2bf60b-9fee-44d4-b30c-ea49e566e57e` (still stuck at audit time).
 
 ### nit P-12-V02: very-short transcript ("Pâtes au beurre.") promotes cleanly with sparse data (pass-style)
@@ -291,7 +291,7 @@ Findings that match a known v0.2.2 backlog item are documented but DO NOT genera
 **Expected:** Gemini returns "no recipe detected", BackgroundTask transitions to `status='failed'` with user-visible error.
 **Actual:** `POST /api/recipes/photo` → `201`, draft created with title `(extraction en cours…)`. After 25s the draft is still `status='draft'`, `title='(extraction en cours…)'`, `ingredients=null` — same stuck state as garbage voice (P-12-V01). Photo IS persisted to Supabase Storage at `9f3b1902-…/{id}/<uuid>.png`. Confirms the bug is **promotion-layer**, not surface-specific — likely lives in `services/llm` or the `BackgroundTask` runner. **Cross-surface dedupe with P-12-V01 — Plan 05 should file ONE finding ("Gemini empty/failure leaves drafts in permanent `(extraction en cours…)` state") covering Voice + Photo + URL.**
 **Screenshot:** `walkthrough-screenshots/capture-photo-non-recipe.png`
-**Issue:** new finding (Plan 05 to file as single cross-surface bug — see also P-12-V01).
+**Issue:** https://github.com/lucaguery/al-dente/issues/3 (filed Plan 12-05 closing sweep — same cross-surface issue as P-12-V01; one issue covers both Voice + Photo).
 **Recipe sample:** `1b84b91e-a5cf-4ff4-9107-86d63acfb9cf`.
 
 ### friction P-12-Ph03: query-string state ignored on Photo tab (cross-tab confirmation of P-12-F04)
@@ -487,7 +487,7 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
   - Tacos (1y, 1n): mixed → `conteste`. Coincidentally correct.
 **Why this matters:** invariant #2 promises the rendered chip equals the computed state from the votes table. With a hard-coded `MEMBER_COUNT=2`, the promise holds **only** for 2-member households. The synthetic audit pile-up (now 4 members because Phase 11's seed plus Plan 12-02 plus this plan each joined a new auditor) makes this user-visible. **In real product use today the bug is masked** because v0.1 ships for couples — but it's a fragile hard-coded constant that will break on the first 3-member household. The comment at `HomeDecide.tsx:52` (`v0.1: hard-coded household size; multi-tenant clean.`) is honest about the limitation, but as a productize-later TODO it isn't tracked: there is no `# TODO(productize)` marker in `HomeDecide.tsx`. **Documentation gap + correctness bug at the same site.**
 **Screenshot:** `walkthrough-screenshots/vote-state-render-after-refresh.png`.
-**Issue:** new finding — Plan 05 to file as **blocker** (architecture invariant violated; user-visible incorrect state labels). Recommend marker added: `// TODO(productize): MEMBER_COUNT must come from /api/households/me.members.length`.
+**Issue:** https://github.com/lucaguery/al-dente/issues/4 (filed Plan 12-05 closing sweep — `audit:walkthrough` label). Severity = **blocker** (architecture invariant violated; user-visible incorrect state labels). Recommend marker added: `// TODO(productize): MEMBER_COUNT must come from /api/households/me.members.length`.
 
 ### nit P-12-Vt-02: Concurrent yes+no on the same recipe deterministically resolves to last-write — `(shortlist_id, recipe_id, member_id)` upsert holds
 **Severity:** nit (pass-style)
@@ -561,7 +561,7 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 **Expected:** Per the docstring at `routers/cooking_logs.py:136-160` — *"Idempotency: re-PUT of an already-finalized log does NOT double-count cook_count (T-04-01-06). The 'is_first_finalize' check is captured BEFORE the rating assignment so subsequent finalizations only refresh last_cooked_at + last_cooked_photo_path."* `cook_count` should stay at 1.
 **Actual:** `cook_count = 2` after the second PUT. The is_first_finalize guard is **not** preventing the increment. This contradicts the comment and the T-04-01-06 mitigation note. **Architecture invariant #3 — `cook_count` and `last_cooked_at` updated in same DB transaction as the cooking_logs insert — is held on first write, but the second write also bumps the counter, violating the idempotency claim.** Real-user impact: a couple finalizing, then re-opening the screen and re-tapping (e.g. to fix a typo in their notes — pattern observed in mobile apps generally) inflates the cook history.
 **Screenshot:** `walkthrough-screenshots/cooking-log-recipe-detail.png` shows `Dernière fois : aujourd'hui · Cuisinée 2 fois` after only one cook today.
-**Issue:** new finding — Plan 05 to file as **blocker** (data corruption: invariant #3 violation; affects scoring algorithm via `cook_count` recency input).
+**Issue:** https://github.com/lucaguery/al-dente/issues/5 (filed Plan 12-05 closing sweep — `audit:walkthrough` label). Severity = **blocker** (data corruption: invariant #3 violation; affects scoring algorithm via `cook_count` recency input).
 
 ### friction P-12-CL-02: Notes field cap is 4000 chars; UI doesn't surface the limit; long-paste returns 422 with raw Pydantic detail
 **Severity:** friction
@@ -667,7 +667,7 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 **Expected:** Detail page rendering the cook's date, rating, notes (the 4000-char-truncated notes from CL-02), photo paths, and a back-link to `/cooking-logs`. Per `cooking-log-history.spec.ts:???` golden the detail route is referenced.
 **Actual:** **No `/cooking-logs/[id]` page exists in `frontend/app/cooking-logs/`** (verified by behavior — Next.js shows the framework default 404 stripped of the chrome, no `Accueil / Recettes / À compléter / Plus` nav). User has no way to view the notes or rating they just saved unless they navigate back to the recipe detail page (which shows aggregate `cook_count` but not per-cook history). **The 5KB notes feature has a UI write path with no read path.**
 **Screenshot:** `walkthrough-screenshots/history-empty-group-headers.png`.
-**Issue:** new finding — Plan 05 to file as **blocker** (write-without-read path; affects CL-04 perception too — the user can't verify their finalize landed). Cross-link CL-01 because both findings together describe the full History UX gap.
+**Issue:** https://github.com/lucaguery/al-dente/issues/6 (filed Plan 12-05 closing sweep — `audit:walkthrough` label). Severity = **blocker** (write-without-read path; affects CL-04 perception too — the user can't verify their finalize landed). Cross-link CL-01 because both findings together describe the full History UX gap.
 
 ### friction P-12-H-03: History page is buried — no main-nav link, only reachable from `/settings` → `Voir les cuissons récentes`
 **Severity:** friction
@@ -1072,7 +1072,7 @@ Backend `/api/push/subscribe` (per `backend/app/routers/push.py`): validates the
 **Actual:** **Joining is impossible.** The UI is technically correct (no submit affordance because no free color) but the user-visible state is silent failure: typing the code shows `[SYNTHETIC] Démo Al Dente, all four swatches greyed`, the form sits there with a disabled submit, no copy explains why. There is **no error message** distinguishing "you haven't picked a color yet" from "no color is available." The product implicitly caps household size at 4 (the palette length) without ever stating this.
 **Why this matters for the audit pile-up:** Plan 12-04's §Realtime Sync requires spawning member #5 for a two-context probe. Per Plan 12-03's projection, member #5 is the synthetic-household audit baseline going forward. **Currently, member #5 cannot be created via the standard onboarding flow.** The realtime probes in Task 2 below adapt: the second context will idempotent-rejoin as one of the existing 4 (per `households.py:142-161` D-07 idempotent path) rather than create a new member.
 **Screenshot:** `walkthrough-screenshots/onboarding-color-collision.png`
-**Issue:** new finding (Plan 05 to file as **blocker** — primary intended action "join household" is non-functional once the palette is exhausted; affects audit baseline going forward; affects any real 5+-person household). Productize-later marker recommended at `frontend/components/ColorSwatchPicker.tsx` and/or a backend max-members enforcement returning a distinct 422.
+**Issue:** https://github.com/lucaguery/al-dente/issues/7 (filed Plan 12-05 closing sweep — `audit:walkthrough` label). Severity = **blocker** — primary intended action "join household" is non-functional once the palette is exhausted; affects audit baseline going forward; affects any real 5+-person household. Productize-later marker recommended at `frontend/components/ColorSwatchPicker.tsx` and/or a backend max-members enforcement returning a distinct 422.
 
 ### friction P-12-O05: Color collision on join surfaces an error, but the form's "your colour was taken between preview and submit" race still wedges UX
 **Severity:** friction
@@ -1127,7 +1127,7 @@ Backend `/api/push/subscribe` (per `backend/app/routers/push.py`): validates the
 **Actual:** Backend → `405 Method Not Allowed` — **`PATCH /households/me` is not implemented**. Inspection of `backend/app/routers/households.py` (router file ends at line 223): NO `PATCH` / `PUT` handler on `/households/me`. The only mutating routes are `POST /households` (create) and `POST /households/join` (join). **A user who picks a typo'd name during onboarding has NO recovery path** short of (a) the D-07 idempotent rejoin trick (would require knowing the trick + creates a NEW member with the new name AND leaves the old one as an orphan in the DB), or (b) backend admin intervention. This is silent privilege loss: the user CAN'T fix their own name. **Architecture invariant gap** — the spec's "members own their identity" implication does not hold in v0.1 ship.
 **Why this matters:** Compounds with O-04 (cannot create new members) — once you've onboarded with a typo, you're stuck with it permanently. Audit-relevant: the synthetic household has accumulated 4 audit-prefixed names (`Luca, Partner, Joe, Auditor`) that cannot be cleaned up except by `--teardown`.
 **Screenshot:** `walkthrough-screenshots/settings-long-name.png` (showing the read-only Membre Card; 200-char emoji/diacritic test moot — no input affordance to type into).
-**Issue:** new finding (Plan 05 to file as **blocker** — missing CRUD; user-visible identity lock-in).
+**Issue:** https://github.com/lucaguery/al-dente/issues/8 (filed Plan 12-05 closing sweep — `audit:walkthrough` label). Severity = **blocker** — missing CRUD; user-visible identity lock-in.
 
 ### friction P-12-S03: No "Quitter le foyer" path — leaving a household requires backend intervention or `--teardown`
 **Severity:** friction
