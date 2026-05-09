@@ -382,19 +382,157 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 
 ## Shortlist
 
-**Starting state:** _to be filled in Plan 12-03_
-**Golden path:** _to be filled — references `frontend/tests/e2e/decide-shortlist-deck.spec.ts` and the framer-motion swipe deck (Phase 7 polish)_
+**Starting state:** Member-#4 auditor (`Auditor`, member id `f244600f`) signed in via `DEMO01`. Synthetic household has **4 members** (Luca, Partner, Joe, Auditor) — the audit pile-up has grown the household beyond the 2-member couple-shape that SPEC.md and Phase 11 D-19 assumed. Shortlist `9a047f52` for `2026-05-09`, generation 1, 5 recipes (Ragu bolognese, Coq au vin, Butter chicken, Shawarma, Tacos au boeuf). Inbox shows 7 drafts (carry-over from Plan 12-02 stuck-draft probes). Today's `cooking-logs/active` = `null`.
+
+**Golden path:** Land on `/`. The framer-motion swipe deck shows one recipe at a time with a peek of the next. Each card shows title, cuisine + mood + protein chips, prep time, member who created it. Two icon-only buttons at the bottom (`aria-label="J'aime cette recette"` = OUI, `aria-label="Pas envie ce soir"` = NON) cast the vote. Card flips on press; deck advances. `À compléter` link in nav shows badge count from drafts. After all 5 swipes, the deck transitions to a "Vous avez tout vu" recap listing the 5 recipes with their computed vote-state chip and a `Coq au vin / Je commence à cuisiner / Régénérer le shortlist` CTA cluster.
+
 **Probes:**
 
+### friction P-12-Sh-01: Install-PWA prompt occludes vote affordances on first load
+**Severity:** friction
+**Surface:** Shortlist (HomeDecide)
+**Probe kind:** invalid-state (banner visibility ⇒ layout shift)
+**Starting state:** First load of `/` after fresh launch (cookie present but install hint not yet dismissed).
+**Repro:**
+1. Navigate to `https://al-dente-pink.vercel.app/` as the auditor.
+2. Observe the `Installe Al Dente sur ton écran d'accueil` banner pinned above the deck.
+3. Measure the OUI/NON button bounding boxes via `page.evaluate(() => el.getBoundingClientRect())`.
+**Expected:** Vote buttons are reliably tappable in the safe area regardless of any banner state.
+**Actual:** With the banner visible, OUI sits at `y=743.59, bottom=799.59` on a 390×844 iPhone viewport — within 44.41 px of the bottom edge but already inside the bottom-nav 64-px guard. After dismissing via the banner's `Fermer` (×) button, the deck and buttons reflow upward by ~90 px and sit comfortably. Pressing OUI/NON while the banner is visible does work, but the vertical compression makes the deck card occupy ~70% of the screen instead of ~85% — friction during the first session before the user dismisses.
+**Screenshot:** `walkthrough-screenshots/shortlist-baseline-deck.png` (banner present), compare with `shortlist-empty-state.png` (post-dismiss layout).
+**Issue:** new finding — Plan 05 to file as friction.
+
+### blocker P-12-Sh-02: `/api/shortlists/regenerate` requires non-null body, frontend `Régénérer` likely sends `null` body (race-probe could not exercise)
+**Severity:** blocker
+**Surface:** Shortlist (regenerate flow)
+**Probe kind:** racing
+**Starting state:** Deck exhausted ("Vous avez tout vu" recap with `Régénérer le shortlist` CTA visible).
+**Repro:**
+1. Vote on all 5 cards via API (`POST /api/shortlists/{sl}/recipes/{r}/vote` with `{vote:"yes"|"no"}`).
+2. Reload `/`. Observe the recap + `Régénérer le shortlist` button.
+3. Fire `POST /api/shortlists/regenerate` directly (no body).
+**Expected:** Regenerate returns 200 with a fresh shortlist (`generation+1`) per `SHORTLIST-02`. Frontend should receive that response when user taps `Régénérer`.
+**Actual:** `POST /api/shortlists/regenerate` returns **422** `{"detail":[{"type":"missing","loc":["body"],"msg":"Field required","input":null}]}`. The Pydantic schema (`shortlist.py::RegenerateRequest`) declares all fields optional, but FastAPI requires a body to be present (even an empty `{}`). Race probe (vote in flight + regenerate concurrent) **could not be exercised** because regenerate itself returns 422 — proves the user-tappable button is broken at the API contract layer. Confirmed across two browser sessions.
+- Direct call: `curl -X POST /api/shortlists/regenerate` → 422.
+- Direct call with empty body: `curl -X POST -d '{}' /api/shortlists/regenerate` → would likely 200 (untested in this run).
+- Frontend `lib/shortlist.ts` regenerate wrapper presumably sends `null` body or missing Content-Type.
+**Screenshot:** `walkthrough-screenshots/shortlist-regenerate-during-vote.png` (recap state with broken CTA), `shortlist-empty-state.png`.
+**Issue:** new finding — Plan 05 to file as **blocker** (primary intended action of `Régénérer` button is non-functional via the documented API). Note: this hits the user every time the deck exhausts, which happens once per day under normal use.
+
+### friction P-12-Sh-03: Click handler on OUI/NON gated on framer-motion drag context — JS `el.click()` registers no POST
+**Severity:** friction
+**Surface:** Shortlist (vote affordances)
+**Probe kind:** racing (programmatic vs touch)
+**Starting state:** Deck visible, banner dismissed, OUI/NON buttons in viewport.
+**Repro:**
+1. Programmatic `el.click()` via `page.evaluate(s => document.querySelector(s).click(), 'button[aria-label=…]')`.
+2. Observe network: zero POST to `/api/shortlists/.../vote`.
+3. Switch to direct API POST with the same recipe id and value — server returns 201 cleanly.
+**Expected:** A semantic click on a `<button>` with `onClick` should fire the handler.
+**Actual:** No vote POST registers. The only click that lands a vote is a real touch (`page.touchscreen.tap`) or a swipe gesture; programmatic synthetic clicks don't traverse the framer-motion `motion.button` event chain. **For a real iOS user this is invisible** (their taps are real touches), but it's a tell-tale that the CTA is gated on a gesture event rather than a stable `click` semantic — friction layer for assistive input methods (switch control, VoiceOver double-tap, automation).
+**Screenshot:** `walkthrough-screenshots/shortlist-rapid-swipe.png`.
+**Issue:** new finding — Plan 05 to file as friction (a11y / robustness).
+
+### blocker P-12-Sh-04: Image overlay `pointer-events:auto` blocks Playwright force click; tap area thin in DOM
+**Severity:** friction
+**Surface:** Shortlist (deck card)
+**Probe kind:** invalid-state
+**Starting state:** Card shown, OUI/NON visible.
+**Repro:**
+1. `await page.click('button[aria-label="J\'aime cette recette"]')` (with timeout).
+2. Playwright reports: `<img alt="" src="synthetic/ragu-bolognese.jpg" class="absolute inset-0 w-full h-full object-cover"/> from <div class="relative w-full max-w-sm aspect-[3/4]">…</div> subtree intercepts pointer events`.
+**Expected:** Decorative `<img>` should not capture pointer events; only the intentional CTA buttons should.
+**Actual:** The `absolute inset-0` image with no `pointer-events:none` traps the click in the parent card subtree. Pair this with Sh-03 above (handler-gated-on-gesture) and you have a card that is clickable in two ways but not the intuitive one. Documented as **friction** because real iOS touches still work; cross-cutting with the next finding.
+**Screenshot:** `walkthrough-screenshots/shortlist-baseline-deck.png`.
+**Issue:** new finding — Plan 05 to file as friction (cross-cuts with Sh-03 — single fix candidate).
+
 **Gemini calls in this section:** 0 (Shortlist scoring is deterministic/server-side).
+
+**Pass-style observations** (regression canaries):
+- The 5 chip labels (`Validé / Pressenti / Contesté / Rejeté / Sans avis`) match the locked `next-intl` strings — no vocabulary drift on the **chip** layer.
+- After exhausting the deck, the recap surface lists exactly the 5 recipes with stable per-recipe chips and offers two correct CTAs. The recap empty-state copy is correct.
+- Network: each page load fires `households/me`, `cooking-logs/active`, `auth/ws-token`, `recipes?status=draft`, `shortlists/today` exactly twice (React 19 strict-mode double-render in production build — observed but not flagged as a probe finding because it's expected for hydration; mention here only because the network log is otherwise clean).
 
 ---
 
 ## Vote
 
-**Starting state:** _to be filled in Plan 12-03_
-**Golden path:** _to be filled — exercise all 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis) per invariant #2_
+**Starting state:** Carry-over from Shortlist probes. Auditor's id `f244600f`. Pre-Vote-probe state per `GET /api/shortlists/today.votes`: 16 vote rows total spread across the 5 recipes and 4 members. Auditor's 5 votes (one per recipe in this session): Ragu yes, Coq no, Butter yes, Shawarma no, Tacos yes. **Veto window: open** — `cooking-logs/active = null` at probe start.
+
+**Golden path:** Vote affordances are the OUI / NON icon-buttons documented in §Shortlist. POSTs land at `POST /api/shortlists/{sl_id}/recipes/{recipe_id}/vote` with body `{"vote":"yes"|"no"}` (per `schemas/vote.py::VoteRequest`). Response 201 includes the freshly-computed `state` per architecture invariant #2 (one of `valide / pressenti / conteste / rejete / sans_avis`). Frontend mirror in `lib/votes.ts::computeVoteState` recomputes the same value client-side and surfaces it as a chip. The veto window closes on the first `CookingLog` for the day per `services/voting` doc, but `routers/votes.py` has no enforcement — VOTE-04 deliberately accepts late `no` votes.
+
 **Probes:**
+
+### blocker P-12-Vt-01: **Architecture invariant #2 broken** — `MEMBER_COUNT=2` hard-coded; vote-state mis-computed in any household with ≠2 members
+**Severity:** blocker
+**Surface:** Vote (chip rendering)
+**Probe kind:** invariant verification (the post-refresh recompute probe; "computed" check)
+**Starting state:** Synthetic household has 4 members. After voting via API, `GET /api/shortlists/today` returns 16 vote rows across 5 recipes; **branch order in `compute_vote_state` is conditioned on `member_count` parameter, defaulted to 2 in both `services/voting.py:54` and `lib/votes.ts:34`. Frontend `components/HomeDecide.tsx:52` defines `const MEMBER_COUNT = 2; // v0.1: hard-coded household size`** and passes it everywhere downstream including the `VoteSummary` component and the rejete-filter at `HomeDecide.tsx:431`.
+**Repro:**
+1. Reload `/` after the Shortlist probes have voted on all 5 recipes.
+2. Read the rendered chip per recipe in the recap.
+3. Compare with the actual vote distribution from `GET /api/shortlists/today.votes` and the spec algorithm.
+**Expected (per invariant #2):** chip equals `compute_vote_state(votes, member_count=4)`.
+- Ragu (4 yes) → `valide` (4/4).
+- Coq (Luca yes, Joe yes, Auditor no, Partner missing = 2y, 1n / 4) → `conteste`.
+- Butter (Luca yes, Partner no, Joe no, Auditor yes = 2y, 2n / 4) → `conteste`.
+- Shawarma (Luca no, Partner no, Auditor no, Joe missing = 0y, 3n / 4) → `sans_avis` per the strict `no_count == member_count` branch (member_count=4).
+- Tacos (Joe no, Auditor yes, others missing = 1y, 1n / 4) → `conteste`.
+**Actual (rendered chips):** `Ragu: Sans avis`, `Coq: Validé`, `Butter chicken: Validé`, `Shawarma: Sans avis`, `Tacos: Contesté`. The render is `compute_vote_state(votes, 2)`:
+  - Ragu (4 yes): `yes_count=4 != 2`, `no_count=0 != 2`, no mixed, no `(yes==1 AND voted==1)` → falls through to `sans_avis`. **Wrong.**
+  - Coq (2 yes, 1 no): `yes_count=2 == 2` → returns `valide`. **Wrong** (should be `conteste`).
+  - Butter (2 yes, 2 no): `yes==2 == 2` → `valide`. **Wrong** (should be `conteste`).
+  - Shawarma (3 no): `no_count=3 != 2` → `sans_avis`. **Wrong** (should be `rejete` under correct member_count).
+  - Tacos (1y, 1n): mixed → `conteste`. Coincidentally correct.
+**Why this matters:** invariant #2 promises the rendered chip equals the computed state from the votes table. With a hard-coded `MEMBER_COUNT=2`, the promise holds **only** for 2-member households. The synthetic audit pile-up (now 4 members because Phase 11's seed plus Plan 12-02 plus this plan each joined a new auditor) makes this user-visible. **In real product use today the bug is masked** because v0.1 ships for couples — but it's a fragile hard-coded constant that will break on the first 3-member household. The comment at `HomeDecide.tsx:52` (`v0.1: hard-coded household size; multi-tenant clean.`) is honest about the limitation, but as a productize-later TODO it isn't tracked: there is no `# TODO(productize)` marker in `HomeDecide.tsx`. **Documentation gap + correctness bug at the same site.**
+**Screenshot:** `walkthrough-screenshots/vote-state-render-after-refresh.png`.
+**Issue:** new finding — Plan 05 to file as **blocker** (architecture invariant violated; user-visible incorrect state labels). Recommend marker added: `// TODO(productize): MEMBER_COUNT must come from /api/households/me.members.length`.
+
+### nit P-12-Vt-02: Concurrent yes+no on the same recipe deterministically resolves to last-write — `(shortlist_id, recipe_id, member_id)` upsert holds
+**Severity:** nit (pass-style)
+**Surface:** Vote (race resolution)
+**Probe kind:** racing
+**Starting state:** Auditor with no vote on Tacos au boeuf.
+**Repro:**
+1. Fire two concurrent POSTs to `/api/shortlists/{sl}/recipes/{tacos}/vote` — body `{"vote":"yes"}` and `{"vote":"no"}` simultaneously via `Promise.all`.
+2. Inspect both responses.
+**Expected:** Both succeed (201). The DB `(shortlist_id, recipe_id, member_id)` unique constraint with `on_conflict_do_update` resolves to last-write (whichever transaction commits last wins).
+**Actual:** Both 201. Final response `state` reflected the second write (`sans_avis` for the case where `no` landed second — note `state` is computed from the *committed* vote rows, so this is the `compute_vote_state` of `[{vote:'no'}]` with `member_count=2`). No 409 conflict, no transaction abort. **Behaves correctly.**
+**Issue:** none — pass-style canary for invariant #2 + Pattern 4 (votes upsert).
+
+### friction P-12-Vt-03: `Régénérer le shortlist` button broken at API contract — repeats Sh-02 finding from the Vote section
+**Severity:** friction (cross-cutting with Sh-02 blocker)
+**Surface:** Vote (post-decide flow)
+**Probe kind:** racing → reduced to "primary action broken"
+**Starting state:** Deck exhausted, recap visible.
+**Repro:** as Sh-02 — direct `POST /api/shortlists/regenerate` → 422 missing-body.
+**Expected:** Successful regeneration so the auditor can re-vote on a fresh shortlist, validate state-machine transitions over time.
+**Actual:** Cross-link Sh-02 — Plan 05 should file ONE issue covering both surfaces. Documented here so Phase 14 knows the friction is felt twice (once on Shortlist exhaust, once on Vote follow-through).
+**Screenshot:** `walkthrough-screenshots/shortlist-regenerate-during-vote.png`.
+**Issue:** cross-link — see Sh-02.
+
+### nit P-12-Vt-04: Vote on non-shortlist recipe → clean 400 `recipe not in this shortlist`
+**Severity:** nit (pass-style — defensive coding canary)
+**Surface:** Vote (boundary)
+**Probe kind:** invalid-state
+**Starting state:** A `structured` recipe NOT in today's shortlist (`Risotto aux champignons`, id `cd82ab4d`).
+**Repro:**
+1. `POST /api/shortlists/{today_sl_id}/recipes/{cd82ab4d}/vote` body `{"vote":"yes"}`.
+**Expected:** 4xx with explicit reason — voting outside the shortlist scope is invariant violation.
+**Actual:** `400 {"detail":"recipe not in this shortlist"}`. Clean. Same shape: bad shortlist UUID returns `404 shortlist not found`; invalid `vote` value returns `422 Input should be 'yes' or 'no'`. **Backend boundary handling solid.**
+**Issue:** none — pass-style.
+
+### friction P-12-Vt-05: Recipe-detail page (`/recipes/{id}`) has NO vote affordance — only `Modifier par la voix / Modifier la recette / Supprimer / Retour`
+**Severity:** friction
+**Surface:** Vote (alt entry point)
+**Probe kind:** invalid arrival
+**Starting state:** Auditor on a structured recipe's detail page.
+**Repro:**
+1. Navigate to `/recipes/{id}` for any structured recipe.
+2. Inspect interactive elements.
+**Expected:** Vote affordance available so a user re-reading a recipe in detail-mode can change their vote without going back to the deck.
+**Actual:** Only edit / delete / voice-modify / back. To vote, the user must navigate back to `/` and find the recipe in the deck — but if it's already exhausted, they cannot. Combined with Sh-02 (regenerate broken), once you've voted you're locked in until tomorrow. **Friction layered on a blocker.**
+**Issue:** new finding — Plan 05 to file as friction. Cross-link Sh-02 because Régénérer is the only escape hatch.
 
 **Gemini calls in this section:** 0 (Voting is non-AI).
 
