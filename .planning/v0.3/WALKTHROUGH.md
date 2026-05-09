@@ -312,14 +312,71 @@ Findings that match a known v0.2.2 backlog item are documented but DO NOT genera
 
 ## Capture — URL
 
-**Starting state:** _to be filled in Plan 12-02_
-**Golden path:** _to be filled — references `frontend/tests/e2e/capture-url.spec.ts`; canned inputs at `walkthrough-inputs/url/urls.md`_
+**Starting state:** after Capture — Photo probes; auditor's recipe collection has the 1 stuck photo draft and the URL-01 dummy drafts about to be created.
+
+**Surface contract observed:** the URL tab renders a single `input[placeholder="https://…"]` (HTML5 `type` likely `url` per behavior of client-side validation), an inline info panel (`L'extraction automatique arrive bientôt — tu pourras compléter les détails dans la boîte de réception.`), and a submit button `Ajouter à la boîte de réception` (disabled until input is a syntactically-valid URL). Notably the UI **explicitly discloses URL-01** ("arrive bientôt") — this is product-honest framing of the stub at `recipes.py:481-490` rather than a hidden failure.
+
+**Golden path = blocker-by-design (URL-01):** Navigate to `/recipes/new` → click "URL" tab → paste `https://www.marmiton.org/recettes/recette_risotto-aux-champignons_28057.aspx` → click `Ajouter à la boîte de réception`. `POST /api/recipes/url` → `201` → redirect to `/inbox`. The draft is created with `status='draft'`, `title=<the raw URL>` (no slug-parsing fallback), no Gemini call attempted (network log shows zero `/v1beta/models/gemini-...` requests in the wave). The draft persists indefinitely as a recipe-shaped row whose only useful data is the URL. The user must manually open the inbox card and complete it. **Per D-14 this is severity = `blocker` BUT cross-links to URL-01 — DO NOT file a new GitHub issue.**
 
 > Note (D-14): the URL surface's primary intended action — promotion to a structured recipe — is currently broken (`URL-01`, `recipes.py:481-490` is `# TODO(productize)`). The URL probe records this as a `blocker`-severity finding and **cross-links to URL-01 instead of filing a new issue** (per D-06 dedupe).
 
 **Probes:**
 
-**Gemini calls in this section:** ~X (per probe).
+### blocker P-12-U01: URL-01 — golden path produces non-promoting draft titled with the raw URL
+**Severity:** blocker (cross-link to URL-01 backlog only — D-14 / D-06: no new GitHub issue)
+**Surface:** Capture — URL
+**Probe kind:** garbage (well-formed URL with extractable content, but extractor is stubbed)
+**Starting state:** fresh `/recipes/new`, URL tab.
+**Repro:**
+1. Paste `https://www.marmiton.org/recettes/recette_risotto-aux-champignons_28057.aspx` (canned input from `walkthrough-inputs/url/urls.md` line "01").
+2. Submit → wait 30s → GET `/api/recipes/{id}`.
+**Expected:** Gemini fetches the page, extracts title/ingredients/steps. Promote to `structured`.
+**Actual:** Recipe `5e4a920b-ae12-4f91-91f7-36d0f6e7a0b5` created `status='draft'`, `title='https://www.marmiton.org/recettes/recette_risotto-aux-champignons_28057.aspx'` (raw URL is the title — no slug parsing, no even-best-effort fallback like "Risotto aux champignons" derivable from `28057.aspx`'s prefix). `source_capture.payload.url` preserved (invariant #5 ✓). No Gemini call made. UI's preemptive disclosure ("arrive bientôt") is the only friction-mitigation. Confirms `recipes.py:481-490` is a no-op short-circuit.
+**Screenshot:** `walkthrough-screenshots/capture-url-marmiton.png`
+**Issue:** **URL-01** — cross-link only; do NOT file new (per D-14). The user-visible artifact is acceptable AS LONG AS the "arrive bientôt" copy stays in front of the user; the moment that copy is removed before extraction is implemented, the surface becomes a true blocker.
+
+### nit P-12-U02: URL field client-side rejects non-URL strings (pass-style)
+**Severity:** nit (pass-style; security-adjacent)
+**Surface:** Capture — URL
+**Probe kind:** garbage (free-form text in URL field)
+**Starting state:** fresh `/recipes/new`, URL tab.
+**Repro:**
+1. Type `not-a-url-just-text` into the URL input.
+**Expected:** submit button disables OR field shows validation error.
+**Actual:** submit button stays `disabled`; HTML5 URL validation fires (likely `<input type="url">` plus a regex that requires scheme). User cannot fire `POST /api/recipes/url`. **Pass-style finding.**
+**Screenshot:** `walkthrough-screenshots/capture-url-not-a-url.png`
+**Issue:** none.
+
+### nit P-12-U03: well-formed non-recipe URL behaves identically to golden (URL-01 short-circuits before any classification)
+**Severity:** nit (URL-01 dedupe — same root cause)
+**Surface:** Capture — URL
+**Probe kind:** boundary (Wikipedia article — well-formed URL, structured-data-ish content, but not a recipe)
+**Starting state:** fresh `/recipes/new`, URL tab.
+**Repro:**
+1. Submit `https://en.wikipedia.org/wiki/Risotto`.
+**Expected:** if URL extraction were implemented, Gemini would either extract a recipe-ish shape from the article or return a structured negative.
+**Actual:** Recipe `2b9f157b-f33f-4756-95cb-adc53b6eb84b`, identical shape to the marmiton draft — `status='draft'`, `title=<raw URL>`. No differentiation between recipe/non-recipe URLs because nothing actually fetches. Confirms URL-01 short-circuits **before** any URL classification or Gemini call. **Cross-link to URL-01.**
+**Screenshot:** none (visually identical to capture-url-marmiton.png).
+**Issue:** see URL-01 cross-link.
+
+### nit P-12-U04: javascript: scheme rejected at client AND backend (defense in depth, pass-style)
+**Severity:** nit (security pass)
+**Surface:** Capture — URL
+**Probe kind:** invalid-state (malicious scheme)
+**Starting state:** fresh `/recipes/new`, URL tab.
+**Repro:**
+1. Paste `javascript:alert(1)` into URL input — submit button disables (client check).
+2. Programmatically `fetch('/api/recipes/url', {method: 'POST', body: JSON.stringify({url: 'javascript:alert(1)'})})` to bypass the client.
+**Expected:** server-side scheme allowlist rejects.
+**Actual:** Client: button disabled. Backend: `422 Unprocessable Entity`, body `{"detail":"url must start with http:// or https://"}`. **Defense in depth confirmed.** Pass-style security finding worth recording so future audits can detect regression.
+**Screenshot:** none (no visible state change).
+**Issue:** none.
+
+**Skipped probe (documented per D-09):** the plan also called for a slow-URL probe via `httpbin.org/delay/30`. Skipped because URL-01 short-circuits the BackgroundTask BEFORE any URL fetch is initiated — there's no upstream call to be slow about, so the probe trivially "passes" with the same draft-stuck state as U-01/U-03. Re-probe this once URL extraction is implemented (post-`# TODO(productize)`).
+
+**Gemini calls in this section:** 0 (URL-01 short-circuits before any model call — verified via network log: zero `/v1beta/models/gemini` requests during the URL probes).
+
+URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `# TODO(productize)`; drafts from URL never promote. (See top of WALKTHROUGH §Backlog dedupe.)
 
 ---
 
