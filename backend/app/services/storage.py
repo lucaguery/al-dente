@@ -249,3 +249,80 @@ def create_signed_photo_url(path: str) -> str:
     if not url:
         raise RuntimeError(f"unexpected signed-url response: {result!r}")
     return url
+
+
+# ============================================================================
+# Phase 11 — Synthetic-household scope helpers (D-08, D-22).
+# All Storage writes/deletes for the prod-synthetic seed go through these.
+# The `synthetic/` prefix is the structural marker for the scope guard and
+# the teardown scope.
+# ============================================================================
+
+SYNTHETIC_PREFIX = "synthetic/"
+
+
+def _assert_synthetic_storage_path(path: str) -> None:
+    """D-08 — every prod-synthetic Storage write/delete passes through this.
+    Refuses any path not under `synthetic/` to prevent the seed from ever
+    touching real-user photo objects.
+    """
+    if not path.startswith(SYNTHETIC_PREFIX):
+        raise AssertionError(
+            f"refusing storage operation outside synthetic/ scope: {path!r}"
+        )
+
+
+def upload_synthetic_photo_idempotent(*, slug: str, content: bytes) -> str:
+    """D-08 + D-22 — skip-if-exists, scope-guarded upload.
+
+    Returns the bucket-relative path stored in `recipes.photo_paths`.
+    Caller is responsible for setting `recipe.photo_paths = [returned_path]`
+    in the same DB tx (Pitfall 2 — without this, signed-URL reads 404).
+    """
+    path = f"{SYNTHETIC_PREFIX}{slug}.jpg"
+    _assert_synthetic_storage_path(path)
+
+    client = _supabase()
+    bucket = client.storage.from_(BUCKET)  # BUCKET = "recipe-photos"
+
+    # storage3.SyncBucket.exists() issues HEAD; returns True/False.
+    if bucket.exists(path):
+        log.info("synthetic_photo.skipped_exists path=%s", path)
+        return path  # D-22 idempotent — no re-upload.
+
+    bucket.upload(
+        path=path,
+        file=content,
+        file_options={"content-type": "image/jpeg", "upsert": "false"},
+    )
+    log.info("synthetic_photo.uploaded path=%s bytes=%d", path, len(content))
+    return path
+
+
+def list_synthetic_storage_count() -> int:
+    """Return the number of objects under `synthetic/`. Used by Plan 04's
+    post-seed COUNT-diff banner (D-13).
+    """
+    client = _supabase()
+    bucket = client.storage.from_(BUCKET)
+    # Default page size is 100; for 21 objects a single call suffices.
+    listed = bucket.list("synthetic")
+    return len(listed or [])
+
+
+def teardown_synthetic_storage() -> int:
+    """D-16 + D-08 — scope-guarded prefix delete. Lists every object under
+    `synthetic/`, asserts each path is in scope (belt-and-suspenders), then
+    issues a single DELETE with the list. Returns the number of objects
+    removed.
+    """
+    client = _supabase()
+    bucket = client.storage.from_(BUCKET)
+    listed = bucket.list("synthetic") or []
+    paths = [f"{SYNTHETIC_PREFIX}{obj['name']}" for obj in listed]
+    for p in paths:
+        _assert_synthetic_storage_path(p)
+    if paths:
+        bucket.remove(paths)
+    log.info("synthetic_storage.teardown removed=%d", len(paths))
+    return len(paths)

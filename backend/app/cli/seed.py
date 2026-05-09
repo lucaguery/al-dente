@@ -24,6 +24,7 @@ app.models.enums - no duplicated literal values.
 """
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 import uuid
@@ -50,8 +51,78 @@ def _id(*parts: str) -> uuid.UUID:
     return uuid.uuid5(NAMESPACE, "aldente.test." + ".".join(parts))
 
 
+# Phase 11 — synthetic-household namespace, distinct from "aldente.test." used by run_test_seed.
+def _id_synth(*parts: str) -> uuid.UUID:
+    """Stable id under the prod-synthetic namespace.
+
+    Distinct from `_id()` so test-seed and prod-synthetic UUIDs never collide
+    even if both somehow ended up in the same DB.
+    """
+    return uuid.uuid5(NAMESPACE, "aldente.prod.synthetic." + ".".join(parts))
+
+
+SYNTHETIC_HOUSEHOLD_ID: uuid.UUID = uuid.uuid5(
+    NAMESPACE, "aldente.prod.synthetic.household.synthetic"
+)
+# 63-bit positive bigint for pg_advisory_xact_lock (D-24).
+# `& ((1 << 63) - 1)` keeps it positive — avoids sign-bit edge cases in the
+# SQLAlchemy bind layer (asyncpg dialect overload-resolution trap).
+SYNTHETIC_LOCK_KEY: int = SYNTHETIC_HOUSEHOLD_ID.int & ((1 << 63) - 1)
+
+# D-07 6-table allowlist (informational — used by reviewers and by
+# `_assert_synthetic_household` introspection).
+SYNTHETIC_ALLOWED_TABLES: frozenset[str] = frozenset({
+    "households", "members", "recipes", "cooking_logs", "votes", "daily_shortlists",
+})
+
+
+def _assert_synthetic_household(row, expected_id: uuid.UUID) -> None:
+    """D-06 — every prod-synthetic write to the 6 allowlisted tables passes
+    through this. Pulls `household_id` off the row (every allowlisted table
+    except `households` itself has the column; `households.id` IS the scope).
+    Raises if the row is for the wrong household.
+    """
+    # `Household` rows are scoped by `id` itself, not `household_id`.
+    if type(row).__name__ == "Household":
+        actual = getattr(row, "id", None)
+    else:
+        actual = getattr(row, "household_id", None)
+    if actual is None:
+        raise AssertionError(
+            f"refusing prod-synthetic write — {type(row).__name__} has no "
+            f"household_id (table not in 6-table allowlist?)"
+        )
+    if actual != expected_id:
+        raise AssertionError(
+            f"refusing prod-synthetic write — {type(row).__name__}.household_id="
+            f"{actual!r} but synthetic_household_id={expected_id!r}"
+        )
+
+
+# NOTE on votes: `Vote` has no `household_id` column directly. Scope is
+# via `shortlist_id` -> `daily_shortlists.household_id`. For vote upserts,
+# callers verify the *parent recipe* is in scope (its `household_id`
+# matches SYNTHETIC_HOUSEHOLD_ID) before issuing the pg_insert statement.
+def _merge_synthetic(db, row, *, synthetic_id: uuid.UUID = SYNTHETIC_HOUSEHOLD_ID):
+    """Wrap db.merge with the D-06 scope assertion. Use this in place of
+    db.merge() throughout run_prod_synthetic_seed (Plan 02).
+    """
+    _assert_synthetic_household(row, synthetic_id)
+    return db.merge(row)
+
+
 def _guard_environment() -> None:
-    """T-10-01 - refuse to run unless we're certain we're targeting the test DB."""
+    """T-10-01 + D-04 symmetric guard.
+
+    Refuses to run the test seed unless ENVIRONMENT=test AND database_url
+    points at the test DB AND no prod opt-in flag/env var is set (D-04).
+    """
+    if os.environ.get("ALDENTE_PROD_SEED") == "1":
+        sys.exit(
+            "REFUSING: ALDENTE_PROD_SEED=1 set but --prod-synthetic flag NOT passed. "
+            "Either pass --prod-synthetic to run prod-synthetic seed, "
+            "or unset ALDENTE_PROD_SEED to run the test seed."
+        )
     if settings.environment != "test":
         sys.exit(
             f"REFUSING to seed: ENVIRONMENT={settings.environment!r}, expected 'test'."
@@ -60,6 +131,29 @@ def _guard_environment() -> None:
         sys.exit(
             f"REFUSING to seed: database_url does not contain 'aldente_test'. "
             f"Got: {settings.database_url!r}"
+        )
+
+
+def _guard_prod_environment() -> None:
+    """D-01..D-04 — refuse unless BOTH the env var AND flag are set,
+    AND we're certain we're targeting prod Supabase."""
+    if os.environ.get("ALDENTE_PROD_SEED") != "1":
+        sys.exit(
+            f"REFUSING: --prod-synthetic passed but ALDENTE_PROD_SEED env var not '1' "
+            f"(got {os.environ.get('ALDENTE_PROD_SEED')!r}). "
+            f"Correct invocation: ALDENTE_PROD_SEED=1 uv run seed --prod-synthetic"
+        )
+    if "supabase.co" not in settings.database_url:
+        host = settings.database_url.split("@")[-1].split("/")[0]
+        sys.exit(
+            f"REFUSING: database_url does not contain 'supabase.co' "
+            f"(got host {host!r}). "
+            f"Prod seed will not run against a non-Supabase URL."
+        )
+    if "localhost" in settings.database_url or "aldente_test" in settings.database_url:
+        sys.exit(
+            f"REFUSING: database_url contains 'localhost' or 'aldente_test' "
+            f"(got {settings.database_url!r}). Cannot be both prod and test."
         )
 
 
@@ -251,8 +345,27 @@ def _recipe_specs() -> list[dict]:
     ]
 
 
-def main() -> None:
-    _guard_environment()
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog="seed",
+        description="Idempotent synthetic seed for the Al Dente test or prod-synthetic DB.",
+    )
+    parser.add_argument(
+        "--prod-synthetic",
+        action="store_true",
+        help="Target prod Supabase (REQUIRES ALDENTE_PROD_SEED=1 in env). "
+             "Without this flag, seed targets the local test DB.",
+    )
+    parser.add_argument(
+        "--teardown",
+        action="store_true",
+        help="Delete the synthetic household and all scoped storage objects. "
+             "Only valid with --prod-synthetic.",
+    )
+    return parser.parse_args(argv)
+
+
+def run_test_seed() -> None:
     auth_token_luca = os.environ.get("SEED_AUTH_TOKEN", "test-token-luca")
     auth_token_partner = os.environ.get("SEED_AUTH_TOKEN_PARTNER", "test-token-partner")
 
@@ -423,6 +536,29 @@ def main() -> None:
             f"recipes={len(recipes_by_slug)} logs={len(log_specs)} "
             f"shortlist={shortlist.id}"
         )
+
+
+def run_prod_synthetic_seed() -> None:
+    raise NotImplementedError("Plan 02 must implement run_prod_synthetic_seed")
+
+
+def run_teardown() -> None:
+    raise NotImplementedError("Plan 04 must implement run_teardown")
+
+
+def main() -> None:
+    args = _parse_args()
+    if args.prod_synthetic:
+        _guard_prod_environment()
+        if args.teardown:
+            run_teardown()
+        else:
+            run_prod_synthetic_seed()
+    else:
+        if args.teardown:
+            sys.exit("REFUSING: --teardown only valid with --prod-synthetic.")
+        _guard_environment()
+        run_test_seed()
 
 
 if __name__ == "__main__":
