@@ -30,6 +30,10 @@
 /public/fallback-*.js.map
 /public/swe-worker-*.js
 /public/swe-worker-*.js.map
+# next-pwa customWorkerSrc compiled output (next.config.ts: customWorkerSrc: 'worker'
+# → frontend/public/worker-<hash>.js, regenerated on every build)
+/public/worker-*.js
+/public/worker-*.js.map
 
 # production
 /build

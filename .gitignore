@@ -7,3 +7,14 @@
 .env.test
 .env.test.local
 !.env.test.example
+
+# Playwright MCP browser session output — screenshots, console logs,
+# DOM snapshots saved during interactive `mcp__playwright__*` runs.
+# Per-spec test artifacts (test-results/, playwright-report/) live under
+# frontend/ and are already gitignored there.
+.playwright-mcp/
+
+# Diagnostic Playwright MCP screenshots saved to repo root.
+# When intentionally capturing a screenshot, write to .playwright-mcp/
+# instead so this pattern doesn't need to widen.
+/*.playwright-screenshot.png
