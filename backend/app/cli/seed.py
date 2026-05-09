@@ -51,6 +51,66 @@ def _id(*parts: str) -> uuid.UUID:
     return uuid.uuid5(NAMESPACE, "aldente.test." + ".".join(parts))
 
 
+# Phase 11 — synthetic-household namespace, distinct from "aldente.test." used by run_test_seed.
+def _id_synth(*parts: str) -> uuid.UUID:
+    """Stable id under the prod-synthetic namespace.
+
+    Distinct from `_id()` so test-seed and prod-synthetic UUIDs never collide
+    even if both somehow ended up in the same DB.
+    """
+    return uuid.uuid5(NAMESPACE, "aldente.prod.synthetic." + ".".join(parts))
+
+
+SYNTHETIC_HOUSEHOLD_ID: uuid.UUID = uuid.uuid5(
+    NAMESPACE, "aldente.prod.synthetic.household.synthetic"
+)
+# 63-bit positive bigint for pg_advisory_xact_lock (D-24).
+# `& ((1 << 63) - 1)` keeps it positive — avoids sign-bit edge cases in the
+# SQLAlchemy bind layer (asyncpg dialect overload-resolution trap).
+SYNTHETIC_LOCK_KEY: int = SYNTHETIC_HOUSEHOLD_ID.int & ((1 << 63) - 1)
+
+# D-07 6-table allowlist (informational — used by reviewers and by
+# `_assert_synthetic_household` introspection).
+SYNTHETIC_ALLOWED_TABLES: frozenset[str] = frozenset({
+    "households", "members", "recipes", "cooking_logs", "votes", "daily_shortlists",
+})
+
+
+def _assert_synthetic_household(row, expected_id: uuid.UUID) -> None:
+    """D-06 — every prod-synthetic write to the 6 allowlisted tables passes
+    through this. Pulls `household_id` off the row (every allowlisted table
+    except `households` itself has the column; `households.id` IS the scope).
+    Raises if the row is for the wrong household.
+    """
+    # `Household` rows are scoped by `id` itself, not `household_id`.
+    if type(row).__name__ == "Household":
+        actual = getattr(row, "id", None)
+    else:
+        actual = getattr(row, "household_id", None)
+    if actual is None:
+        raise AssertionError(
+            f"refusing prod-synthetic write — {type(row).__name__} has no "
+            f"household_id (table not in 6-table allowlist?)"
+        )
+    if actual != expected_id:
+        raise AssertionError(
+            f"refusing prod-synthetic write — {type(row).__name__}.household_id="
+            f"{actual!r} but synthetic_household_id={expected_id!r}"
+        )
+
+
+# NOTE on votes: `Vote` has no `household_id` column directly. Scope is
+# via `shortlist_id` -> `daily_shortlists.household_id`. For vote upserts,
+# callers verify the *parent recipe* is in scope (its `household_id`
+# matches SYNTHETIC_HOUSEHOLD_ID) before issuing the pg_insert statement.
+def _merge_synthetic(db, row, *, synthetic_id: uuid.UUID = SYNTHETIC_HOUSEHOLD_ID):
+    """Wrap db.merge with the D-06 scope assertion. Use this in place of
+    db.merge() throughout run_prod_synthetic_seed (Plan 02).
+    """
+    _assert_synthetic_household(row, synthetic_id)
+    return db.merge(row)
+
+
 def _guard_environment() -> None:
     """T-10-01 + D-04 symmetric guard.
 
