@@ -620,6 +620,36 @@ def _print_post_seed_banner(
     print(border)
 
 
+def _print_teardown_banner(
+    *,
+    household_id: uuid.UUID,
+    removed: dict[str, int],
+    storage_removed: int,
+) -> None:
+    """Banner reporting per-table deletion counts. -1 in storage_removed
+    means Postgres deletes succeeded but Storage cleanup raised — operator
+    should re-run.
+    """
+    border = "=" * 70
+    print(border)
+    print(f"  SYNTHETIC HOUSEHOLD TEARDOWN — {household_id}")
+    print(border)
+    print(f"  votes removed:                 {removed['votes']:>4d}")
+    print(f"  cooking_logs removed:          {removed['cooking_logs']:>4d}")
+    print(f"  daily_shortlists removed:      {removed['daily_shortlists']:>4d}")
+    print(f"  recipes removed:               {removed['recipes']:>4d}")
+    print(f"  members removed:               {removed['members']:>4d}")
+    print(f"  households removed:            {removed['households']:>4d}")
+    if storage_removed == -1:
+        print("  storage objects removed:       FAILED — see WARNING above")
+    else:
+        print(f"  storage objects removed:       {storage_removed:>4d}")
+    print(border)
+    if all(v == 0 for v in removed.values()) and storage_removed in (0, -1):
+        print("  Note: nothing to remove (already torn down or never seeded).")
+        print(border)
+
+
 def run_prod_synthetic_seed() -> None:
     """Phase 11 — prod-synthetic seed. Idempotent across re-runs (D-10/D-11/D-12).
 
@@ -844,7 +874,110 @@ def run_prod_synthetic_seed() -> None:
 
 
 def run_teardown() -> None:
-    raise NotImplementedError("Plan 04 must implement run_teardown")
+    """Phase 11 — wipe the synthetic household and all scoped storage objects.
+
+    Deletion order (D-16 + Pitfall 9):
+      1. votes (scoped via shortlist_id -> daily_shortlists.household_id)
+      2. cooking_logs
+      3. daily_shortlists
+      4. recipes
+      5. members
+      6. households (the row itself)
+      7. AFTER Postgres commit: synthetic/ Storage objects.
+
+    Idempotent — re-running after partial failure is safe because every
+    DELETE is conditioned on `household_id = :hh`, so previously-deleted
+    rows are already gone.
+
+    Concurrent-safe — same `pg_advisory_xact_lock(SYNTHETIC_LOCK_KEY)` as
+    the seed serializes seed-vs-teardown races.
+    """
+    from app.services.storage import teardown_synthetic_storage
+
+    removed = {
+        "votes": 0,
+        "cooking_logs": 0,
+        "daily_shortlists": 0,
+        "recipes": 0,
+        "members": 0,
+        "households": 0,
+    }
+
+    with SessionLocal() as db:
+        # D-24 — same lock key as run_prod_synthetic_seed.
+        # NOTE: Postgres advisory locks require a session-pinned connection.
+        # PgBouncer in transaction-pool mode does NOT support these — the
+        # operator must connect via the direct (session-mode) URL. Documented
+        # in RUNBOOK.md (Plan 05).
+        db.execute(
+            text("SELECT pg_advisory_xact_lock(:k)"),
+            {"k": SYNTHETIC_LOCK_KEY},
+        )
+
+        # D-16 — votes first (CASCADE via daily_shortlists, but explicit is safer)
+        r = db.execute(
+            text(
+                "DELETE FROM votes WHERE shortlist_id IN ("
+                "SELECT id FROM daily_shortlists WHERE household_id = :hh"
+                ")"
+            ),
+            {"hh": SYNTHETIC_HOUSEHOLD_ID},
+        )
+        removed["votes"] = r.rowcount or 0
+
+        r = db.execute(
+            text("DELETE FROM cooking_logs WHERE household_id = :hh"),
+            {"hh": SYNTHETIC_HOUSEHOLD_ID},
+        )
+        removed["cooking_logs"] = r.rowcount or 0
+
+        r = db.execute(
+            text("DELETE FROM daily_shortlists WHERE household_id = :hh"),
+            {"hh": SYNTHETIC_HOUSEHOLD_ID},
+        )
+        removed["daily_shortlists"] = r.rowcount or 0
+
+        r = db.execute(
+            text("DELETE FROM recipes WHERE household_id = :hh"),
+            {"hh": SYNTHETIC_HOUSEHOLD_ID},
+        )
+        removed["recipes"] = r.rowcount or 0
+
+        # Pitfall 10 — this also deletes the auditor's member #3 if joined.
+        # By-design; runbook documents that teardown ends any active audit session.
+        r = db.execute(
+            text("DELETE FROM members WHERE household_id = :hh"),
+            {"hh": SYNTHETIC_HOUSEHOLD_ID},
+        )
+        removed["members"] = r.rowcount or 0
+
+        r = db.execute(
+            text("DELETE FROM households WHERE id = :hh"),
+            {"hh": SYNTHETIC_HOUSEHOLD_ID},
+        )
+        removed["households"] = r.rowcount or 0
+
+        db.commit()  # Releases advisory lock.
+
+    # D-16 — storage AFTER Postgres commit. This is the only place Storage
+    # is touched outside the seed; the scope guard in Plan 01's
+    # teardown_synthetic_storage enforces the `synthetic/` prefix.
+    try:
+        storage_removed = teardown_synthetic_storage()
+    except RuntimeError as exc:
+        print(
+            f"WARNING: Postgres teardown succeeded but Storage cleanup failed: {exc}\n"
+            f"Re-run `uv run seed --prod-synthetic --teardown` to retry "
+            f"(idempotent — Postgres deletes are no-ops on second run).",
+            file=sys.stderr,
+        )
+        storage_removed = -1  # sentinel for the banner
+
+    _print_teardown_banner(
+        household_id=SYNTHETIC_HOUSEHOLD_ID,
+        removed=removed,
+        storage_removed=storage_removed,
+    )
 
 
 def main() -> None:
