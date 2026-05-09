@@ -193,21 +193,120 @@ Findings that match a known v0.2.2 backlog item are documented but DO NOT genera
 
 ## Capture — Voice
 
-**Starting state:** _to be filled in Plan 12-02_
-**Golden path:** _to be filled — references `frontend/tests/e2e/capture-voice.spec.ts`; canned inputs at `walkthrough-inputs/voice/`_
+**Starting state:** after Capture — Quick + Full probes; auditor's inbox has 3 stale `Brouillon` cards from Quick. Synthetic recipe count grew by 4 from Capture — Full submissions.
+
+**Surface contract observed:** the Voix tab renders a single `textarea` with placeholder `Dictez via le clavier 🎤 ou tapez votre recette…` — no in-app audio recorder, no file picker. Confirmed JSON `{transcript: "..."}` body shape (per `capture-voice.spec.ts:14-23`). The iOS-mic-on-keyboard strategy means voice capture is, on prod, just a text-paste flow; the "voice" naming is product framing, not a different transport. Submit button: `Envoyer`. Helper text: `Dicte ta recette en français. On la met en forme automatiquement.`
+
+**Golden path:** Navigate to `/recipes/new` → click "Voix" tab → paste content of `walkthrough-inputs/voice/01-clean-french.txt` (Risotto aux champignons transcript) → click `Envoyer`. `POST /api/recipes/voice` → `201` → redirect to `/inbox` → card appears with title `(extraction en cours…)` and `Extraction en cours…` status. Within ~10s the BackgroundTask completes, the card disappears from `/inbox`, and a new `structured` recipe `1155ada8-50df-474a-a256-7946a107adf4` appears in `/recipes`. Quality of extraction (verified via API): title=`Risotto aux champignons`, 7 ingredients (`Riz arborio` etc., all `quantity: null` because the prose has no quantities), `cuisine: italian` (Gemini-inferred), `servings: 2` from "pour deux personnes". `mood: []` not inferred (could be); `steps: null` (correct — transcript had no procedural steps).
+
 **Probes:**
 
-**Gemini calls in this section:** ~X (per probe).
+### blocker P-12-V01: garbage transcript leaves draft permanently stuck at `(extraction en cours…)`
+**Severity:** blocker
+**Surface:** Capture — Voice
+**Probe kind:** garbage (no recipe content)
+**Starting state:** fresh `/recipes/new`, Voix tab.
+**Repro:**
+1. Submit transcript with no recipe content: `le chat est assis sur le tapis hier j'ai vu un nuage et j'ai pensé à mes vacances en bretagne il pleuvait beaucoup mais c'était bien quand même`.
+2. Wait 3+ minutes.
+3. GET `/api/recipes/{id}`.
+**Expected:** either Gemini returns a best-effort recipe shape, OR the BackgroundTask updates the recipe to a terminal state like `status='failed'` with a user-visible explanation ("Pas de recette détectée"). The user must have a recovery path other than the X button.
+**Actual:** the draft remains `status='draft'`, `title='(extraction en cours…)'`, `ingredients=null`, **for at least 3 minutes** (audit didn't wait longer). The inbox card just shows "(extraction en cours…)" with the spinner spinning indefinitely. The user has no way to know whether the model is still trying or has silently failed. Only recovery: delete and start over.
+**Screenshot:** `walkthrough-screenshots/capture-voice-garbled.png`
+**Issue:** new finding (Plan 05 to file). Severity = **blocker** because the primary intended action (a recipe) is not delivered AND the system gives no actionable feedback (D-01: "primary intended action non-functional even via workaround"). The `recipes` model needs a `failed` terminal state OR the worker needs a timeout that surfaces an error in the UI.
+**Recipe sample:** `2e2bf60b-9fee-44d4-b30c-ea49e566e57e` (still stuck at audit time).
+
+### nit P-12-V02: very-short transcript ("Pâtes au beurre.") promotes cleanly with sparse data (pass-style)
+**Severity:** nit
+**Surface:** Capture — Voice
+**Probe kind:** boundary (minimal valid transcript)
+**Starting state:** fresh `/recipes/new`, Voix tab.
+**Repro:**
+1. Paste `walkthrough-inputs/voice/03-very-short.txt` content: `Pâtes au beurre.`
+2. Submit, wait <30s.
+**Expected:** either promotion to a sparse `structured` recipe, or graceful fallback.
+**Actual:** `POST` → 201 → BackgroundTask → ~25s later, recipe `dbbbf866-1165-4a3c-890a-3b9233fe6a0c` is `status='structured'`, title=`Pâtes au beurre`, 2 ingredients (presumably `pâtes` + `beurre`). **Pass-style finding** — Gemini handles edge of validity correctly. Notable: the only difference between this passing case and V-01 above is recipe-domain content present vs absent — suggests Gemini is silently swallowing "no recipe found" cases instead of returning a structured negative.
+**Screenshot:** `walkthrough-screenshots/capture-voice-very-short.png`
+**Issue:** none.
+
+### nit P-12-V03: BackgroundTask robust to client navigation (pass-style)
+**Severity:** nit
+**Surface:** Capture — Voice (architecture invariant #1)
+**Probe kind:** racing (client navigates away during in-flight Gemini call)
+**Starting state:** fresh `/recipes/new`, Voix tab. Disfluent canned transcript from `02-garbled-accent.txt` (`euh risotto aux champignons hum...ouais...voilà`).
+**Repro:**
+1. Programmatically: `submitButton.click(); setTimeout(() => window.location.href = '/', 0);` — navigates within the same task before the network response.
+2. Wait ~25s.
+3. List recipes via `/api/recipes?limit=4`.
+**Expected:** invariant #1 says promotion is server-side `BackgroundTask` so client navigation should not abort it.
+**Actual:** Recipe `cd82ab4d-660f-4bec-8eca-dc86c8328e6c` arrives `structured` with title `Risotto aux champignons` despite navigation. **Invariant #1 holds.** Also notable: Gemini cleaned the disfluencies ("euh", "hum", "ouais", "voilà") and produced the same canonical title as the clean transcript — strong robustness signal.
+**Screenshot:** none (the auditor's view post-navigation showed no visible state change; finding is invisible to UI but visible via API).
+**Issue:** none.
+
+**Gemini calls in this section:** 4 (1 golden + 3 probes — V-01 may still be retrying server-side; counted as 1 even if internal retries occurred).
 
 ---
 
 ## Capture — Photo
 
-**Starting state:** _to be filled in Plan 12-02_
-**Golden path:** _to be filled — references `frontend/tests/e2e/capture-photo.spec.ts`; canned inputs (if committed) at `walkthrough-inputs/photo/` per `walkthrough-inputs/photo/README.md`_
+**Starting state:** after Capture — Voice probes; auditor's recipe collection now includes 4 voice-derived recipes (1 stuck V-01, 3 promoted) plus the 3 Capture — Full recipes. Inbox tab shows count "4" (3 Quick drafts + 1 stuck voice draft).
+
+**Surface contract observed:** the Photo tab renders heading `Photographie la recette`, helper paragraph `Ajoute jusqu'à 4 photos. Gemini extrait le titre, les ingrédients et les étapes.`, an `Ajouter une photo` button, and a disabled `Capturer la recette` submit button until at least one photo is attached. Two hidden `<input type="file" accept="image/*">` elements exist: one with `capture="environment"` (camera path), one without (library path). Clicking `Ajouter une photo` opens a Radix `[role="dialog"]` bottom sheet with two buttons (`Caméra` and `Photothèque`).
+
+**Surface contract — canned inputs:** `walkthrough-inputs/photo/` ships only README.md and `.gitkeep` (per Plan 12-01 SUMMARY); no JPGs are committed. Auditor generated synthetic 4×4-pixel red PNGs (~70 bytes) in `.playwright-mcp/audit-photo/` to exercise the upload pipeline. These are recipe-domain-irrelevant by construction — useful for probing Gemini's behavior on out-of-domain inputs but not for OCR/extraction quality.
+
+**Golden path:** Click "Photo" tab → click `Ajouter une photo` → bottom sheet appears → click `Photothèque` → file chooser → select `non-recipe.png` → photo appears with `Retirer la photo` control → click `Capturer la recette`. `POST /api/recipes/photo` (multipart `files`) → `201` → redirect to `/inbox` → card with `(extraction en cours…)`. Photo path returned: `9f3b1902-…/<recipe_id>/<file_uuid>.png` (Supabase Storage path scoped to household). The actual promotion outcome is documented per probe below — for the synthetic non-recipe input, promotion does NOT complete (see P-12-Ph02).
+
 **Probes:**
 
-**Gemini calls in this section:** ~X (per probe).
+### blocker P-12-Ph01: Sheet-01 reproduces — Photothèque button clipped 35px below iPhone viewport
+**Severity:** blocker (matches the Sheet-01 [#1] backlog item — D-06 dedupe applies)
+**Surface:** Capture — Photo (and likely all `<SheetContent side="bottom">` usages — VoiceModifySheet, RegenerateSheet per PROJECT.md)
+**Probe kind:** invalid-state (CSS class collision)
+**Starting state:** iPhone-shape Chromium viewport 390×844; Photo tab active.
+**Repro:**
+1. Click `Ajouter une photo`.
+2. Inspect the bottom sheet: `getBoundingClientRect()` on `[role="dialog"]` and on the two action buttons.
+**Expected:** the entire sheet visible inside the 844px-tall viewport with both `Caméra` and `Photothèque` fully tappable.
+**Actual:**
+  - Dialog: `top=702px`, `bottom=939px`, `height=237px` — sheet ends **95px below the 844px viewport**.
+  - `Caméra` button: `top=775, bottom=823` — barely in viewport (823 ≤ 844).
+  - `Photothèque` button: `top=831, bottom=879` — **35px clipped** off the bottom (879 > 844). Touching it requires the browser/iOS Safari URL-bar to auto-hide first, OR scrolling within the dialog (not always possible inside a Radix sheet).
+  - Computed style: `position: relative` (NOT `fixed`); `paper-grain` class is present.
+  - Confirms the `paper-grain` overrides Tailwind `fixed` per PROJECT.md root-cause analysis.
+**Screenshot:** `walkthrough-screenshots/capture-photo-bottom-sheet.png`
+**Issue:** **cross-link to backlog only — DO NOT file new** (D-06): https://github.com/lucaguery/al-dente/issues/1 (Sheet-01).
+**Note vs original report:** the original PROJECT.md/SPEC framing said "off-screen" — at audit time the sheet is **partially clipped**, not fully off-screen. Caméra is reachable, Photothèque is partially reachable. Severity is still **blocker** because the photo-library path (the more common one) is the clipped one and there's no scroll-affordance inside the sheet.
+
+### blocker P-12-Ph02: non-recipe photo upload leaves draft permanently stuck at `(extraction en cours…)`
+**Severity:** blocker (cross-surface duplicate of P-12-V01 — same Gemini-failed-silently pattern)
+**Surface:** Capture — Photo
+**Probe kind:** garbage (out-of-domain image input)
+**Starting state:** Photo tab, fresh `/recipes/new`.
+**Repro:**
+1. `Ajouter une photo` → `Photothèque` → upload 4×4-pixel PNG `non-recipe.png` (no recipe content).
+2. Click `Capturer la recette`.
+3. Wait 25+ seconds.
+4. GET `/api/recipes/{id}`.
+**Expected:** Gemini returns "no recipe detected", BackgroundTask transitions to `status='failed'` with user-visible error.
+**Actual:** `POST /api/recipes/photo` → `201`, draft created with title `(extraction en cours…)`. After 25s the draft is still `status='draft'`, `title='(extraction en cours…)'`, `ingredients=null` — same stuck state as garbage voice (P-12-V01). Photo IS persisted to Supabase Storage at `9f3b1902-…/{id}/<uuid>.png`. Confirms the bug is **promotion-layer**, not surface-specific — likely lives in `services/llm` or the `BackgroundTask` runner. **Cross-surface dedupe with P-12-V01 — Plan 05 should file ONE finding ("Gemini empty/failure leaves drafts in permanent `(extraction en cours…)` state") covering Voice + Photo + URL.**
+**Screenshot:** `walkthrough-screenshots/capture-photo-non-recipe.png`
+**Issue:** new finding (Plan 05 to file as single cross-surface bug — see also P-12-V01).
+**Recipe sample:** `1b84b91e-a5cf-4ff4-9107-86d63acfb9cf`.
+
+### friction P-12-Ph03: query-string state ignored on Photo tab (cross-tab confirmation of P-12-F04)
+**Severity:** friction (duplicate-pattern of P-12-F04)
+**Surface:** Capture — Photo (whole `/recipes/new` route)
+**Probe kind:** invalid-state
+**Starting state:** navigate to `/recipes/new?tab=photo&files=garbage&blob=☠`.
+**Repro:**
+1. Open the URL above.
+**Expected:** `?tab=photo` selects Photo tab; `?files=` either parses-and-rejects or ignored cleanly.
+**Actual:** "Rapide" tab default-selected (param ignored); no pre-attached photos; `Capturer la recette` not exposed (we're not on Photo tab). Same friction as F-04 — confirmed it's a route-level deep-link gap, not tab-specific. Plan 05 to fold this into the F-04 finding.
+**Screenshot:** none (visually identical to /recipes/new default).
+**Issue:** see P-12-F04.
+
+**Gemini calls in this section:** 1 (single non-recipe upload — auditor stayed conservative on Gemini budget given V-01 is still potentially retrying server-side).
 
 ---
 
