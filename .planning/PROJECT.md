@@ -60,7 +60,7 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 ### Active
 
-_None — between milestones. Run `/gsd-new-milestone` to scope next direction._
+v0.3 — Audit & Uniqueness Foundation. See **Current Milestone** section below for goal, target features, and constraints. Specific REQ-IDs added to this section after `/gsd-new-milestone` finishes the requirements pass.
 
 ### Surfaced for follow-up (v0.2.2 backlog)
 
@@ -131,9 +131,21 @@ Real product issues surfaced by Phase 10 runtime verification — not fixed inli
 | uuid5 + Session.merge upsert seed (v0.2.1 D-09) | Idempotency is in the success criteria; TRUNCATE+INSERT breaks "re-running mid-test." uuid5 is deterministic across runs and machines | ✅ Validated — same household / member / shortlist UUIDs across re-runs, no duplicate-key errors on second invocation within the same day. Cross-day hole surfaced (SEED-01) — workaround documented |
 | iPhone-shape Chromium viewport for tests (v0.2.1 post-ship) | The PWA ships to two iPhones; testing at desktop-sized viewports masks mobile-only layout bugs (e.g. Sheet-01 [#1](https://github.com/lucaguery/al-dente/issues/1)). 390×844 + isMobile + hasTouch + Chromium catches them while staying under the cross-browser non-goal | ✅ Validated — surfaced the Sheet-01 bug via Playwright MCP, then encoded `toBeInViewport()` assertion that catches future regressions |
 
-## Current Milestone
+## Current Milestone: v0.3 Audit & Uniqueness Foundation
 
-_None — v0.2.1 shipped 2026-05-09. Awaiting `/gsd-new-milestone` to scope next direction._
+**Goal:** Produce a grounded, evidence-backed assessment of Al Dente's current UX and design quality against a real production environment, so v0.4 can target what genuinely makes the app unique.
+
+**Target features:**
+- **Production-accessible synthetic household** — extend `uv run seed` to run idempotently against prod Supabase, producing a single permanent labeled household ("[SYNTHETIC] Démo Al Dente" or similar) with a stable invite code returned. User can inspect the synthetic env from their own phone alongside the automated audit.
+- **Exploratory feature walkthrough** — Playwright MCP agent navigates the app like a human against the synthetic env: every shipped surface (5 capture flows, shortlist, voting, cooking log, exports, push, realtime sync, onboarding). Output: bug list + UX friction notes. Mode is exploratory (improvised inputs surfacing surprises), not scripted golden paths.
+- **Design quality & originality audit** — Playwright MCP-driven visual exploration on the synthetic env, layered with `/gsd-ui-review`'s retroactive 6-pillar audit. Scope: every screen the synthetic household reaches. Output: per-surface scored UI-REVIEW + a "feels generic vs. feels Al Dente" judgment per surface.
+- **Synthesis** — single ranked-findings assessment document. **Not** a v0.4 roadmap proposal — clean separation between "what we found" and "what we should do about it" (v0.4 milestone planning is a separate `/gsd-new-milestone` cycle).
+
+**Key context / constraints:**
+- Zero new product features in v0.3. Audit only.
+- Synthetic seed in prod must not contaminate real user data — household labeling + isolation are load-bearing constraints.
+- Builds directly on v0.2.1 Phase 10 infrastructure (idempotent local seed, Playwright wired in `frontend/tests/e2e/`, iPhone-shape Chromium viewport, `toBeInViewport()` assertions).
+- Phase numbering continues from v0.2.1 — this milestone starts at **Phase 11**.
 
 ## Future Milestones (deferred)
 
@@ -159,4 +171,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-09 — v0.2.1 (E2E test infrastructure) shipped. 1 phase, 7 plans, 4 requirements all validated. 14 Playwright specs running on iPhone-shape Chromium viewport with `toBeInViewport()` assertions. 6 product issues surfaced for v0.2.2 backlog (Sheet-01 [#1], TZ-01, URL-01, CL-01, SEED-01, plus carried POLISH-01/02). Awaiting `/gsd-new-milestone` to scope next direction.*
+*Last updated: 2026-05-09 — v0.3 (Audit & Uniqueness Foundation) milestone scoped. Goal: grounded assessment of current UX + design quality on a real production environment to inform v0.4. Audit-only, no new product features. Phase numbering continues at Phase 11. Requirements + roadmap to follow within this `/gsd-new-milestone` cycle.*

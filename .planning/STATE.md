@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.2.1
-milestone_name: "E2E test infrastructure"
-status: shipped
-stopped_at: v0.2.1 milestone complete — awaiting next-milestone scope
-last_updated: "2026-05-09T02:15:00.000Z"
+milestone: v0.3
+milestone_name: "Audit & Uniqueness Foundation"
+status: defining_requirements
+stopped_at: v0.3 milestone scoped — defining requirements
+last_updated: "2026-05-09T03:00:00.000Z"
 last_activity: 2026-05-09
 progress:
-  total_phases: 11
-  completed_phases: 11
-  total_plans: 64
-  completed_plans: 64
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-09 after v0.2.1 milestone)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** None — v0.2.1 shipped. Awaiting `/gsd-new-milestone` to scope next direction.
+**Current focus:** v0.3 — Audit & Uniqueness Foundation (audit-only milestone producing a grounded assessment of UX + design quality to inform v0.4).
 
 ## Current Position
 
-Milestone: v0.2.1 (shipped 2026-05-09)
-Phase: None (Phase 10 complete)
-Status: Awaiting next-milestone scope
-Last activity: 2026-05-09
+Milestone: v0.3 (Audit & Uniqueness Foundation)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-09 — Milestone v0.3 started
 
-Progress: [██████████] 100% (3 milestones shipped: v0.1 / v0.2 / v0.2.1)
+Progress: [░░░░░░░░░░] 0% (3 milestones shipped: v0.1 / v0.2 / v0.2.1)
 
 ## Performance Metrics
 
