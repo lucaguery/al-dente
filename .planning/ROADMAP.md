@@ -71,7 +71,11 @@ Audit-only milestone. Produce a grounded, evidence-backed assessment of Al Dente
   2. Each per-surface UI-REVIEW carries a "feels generic vs feels Al Dente" originality verdict with at least one specific element flagged as boilerplate AND at least one specific element flagged as earned (or an explicit note when one direction is empty), so the verdict is grounded in observable detail rather than vibes.
   3. Each scored surface has at least one Playwright MCP screenshot committed under `.planning/v0.3/ui-reviews/` and linked from its UI-REVIEW file as visual evidence.
   4. A milestone-level `UI-AUDIT.md` exists at `.planning/v0.3/UI-AUDIT.md` aggregating per-surface 6-pillar scores and originality verdicts into a single readable summary, with one row per surface listed in WALK-01.
-**Plans**: TBD
+**Plans**: 4 plans
+  - [ ] 13-01-PLAN.md — Score 5 capture surfaces (capture-quick, capture-full, capture-voice, capture-photo, capture-url) — calibration heaviest UI density first per CONTEXT D-07.
+  - [ ] 13-02-PLAN.md — Score 4 decide+cook surfaces (shortlist, vote, cooking-log, history) with D-16 partial-reach notation for history (CL-01 missing endpoint).
+  - [ ] 13-03-PLAN.md — Score 5 cross-cutting + thinner surfaces (exports, push, realtime, onboarding, settings) — closes the 14-surface set per AUDIT-04.
+  - [ ] 13-04-PLAN.md — Aggregate 14 per-surface UI-REVIEWs into `.planning/v0.3/UI-AUDIT.md` (milestone-level aggregator per CONTEXT D-14).
 **UI hint**: yes
 
 **Out of scope:** No design fixes, no token-system rework, no component rewrites. The audit produces scores and verdicts only — design responses are v0.4 territory.
@@ -98,7 +102,7 @@ Phases execute in numeric order: 11 → 12 → 13 → 14. Phase 13 may run in pa
 |-------|----------------|--------|-----------|
 | 11. Production Synthetic Household | 5/5 | Complete    | 2026-05-09 |
 | 12. Exploratory Feature Walkthrough | 5/5 | Complete    | 2026-05-09 |
-| 13. Design Quality & Originality Audit | 0/TBD | Not started | - |
+| 13. Design Quality & Originality Audit | 0/4   | Not started | - |
 | 14. Synthesis & Handoff | 0/TBD | Not started | - |
 
 ## Next Steps
