@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: "Audit & Uniqueness Foundation"
-status: defining_requirements
-stopped_at: v0.3 milestone scoped — defining requirements
-last_updated: "2026-05-09T03:00:00.000Z"
+status: ready_to_plan
+stopped_at: v0.3 roadmap created — Phase 11 ready to plan
+last_updated: "2026-05-09T03:30:00.000Z"
 last_activity: 2026-05-09
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-09 after v0.2.1 milestone)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** v0.3 — Audit & Uniqueness Foundation (audit-only milestone producing a grounded assessment of UX + design quality to inform v0.4).
+**Current focus:** v0.3 — Audit & Uniqueness Foundation. Phase 11 (Production Synthetic Household) ready to plan.
 
 ## Current Position
 
 Milestone: v0.3 (Audit & Uniqueness Foundation)
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-05-09 — Milestone v0.3 started
+Phase: 11 of 14 — Production Synthetic Household
+Plan: Not yet planned
+Status: Ready to plan
+Last activity: 2026-05-09 — v0.3 roadmap created (4 phases, 16 requirements, 1:1 category-to-phase mapping)
 
 Progress: [░░░░░░░░░░] 0% (3 milestones shipped: v0.1 / v0.2 / v0.2.1)
 
@@ -49,12 +49,14 @@ Progress: [░░░░░░░░░░] 0% (3 milestones shipped: v0.1 / v0.2
 | v0.1 (W1-W4 + 01.1) | 5 | ✅ Complete |
 | v0.2 (Phases 5-9) | 5 | ✅ Complete |
 | v0.2.1 (Phase 10) | 1 | ✅ Complete |
+| v0.3 (Phases 11-14) | 4 | 🚧 Planning |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
-- v0.2.1 milestone shipped 2026-05-09: single-phase patch milestone (Phase 10) for E2E test infrastructure. The runtime verification surfaced 5 real product issues — see milestones/v0.2.1-ROADMAP.md "Surfaced product issues" — none fixed inline (per `feedback_executor_scope_creep`); filed for v0.2.2 follow-up. Bottom-sheet positioning bug filed at https://github.com/lucaguery/al-dente/issues/1.
+- v0.3 milestone scoped 2026-05-09: 4 phases (11-14), 16 requirements across 4 categories (SEED / WALK / AUDIT / SYNTH), 1:1 category-to-phase mapping. Audit-only — zero new product features. Phase 11 has a non-trivial threat model (writes to prod Supabase); Phases 12–14 are read-only audit work.
+- v0.2.1 milestone shipped 2026-05-09: single-phase patch milestone (Phase 10) for E2E test infrastructure. Surfaced 5 real product issues (Sheet-01 [#1], TZ-01, URL-01, CL-01, SEED-01 cross-day) — none fixed inline; filed for v0.2.2 follow-up.
 - v0.2 milestone shipped 2026-05-08: 5 phases (5-9), 31 requirements, Slow Food design system locked.
 - v0.1 milestone shipped 2026-05-08: 5 phases (1, 01.1, 2-4), 49 requirements, full PWA loop.
 - W4 UI-REVIEW gaps folded inline into screen-group phases per requirement IDs (CAPTURE-11 → Phase 6; DECIDE-05 → Phase 7; COOK-07/08/11/12 → Phase 8). No separate fix phase.
@@ -63,28 +65,29 @@ Progress: [░░░░░░░░░░] 0% (3 milestones shipped: v0.1 / v0.2
 
 ### Decisions
 
-See PROJECT.md Key Decisions table — all 13 v0.1 decisions validated, v0.2 design direction locked, and v0.2.1 test-infrastructure decisions added (Bearer-header auth shortcut + `aldente_auth` storageState cookie for WS upgrades, Docker Postgres on :5433, env-flag stub for Gemini/Storage in test mode, uuid5+merge idempotent seed, iPhone-shape Chromium viewport for mobile-only layout bug detection, `toBeInViewport()` on critical interactive surfaces).
+See PROJECT.md Key Decisions table — all 13 v0.1 decisions validated, v0.2 design direction locked, v0.2.1 test-infrastructure decisions added. v0.3 decisions to be logged as phases complete.
 
 ### Surfaced product issues (v0.2.1 → v0.2.2 backlog)
 
 - **TZ-01**: Active-cook filter uses Python local-tz date vs UTC DB date in `cooking_logs.py:72-78,118-126`. Late-evening cooks fall through across UTC offset window.
 - **URL-01**: URL extraction is `# TODO(productize)` at `recipes.py:481-490`. Drafts created from URL never promote.
 - **CL-01**: GET /cooking-logs (list) endpoint missing — the `/cooking-logs` history page renders but never has data.
-- **SEED-01**: Seed cross-day idempotency hole at `cli/seed.py:369,405`. Workaround: `docker compose down -v` between days. Already documented in TESTING.md.
+- **SEED-01**: Seed cross-day idempotency hole at `cli/seed.py:369,405`. Workaround: `docker compose down -v` between days. v0.3 SEED-02 closes this *for the prod synthetic specifically*.
 - **WS-01**: WS upgrade reads only cookie / `?token=` — never `Authorization` header. Required Playwright config to set cookie via storageState (already shipped).
 - **Sheet-01** ([#1](https://github.com/lucaguery/al-dente/issues/1)): `paper-grain` class on `SheetContent` overrides Tailwind `fixed`, leaving bottom sheets off-screen on iPhone-sized viewports. `capture-photo.spec.ts` "photo upload sheet is reachable" is `test.fixme` until this lands.
 
 ### Open Research
 
-None — between milestones.
+None — research deliberately skipped for v0.3 (audit milestone, no new domain features to research).
 
 ### Blockers/Concerns
 
-- None blocking. The 6 surfaced product issues above are tracked for v0.2.2 (or whichever follow-up milestone scopes them).
+- None blocking. Phase 11 has a non-trivial threat model (writes to prod) — surface during `/gsd-discuss-phase 11`.
+- The 6 surfaced product issues above are tracked for v0.2.2 (or whichever follow-up milestone scopes them).
 
 ## Session Continuity
 
-Last session: 2026-05-09T02:15:00.000Z
-Stopped at: v0.2.1 milestone archived (commit pending)
-Resume file: None — between milestones
-Next: `/gsd-new-milestone` to scope v0.2.2 (close surfaced product issues + v0.2 deferred polish) or v0.3 (new feature direction). Behavioral validation gate (≥ 2 weeks of daily use by both household members per SPEC.md) is still the implicit gate before broader scope decisions.
+Last session: 2026-05-09T03:30:00.000Z
+Stopped at: v0.3 roadmap created — 4 phases, 16 requirements mapped, traceability filled in
+Resume file: None — between roadmap creation and Phase 11 planning
+Next: `/gsd-plan-phase 11` (or `/gsd-discuss-phase 11` first to surface the prod-write threat model).

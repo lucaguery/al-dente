@@ -58,28 +58,28 @@ Filled in by the roadmapper during phase creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEED-01 | TBD | Pending |
-| SEED-02 | TBD | Pending |
-| SEED-03 | TBD | Pending |
-| SEED-04 | TBD | Pending |
-| SEED-05 | TBD | Pending |
-| WALK-01 | TBD | Pending |
-| WALK-02 | TBD | Pending |
-| WALK-03 | TBD | Pending |
-| WALK-04 | TBD | Pending |
-| AUDIT-01 | TBD | Pending |
-| AUDIT-02 | TBD | Pending |
-| AUDIT-03 | TBD | Pending |
-| AUDIT-04 | TBD | Pending |
-| SYNTH-01 | TBD | Pending |
-| SYNTH-02 | TBD | Pending |
-| SYNTH-03 | TBD | Pending |
+| SEED-01 | Phase 11 | Pending |
+| SEED-02 | Phase 11 | Pending |
+| SEED-03 | Phase 11 | Pending |
+| SEED-04 | Phase 11 | Pending |
+| SEED-05 | Phase 11 | Pending |
+| WALK-01 | Phase 12 | Pending |
+| WALK-02 | Phase 12 | Pending |
+| WALK-03 | Phase 12 | Pending |
+| WALK-04 | Phase 12 | Pending |
+| AUDIT-01 | Phase 13 | Pending |
+| AUDIT-02 | Phase 13 | Pending |
+| AUDIT-03 | Phase 13 | Pending |
+| AUDIT-04 | Phase 13 | Pending |
+| SYNTH-01 | Phase 14 | Pending |
+| SYNTH-02 | Phase 14 | Pending |
+| SYNTH-03 | Phase 14 | Pending |
 
 **Coverage:**
 - v1 requirements: 16 total
-- Mapped to phases: 0 (roadmapper pending)
-- Unmapped: 16 ⚠️ (will resolve to 0 after roadmap creation)
+- Mapped to phases: 16 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-09*
-*Last updated: 2026-05-09 after initial definition for v0.3 milestone.*
+*Last updated: 2026-05-09 — Traceability filled in by roadmapper. All 16 requirements mapped 1:1 to 4 phases (Phase 11: SEED-01..05; Phase 12: WALK-01..04; Phase 13: AUDIT-01..04; Phase 14: SYNTH-01..03).*
