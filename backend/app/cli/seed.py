@@ -26,11 +26,13 @@ from __future__ import annotations
 
 import argparse
 import os
+import secrets
 import sys
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.config import settings
@@ -44,6 +46,11 @@ from app.models.recipe import Recipe
 from app.models.vote import Vote
 
 NAMESPACE = uuid.NAMESPACE_DNS
+
+# Phase 11 — synthetic photo JPGs are committed to the repo (Plan 03, D-20).
+# Path resolution mirrors `Path(__file__).parent / "synthetic_photos"`, so the
+# seed reads from the same directory regardless of where `uv run seed` is invoked.
+SYNTHETIC_PHOTOS_DIR = Path(__file__).parent / "synthetic_photos"
 
 
 def _id(*parts: str) -> uuid.UUID:
@@ -539,7 +546,226 @@ def run_test_seed() -> None:
 
 
 def run_prod_synthetic_seed() -> None:
-    raise NotImplementedError("Plan 02 must implement run_prod_synthetic_seed")
+    """Phase 11 — prod-synthetic seed. Idempotent across re-runs (D-10/D-11/D-12).
+
+    Writes are scoped to SYNTHETIC_HOUSEHOLD_ID via _merge_synthetic (D-06).
+    Storage uploads are scoped to `synthetic/` via upload_synthetic_photo_idempotent
+    (D-08/D-22). Concurrent runs serialize on pg_advisory_xact_lock(SYNTHETIC_LOCK_KEY)
+    (D-24).
+    """
+    from app.services.storage import (
+        list_synthetic_storage_count,
+        upload_synthetic_photo_idempotent,
+    )
+
+    # Pitfall 8 — fail fast if Storage creds are missing, BEFORE any DB write.
+    # An empty list call is enough to trigger the lazy _supabase() init.
+    try:
+        _ = list_synthetic_storage_count()
+    except RuntimeError as exc:
+        sys.exit(
+            f"REFUSING: Supabase Storage not configured ({exc}). "
+            f"Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before running."
+        )
+
+    # Pre-flight: every spec slug must have a committed photo on disk.
+    # Plan 03 commits the 21 JPGs; without them the seed cannot satisfy D-20.
+    missing = [
+        spec["slug"] for spec in _recipe_specs()
+        if not (SYNTHETIC_PHOTOS_DIR / f"{spec['slug']}.jpg").exists()
+    ]
+    if missing:
+        sys.exit(
+            f"REFUSING: missing photo(s) at {SYNTHETIC_PHOTOS_DIR}/<slug>.jpg "
+            f"for slugs: {missing}. "
+            f"Plan 03 (synthetic photo curation) must commit these JPGs first."
+        )
+
+    today = date.today()
+    now = datetime.now(timezone.utc)
+
+    with SessionLocal() as db:
+        # D-24 — serialize concurrent seed runs. Releases on commit/rollback.
+        # NOTE: Postgres advisory locks require a session-pinned connection.
+        # PgBouncer in transaction-pool mode does NOT support these — the
+        # operator must connect via the direct (session-mode) URL. Documented
+        # in RUNBOOK.md (Plan 05).
+        db.execute(
+            text("SELECT pg_advisory_xact_lock(:k)"),
+            {"k": SYNTHETIC_LOCK_KEY},
+        )
+
+        # ---- 1. Household (D-05 label, D-14 fixed invite code) ----
+        household = _merge_synthetic(db, Household(
+            id=SYNTHETIC_HOUSEHOLD_ID,
+            name="[SYNTHETIC] Démo Al Dente",
+            invite_code="DEMO01",
+            timezone="Europe/Paris",
+        ))
+
+        # ---- 2. Members (D-18 — fresh tokens per run, NEVER printed) ----
+        member_luca = _merge_synthetic(db, Member(
+            id=_id_synth("member", "luca"),
+            household_id=SYNTHETIC_HOUSEHOLD_ID,
+            name="Luca",
+            color_hex="#F43F5E",
+            auth_token=secrets.token_urlsafe(32),
+        ))
+        member_partner = _merge_synthetic(db, Member(
+            id=_id_synth("member", "partner"),
+            household_id=SYNTHETIC_HOUSEHOLD_ID,
+            name="Partner",
+            color_hex="#10B981",
+            auth_token=secrets.token_urlsafe(32),
+        ))
+
+        # Pitfall 4 — flush so recipes' FK to created_by_member_id resolves.
+        db.flush()
+
+        # ---- 3. Recipes (21) — D-23 import _recipe_specs directly ----
+        # Pitfall 2 — populate photo_paths so signed-URL reads succeed.
+        recipes_by_slug: dict[str, Recipe] = {}
+        for spec in _recipe_specs():
+            jpeg_bytes = (SYNTHETIC_PHOTOS_DIR / f"{spec['slug']}.jpg").read_bytes()
+            photo_path = upload_synthetic_photo_idempotent(
+                slug=spec["slug"], content=jpeg_bytes,
+            )
+            # Pitfall 5 — set every NOT NULL column explicitly.
+            r = _merge_synthetic(db, Recipe(
+                id=_id_synth("recipe", spec["slug"]),
+                household_id=SYNTHETIC_HOUSEHOLD_ID,
+                created_by_member_id=member_luca.id,
+                status="structured",
+                title=spec["title"],
+                source_capture={
+                    "type": "manual",
+                    "payload": {"title": spec["title"]},
+                },
+                photo_paths=[photo_path],  # CRITICAL — Pitfall 2
+                ingredients=spec["ingredients"],
+                steps=spec["steps"],
+                prep_time_minutes=spec["prep_time_minutes"],
+                servings=spec["servings"],
+                cuisine=spec["cuisine"],
+                mood=spec["mood"],
+                main_protein=spec["main_protein"],
+                seasonality=spec["seasonality"],
+                tags=[],
+                cook_count=0,
+                last_cooked_at=None,
+                last_cooked_photo_path=None,
+                promotion_error=None,
+                promotion_attempts=0,
+            ))
+            recipes_by_slug[spec["slug"]] = r
+
+        # Flush so recipe IDs are visible to the cooking-log denorm queries.
+        db.flush()
+
+        # ---- 4. Cooking logs — D-10 SLIDING DATES ----
+        # _id key is "cooking_log", slug only — NO date in the key.
+        # cooked_at is recomputed from now() per run; merge UPDATEs the field.
+        # This closes the v0.2.2 SEED-01 cross-day idempotency hole for prod-synthetic.
+        log_specs = [
+            ("ragu-bolognese", "loved", "Excellent ce soir.", now - timedelta(days=2)),
+            ("poulet-citron", "liked", "Bon mais sec.", now - timedelta(days=5)),
+            ("burger-classique", "disliked", "Pas memorable.", now - timedelta(days=10)),
+        ]
+        for slug, rating, notes, cooked_at in log_specs:
+            recipe = recipes_by_slug[slug]
+            _merge_synthetic(db, CookingLog(
+                id=_id_synth("cooking_log", slug),  # NO DATE in key — D-10
+                recipe_id=recipe.id,
+                household_id=SYNTHETIC_HOUSEHOLD_ID,
+                cooked_by_member_id=member_luca.id,
+                cooked_at=cooked_at,
+                photo_paths=[],
+                rating=rating,
+                notes=notes,
+            ))
+            # Architecture invariant #3 — same-tx denorm of recipes.last_cooked_at +
+            # cook_count. Recompute count from rows so re-runs converge correctly.
+            db.flush()
+            log_count = db.scalar(
+                select(func.count(CookingLog.id)).where(
+                    CookingLog.recipe_id == recipe.id
+                )
+            ) or 0
+            recipe.cook_count = int(log_count)
+            recipe.last_cooked_at = (
+                cooked_at
+                if recipe.last_cooked_at is None or cooked_at > recipe.last_cooked_at
+                else recipe.last_cooked_at
+            )
+
+        # ---- 5. Daily shortlist — D-11 SLIDING KEY ----
+        # _id key is ("shortlist", "today") — NO date in the key.
+        # `date` field UPDATEs to today on every re-run.
+        shortlist_recipe_slugs = [
+            "ragu-bolognese", "coq-au-vin", "butter-chicken", "shawarma", "tacos-boeuf",
+        ]
+        shortlist = _merge_synthetic(db, DailyShortlist(
+            id=_id_synth("shortlist", "today"),  # NO DATE in key — D-11
+            household_id=SYNTHETIC_HOUSEHOLD_ID,
+            date=today,
+            generation=1,
+            recipe_ids=[recipes_by_slug[s].id for s in shortlist_recipe_slugs],
+            filters=None,
+        ))
+
+        db.flush()
+
+        # ---- 6. Votes — D-12 stable shortlist UUID, vote rows UPDATE in place ----
+        # member_count = 2 -> states for (luca_vote, partner_vote):
+        #   ('yes', 'yes') -> Validé   (2 rows)
+        #   ('yes', None)  -> Pressenti (1 row)
+        #   ('yes', 'no')  -> Contesté  (2 rows)
+        #   ('no',  'no')  -> Rejeté    (2 rows)
+        #   (None, None)   -> Sans avis (0 rows — no rows inserted)
+        # Total: 2 + 1 + 2 + 2 + 0 = 7 vote rows producing all 5 computed states.
+        vote_specs = [
+            ("ragu-bolognese", "yes", "yes"),       # Validé
+            ("coq-au-vin",     "yes", None),        # Pressenti
+            ("butter-chicken", "yes", "no"),        # Contesté
+            ("shawarma",       "no",  "no"),        # Rejeté
+            ("tacos-boeuf",    None,  None),        # Sans avis
+        ]
+        for slug, luca_vote, partner_vote in vote_specs:
+            # Vote has no household_id column. Verify the parent recipe is in
+            # scope before issuing the upsert (D-06 belt-and-suspenders).
+            parent_recipe = recipes_by_slug[slug]
+            _assert_synthetic_household(parent_recipe, SYNTHETIC_HOUSEHOLD_ID)
+            for member_id, vote_value in [
+                (member_luca.id, luca_vote),
+                (member_partner.id, partner_vote),
+            ]:
+                if vote_value is None:
+                    continue
+                stmt = (
+                    pg_insert(Vote)
+                    .values(
+                        id=_id_synth("vote", slug, str(member_id)),
+                        shortlist_id=shortlist.id,
+                        recipe_id=parent_recipe.id,
+                        member_id=member_id,
+                        vote=vote_value,
+                    )
+                    .on_conflict_do_update(
+                        index_elements=["shortlist_id", "recipe_id", "member_id"],
+                        set_={"vote": vote_value},
+                    )
+                )
+                db.execute(stmt)
+
+        db.commit()  # Advisory lock auto-releases here.
+
+        # ---- 7. Post-seed banner (D-13 + D-15) ----
+        counts = _gather_synthetic_counts(db)
+        _print_post_seed_banner(
+            household_id=SYNTHETIC_HOUSEHOLD_ID,
+            invite_code="DEMO01",
+            counts=counts,
+        )
 
 
 def run_teardown() -> None:
