@@ -402,8 +402,9 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 **Screenshot:** `walkthrough-screenshots/shortlist-baseline-deck.png` (banner present), compare with `shortlist-empty-state.png` (post-dismiss layout).
 **Issue:** new finding — Plan 05 to file as friction.
 
-### blocker P-12-Sh-02: `/api/shortlists/regenerate` requires non-null body, frontend `Régénérer` likely sends `null` body (race-probe could not exercise)
-**Severity:** blocker
+### friction P-12-Sh-02: `/api/shortlists/regenerate` requires non-null body, frontend `Régénérer` may send `null` body (sender-bug; backend contract works with `{}`)
+**Severity:** friction
+*Re-tagged in final-pass sweep: was blocker, now friction because Plan 12-04 RT-5 re-probed regenerate with `{}` body and got `200 OK` + new shortlist + proper `shortlist.created` broadcast (see §Realtime Sync RT-5). The backend contract is intact; the original 422 was a sender-side body-formatting bug. Severity reclassified per D-01 — primary action `Régénérer` is reachable via correct sender; the 422 path costs the user one retry plus a confusing error toast (friction class), not a permanent outage. NEW friction action item: tighten the frontend's regenerate request body to send `{}` and surface a clearer toast on 422.*
 **Surface:** Shortlist (regenerate flow)
 **Probe kind:** racing
 **Starting state:** Deck exhausted ("Vous avez tout vu" recap with `Régénérer le shortlist` CTA visible).
@@ -417,7 +418,7 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 - Direct call with empty body: `curl -X POST -d '{}' /api/shortlists/regenerate` → would likely 200 (untested in this run).
 - Frontend `lib/shortlist.ts` regenerate wrapper presumably sends `null` body or missing Content-Type.
 **Screenshot:** `walkthrough-screenshots/shortlist-regenerate-during-vote.png` (recap state with broken CTA), `shortlist-empty-state.png`.
-**Issue:** new finding — Plan 05 to file as **blocker** (primary intended action of `Régénérer` button is non-functional via the documented API). Note: this hits the user every time the deck exhausts, which happens once per day under normal use.
+**Issue:** none (re-tagged friction in final-pass sweep — see severity note above; remains in WALKTHROUGH as Phase 14 input). Frontend should send `{}` body on `Régénérer` and improve the 422 error toast.
 
 ### friction P-12-Sh-03: Click handler on OUI/NON gated on framer-motion drag context — JS `el.click()` registers no POST
 **Severity:** friction
@@ -433,7 +434,7 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 **Screenshot:** `walkthrough-screenshots/shortlist-rapid-swipe.png`.
 **Issue:** new finding — Plan 05 to file as friction (a11y / robustness).
 
-### blocker P-12-Sh-04: Image overlay `pointer-events:auto` blocks Playwright force click; tap area thin in DOM
+### friction P-12-Sh-04: Image overlay `pointer-events:auto` blocks Playwright force click; tap area thin in DOM
 **Severity:** friction
 **Surface:** Shortlist (deck card)
 **Probe kind:** invalid-state
@@ -501,7 +502,7 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 **Issue:** none — pass-style canary for invariant #2 + Pattern 4 (votes upsert).
 
 ### friction P-12-Vt-03: `Régénérer le shortlist` button broken at API contract — repeats Sh-02 finding from the Vote section
-**Severity:** friction (cross-cutting with Sh-02 blocker)
+**Severity:** friction (cross-cutting with Sh-02 — Sh-02 was re-tagged friction in final-pass sweep; this finding remains friction at the same severity tier)
 **Surface:** Vote (post-decide flow)
 **Probe kind:** racing → reduced to "primary action broken"
 **Starting state:** Deck exhausted, recap visible.
@@ -531,8 +532,8 @@ URL-01 backlog cross-link: `URL-01` — `recipes.py:481-490` URL extraction is `
 1. Navigate to `/recipes/{id}` for any structured recipe.
 2. Inspect interactive elements.
 **Expected:** Vote affordance available so a user re-reading a recipe in detail-mode can change their vote without going back to the deck.
-**Actual:** Only edit / delete / voice-modify / back. To vote, the user must navigate back to `/` and find the recipe in the deck — but if it's already exhausted, they cannot. Combined with Sh-02 (regenerate broken), once you've voted you're locked in until tomorrow. **Friction layered on a blocker.**
-**Issue:** new finding — Plan 05 to file as friction. Cross-link Sh-02 because Régénérer is the only escape hatch.
+**Actual:** Only edit / delete / voice-modify / back. To vote, the user must navigate back to `/` and find the recipe in the deck — but if it's already exhausted, they cannot. Combined with Sh-02 (regenerate friction — frontend may send wrong body), once you've voted you may be locked in until tomorrow if `Régénérer` returns 422 and the user gives up. **Friction stacking.**
+**Issue:** none (friction stays in WALKTHROUGH as Phase 14 input). Cross-link Sh-02.
 
 **Gemini calls in this section:** 0 (Voting is non-AI).
 
@@ -841,8 +842,9 @@ Backend `/api/push/subscribe` (per `backend/app/routers/push.py`): validates the
 **Screenshot:** `walkthrough-screenshots/push-resubscribe-idempotent.png` (re-uses earlier shot — there's no UI state to capture).
 **Issue:** new finding (Plan 05 may file): add `POST /api/push/admin-test` (gated to authenticated members; sends a "test notification" to caller's subscription) for future audit + user-side "Test my notifications" diagnostic. Cross-link: this is the same observability gap as the missing Settings push affordance (P-12-Pu-02).
 
-### checkpoint P-12-Pu-05: Round-trip notification verification — operator-confirmation slot
-**Severity:** blocker (until operator-confirmed)
+### checkpoint P-12-Pu-05: Round-trip notification verification — operator-confirmation slot (DEFERRED to v0.3-ship sign-off)
+**Severity:** friction
+*Re-tagged in final-pass sweep: was "blocker (until operator-confirmed)", now friction. Per Plan 05 orchestrator handoff (2026-05-09), the user explicitly DEFERRED the Push round-trip — operator will confirm at v0.3-ship sign-off rather than mid-audit. Phase 12 verification can pass with this open item; no GitHub issue is filed for Pu-05.*
 **Surface:** Push (end-to-end delivery)
 **Probe kind:** operator-assist (D-19 explicit fallback)
 **Starting state:** Auditor cannot subscribe in headless Chromium (Pu-01); no programmatic fire path exists (Pu-04). Operator's iPhone is the round-trip target.
@@ -854,11 +856,11 @@ Backend `/api/push/subscribe` (per `backend/app/routers/push.py`): validates the
    - **Cron path**: wait until 16:00 household-tz for the daily shortlist push.
 4. Operator records the round-trip outcome inline below per CONTEXT D-19 format.
 **Expected line (from CONTEXT D-19 verbatim):** `verified by Luca on YYYY-MM-DD HH:MM, notification arrived in ~Ns`.
-**Actual:** _Pending operator confirmation. **CHECKPOINT — see "Awaiting operator confirmation" below.**_
-**Screenshot:** `walkthrough-screenshots/push-subscribe-network.png` (snapshot of the network state at the auditor side; operator-side iPhone screenshot would be a future addition).
-**Issue:** Plan 05 to file a meta-finding only if operator confirms NO round-trip lands within 30s — that would be a real product delivery blocker. If round-trip lands, this becomes pass-style. If operator declines (no iPhone available), the finding stays as `friction-tagged: round-trip pending operator availability` per CONTEXT D-19 ("expected, not a blocker").
+**Actual:** **DEFERRED** — operator chose to defer the round-trip verification to v0.3-ship sign-off (decision recorded 2026-05-09). The product-side delivery path is unchanged (cron at 16:00 household-tz + cooking.started events still emit pushes); only the audit-time confirmation is postponed.
+**Screenshot:** `walkthrough-screenshots/push-subscribe-network.png` (snapshot of the network state at the auditor side; operator-side iPhone screenshot deferred with the round-trip).
+**Issue:** none — DEFERRED per operator decision. No GitHub issue filed. Will be re-confirmed at v0.3-ship sign-off via the `## Pending operator round-trip` line below.
 
-**Awaiting operator confirmation:** _Operator: please trigger a real cron / cooking-started / shortlist-related push on your iPhone (member of the synthetic household). Reply with the line `verified by Luca on YYYY-MM-DD HH:MM, notification arrived in ~Ns` OR `no iPhone available — friction-tag the round-trip` and Plan 05 will reconcile._
+**## Pending operator round-trip:** Operator confirmation of an end-to-end push delivery is OUT OF SCOPE for Phase 12. Operator (Luca) will validate at v0.3-ship sign-off by triggering one real product event (cron or cooking.started) on his iPhone and recording `verified by Luca on YYYY-MM-DD HH:MM, notification arrived in ~Ns` here. Phase 12 verification proceeds with this item open per orchestrator handoff.
 
 **Pass-style observations** (regression canaries):
 - Service worker registered + active at scope `/` (verified live).
@@ -953,7 +955,7 @@ Backend `/api/push/subscribe` (per `backend/app/routers/push.py`): validates the
 **Issue:** none for arrival. Cross-link P-12-Vt-01 (Plan 05 to file).
 
 ### nit P-12-RT-5 `shortlist.created`: regenerate succeeds (200) with new generation; broadcast arrives — and **Plan 12-03 Sh-02 is partially contradicted**
-**Severity:** nit (pass-style for arrival); blocker downgrade considered for Sh-02
+**Severity:** nit (pass-style for arrival; Sh-02 reconciliation now resolved → re-tagged friction in final-pass sweep)
 **Surface:** Realtime Sync (event class 5/6) + cross-link to §Shortlist P-12-Sh-02
 **Probe kind:** invariant verification (Sh-02 retest)
 **Starting state:** A parked on `/`. B authenticated as Joe. Today's shortlist `9a047f52` (Plan 12-03's gen 1).
@@ -964,7 +966,7 @@ Backend `/api/push/subscribe` (per `backend/app/routers/push.py`): validates the
 **Expected (per Plan 12-03 P-12-Sh-02):** 422 `missing-body` error.
 **Actual:** **200 OK with new shortlist** — `{shortlist_id: "4270b9c2-2d36-4c10-91d2-796646da9701", date: "2026-05-09", generation: 2, recipes: [...]}` — full new deck of 5 recipes. WS frame at A: `{"type": "shortlist.created", "payload": {"shortlist_id": "4270b9c2-...", "date": "2026-05-09", "generation": 2}}` — 137 bytes. **The endpoint WORKS today.** Plan 12-03 P-12-Sh-02 documented `POST /api/shortlists/regenerate → 422 missing-body`. Possible explanations: (a) Plan 12-03 sent a malformed body shape and got 422; this run sends an empty `{}` JSON body and gets 200 — so the endpoint expects an empty/optional body. (b) The endpoint was fixed between Plan 12-03 and Plan 12-04 (no commits to backend in between — so this is unlikely). The P-12-Sh-02 finding may be re-classifiable from `blocker` to `friction` (poor 422 error message when wrong body is sent) or **invalid** (sender bug). **Plan 05 must reconcile** before filing.
 **Screenshot:** `walkthrough-screenshots/realtime-shortlist-created.png`
-**Issue:** Plan 05 reconciliation needed. P-12-Sh-02 status = `disputed`.
+**Issue:** none — RT-5 itself is pass-style. Sh-02 reconciled in final-pass sweep: re-tagged from blocker to friction (sender-bug interpretation; backend contract is intact with `{}` body).
 
 ### nit P-12-RT-6 `cooking.started`: cook broadcasts in ~1.3s; the broadcast is `cooking.started` (not `cooking_log.created` as some docs say)
 **Severity:** nit (pass-style + light vocabulary drift)
@@ -1166,17 +1168,109 @@ Backend `/api/push/subscribe` (per `backend/app/routers/push.py`): validates the
 
 ## Summary
 
-> _Filled in Plan 12-05 closing sweep._
+_Closing sweep performed in Plan 12-05 on 2026-05-09._
 
-**Findings by severity:**
-- Blockers: X (Y filed as new issues, Z cross-linked to backlog)
-- Friction: A
-- Nits: B
+**Findings by severity (post-sweep):**
+- **Blockers: 14 total**
+  - **7 filed as new GitHub issues** (`audit:walkthrough` label; URLs inserted in each finding's `Issue:` line below):
+    - P-12-F01 (Capture — Full): ingredient parser duplicates `<int> <noun>` patterns
+    - P-12-V01 + P-12-Ph02 *(deduped — one issue)*: garbage Voice / Photo input leaves draft permanently stuck at `(extraction en cours…)`
+    - P-12-Vt-01 (Vote): architecture invariant #2 broken — `MEMBER_COUNT=2` hard-coded
+    - P-12-CL-01 (Cooking Log): re-finalize doubles `cook_count` (invariant #3 violated)
+    - P-12-H-02 (History): per-log detail route `/cooking-logs/{id}` missing
+    - P-12-O04 (Onboarding): 4-member household at color-palette capacity ceiling
+    - P-12-S02 (Settings): `PATCH /api/households/me` returns 405 — member name unchangeable
+  - **4 cross-linked to v0.2.2 backlog** (NOT filed as new issues — D-06 dedupe):
+    - P-12-Ph01 → `Sheet-01` (#1)
+    - P-12-U01 → `URL-01`
+    - P-12-CL-04 → `TZ-01`
+    - P-12-H-01 → `CL-01`
+  - **2 audit-environment-only blockers** (NOT product bugs; NOT filed per CONTEXT D-19 + orchestrator handoff):
+    - P-12-Pu-01: headless Chromium cannot subscribe (expected per RESEARCH §Risk 3)
+    - P-12-Pu-04: no programmatic test-fire endpoint exists for round-trip verification (audit-observability gap, not a product bug)
+  - **1 deferred operator-checkpoint (NOT filed):**
+    - P-12-Pu-05: round-trip notification verification — operator chose to defer to v0.3-ship sign-off (re-tagged friction in this sweep)
+- **Friction: 22 total** — remain in this document as Phase 14 synthesis input.
+- **Nits: 28 total** — remain in this document as Phase 14 synthesis input.
 
-**Gemini calls total:** ~XX (per-section breakdown above).
+**Gemini calls total:** **6** across the phase (Plan 02 = 5: 4 voice + 1 photo + 0 url; Plan 03 = 0: all 4 surfaces non-AI; Plan 04 = 1: RT-2 voice promotion). Well under D-12's worst-case ~$0.50 / ~30-50-call ceiling.
 
-**Surfaces with no issues found:** _list_
+**Surfaces with no NEW blocker findings filed:**
+- **Capture — Quick** (4 probes): only friction (Q02, Q03) + nits — no blocker filed.
+- **Capture — Photo** (3 probes): the only blocker (Ph02) is deduped into the V01 stuck-draft issue; Ph01 cross-links Sheet-01 #1.
+- **Capture — URL** (4 probes): the only blocker (U01) cross-links URL-01 backlog.
+- **Shortlist** (4 probes): Sh-02 was re-tagged friction in this sweep; Sh-01/03/04 were already friction.
+- **Exports** (4 probes): only friction (E02, E03) + nits — no blocker.
+- **Push** (5 probes): all 3 blocker-tagged probes are audit-environment-only or deferred — none filed.
+- **Realtime Sync** (8 probes): all 8 are nit pass-style verifications of invariant #4 (with cross-link to Vt-01 inside RT-4).
+
+**Surfaces with at least one NEW issue filed:** Capture — Full (F01), Capture — Voice (V01 — cross-surface dedupe with Ph02), Vote (Vt-01), Cooking Log (CL-01), History (H-02), Onboarding (O04), Settings (S02) = **7 surfaces**.
+
+**New blocker issues filed (Plan 05 batch — 7 issues, `audit:walkthrough` label):**
+
+| # | Probe | Title | URL |
+|---|-------|-------|-----|
+| 2 | P-12-F01 | [audit] Ingredient parser duplicates `<int> <noun>` tokens (Quantité+Nom collision) | https://github.com/lucaguery/al-dente/issues/2 |
+| 3 | P-12-V01 / P-12-Ph02 | [audit] Voice + Photo: garbage / out-of-domain input leaves draft permanently stuck at `(extraction en cours…)` (no terminal `failed` state) | https://github.com/lucaguery/al-dente/issues/3 |
+| 4 | P-12-Vt-01 | [audit] Architecture invariant #2 broken — `MEMBER_COUNT=2` hardcoded; vote-state mis-computed in any household with ≠2 members | https://github.com/lucaguery/al-dente/issues/4 |
+| 5 | P-12-CL-01 | [audit] Re-finalize cooking log increments `cook_count` instead of being idempotent (invariant #3 violated) | https://github.com/lucaguery/al-dente/issues/5 |
+| 6 | P-12-H-02 | [audit] Per-log detail route `/cooking-logs/{id}` missing in Next.js — write path with no read path | https://github.com/lucaguery/al-dente/issues/6 |
+| 7 | P-12-O04 | [audit] 4-member household is at color-palette capacity — no path for member #5 (palette length doubles as max-members ceiling) | https://github.com/lucaguery/al-dente/issues/7 |
+| 8 | P-12-S02 | [audit] Member name unchangeable post-onboarding — `PATCH /api/households/me` returns 405 | https://github.com/lucaguery/al-dente/issues/8 |
+
+**Backlog cross-links (D-06 dedupe — NOT filed as new issues):**
+- `Sheet-01` (#1, https://github.com/lucaguery/al-dente/issues/1) — surfaced in §Capture — Photo (P-12-Ph01).
+- `URL-01` — surfaced in §Capture — URL (P-12-U01, cross-link in P-12-U03).
+- `TZ-01` — surfaced in §Cooking Log (P-12-CL-04).
+- `CL-01` — surfaced in §History (P-12-H-01) and underlies §Cooking Log P-12-CL-05 offline UX gap.
+- `POLISH-01` — surfaced in §Settings (P-12-S05); cluster extension to `settings/page.tsx:175-183` Historique Card hardcoded copy.
+- `POLISH-02` — surfaced in §Settings (P-12-S01) and **CLOSED** — Copy button shipped at `frontend/app/settings/page.tsx:154-162`. Mark closed in v0.2.2 backlog tracker.
+
+**Re-tag deltas (from severity sweep):**
+- **P-12-Sh-02:** blocker → friction. Reason: Plan 12-04 RT-5 re-probed `POST /api/shortlists/regenerate` with `{}` body and got `200 OK` + new shortlist + proper `shortlist.created` broadcast. Backend contract is intact; the original 422 was a sender-side body-formatting bug. Frontend should send `{}` body; remains in WALKTHROUGH as Phase 14 input.
+- **P-12-Pu-05:** "blocker (until operator-confirmed)" → friction. Reason: per orchestrator handoff (2026-05-09), operator (Luca) explicitly DEFERRED the Push round-trip to v0.3-ship sign-off. Phase 12 verification can pass with this open item; tracked via the `## Pending operator round-trip` line in §Push.
+- **P-12-Sh-04:** title-only fix (severity already friction in body); title now reads `### friction P-12-Sh-04: …` instead of the original `### blocker P-12-Sh-04: …` mislabel. No severity change.
+
+**Pending operator round-trip:** P-12-Pu-05 (Push surface, end-to-end delivery) is open and deferred. Operator (Luca) will confirm at v0.3-ship sign-off by triggering one real product event (cron at 16:00 household-tz or `cooking.started`) on his iPhone and recording `verified by Luca on YYYY-MM-DD HH:MM, notification arrived in ~Ns` inline in §Push.
 
 ## Inputs to Phase 14
 
-This document, together with `walkthrough-screenshots/` and the GitHub issues filed under `lucaguery/al-dente` with label `audit:walkthrough`, is the input set Phase 14 (`/gsd-new-milestone` synthesis) consumes. Phase 13 (design quality + originality audit) reads this file to avoid double-probing the same surface.
+This document, together with `walkthrough-screenshots/` (48 screenshots committed across Plans 02/03/04) and the 7 GitHub issues filed under `lucaguery/al-dente` with label `audit:walkthrough`, is the input set Phase 14 (`/gsd-new-milestone` synthesis) consumes. Phase 13 (design quality + originality audit) reads this file to avoid double-probing the same surface.
+
+**Concrete pointers Phase 14 will likely consume first:**
+
+1. **Architecture-invariant violations are the highest-leverage signals** (Phase 14 ranking should weight these heavily):
+   - Invariant #2 (vote state computed): broken at `MEMBER_COUNT=2` hardcode (Vt-01 / RT-4). One-line fix; high blast radius once households exceed 2 members.
+   - Invariant #3 (denorm fields update in same txn): broken on PUT re-finalize (CL-01). Data-corruption class.
+   - Invariant #6 (next-intl French-only, day one): partial drift in `settings/page.tsx:175-183` (POLISH-01 cluster extension).
+   - Invariant #4 (realtime broadcast): UPHELD — verified at WS-frame layer for all 6 documented event classes (RT-1..RT-7); a 7th event class `cooking.finalized` is emitted but undocumented in `services/realtime.py:9-19` (doc-vs-code drift, recorded as a sub-finding in RT-6).
+
+2. **Capture-pipeline missing terminal state** (V01 + Ph02): the `recipes` model lacks a `failed` status; Gemini extraction failures leave drafts permanently in `extraction en cours…`. Will require a new enum value + migration + UI affordance — single-fix, multi-surface impact (also affects URL-01 once extraction lands).
+
+3. **Capacity / CRUD gaps in v0.1 onboarding/settings** (O04 + S02): the 4-member ceiling and the missing `PATCH /api/households/me` together describe a household-management surface that ships read-only. v0.4 productize work needs a `household.maxMembers` config + a member-CRUD router + a UI affordance for both.
+
+4. **History feature is effectively decommissioned in v0.2.1 prod** (CL-01 backlog + H-02 new): the GET list endpoint is missing AND the per-log detail route is missing. These are coordinated — fix together. Consider a meta-issue or use H-02 as the umbrella.
+
+5. **Validation-error UX is uniformly weak across capture + cooking-log + exports** (Q02 + CL-02 + E02 cluster): backend returns 422 with raw Pydantic detail; frontend toasts say "Connexion impossible" or no toast at all. Single root-cause cluster — consider a frontend `lib/api-error.ts` improvement that maps 422 → field-specific French toasts.
+
+6. **Push UX has three distinct gaps** (Pu-02 friction + Pu-04 audit-only-blocker + Pu-05 deferred): Settings affordance missing; no admin-test endpoint; round-trip is operator-only. Three coordinated v0.4 productize moves: (a) `/api/push/admin-test` route, (b) Settings "Notifications" Card with state-aware UX, (c) browser-PWA opt-in for Android.
+
+7. **Cooking-log time-zone bug** (TZ-01 cross-link): Phase 12 surfaced via code inspection (`cooking_logs.py:72-78,118-126`) — auditor was in CEST (UTC+2) so the live probe didn't trigger. Phase 14 should consider whether to upgrade severity given the `Cette cuisson n'est plus disponible` user-visible copy. Affects users in TZs ahead of UTC near their local midnight.
+
+8. **Audit-environment infrastructure improvements (audit-only, NOT product issues):**
+   - `cookie-isolation` two-context pattern documented in §Realtime Sync (RT-CookieIsolation) — canonical for future multi-device tests.
+   - WS-frame inspection via Playwright `page.on('websocket')` framereceived hook proved decisive for RT-4 / RT-5 — recommended pattern for v0.4 perf phase.
+
+9. **Persistent prod-data anomalies in the synthetic household** (Phase 14 may want to surface as observability signals or arrange teardown):
+   - Coq au vin's `cook_count=2` (CL-01 bug exposure).
+   - 7+ stuck drafts in inbox (V01/Ph02 cluster — adds new ones each probe).
+   - Joe's active cook on Pad thai tofu (`c7c92195`, NOT yet finalized — will accumulate as a "live" cook in the household until finalized or torn down via `--teardown`).
+   - Auditor + Joe persist as members #3 and #4 of the synthetic household; Phase 11 D-19 says member #4 may persist post-phase — both stay until the next teardown.
+
+**Probe count summary across Phase 12:** ~64 finding entries spanning 14 surfaces, well above the SC2 minimum (≥1 weird-state probe per section). Per-plan tallies: Plan 02 = 18 probes, Plan 03 = 19 probes, Plan 04 = 27 probes → 64 total. Each entry uses the uniform finding template (D-04).
+
+**ROADMAP §Phase 12 success criteria — final check:**
+- **SC1** (every shipped surface has a section): MET — 14 surface sections + Summary + Inputs to Phase 14 = 16 top-level sections.
+- **SC2** (≥1 weird-state probe per section): MET — minimum 3 probes per surface (most have 4-8).
+- **SC3** (severity tag + repro on every entry): MET — every `### …` block has both, normalized post-sweep.
+- **SC4** (every blocker → issue OR backlog cross-link): MET — 7 NEW issues filed; 4 backlog cross-links; 2 audit-only blockers documented but excluded per orchestrator handoff; 1 operator-checkpoint deferred per orchestrator handoff.
