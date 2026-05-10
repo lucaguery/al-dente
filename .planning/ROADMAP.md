@@ -22,7 +22,7 @@ Audit-only milestone. Produce a grounded, evidence-backed assessment of Al Dente
 
 - [x] **Phase 11: Production Synthetic Household** — Extend `uv run seed` to run safely & idempotently against prod Supabase, producing one labeled synthetic household the operator can join from their phone. (completed 2026-05-09)
 - [x] **Phase 12: Exploratory Feature Walkthrough** — Playwright MCP exploratory walkthrough across every shipped surface against the prod synthetic env; structured findings doc + GitHub issues for blockers. (completed 2026-05-09)
-- [ ] **Phase 13: Design Quality & Originality Audit** — Per-surface 6-pillar `/gsd-ui-review` scoring + "feels generic vs feels Al Dente" originality verdict, anchored by Playwright MCP screenshots.
+- [x] **Phase 13: Design Quality & Originality Audit** — Per-surface 6-pillar `/gsd-ui-review` scoring + "feels generic vs feels Al Dente" originality verdict, anchored by Playwright MCP screenshots. (completed 2026-05-10)
 - [ ] **Phase 14: Synthesis & Handoff** — Single ranked-findings `ASSESSMENT.md` combining WALK + AUDIT outputs. Descriptive only — does NOT propose v0.4 phases.
 
 ## Phase Details
@@ -75,7 +75,7 @@ Audit-only milestone. Produce a grounded, evidence-backed assessment of Al Dente
   - [x] 13-01-PLAN.md — Score 5 capture surfaces (capture-quick, capture-full, capture-voice, capture-photo, capture-url) — calibration heaviest UI density first per CONTEXT D-07.
   - [x] 13-02-PLAN.md — Score 4 decide+cook surfaces (shortlist, vote, cooking-log, history) with D-16 partial-reach notation for history (CL-01 missing endpoint).
   - [x] 13-03-PLAN.md — Score 5 cross-cutting + thinner surfaces (exports, push, realtime, onboarding, settings) — closes the 14-surface set per AUDIT-04.
-  - [ ] 13-04-PLAN.md — Aggregate 14 per-surface UI-REVIEWs into `.planning/v0.3/UI-AUDIT.md` (milestone-level aggregator per CONTEXT D-14).
+  - [x] 13-04-PLAN.md — Aggregate 14 per-surface UI-REVIEWs into `.planning/v0.3/UI-AUDIT.md` (milestone-level aggregator per CONTEXT D-14).
 **UI hint**: yes
 
 **Out of scope:** No design fixes, no token-system rework, no component rewrites. The audit produces scores and verdicts only — design responses are v0.4 territory.
@@ -102,7 +102,7 @@ Phases execute in numeric order: 11 → 12 → 13 → 14. Phase 13 may run in pa
 |-------|----------------|--------|-----------|
 | 11. Production Synthetic Household | 5/5 | Complete    | 2026-05-09 |
 | 12. Exploratory Feature Walkthrough | 5/5 | Complete    | 2026-05-09 |
-| 13. Design Quality & Originality Audit | 3/4 | In Progress|  |
+| 13. Design Quality & Originality Audit | 4/4 | Complete   | 2026-05-10 |
 | 14. Synthesis & Handoff | 0/TBD | Not started | - |
 
 ## Next Steps
