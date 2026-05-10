@@ -158,7 +158,220 @@
 
 ### Tier 3 — total impact score 0-1
 
-<!-- 17 entries, drafted in Task 3. -->
+#### C-1 — Token-completeness gap — Tailwind-palette-literal cluster
+
+- **Tier:** 3
+- **Impact axes:** (i:1 / ii:0 / iii:0, total 1)
+- **Observed:** Five surfaces reach for Tailwind palette literals where custom CSS variables would close the system. The literal pattern surfaces as `text-emerald-500` on the OUI thumb button on the shortlist deck, `border-emerald-500/50` on the validé chip border in the post-deck recap, `text-emerald-700` on the ChefHat icon in the cooking-log finalize page, the same `text-emerald-700` ChefHat on the realtime cooking-banner mounted on `/`, and the raw hex literals in the `MEMBER_COLORS` array used by the onboarding swatch picker (and reused by `<MemberDot>` across partner-vote indicators on shortlist cards and vote chips). The `globals.css` documentation marks emerald (h≈145) as part of the Slow Food palette, but the system has not yet exposed it as semantic tokens like `--color-valide-foreground` / `--color-cooking-foreground` / `--color-member-{rose,amber,emerald,sky,violet}-{bg,foreground}`. The rendered colors land within the Slow Food register; the gap is structural rather than visible.
+- **Where:** `frontend/components/ShortlistCard.tsx:256-258` (OUI thumb `text-emerald-500`); `frontend/components/VoteSummary.tsx:60` (validé chip border `border-emerald-500/50`); `frontend/app/cooking-logs/[id]/finalize/page.tsx` and `frontend/components/CookingBanner.tsx:25-28` (`text-emerald-700` ChefHat icon); `frontend/lib/colors.ts:1-7` (`MEMBER_COLORS` raw hex literals: `#F43F5E` / `#F59E0B` / `#10B981` / `#0EA5E9` / `#8B5CF6`).
+- **Pattern:** 5 surfaces — shortlist OUI thumb (`text-emerald-500`) / vote validé chip border (`border-emerald-500/50`) / cooking-log ChefHat (`text-emerald-700`) / realtime cooking-banner ChefHat (`text-emerald-700`) / onboarding `MEMBER_COLORS` raw hex.
+- **Why this impacts feels-Al-Dente:** Axis (i): 1. Token-completeness is part of Phase 13 D-02's "feels Al Dente" hybrid definition (token compliance + editorial cohesion). The rendered colors ARE Slow Food — the gap is internal: `globals.css` documents emerald as intentional, but the implementation reaches for the palette literal at the JSX call sites. Identity-signature impact is peripheral because the user reads the right color; the system gap is at the token layer, not the pixel layer. Axis (ii): 0. No documented architecture invariant covers token-completeness. Axis (iii): 0. No primary-path friction; the user-visible artifact is correct.
+- **Sources:**
+  - `UI-AUDIT.md "Cross-cutting observations" bullet 1` (token-completeness gap, 5-surface footprint)
+  - `ui-reviews/shortlist-UI-REVIEW.md Pillar 3` (OUI thumb literal)
+  - `ui-reviews/vote-UI-REVIEW.md Pillar 3` (validé chip border literal)
+  - `ui-reviews/cooking-log-UI-REVIEW.md Pillar 3` (ChefHat literal)
+  - `ui-reviews/realtime-UI-REVIEW.md Pillar 3` (cooking-banner ChefHat literal)
+  - `ui-reviews/onboarding-UI-REVIEW.md Pillar 3` (`MEMBER_COLORS` raw hex)
+
+#### C-6 — shadcn-default icons survived re-themeing
+
+- **Tier:** 3
+- **Impact axes:** (i:1 / ii:0 / iii:0, total 1)
+- **Observed:** Four surfaces ship lucide icons that are themed via `text-primary` / `text-foreground-muted` color tokens but not customized for the Al Dente vocabulary. Exports uses the off-the-shelf `Download` icon for the JSON-as-recipe-archive CTA; push uses the off-the-shelf `Bell` icon for the activate-notifications affordance; cooking-log uses the lucide `ChefHat` for the active-cook surface; the realtime cooking banner mirrors the same `ChefHat` glyph. The chrome around each icon (rose-tinted region on push, paper-grain Card on exports, bg-primary/8 paper-grain on the cooking banner) rescues the surfaces from pure boilerplate, but the icons themselves carry no Slow Food custom register — a clock-shaped or paper-recipe-shaped glyph for push (matching the cron's 16:00-household-tz delivery moment), a kitchen-paper-ticket glyph for the cooking banner, or a JSON-as-recipe-archive glyph for exports would tie each into the editorial vocabulary the rest of the system earns.
+- **Where:** `frontend/app/settings/page.tsx` (exports `Download` icon in Sauvegarde Card); `frontend/components/PushPermissionBanner.tsx` (push `Bell` icon); `frontend/app/cooking-logs/[id]/finalize/page.tsx` and `frontend/components/CookingBanner.tsx` (`ChefHat` icon).
+- **Pattern:** 4 surfaces — exports (`Download`) / push (`Bell`) / cooking-log (`ChefHat`) / realtime cooking-banner (`ChefHat`).
+- **Why this impacts feels-Al-Dente:** Axis (i): 1. The icons are themed correctly (no raw colors), but the glyphs themselves do not carry custom Slow Food register — `ui-reviews/exports-UI-REVIEW.md` and `ui-reviews/push-UI-REVIEW.md` both dock Pillar 2 -1 for exactly this reason; on cooking-log and realtime the surrounding chrome (paper-grain texture, terracotta wash) rescues the surface from a verdict shift. Identity-signature impact is peripheral. Axis (ii): 0. No documented invariant covers icon design. Axis (iii): 0. No primary-path friction.
+- **Sources:**
+  - `UI-AUDIT.md "Cross-cutting observations" bullet 6` (shadcn-default icons cluster)
+  - `ui-reviews/exports-UI-REVIEW.md Pillar 2`
+  - `ui-reviews/push-UI-REVIEW.md Pillar 2`
+  - `ui-reviews/cooking-log-UI-REVIEW.md Pillar 2`
+  - `ui-reviews/realtime-UI-REVIEW.md Pillar 2`
+
+#### C-8 — i18n drift — next-intl invariant #6
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:1 / iii:0, total 1)
+- **Observed:** Three surfaces ship hardcoded French strings instead of routing them through `next-intl`. The settings Historique Card renders `<span>Historique</span>` and `<span>Voir les cuissons récentes</span>` directly in JSX at `frontend/app/settings/page.tsx:175-183`. The HomeDecide partner-waiting strings are tracked as the POLISH-01 backlog item per `PROJECT.md` "Surfaced for follow-up". The cooking-log offline state on `CookingLogFinalize.tsx:83-86` checks `navigator.onLine` and surfaces an offline toast that is partially i18n-keyed but not exercised in the audit's Phase 12 reproduction (P-12-CL-05) — the listener wiring leaves at least one path producing untranslated content under degraded conditions. The rendered French strings ARE on-register (the settings copy is the same warm vocabulary as the rest of the page), so the user-visible artifact is correct; the invariant break is at the code layer where `next-intl` is bypassed.
+- **Where:** `frontend/app/settings/page.tsx:175-183` (hardcoded `Historique` / `Voir les cuissons récentes`). `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" POLISH-01 (HomeDecide partner-waiting strings). `frontend/components/CookingLogFinalize.tsx:83-86` (offline state listener path; partial i18n coverage per P-12-CL-05).
+- **Pattern:** 3 surfaces — settings hardcoded `Historique` / `Voir les cuissons récentes` (`page.tsx:175-183`) / HomeDecide partner-waiting strings (POLISH-01 cross-link) / cooking-log offline toast (P-12-CL-05).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. The rendered French is on-register and the user reads the warm vocabulary the rest of the page earns. Axis (ii): 1. Architecture invariant #6 ("French-only via `next-intl`, day one") breaks at the code layer — the strings ship outside the i18n table — but the user-visible drift is masked because the hardcoded French happens to match the locked Slow Food vocabulary. Code-layer break, user-layer correct. Axis (iii): 0. No primary-path friction.
+- **Sources:**
+  - `UI-AUDIT.md "Cross-cutting observations" bullet 11` (i18n drift cluster)
+  - `WALKTHROUGH.md §Settings — P-12-S05` (settings hardcoded strings)
+  - `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" POLISH-01
+  - `ui-reviews/settings-UI-REVIEW.md Pillar 1` (3/4 dock; honest source-comment marker)
+
+#### B-12 — `cooking.finalized` 7th broadcast event missing from canonical docstring (doc rot)
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:1 / iii:0, total 1)
+- **Observed:** The realtime contract docstring at `backend/app/services/realtime.py:9-19` enumerates the 6 documented broadcast event classes (`recipe.created`, `recipe.promoted`, `recipe.updated`, `vote.created`, `cooking_log.created`, `cooking_log.finalized` per the docstring vocabulary). The actual code path emits a 7th class — `cooking.finalized` (note the dotted-namespace drift: `cooking.finalized` rather than the docstring's `cooking_log.finalized`) — at `backend/app/routers/cooking_logs.py:219` when a finalize PUT lands. The Phase 12 §Realtime probes verified all 6 enumerated classes end-to-end (latencies 1.3s–4s under D-17's qualitative threshold), and the Phase 13 audit re-discovered the 7th class via code review. The user-visible behavior is correct (finalize broadcasts arrive; subscribed clients re-render the cooking banner), but the canonical contract documentation is out of sync with the implementation, AND the namespace drift (`cooking.` vs `cooking_log.`) means future invariant-counts based on the docstring undercount. Pure documentation rot — not user-visible, but compounds for downstream auditors.
+- **Where:** `backend/app/services/realtime.py:9-19` (canonical docstring listing 6 event classes). `backend/app/routers/cooking_logs.py:219` (emission site of the 7th class `cooking.finalized` not enumerated in the docstring; namespace differs from `cooking_log.finalized` documentation vocabulary).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised; the broadcast IS emitted correctly and the realtime cooking-banner re-renders on schedule. Axis (ii): 1. Architecture invariant #4 (realtime broadcast contract — `services/realtime.broadcast_to_household` for all household-affecting mutations) holds at the code layer; only the docstring enumeration is out of sync. Code-layer doc rot, masked from the user. Axis (iii): 0. No primary-path friction; the broadcast works.
+- **Sources:**
+  - `WALKTHROUGH.md §Realtime — P-12-RT-6` (sub-finding: 7th event class discovered via code review)
+  - `ui-reviews/realtime-UI-REVIEW.md Pillar 6` (2/4 dock; "recurring documentation rot that breaks future audits' invariant-counts")
+  - `UI-AUDIT.md "Cross-cutting observations" bullet 9` (architecture-invariant violation cluster — code-layer member)
+
+#### C-2 — No-debounce-on-submit cluster
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** Four surfaces share a non-idempotent submit pattern. On capture-quick, a fast double-tap on `Ajouter` (mimicked via `submitButton.click(); submitButton.click()` in a single synchronous JS task) fires `POST /api/recipes/quick` twice and both calls return `201` with distinct UUIDs — two duplicate `Brouillon` cards land in `/inbox`. On capture-full, the same root cause propagates because `setSubmitting(true)` at `RecipeForm.tsx:178` is not synchronously visible to a fast double-tap before React batches the re-render; the form's `disabled={!v.title.trim() || submitting}` only blocks the second click after the first call resolves the state update. On capture-photo, the `setSubmitting(true)` at `PhotoCaptureTab.tsx:90` carries the same gap. On exports, `Promise.all([fetch(exportUrl), fetch(exportUrl)])` against the household export endpoint returns `200, 200` with 194KB total payload over the wire (97KB × 2). Direct API races bypass the UI-only guard entirely. The `disabled={submitting}` UI guard is the wrong primitive for the failure mode — synchronous-double-tap and direct-API-race both land before the React state update completes. The friction class is "primary tap-path completes but with friction" rather than "primary tap-path is blocked", because the user does get their recipe / their export — they just sometimes get two of them.
+- **Where:** `frontend/components/RecipeForm.tsx:178` (capture-full `setSubmitting`). `frontend/components/PhotoCaptureTab.tsx:90` (capture-photo `setSubmitting`). Capture-quick submit handler (no idempotency token; double-201 verified live per P-12-Q03). Exports endpoint `/api/households/{hh}/export.json` (no server-side coalescing; `Promise.all` race produces 2× full payload per P-12-E03).
+- **Pattern:** 4 surfaces — capture-quick (P-12-Q03 double-tap creates 2 drafts) / capture-full (cross-link; same root cause propagated via shared form-submit pattern) / capture-photo (Sheet-01-adjacent submit handler) / exports (P-12-E03 rapid double-fetch produces 2× 97KB exports).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised; the visible chrome (Sticky CTA, `disabled={submitting}` styling) is correct. Axis (ii): 0. No documented architecture invariant covers form-submit idempotency. Axis (iii): 1. Primary tap-path completes but with friction — the user gets their recipe / their export, but sometimes gets two; the disambiguation cost (manually deleting the duplicate) is the user-visible friction. Single-fix-multi-surface footprint at the form-submit layer.
+- **Sources:**
+  - `UI-AUDIT.md "Cross-cutting observations" bullet 10` (no-debounce-on-submit cluster)
+  - `WALKTHROUGH.md §Capture-Quick — P-12-Q03`
+  - `WALKTHROUGH.md §Capture-Full` (propagated submit-debounce gap; cross-linked to P-12-Q03)
+  - `WALKTHROUGH.md §Exports — P-12-E03`
+  - `ui-reviews/capture-quick-UI-REVIEW.md Pillar 6`, `ui-reviews/capture-full-UI-REVIEW.md Pillar 6`, `ui-reviews/capture-photo-UI-REVIEW.md Pillar 6`, `ui-reviews/exports-UI-REVIEW.md Pillar 6`
+
+#### C-3 — Validation-error UX cluster (5 surfaces)
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** Five surfaces share a validation-error UX gap where backend 422s and missing-recovery-copy paths surface to the user as either a wrong-domain toast (`Connexion impossible. Réessaie dans un instant.` for what is actually a length-cap rejection or an offline state) or no toast at all. On capture-quick, a 5KB title submission returns `POST /api/recipes/quick → 422 Unprocessable Entity` and the frontend toast says `Connexion impossible. Réessaie dans un instant.` — the user has no signal that the title is the cause. On capture-full, the same toast pattern propagates from the same wrapper. On cooking-log, a 4000-character notes payload triggers a Pydantic `String should have at most 4000 characters` 422 that the `lib/api.ts` wrapper swallows; the user reads the generic save-failed toast. On exports, the Sauvegarde button stays clickable when `navigator.onLine === false` because `disabled={exporting}` only tracks in-flight state, not connectivity — the user only learns they are offline after tapping. On onboarding, the color-collision race produces a `409 Conflict` when two users join the same household and pick the same color in the same race window, with no recovery copy explaining what happened (per N-1 resolution this entry merges the C-3 toast cluster and the C-5 missing-recovery-copy cluster into one ranked entry — the underlying pattern is the same: backend cause-class is not visible to the user, leaving a confused mental model). The mono-cause toast pattern surfaces in three distinct cause classes (validation, network, conflict) but only the connectivity copy is shown.
+- **Where:** `frontend/lib/api.ts` wrapper (swallows Pydantic 422 details). `frontend/app/recipes/new/page.tsx` (capture-quick + capture-full toast routing). `frontend/components/CookingLogFinalize.tsx:106` (`save_failed` generic). `frontend/app/settings/page.tsx` and exports CTA (`disabled={exporting}` only tracks in-flight, not connectivity). Onboarding join handler (race-409 missing recovery copy). 
+- **Pattern:** 5 surfaces — capture-quick `Connexion impossible` for 422 (P-12-Q02) / capture-full propagated / cooking-log raw Pydantic 4000-char cap (P-12-CL-02) / exports offline-clickable button (P-12-E02) / onboarding race-409 missing recovery copy (P-12-O05). Per N-1 resolution, this entry merges the C-3 toast cluster and the C-5 missing-recovery-copy cluster into one ranked entry; the underlying friction class is the same.
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised. Axis (ii): 0. No documented architecture invariant covers validation-error UX. Axis (iii): 1. Primary tap-path completes — the user submits, gets a toast, retries with a confused mental model ("did I lose my connection?") when the actual cause is a length cap or an offline state. The friction is the disambiguation cost between cause classes that the toast does not surface.
+- **Sources:**
+  - `WALKTHROUGH.md "Inputs to Phase 14" bullet 5` (validation-error UX uniformly weak)
+  - `WALKTHROUGH.md §Capture-Quick — P-12-Q02`
+  - `WALKTHROUGH.md §Cooking-Log — P-12-CL-02`
+  - `WALKTHROUGH.md §Exports — P-12-E02`
+  - `WALKTHROUGH.md §Onboarding — P-12-O05`
+  - `ui-reviews/capture-quick-UI-REVIEW.md Pillar 6`, `ui-reviews/cooking-log-UI-REVIEW.md Pillar 6`, `ui-reviews/exports-UI-REVIEW.md Pillar 6`
+
+#### B-8 — TZ-01: `func.date(cooked_at) == DateType.today()` UTC vs local-tz mismatch
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** The cooking-logs active-filter at `backend/app/routers/cooking_logs.py:72-78` and `:118-126` compares `func.date(cooked_at)` (the UTC date of the column) against `DateType.today()` (the server-local date). For users in timezones ahead of UTC near local midnight, the two dates disagree: a cook started at 23:50 local time in CEST (UTC+2) writes `cooked_at` as the next UTC day, so the `cooking_logs.py` filter classifies the cook as "yesterday" while the user reads "today" on their device clock. The user-visible artifact is the `Cette cuisson n'est plus disponible` empty-state copy on the cooking-log finalize page when the user re-opens the surface to add notes after a cross-midnight cook. The Phase 12 reproduction at §Cooking-Log P-12-CL-04 inferred the bug from code inspection because the auditor's CEST cook at UTC 18:10 had aligned dates (the offset case did not surface live in the audit corpus). Per the T-4 resolution this entry stays at axis (iii):1 strictly per rubric; cross-surface footprint (cooking-log + realtime locus 3 visibility + history-implicit) is captured in `Where`/`Sources` rather than via axis bumping.
+- **Where:** `backend/app/routers/cooking_logs.py:72-78` and `:118-126` (UTC-vs-local-tz date comparison in the active-filter). Surface footprint: cooking-log (the empty-state surface for cross-midnight cooks); realtime (locus 3 cooking-banner visibility cross-link, since the same active-filter gates banner mount); history (implicit — the same filter shape is the CL-01 endpoint's design pattern). Backlog entry: `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" TZ-01.
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised. Axis (ii): 0. Timezone handling is not enumerated in the 8 documented architecture invariants in CLAUDE.md. Axis (iii): 1. Primary tap-path completes (the cook lands; the cooking-log row exists with `cooked_at` populated), but the user-visible result is friction-class — for users in TZs ahead of UTC near local midnight, the surface re-opens to `Cette cuisson n'est plus disponible` instead of the finalize editor, and the active-cook banner on `/` does not mount on the day-of expectation.
+- **Sources:**
+  - `WALKTHROUGH.md §Cooking-Log — P-12-CL-04` (code-inspection reproduction; TZ-01 backlog cross-link)
+  - `UI-AUDIT.md "Cross-cutting observations" bullet 9` (architecture-invariant violation cluster — partial member)
+  - `ui-reviews/realtime-UI-REVIEW.md Pillar 6` (TZ-01 cross-link as locus 3 cooking-banner gate)
+  - `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" TZ-01
+
+#### B-9 — URL-01: URL extraction is productize-deferred; drafts never promote
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** The capture-url surface ships a CTA whose contract is "we'll structure this for you" but does not deliver. Submitting a URL via `POST /api/recipes/url` creates a draft titled with the raw URL string and sets `status='draft'`; no Gemini extraction runs because the endpoint at `backend/app/api/recipes.py:481-490` is tagged for productize and ships as a no-op stub. The user must complete the recipe manually after submitting. The surface mitigates the gap with helper copy `arrive bientôt` ("coming soon") in the surface chrome, marking the limitation transparently — `ui-reviews/capture-url-UI-REVIEW.md` characterizes this as "the surface ships a CTA whose contract is 'we'll structure this for you' but doesn't deliver — friction-class because the helper copy DOES surface the limitation, but the moment that copy is dropped the surface becomes a true blocker". The surface's primary intended action does not deliver, but the editorial honesty of the helper copy keeps the entry at friction-class rather than blocker.
+- **Where:** `backend/app/api/recipes.py:481-490` (productize-deferred endpoint stub). User-visible render site: `/inbox` cards with the raw URL as title, status `draft`, never transitioning to `structured`. Backlog entry: `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" URL-01. Helper copy mitigation: `arrive bientôt` in the capture-url surface chrome.
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. The capture-url surface's helper copy is editorial-honest and sits within the warm Slow Food register; identity is intact. Axis (ii): 0. No documented architecture invariant covers URL extraction. Axis (iii): 1. Primary intended action ("structure a URL") does not deliver, but the helper copy mitigates the friction by surfacing the limitation transparently. The entry would shift to a true blocker if the helper copy were dropped without delivering the extraction; the editorial honesty is what holds the score at 1.
+- **Sources:**
+  - `WALKTHROUGH.md §Capture-URL — P-12-U01` (productize-deferred stub; raw URL as draft title)
+  - `ui-reviews/capture-url-UI-REVIEW.md Pillar 6` (1/4 dock; "the moment that copy is dropped the surface becomes a true blocker")
+  - `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" URL-01
+
+#### B-11 — History feature buried + decommissioned (cross-cutting friction)
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** The history surface lives at `/cooking-logs` but has no main-nav link in the bottom navigation (`[/, /recipes, /inbox, /settings]` are the 4 main-nav slots). Discovery of the history surface requires navigating to `/settings → Voir les cuissons récentes` (the navigation row in the Settings Historique Card), a 2-tap path with cognitive overhead — the user must form the mental model that "past cooks live behind Settings" rather than alongside the daily-use loop. Per `WALKTHROUGH.md §History — P-12-H-03` the original Phase 12 framing places history as part of the daily-use loop ("look back at this week's meals together"), so the buried position is friction independent of the route + endpoint absences. Per the N-2 resolution this entry stays distinct from B-5 (missing detail route) and B-10 (missing GET endpoint): combined the surface is observationally decommissioned, but the IA-only finding is the standalone friction independent of the route + endpoint, and an Executive-Summary-level umbrella observation captures the combined decommissioning shape rather than collapsing the three entries into one.
+- **Where:** Bottom navigation slot configuration (4 slots: `/, /recipes, /inbox, /settings`) — history not in the main nav. Discovery path: `frontend/app/settings/page.tsx:175-183` (Historique Card navigation row to `/cooking-logs`). Cross-link: B-5 (`/cooking-logs/{id}` detail route absent), B-10 (`GET /api/cooking-logs?days=14` endpoint absent).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised by the IA placement. Axis (ii): 0. No documented architecture invariant covers main-nav configuration. Axis (iii): 1. Primary tap-path (open history, see what we cooked) requires 2 taps + cognitive overhead instead of 1 tap. Combined with B-5 and B-10 the history surface is observationally decommissioned, but the IA-only finding is the standalone friction the cross-link captures here — per N-2 the umbrella observation surfaces in the Executive Summary rather than as a fourth ranked entry.
+- **Sources:**
+  - `WALKTHROUGH.md §History — P-12-H-03` (buried-nav finding)
+  - `ui-reviews/history-UI-REVIEW.md` ("buried 2 taps deep behind a chrome path")
+  - Cross-links: B-5 (this document) and B-10 (this document) for the combined decommissioning shape
+
+#### B-14 — capture-full title-only submit creates orphan `structured` recipe with null ingredients
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** On the capture-full surface, the only client-side gate before the `Enregistrer la recette` submit is `disabled={!v.title.trim() || submitting}` at `RecipeForm.tsx:364`. Submitting with a title only — no ingredients, no steps, no metadata — produces a recipe with `status='structured'`, `ingredients=null`, `steps=null` and redirects the user to the recipe-detail page that renders an empty body (only `Dernière fois : Jamais cuisinée · Cuisinée 0 fois` survives). The recipe is now eligible for shortlist scoring with no ingredients to score against; the algorithm at `backend/app/services/algorithm.py` consumes a populated structured-recipe row in the same shape regardless of whether the ingredient list is present. The behavior is asymmetric versus capture-quick (which would put the same payload in `/inbox` as a `Brouillon` draft awaiting completion) — the asymmetry shows the capture-full client trusts the title as a sufficient gate, while capture-quick treats every captured payload as a draft until completion.
+- **Where:** `frontend/components/RecipeForm.tsx:364` (only the title gates submit). User-visible render site: `/recipes/{id}` detail page with empty body. Sample row from Phase 12: `e80a248c-1184-498d-a5d5-d0816d971aa0`.
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised. Axis (ii): 0. No documented architecture invariant covers capture-full submission gating; invariant #1 ("five capture surfaces, one shape") covers the capture-full → `structured` transition shape but does not constrain the ingredient/steps presence. Axis (iii): 1. Primary tap-path completes but produces a friction-class artifact — an orphan `structured` recipe in the household library that subsequently affects shortlist scoring inputs silently. Could shift higher if the scoring impact were judged user-visible; the rubric per Phase 13 D-13 anchors axis (iii) on user-visible-friction at the surface anchor (capture-full here), so the score holds at 1.
+- **Sources:**
+  - `WALKTHROUGH.md §Capture-Full — P-12-F02` (live reproduction; sample recipe id)
+  - `ui-reviews/capture-full-UI-REVIEW.md Pillar 6` (2/4 dock; "asymmetric vs Quick")
+
+#### B-15 — Install-PWA banner occludes vote affordances on first load
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** On the shortlist surface during the first session before the user has dismissed the install-PWA prompt, the install banner stacks above the deck and compresses the OUI/NON thumb buttons toward the bottom edge of the iPhone-shape viewport. The Phase 12 audit measured: with the banner visible, the OUI button at `y=743.59 bottom=799.59` on 390×844, leaving 44.41px of breathing room above the viewport bottom — usable but compressed. After dismissing via the banner's `×` button, the deck reflows ~90px upward and sits at a comfortable tap distance. The friction is first-session-only and self-resolves on dismissal; it surfaces during the user's introduction to the swipe-deck interaction (the moment the framer-motion physics is supposed to feel earned) rather than at every visit.
+- **Where:** Install-PWA prompt stack on `/` HomeDecide (banner positioning above the shortlist deck on first session). Surface anchor: shortlist (the framer-motion swipe deck per `frontend/components/ShortlistCard.tsx:117-178`).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. The framer-motion swipe deck is the most distinctive interaction in the app per `ui-reviews/shortlist-UI-REVIEW.md`, but the banner stacking does not break the visual register — the deck still renders correctly; it just sits lower on the viewport. Axis (ii): 0. No documented architecture invariant. Axis (iii): 1. Primary tap-path completes but with friction during the first-session introduction to the deck — the OUI/NON tap targets are compressed but reachable. Self-resolves on banner dismiss.
+- **Sources:**
+  - `WALKTHROUGH.md §Shortlist — P-12-Sh-01` (live measurements; first-session-only)
+  - `ui-reviews/shortlist-UI-REVIEW.md Pillar 6` (2/4 dock; one of four stacking frictions)
+
+#### B-16 — Decorative `<img>` traps pointer events on shortlist deck card
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** The decorative recipe photo on the front shortlist card renders as `<img>` with `absolute inset-0 w-full h-full object-cover` at `frontend/components/ShortlistCard.tsx:144-149` and lacks `pointer-events: none`. Real iOS touches resolve correctly because the framer-motion gesture context handles the touch event chain; Playwright `force click` reports the img subtree intercepts the click, and assistive-input methods (switch control, VoiceOver double-tap, automation) trip on the same trapped path because they do not traverse the gesture context the way real touches do. Per the T-5 resolution this entry holds axis (iii):1 because assistive-tech users are real users; the friction is invisible to the audit's iPhone-shape Chromium scope but surfaces in real assistive-input scenarios.
+- **Where:** `frontend/components/ShortlistCard.tsx:144-149` (decorative `<img>` without `pointer-events: none`). Compounds with P-12-Sh-03 (handler gated on framer-motion drag context — programmatic click events do not traverse the `motion.button` event chain).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. The decorative photo placement is on-system; the pointer-event trap is a behavioral gap, not a visual one. Axis (ii): 0. No documented architecture invariant. Axis (iii): 1. Primary tap-path completes for real iOS users via gesture-context resolution, but assistive-tech users hit the trapped subtree — the friction surfaces only via assistive-input methods. Per Phase 13 D-03 the rubric measures user-visible friction, and assistive-tech users are users.
+- **Sources:**
+  - `WALKTHROUGH.md §Shortlist — P-12-Sh-04` (`<img>` trap)
+  - `WALKTHROUGH.md §Shortlist — P-12-Sh-03` (handler gated on gesture context; compounds)
+  - `ui-reviews/shortlist-UI-REVIEW.md Pillar 6` (2/4 dock; a11y/automation-only friction)
+
+#### B-17 — `/onboarding/welcome` reachable for authenticated user; no redirect guard
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** Three of the four onboarding routes (`/onboarding/welcome`, `/onboarding/create`, `/onboarding/join`) lack a redirect-home guard for authenticated users. A user who lands on these routes via a stale browser tab or a deep link can start the onboarding flow as if they were a new user. If the user completes the flow with a different name, the cookie rotates and the original member-#4 session is overwritten without confirmation — destructive re-onboarding is possible. The fourth onboarding route (`/onboarding/share-code`) does have the redirect guard via a client-side `useEffect` redirect on missing `?code=` parameter (`frontend/app/onboarding/share-code/page.tsx:19-23`), so the inconsistency itself is the structural gap: some onboarding routes self-protect, others do not. The visible step (the user reads the onboarding chrome they have seen before) mitigates the friction class to "completes-with-friction" rather than "blocks-or-corrupts-silently" — but the destructive path exists without a confirmation.
+- **Where:** `frontend/app/onboarding/welcome/page.tsx`, `frontend/app/onboarding/create/page.tsx`, `frontend/app/onboarding/join/page.tsx` (no redirect-home guard for authenticated users). Contrast: `frontend/app/onboarding/share-code/page.tsx:19-23` (has `useEffect`-based guard for missing `?code=`).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised. Axis (ii): 0. No documented architecture invariant covers onboarding-route guarding. Axis (iii): 1. Primary tap-path completes but with friction — destructive re-onboarding is reachable without confirmation. The visible step (recognizable onboarding chrome) mitigates the friction class to 1 rather than 2.
+- **Sources:**
+  - `WALKTHROUGH.md §Onboarding — P-12-O01` (route-guard absence; stale-tab destructive flow)
+  - `ui-reviews/onboarding-UI-REVIEW.md Pillar 6` (2/4 dock; "the inconsistency with welcome/create/join is the bigger UX gap")
+
+#### B-18 — Recipe-detail page has no vote affordance
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** The recipe-detail page at `/recipes/{id}` ships four chrome actions — `Modifier par la voix` / `Modifier la recette` / `Supprimer` / `Retour` — and no vote affordance. A user who exhausts the daily shortlist deck and wants to revisit a specific recipe in detail mode to change a vote has no path within the detail surface; they must navigate back to `/` and re-enter the deck, which is locked-out for the day once exhausted (the regenerate path is gated and the Sh-02 friction can fail the retry). Combined with the Sh-02 regenerate friction reconciled in the Phase 12 closing sweep, the user who exhausts the deck is locked into the day's vote state without a recovery handle from the detail surface.
+- **Where:** `frontend/app/recipes/[id]/page.tsx` (chrome actions: `Modifier par la voix` / `Modifier la recette` / `Supprimer` / `Retour` only; no vote control). Cross-link to shortlist Sh-02 regenerate friction (the alternate recovery path).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised on the detail surface itself. Axis (ii): 0. No documented architecture invariant covers vote-entry-point placement. Axis (iii): 1. Primary tap-path (re-read a recipe in detail mode, change my vote) does not complete from the detail surface — the user must re-enter the deck, which can be exhausted for the day. Friction-class because the alternate path (regenerate) sometimes works.
+- **Sources:**
+  - `WALKTHROUGH.md §Vote — P-12-Vt-05` (recipe-detail vote-affordance absence)
+
+#### B-19 — No "Quitter le foyer" path; leaving requires backend intervention
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:1, total 1)
+- **Observed:** The settings surface ships no "Quitter le foyer" affordance — no Card, no button, no productize-deferred annotation. The backend has no `DELETE /api/households/me` route to leave a household; once the cookie binds the user to a household, the only paths off are clearing browser data (which on iOS Safari requires multi-step clear-history navigation outside the app) or backend intervention. Couple-scale (the v0.1 product target) rarely exercises this path — the primary use case is "two people sharing a household" and the leaving event is rare — but the absence is undocumented (no productize-deferred surface marker exists), so the user faces the constraint silently when they need it.
+- **Where:** Missing UI affordance on `frontend/app/settings/page.tsx`. Missing DELETE route on `backend/app/routers/households.py`. Recovery path: iOS Safari `Settings → Clear History and Website Data` (multi-step, outside the app).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised. Axis (ii): 0. No documented architecture invariant covers household offboarding. Axis (iii): 1. Primary tap-path (leave the household, start fresh) does not complete in-app; requires browser-level intervention. Couple-scale rarely exercises this; the friction surfaces only when the user needs it.
+- **Sources:**
+  - `WALKTHROUGH.md §Settings — P-12-S03` (no leave-household path)
+  - `ui-reviews/settings-UI-REVIEW.md Pillar 6` (2/4 dock; "couple-scale rarely exercises this, but the absence is undocumented")
+
+#### B-20 — Capture tab/button copy drift from documentation
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:0, total 0)
+- **Observed:** Across the five capture surfaces, the rendered French strings drift from the documentation in `CLAUDE.md` and the original plan/spec. Tab labels are `Rapide / Complète / Voix / Photo / URL` (the documentation references `Quick`); the submit button on the Quick tab is `Ajouter` (the plan referenced `Créer` / `Valider`); the draft badge is bare `Brouillon` (the spec referenced `Brouillon en attente d'analyse`). The rendered strings ARE on-register and editorially correct — the drift is documentation-vs-implementation rather than implementation-vs-correctness — so the user reads the right warm vocabulary regardless. Pure documentation drift; the audit value is recording the delta so future reads of `CLAUDE.md` can reconcile rather than misalign.
+- **Where:** Surface anchor: capture-quick (tab label + submit button + draft badge text). Cluster: all 5 capture surfaces share the documentation drift (per WALKTHROUGH §Capture-Quick P-12-Q01 the finding is described as a documentation alignment probe, not a bug). `CLAUDE.md` Locked vocabularies §"Tab labels" (the documentation source).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. The rendered French strings ARE Slow Food register; documentation drift does not affect the user's read. Axis (ii): 0. No documented architecture invariant covers documentation-vs-implementation alignment. Axis (iii): 0. No primary-path friction; the user reads correct copy and acts on it correctly.
+- **Sources:**
+  - `WALKTHROUGH.md §Capture-Quick — P-12-Q01` (documentation alignment probe)
+
+#### B-21 — POLISH-02 backlog hygiene + `MEMBER_COLORS` 4→5 swatch audit-time delta
+
+- **Tier:** 3
+- **Impact axes:** (i:0 / ii:0 / iii:0, total 0)
+- **Observed:** Two backlog-hygiene observations combine in this entry per the T-1 resolution. (a) POLISH-02 backlog item is observationally resolved: the Copy button on the invite code shipped during Phase 9 work and is live at both `/onboarding/share-code` (source review per `ui-reviews/onboarding-UI-REVIEW.md`) and `/settings` Card 2 (`page.tsx:154-162` — `<Button size="icon" variant="ghost" className="h-12 w-12">` with lucide `Copy` icon → `Check` icon swap via `setCopied(true) + setTimeout`). The `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" section still lists POLISH-02 as open; the backlog and the live state disagree. (b) The `MEMBER_COLORS` palette delta: `WALKTHROUGH.md §Onboarding O-04` states the palette has 4 swatches; live `frontend/lib/colors.ts:1-7` (read on 2026-05-10) shows 5 swatches (`rose / amber / emerald / sky / violet`). The capacity ceiling captured in B-6 stands at N=5 in the live code, not N=4 as the WALKTHROUGH text states; `Issue #7` text reconciliation is observationally pending. Pure backlog-hygiene + documentation-vs-live-code delta — zero impact on any axis.
+- **Where:** POLISH-02: `frontend/app/settings/page.tsx:154-162` (Copy button shipped) AND `frontend/app/onboarding/share-code/page.tsx` (Copy button shipped). `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" still lists POLISH-02 as open. `MEMBER_COLORS` delta: `frontend/lib/colors.ts:1-7` (5-swatch live state) vs `WALKTHROUGH.md §Onboarding O-04` (4-swatch claim).
+- **Why this impacts feels-Al-Dente:** Axis (i): 0. No identity-bearing visual moment is compromised; the Copy button is shipped and on-system, the palette is rendered correctly at N=5. Axis (ii): 0. No documented architecture invariant covers backlog hygiene. Axis (iii): 0. No primary-path friction; the user-visible artifact matches what they want (working Copy button; rendered palette respects the design system).
+- **Sources:**
+  - `WALKTHROUGH.md §Settings — P-12-S01` (POLISH-02 confirmed shipped)
+  - `WALKTHROUGH.md §Onboarding — O-04` (4-swatch claim)
+  - `UI-AUDIT.md "Cross-cutting observations" bullet 12` (4→5 swatch reconciliation, audit-time delta)
+  - `frontend/lib/colors.ts:1-7` (live-code 5-swatch state; `rose / amber / emerald / sky / violet`)
+  - `PROJECT.md` "Surfaced for follow-up (v0.2.2 backlog)" POLISH-02 still listed
 
 ## Inputs to next /gsd-new-milestone cycle
 
