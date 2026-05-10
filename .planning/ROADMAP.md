@@ -91,7 +91,9 @@ Audit-only milestone. Produce a grounded, evidence-backed assessment of Al Dente
 
 **Out of scope:** v0.4 phase planning, v0.4 requirement definition, prescriptive recommendations. v0.4 scoping is a separate `/gsd-new-milestone` cycle that consumes (but is not authored by) `ASSESSMENT.md`.
 
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 14-01-PLAN.md — Build the D-07/D-08 grep gate + draft Section 3 (Ranked findings) — 27 entries across Tier 1 (2) / Tier 2 (8) / Tier 3 (17) per locked D-03 rubric.
+  - [ ] 14-02-PLAN.md — Compose Sections 1/2/4 (Executive summary + Ranking method + Inputs to next milestone) + run pre-commit grep gate + commit + push.
 
 ## Progress
 
@@ -103,7 +105,7 @@ Phases execute in numeric order: 11 → 12 → 13 → 14. Phase 13 may run in pa
 | 11. Production Synthetic Household | 5/5 | Complete    | 2026-05-09 |
 | 12. Exploratory Feature Walkthrough | 5/5 | Complete    | 2026-05-09 |
 | 13. Design Quality & Originality Audit | 4/4 | Complete    | 2026-05-10 |
-| 14. Synthesis & Handoff | 0/TBD | Not started | - |
+| 14. Synthesis & Handoff | 0/2 | Not started | - |
 
 ## Next Steps
 
@@ -113,4 +115,4 @@ Once v0.3 ships:
 - **Behavioral validation gate** per `SPEC.md`: ≥ 2 weeks of daily use by both household members. Still the v0.1 definition of done; orthogonal to v0.3 audit work.
 
 ---
-*Last updated: 2026-05-09 — v0.3 milestone scoped (4 phases, 16 requirements, 1:1 category-to-phase mapping). Phase numbering continues from v0.2.1 at Phase 11.*
+*Last updated: 2026-05-10 — Phase 14 planned (2 plans). v0.3 milestone scoped (4 phases, 16 requirements, 1:1 category-to-phase mapping). Phase numbering continues from v0.2.1 at Phase 11.*
