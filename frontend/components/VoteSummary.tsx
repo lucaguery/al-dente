@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MemberDot } from "@/components/MemberDot";
+import { useSession } from "@/components/SessionProvider";
 import {
   computeVoteState,
   type ShortlistVote,
@@ -32,7 +33,6 @@ export type VoteSummaryProps = {
   votes: ShortlistVote[];
   me: VoteSummaryMember;
   partner: VoteSummaryMember;
-  memberCount?: number;
   onCookStart: (recipeId: string) => void;
   onDelegate: () => void;
   onRegenerate: () => void;
@@ -80,7 +80,6 @@ export function VoteSummary({
   votes,
   me,
   partner,
-  memberCount = 2,
   onCookStart,
   onDelegate,
   onRegenerate,
@@ -89,6 +88,14 @@ export function VoteSummary({
 }: VoteSummaryProps) {
   const t = useTranslations("home.summary");
   const tState = useTranslations("vote.state");
+  // INV-01 / D-15-03: read live member count from session rather than a
+  // hardcoded default. If session is null (loading), short-circuit to 0 —
+  // computeVoteState then falls through to `sans_avis` for unvoted recipes
+  // (15-RESEARCH §Pitfall 3). In practice this branch is dead because
+  // HomeDecide's !session render guard upstream means VoteSummary mounts
+  // only with a resolved session, but explicit-is-better-than-implicit.
+  const { session } = useSession();
+  const memberCount = session?.members.length ?? 0;
 
   // D-06: rejete recipes are NOT rendered. Filter them out.
   const rows: RowState[] = useMemo(() => {
