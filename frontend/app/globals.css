@@ -156,6 +156,37 @@
 
   /* Phase 3 — Validé tint (light). Faint emerald wash, unchanged. */
   --valide-tint: oklch(0.93 0.07 145);
+
+  /* Phase 20 TOK-01 — emerald-replacement tokens (semantic, not literal).
+     Emerald is reserved for the "Validé" winning state and the cooking-success
+     accent per the Phase 7 voting-state color story. Sibling tokens to
+     `--color-valide-tint` (which holds the faint wash for the winning row /
+     cooking banner background). DECIDE-03 invariant lock applies: emerald
+     hue h≈145 is reserved for this semantic role; do not reuse for unrelated
+     accents. */
+  --color-valide-foreground: #10B981;     /* emerald-500 — primary accent */
+  --color-valide-emphasis: #047857;       /* emerald-700 — darker accent text */
+  --color-valide-border: #10B98180;       /* emerald-500/50 — Heart button border */
+  --color-valide-border-faint: #10B9814D; /* emerald-500/30 — row borders */
+  --color-cooking-foreground: #047857;    /* emerald-700 — cooking-banner icon */
+
+  /* Phase 20 TOK-02 — member-color tokens (5 slots × bg/fg pairs).
+     `--color-member-{slot}-bg` is the chip background; `-foreground` is the
+     readable text/icon on top. Five fixed slots mirror MEMBER_COLORS in
+     `frontend/lib/colors.ts` and `backend/app/colors.py`. Storage of
+     `Member.color_hex` is unchanged — these tokens are the new RENDER layer
+     (D-20-05/06). Backwards-compat: amber needs a dark foreground because
+     amber-500 is too light to support white text at AA contrast. */
+  --color-member-rose-bg: #F43F5E;
+  --color-member-rose-foreground: #FFFFFF;
+  --color-member-amber-bg: #F59E0B;
+  --color-member-amber-foreground: #1F1311;
+  --color-member-emerald-bg: #10B981;
+  --color-member-emerald-foreground: #FFFFFF;
+  --color-member-sky-bg: #0EA5E9;
+  --color-member-sky-foreground: #FFFFFF;
+  --color-member-violet-bg: #8B5CF6;
+  --color-member-violet-foreground: #FFFFFF;
 }
 
 .dark {
@@ -202,6 +233,31 @@
 
   /* Phase 3 — Validé tint (dark). Deeper emerald, unchanged. */
   --valide-tint: oklch(0.30 0.06 145);
+
+  /* Phase 20 TOK-01 dark — emerald-replacement tokens (lighter foreground
+     shades against the deeper background). `emerald-300` (#6EE7B7) reads
+     comfortably against the dark terracotta-neighborhood surface; the alpha
+     border tints stay anchored to the same lightened hex so the border-on-
+     dark-card contrast matches the light-mode wash. */
+  --color-valide-foreground: #6EE7B7;     /* emerald-300 — lighter accent */
+  --color-valide-emphasis: #A7F3D0;       /* emerald-200 — lighter emphasis */
+  --color-valide-border: #6EE7B780;       /* emerald-300/50 */
+  --color-valide-border-faint: #6EE7B74D; /* emerald-300/30 */
+  --color-cooking-foreground: #A7F3D0;    /* emerald-200 — banner icon */
+
+  /* Phase 20 TOK-02 dark — member chip hexes stay identical (the bg IS the
+     chip; foreground readability is encoded in the fg token). Amber's dark
+     foreground is intentional for AA contrast in both modes. */
+  --color-member-rose-bg: #F43F5E;
+  --color-member-rose-foreground: #FFFFFF;
+  --color-member-amber-bg: #F59E0B;
+  --color-member-amber-foreground: #1F1311;
+  --color-member-emerald-bg: #10B981;
+  --color-member-emerald-foreground: #FFFFFF;
+  --color-member-sky-bg: #0EA5E9;
+  --color-member-sky-foreground: #FFFFFF;
+  --color-member-violet-bg: #8B5CF6;
+  --color-member-violet-foreground: #FFFFFF;
 }
 
 /* Phase 5 dark-mode shadow overrides (DESIGN-05).
