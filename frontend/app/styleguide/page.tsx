@@ -110,6 +110,60 @@ const lightSwatches: Swatch[] = [
   },
 ];
 
+// Phase 20 TOK-01 — emerald-replacement tokens (D-20-09 acceptance gate).
+// Hex literals mirror globals.css :root values; rendering goes through
+// `var(--token)` so the .dark preview block below picks up dark overrides.
+const emeraldReplacementTokens: ReadonlyArray<{ token: string; hex: string }> =
+  [
+    { token: "--color-valide-foreground", hex: "#10B981" },
+    { token: "--color-valide-emphasis", hex: "#047857" },
+    { token: "--color-valide-border", hex: "#10B98180" },
+    { token: "--color-cooking-foreground", hex: "#047857" },
+  ];
+
+// Phase 20 TOK-02 — five member-color slots (D-20-09 acceptance gate).
+// Each chip paints via the explicit slot pair so the var() names appear in
+// source (acceptance grep counts the literal token strings). Readability in
+// dark mode lives in the foreground token (amber's #1F1311 fg is the AA
+// contrast exception against amber-500).
+const memberColorTokens: ReadonlyArray<{
+  slot: string;
+  hex: string;
+  bgVar: string;
+  fgVar: string;
+}> = [
+  {
+    slot: "rose",
+    hex: "#F43F5E",
+    bgVar: "var(--color-member-rose-bg)",
+    fgVar: "var(--color-member-rose-foreground)",
+  },
+  {
+    slot: "amber",
+    hex: "#F59E0B",
+    bgVar: "var(--color-member-amber-bg)",
+    fgVar: "var(--color-member-amber-foreground)",
+  },
+  {
+    slot: "emerald",
+    hex: "#10B981",
+    bgVar: "var(--color-member-emerald-bg)",
+    fgVar: "var(--color-member-emerald-foreground)",
+  },
+  {
+    slot: "sky",
+    hex: "#0EA5E9",
+    bgVar: "var(--color-member-sky-bg)",
+    fgVar: "var(--color-member-sky-foreground)",
+  },
+  {
+    slot: "violet",
+    hex: "#8B5CF6",
+    bgVar: "var(--color-member-violet-bg)",
+    fgVar: "var(--color-member-violet-foreground)",
+  },
+];
+
 function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -194,6 +248,101 @@ export default function StyleguidePage() {
           </span>
           <div className="dark rounded-xl bg-background p-4">
             <SwatchGrid swatches={lightSwatches} />
+          </div>
+        </div>
+      </section>
+
+      {/* (a.1) Phase 20 tokens — emerald-replacement + member-color groups
+          per D-20-09. These tokens land in Plan 20-01; the 7 audit-cited
+          surface files consume them in Plan 20-02. Rendered here as the
+          acceptance gate. Both groups carry light + dark variants in
+          globals.css — the `.dark` wrapper below mirrors the existing
+          dark-mode preview pattern from the section above. */}
+      <section className="flex flex-col gap-6">
+        <h2 className="text-title">Phase 20 tokens</h2>
+
+        {/* emerald-replacement tokens — 4 round swatches, label + hex */}
+        <div className="flex flex-col gap-4">
+          <span className="text-caption font-medium uppercase tracking-wide text-foreground-muted">
+            Emerald-replacement tokens
+          </span>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {emeraldReplacementTokens.map((t) => (
+              <div
+                key={t.token}
+                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3"
+              >
+                <span
+                  className="h-10 w-10 rounded-full border border-border"
+                  style={{ background: `var(${t.token})` }}
+                  aria-hidden
+                />
+                <span className="text-caption font-medium text-center break-all">
+                  {t.token}
+                </span>
+                <span className="text-caption opacity-80">{t.hex}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* member-color tokens — 5 rounded-pill chips, bg + fg */}
+        <div className="flex flex-col gap-4">
+          <span className="text-caption font-medium uppercase tracking-wide text-foreground-muted">
+            Member-color tokens
+          </span>
+          <div className="flex flex-wrap gap-3">
+            {memberColorTokens.map((m) => (
+              <div
+                key={m.slot}
+                className="flex flex-col items-start gap-1"
+              >
+                <span
+                  className="inline-flex h-[30px] w-[50px] items-center justify-center rounded-full text-caption font-medium"
+                  style={{ background: m.bgVar, color: m.fgVar }}
+                >
+                  {m.slot}
+                </span>
+                <span className="text-caption opacity-80">{m.hex}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Dark-mode preview (mirrors the Tokens/Color section above) */}
+        <div className="flex flex-col gap-4">
+          <span className="text-caption font-medium uppercase tracking-wide text-foreground-muted">
+            Dark mode preview
+          </span>
+          <div className="dark rounded-xl bg-background p-4 flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {emeraldReplacementTokens.map((t) => (
+                <div
+                  key={`dark-${t.token}`}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3"
+                >
+                  <span
+                    className="h-10 w-10 rounded-full border border-border"
+                    style={{ background: `var(${t.token})` }}
+                    aria-hidden
+                  />
+                  <span className="text-caption font-medium text-center break-all text-foreground">
+                    {t.token}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {memberColorTokens.map((m) => (
+                <span
+                  key={`dark-${m.slot}`}
+                  className="inline-flex h-[30px] w-[50px] items-center justify-center rounded-full text-caption font-medium"
+                  style={{ background: m.bgVar, color: m.fgVar }}
+                >
+                  {m.slot}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
