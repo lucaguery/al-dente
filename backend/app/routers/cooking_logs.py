@@ -39,7 +39,7 @@ Per Pattern 7: 409 Conflict if an unfinalized log already exists today.
 from __future__ import annotations
 
 import logging
-from datetime import date as DateType, datetime, timezone
+from datetime import date as DateType, datetime, timedelta, timezone
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -213,6 +213,45 @@ def get_active_cooking_log(
     return CookingLogResponse.model_validate(log_row)
 
 
+@router.get(
+    "/cooking-logs",
+    response_model=list[CookingLogResponse],
+)
+def list_cooking_logs(
+    days: int = Query(default=30, ge=1, le=365),
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+):
+    """HIST-01 — household's finalized cooking logs from the last `days`.
+
+    Per D-17-01: filter by household_id == member.household_id,
+    cooked_at >= now() - interval `days` days, rating IS NOT NULL
+    (finalized only; the unfinalized `today` log surfaces via the
+    dedicated /cooking-logs/active endpoint). Sort: cooked_at DESC.
+
+    Per D-17-02: reuse CookingLogResponse — no eager-loaded recipe
+    join. Frontend resolves recipe titles via its existing recipe
+    fetch (couple-scale workload, ~30 logs max per page).
+
+    Per D-17-03 + D-17-10: read-only — no realtime broadcast
+    (invariant #4 unaffected). The relative `days` window is not
+    timezone-sensitive (it's a duration, not a calendar boundary), so
+    this endpoint does NOT use _household_today_in_tz / FIX-01's
+    machinery.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    rows = db.scalars(
+        select(CookingLog)
+        .where(
+            CookingLog.household_id == member.household_id,
+            CookingLog.cooked_at >= cutoff,
+            CookingLog.rating.is_not(None),
+        )
+        .order_by(CookingLog.cooked_at.desc())
+    ).all()
+    return [CookingLogResponse.model_validate(r) for r in rows]
+
+
 @router.put(
     "/cooking-logs/{log_id}",
     response_model=CookingLogResponse,
@@ -342,6 +381,34 @@ async def finalize_cooking_log(
             "rating": log_row.rating,
         },
     )
+    return CookingLogResponse.model_validate(log_row)
+
+
+@router.get(
+    "/cooking-logs/{log_id}",
+    response_model=CookingLogResponse,
+)
+def get_cooking_log(
+    log_id: UUID,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+):
+    """HIST-02 — single household-scoped cooking log for the detail page.
+
+    T-04-01-03: cross-household reads return 404 (never 403) — same
+    pattern as photos.py and the existing PUT/POST endpoints in this
+    module. Returns finalized OR unfinalized logs (the detail page
+    may be reached from the active-cook banner before finalize, in
+    addition to the history list after).
+    """
+    log_row = db.scalar(
+        select(CookingLog).where(
+            CookingLog.id == log_id,
+            CookingLog.household_id == member.household_id,
+        )
+    )
+    if log_row is None:
+        raise HTTPException(404, "cooking log not found")
     return CookingLogResponse.model_validate(log_row)
 
 
