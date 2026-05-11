@@ -14,23 +14,16 @@ import { test, expect } from '@playwright/test';
 // (Plan template said `/cooking_logs` snake_case; the actual router uses
 // `/cooking-logs` hyphenated. Adapted accordingly.)
 //
-// Skipped — real timezone bug in backend/app/routers/cooking_logs.py:72-78
-// (and :118-126). The active-cook filter compares `func.date(cooked_at)` —
-// the DB extracts the date in UTC — to `DateType.today()` which uses Python's
-// LOCAL timezone. At any time within the local UTC offset window (e.g.
-// 01:20 Paris → 23:20 UTC the prior day), the dates differ and the freshly
-// created cook is filtered out as "not today's", so the finalize page renders
-// "Cette cuisson n'est plus disponible". Surfaced by this spec; per
-// feedback_executor_scope_creep the fix is OUT of Phase 10 scope (would touch
-// product code in backend/app/routers/cooking_logs.py). Re-enable once the
-// active-cook filter uses household_tz consistently.
-//
-// Phase 15 (Plan 15-04) added the INV-02 double-tap idempotency assertion at
-// the end of the test body; still gated by TZ-01 until Phase 17 (FIX-01)
-// removes the skip marker and the eslint-disable above.
+// Activated in Phase 17 (Plan 17-03) — the FIX-01 / TZ-01 timezone bug
+// that previously made the freshly-created active cook invisible to the
+// finalize page (because the filter compared func.date(cooked_at) (UTC)
+// to DateType.today() (Python local-tz)) was closed in Plan 17-01 by
+// routing both callsites through household.timezone via zoneinfo. The
+// INV-02 double-tap idempotency block at lines ~112-141 was added in
+// Phase 15 (Plan 15-04) and was gated on this fix landing — it is now
+// load-bearing.
 test.describe('cooking-log-create-finalize', () => {
-  // eslint-disable-next-line playwright/no-skipped-test -- backend timezone bug; see header comment
-  test.fixme('cook flow updates last_cooked_at and cook_count', async ({
+  test('cook flow updates last_cooked_at and cook_count', async ({
     page,
     request,
   }) => {

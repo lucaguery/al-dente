@@ -1,16 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-// TEST-02 — /cooking-logs history view. The page is shipped (Phase 8 COOK-10)
-// but its data source — GET /cooking-logs (list) — is NOT wired backend-side.
-// frontend/app/cooking-logs/page.tsx:11-13 explicitly notes: "(only POST
-// /recipes/{id}/cook, GET /cooking-logs/active, and PUT /cooking-logs/{id}
-// exist today...). The route ships the shell + EmptyState fallback now".
-// At runtime the page renders "Aucune recette pour le moment" → seed titles
-// are not visible because they're never fetched. Re-enable once the list
-// endpoint ships.
+// TEST-02 — /cooking-logs history view (Phase 17 / HIST-01 + HIST-02).
+// The list endpoint GET /cooking-logs?days=N + the detail route
+// /cooking-logs/[id] are both live as of Phase 17 (17-01 backend +
+// 17-02 frontend). This spec asserts the 3 seeded logs surface by
+// recipe title AND that tapping a card navigates to the detail page.
 test.describe('cooking-log-history', () => {
-  // eslint-disable-next-line playwright/no-skipped-test -- backend list endpoint deferred (see frontend/app/cooking-logs/page.tsx:11-13)
-  test.fixme(
+  test(
     'history page lists all 3 seeded logs by recipe title',
     async ({ page }) => {
       await page.goto('/cooking-logs');
@@ -26,14 +22,27 @@ test.describe('cooking-log-history', () => {
     },
   );
 
-  test('history page renders shell + empty-state fallback (until list endpoint ships)', async ({
+  test('tapping a cooking-log card navigates to the detail page', async ({
     page,
   }) => {
     await page.goto('/cooking-logs');
-    // Page renders without redirecting to onboarding. Empty-state copy is
-    // the "no cooked recipes yet" message until GET /cooking-logs lands.
+    // Wait for at least one card to be on the page — list-page fetch must
+    // resolve before the click target exists.
+    const ragu = page.getByText('Ragu bolognese', { exact: true }).first();
+    await expect(ragu).toBeVisible();
+    await ragu.click();
+    // URL transitions to /cooking-logs/{uuid} — assert via regex so we
+    // don't have to know the seeded id. The detail route is distinct from
+    // the /finalize child path (won't false-match because $ anchors).
+    await expect(page).toHaveURL(/\/cooking-logs\/[0-9a-f-]{36}$/);
+    // Detail page renders the rating chip — French label from fr.json
+    // cooking_log.rating.* keys. The seed plants "ragu-bolognese" → loved
+    // (backend/app/cli/seed.py:452), which maps to "Adoré". Use a regex
+    // tolerant to the loved/liked/disliked trio so the assertion doesn't
+    // break if seed.py re-shuffles ratings — but we drop the alternates
+    // not present in fr.json (per Plan 17-03 explicit instruction).
     await expect(
-      page.getByText('Aucune recette pour le moment'),
+      page.getByText(/Adoré|Bien|Passable/).first(),
     ).toBeVisible();
   });
 });
