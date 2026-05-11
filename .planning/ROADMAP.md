@@ -33,7 +33,11 @@
   1. In a household with N members (N≥2), the vote chip on `HomeDecide` / `VoteSummary` renders the correct one of {Validé / Pressenti / Contesté / Rejeté / Sans avis} per the actual member count — no `MEMBER_COUNT=2` hardcode remains in `HomeDecide.tsx:52`, `VoteSummary.tsx:83`, or `services/voting.compute_vote_state`.
   2. A user can tap `Finaliser` twice on the same `cooking_log` and the recipe's `cook_count` increments exactly once (and `last_cooked_at` stays stable) — observable on the recipe-detail surface and verifiable via DB read.
   3. Architecture invariants #2 (voting state computed) and #3 (same-tx denormalized) hold under audit-revisit: neither invariant introduces nor relaxes a contract.
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 15-01-PLAN.md — pytest scaffolding (pyproject.toml + tests/conftest.py)
+- [ ] 15-02-PLAN.md — backend atomic UPDATE rewrite of finalize_cooking_log + first Python tests (INV-01 backend, INV-02)
+- [ ] 15-03-PLAN.md — frontend MEMBER_COUNT removal (HomeDecide, VoteSummary) + 5-state regression canary spec (INV-01 frontend)
+- [ ] 15-04-PLAN.md — extend cooking-log-create-finalize.spec.ts with double-tap idempotency assertion (stays test.fixme until Phase 17 closes TZ-01)
 **Key risks / threat-model flags**:
   - Touches shared modules (`services/voting`, `cooking_logs.py`) that later phases (17, 18) also touch — landing first minimizes merge churn.
   - Architecture invariants #2 + #3 are load-bearing per `CLAUDE.md`. Any plan reviewer must verify the invariant contract is preserved, not just the bug fix.
@@ -136,7 +140,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Tier 1 invariant fixes | 0/0 | Not started | - |
+| 15. Tier 1 invariant fixes | 0/4 | Planned | - |
 | 16. Capture pipeline correctness | 0/0 | Not started | - |
 | 17. History feature restoration | 0/0 | Not started | - |
 | 18. Identity management | 0/0 | Not started | - |
@@ -150,4 +154,4 @@
 - **Behavioral validation gate** per `SPEC.md`: ≥ 2 weeks of daily use by both household members. Still the v0.1 definition of done; orthogonal to v0.4 phases.
 
 ---
-*Last updated: 2026-05-11 — v0.4 roadmap created. Tight scope (7 phases, 24 requirements). Phases 15-21 cluster the 2 Tier 1 + 4 Tier 2 ASSESSMENT findings plus the v0.2.2 backlog roll-in (TZ-01, SEED-01, POLISH-01/02) plus the two identity-polish directions (token-completeness C-1 + Pillar 6 deficit pass).*
+*Last updated: 2026-05-11 — Phase 15 planned (4 plans). Wave 0: 15-01 (pytest scaffold). Wave 1: 15-02 (backend atomic UPDATE + tests), 15-03 (frontend MEMBER_COUNT removal + canary spec), 15-04 (E2E double-tap assertion, gated by TZ-01).*
