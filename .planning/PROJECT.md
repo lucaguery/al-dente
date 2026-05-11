@@ -70,7 +70,7 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 ### Active
 
-v0.3 complete (2026-05-11). Pending `/gsd-complete-milestone` to archive the milestone and prepare for the next cycle. v0.4 scoping is a separate `/gsd-new-milestone` cycle that consumes `ASSESSMENT.md` as input but is not authored by it.
+**v0.4 Audit Remediation & Identity Polish** scoped 2026-05-11. Consumes `.planning/v0.3/ASSESSMENT.md` (27 ranked findings), `UI-AUDIT.md`, `WALKTHROUGH.md`, and GitHub Issues #1–#8 as inputs. Targets the highest-impact correctness violations (both Tier 1 architecture-invariant breaks + 4 Tier 2 correctness clusters) and two identity-signature directions (token-completeness sweep + Pillar 6 deficit pass), plus the v0.2.2 orthogonal backlog (TZ-01, SEED-01, POLISH-01/02). Requirements pending — to be authored in the next step of this `/gsd-new-milestone` cycle.
 
 ### Surfaced for follow-up (v0.2.2 backlog)
 
@@ -141,21 +141,37 @@ Real product issues surfaced by Phase 10 runtime verification — not fixed inli
 | uuid5 + Session.merge upsert seed (v0.2.1 D-09) | Idempotency is in the success criteria; TRUNCATE+INSERT breaks "re-running mid-test." uuid5 is deterministic across runs and machines | ✅ Validated — same household / member / shortlist UUIDs across re-runs, no duplicate-key errors on second invocation within the same day. Cross-day hole surfaced (SEED-01) — workaround documented |
 | iPhone-shape Chromium viewport for tests (v0.2.1 post-ship) | The PWA ships to two iPhones; testing at desktop-sized viewports masks mobile-only layout bugs (e.g. Sheet-01 [#1](https://github.com/lucaguery/al-dente/issues/1)). 390×844 + isMobile + hasTouch + Chromium catches them while staying under the cross-browser non-goal | ✅ Validated — surfaced the Sheet-01 bug via Playwright MCP, then encoded `toBeInViewport()` assertion that catches future regressions |
 
-## Current Milestone: v0.3 Audit & Uniqueness Foundation
+## Current Milestone: v0.4 Audit Remediation & Identity Polish
 
-**Goal:** Produce a grounded, evidence-backed assessment of Al Dente's current UX and design quality against a real production environment, so v0.4 can target what genuinely makes the app unique.
+**Goal:** Close the highest-impact correctness violations and UI gaps surfaced by the v0.3 audit corpus, advancing the "feels Al Dente" verdict distribution without adding new product capabilities.
 
 **Target features:**
-- **Production-accessible synthetic household** — extend `uv run seed` to run idempotently against prod Supabase, producing a single permanent labeled household ("[SYNTHETIC] Démo Al Dente" or similar) with a stable invite code returned. User can inspect the synthetic env from their own phone alongside the automated audit.
-- **Exploratory feature walkthrough** — Playwright MCP agent navigates the app like a human against the synthetic env: every shipped surface (5 capture flows, shortlist, voting, cooking log, exports, push, realtime sync, onboarding). Output: bug list + UX friction notes. Mode is exploratory (improvised inputs surfacing surprises), not scripted golden paths.
-- **Design quality & originality audit** — Playwright MCP-driven visual exploration on the synthetic env, layered with `/gsd-ui-review`'s retroactive 6-pillar audit. Scope: every screen the synthetic household reaches. Output: per-surface scored UI-REVIEW + a "feels generic vs. feels Al Dente" judgment per surface.
-- **Synthesis** — single ranked-findings assessment document. **Not** a v0.4 roadmap proposal — clean separation between "what we found" and "what we should do about it" (v0.4 milestone planning is a separate `/gsd-new-milestone` cycle).
+
+*Correctness — close architecture-invariant violations + structurally-decommissioned features:*
+- **Tier 1 invariant fixes** — eliminate the `MEMBER_COUNT=2` hardcode so the 5-state vote chip computes correctly in non-2-member households (B-3, invariant #2, Issue #4); fix `cook_count` double-increment on re-finalize so the denormalized `cook_count`/`last_cooked_at` columns honor invariant #3 (B-4, Issue #5).
+- **Capture pipeline correctness** — add a `failed` terminal state to the `recipes` model + recovery affordance for stuck `(extraction en cours…)` drafts across voice/photo/url (C-4); fix the ingredient parser regex so `<int> <noun>` lines (`4 tomates`, `1 oignon rouge`) round-trip correctly to the recipe-detail page (B-2, Issue #2).
+- **History feature restoration** — restore `GET /api/cooking-logs` list endpoint (B-10, CL-01) and add `frontend/app/cooking-logs/[id]/page.tsx` detail route (B-5, Issue #6). The 5KB notes feature ships a write path with no read path today; this closes the loop.
+- **Identity management** — add `PATCH /api/households/me` route + Settings UI affordance for member rename (B-7, Issue #8); add household-capacity copy + 422 enforcement on join when the color palette is exhausted (B-6, Issue #7).
+- **Validation surfaces** — fix Sheet-01 (`paper-grain` overriding Tailwind `fixed` on Radix Sheet, photo-source 35px off-screen on iPhone, B-1, Issue #1); fix Push UX three-gap cluster — Settings recovery surface after `Pas maintenant` dismiss, admin-test fire endpoint, end-to-end round-trip verification (B-13).
+
+*Identity polish — close the design-system gaps driving the Pillar 6 corpus deficit:*
+- **Token-completeness sweep** — replace emerald Tailwind literals (`text-emerald-500`, `border-emerald-500/50`, `text-emerald-700`) across 5 surfaces + `MEMBER_COLORS` raw hex with semantic CSS variables (e.g. `--color-valide-foreground`, `--color-cooking-foreground`, `--color-member-{rose,amber,emerald,sky,violet}-{bg,foreground}`). Observable in `/styleguide` (C-1).
+- **Pillar 6 deficit pass** — surface-by-surface experience-design upgrades aiming to flip ≥3 surfaces from ⚠ Mixed to ✅ Feels Al Dente. Working spec: per-surface `ui-reviews/*-UI-REVIEW.md` Pillar 6 dock notes.
+
+*Orthogonal v0.2.2 backlog (rolled in):*
+- **TZ-01** — cooking-log active-cook filter uses Python local-tz vs UTC DB date at `cooking_logs.py:72-78,118-126`; late-evening cooks fall through. Fix unblocks the `cooking-log-create-finalize.spec.ts` `test.fixme`.
+- **SEED-01** — cross-day idempotency hole at `cli/seed.py:369,405`. Replace the `docker compose down -v` workaround with proper composite-key handling.
+- **POLISH-01** — `next-intl` sweep on HomeDecide partner-waiting strings + hardcoded `Historique` / `Voir les cuissons récentes` in `settings/page.tsx:175-183` (invariant #6 code-layer break).
+- **POLISH-02** — Copy button on the Settings invite-code Card (Phase 9 deferral; also surfaced in WALKTHROUGH).
 
 **Key context / constraints:**
-- Zero new product features in v0.3. Audit only.
-- Synthetic seed in prod must not contaminate real user data — household labeling + isolation are load-bearing constraints.
-- Builds directly on v0.2.1 Phase 10 infrastructure (idempotent local seed, Playwright wired in `frontend/tests/e2e/`, iPhone-shape Chromium viewport, `toBeInViewport()` assertions).
-- Phase numbering continues from v0.2.1 — this milestone starts at **Phase 11**.
+- Zero new product features. v0.4 is bounded to remediation + polish; new capabilities (album, magic-link auth, per-member ratings) remain v2 backlog.
+- Builds on v0.3 audit corpus — `.planning/v0.3/ASSESSMENT.md` (27 ranked findings), `UI-AUDIT.md`, `WALKTHROUGH.md`, and GitHub Issues #1–#8 are the canonical inputs.
+- Architecture invariants from `CLAUDE.md` are load-bearing — invariant #1 (5 capture surfaces, one shape) shapes the C-4 failed-state work; invariant #2 (voting state computed) shapes B-3; invariant #3 (same-tx denormalized fields) shapes B-4; invariant #6 (`next-intl` French-only) shapes POLISH-01.
+- **URL-01 explicitly NOT in scope** — URL extraction stays `# TODO(productize)`. The C-4 failed-state work surfaces the deferred stub with a recovery affordance instead of resolving the extraction itself.
+- Phase numbering continues from v0.3 — this milestone starts at **Phase 15**.
+- Tight scope target: ~5-7 phases. Each phase clusters one Tier 1 or Tier 2 finding pair to keep commits atomic and ship-velocity high (the v0.2 single-day shape).
+- Behavioral validation gate (≥ 2 weeks daily use by both members from the v0.1 definition-of-done) remains pending — orthogonal to v0.4 phases.
 
 ## Future Milestones (deferred)
 
@@ -181,4 +197,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-11 — v0.3 (Audit & Uniqueness Foundation) milestone complete. All 4 phases shipped (Phase 11 prod synthetic + Phase 12 walkthrough + Phase 13 design-quality audit + Phase 14 synthesis). All 16 requirements validated (SEED × 5 + WALK × 4 + AUDIT × 4 + SYNTH × 3). 4 milestone-level artifacts in `.planning/v0.3/` (RUNBOOK / WALKTHROUGH / UI-AUDIT / ASSESSMENT) + 8 GitHub issues filed. Pending `/gsd-complete-milestone` to archive. v0.4 scoping is a separate `/gsd-new-milestone` cycle consuming `ASSESSMENT.md` as input.*
+*Last updated: 2026-05-11 — v0.4 (Audit Remediation & Identity Polish) milestone scoped. Consumes `.planning/v0.3/ASSESSMENT.md` (27 ranked findings), `UI-AUDIT.md`, `WALKTHROUGH.md`, and GitHub Issues #1–#8 as canonical inputs. Tight scope (~5-7 phases) covering both Tier 1 invariant fixes (B-3 MEMBER_COUNT, B-4 cook_count) + 4 Tier 2 correctness clusters (capture pipeline C-4/B-2, history B-5/B-10, identity-mgmt B-6/B-7, Sheet-01 + Push B-1/B-13) + 2 UI directions (token-completeness C-1 + Pillar 6 deficit pass) + v0.2.2 backlog roll-in (TZ-01, SEED-01, POLISH-01/02). Requirements + roadmap pending in the active `/gsd-new-milestone` cycle. Phase numbering continues — v0.4 starts at Phase 15.*
