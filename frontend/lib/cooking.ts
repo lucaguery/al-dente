@@ -85,3 +85,34 @@ export async function getCookingLogSignedPhotoUrl(
   );
   return data.url;
 }
+
+// --- Phase 17 — history read clients (HIST-01 + HIST-02) -------------------
+//
+// Backend contracts (17-01):
+//   GET /api/cooking-logs?days=N         — finalized household logs, N days
+//   GET /api/cooking-logs/{id}           — single household-scoped log
+//
+// Both endpoints are read-only (no realtime broadcast per D-17-03) and
+// rely on the same cookie auth (`api<T>`) as the rest of the file.
+
+/** HIST-01 — fetch the household's finalized cooking logs from the last
+ *  `days` days (default matches backend default of 30; backend clamps
+ *  1 <= days <= 365 and 422s on out-of-range). Returns a bare list per
+ *  D-17-02 (no `{ logs: ... }` envelope).
+ */
+export async function fetchCookingLogs(
+  days?: number,
+): Promise<CookingLogResponse[]> {
+  const qs = typeof days === "number" ? `?days=${days}` : "";
+  return api<CookingLogResponse[]>(`/api/cooking-logs${qs}`);
+}
+
+/** HIST-02 — fetch a single household-scoped cooking log by id. Throws
+ *  on 404 (cross-household reads return 404 not 403 per T-04-01-03). The
+ *  `api<T>` wrapper surfaces non-OK as `Error("<status> <statusText>")`.
+ */
+export async function fetchCookingLog(
+  logId: string,
+): Promise<CookingLogResponse> {
+  return api<CookingLogResponse>(`/api/cooking-logs/${logId}`);
+}
