@@ -1,14 +1,17 @@
-"""Household onboarding endpoints — ONBOARD-01/02/04/05 + INFRA-06.
+"""Household onboarding endpoints — ONBOARD-01/02/04/05 + INFRA-06 + IDM-01/03.
 
-Four routes:
+Five routes:
 - ``POST /households`` — create household + creator member, mint auth_token,
   return invite_code (ONBOARD-01, ONBOARD-02).
 - ``POST /households/join`` — second member joins via invite_code; rejects
-  unknown codes (404) and already-taken colors (409). ONBOARD-04, ONBOARD-05.
+  unknown codes (404), full households (422 HOUSEHOLD_FULL, IDM-03), and
+  already-taken colors (409). ONBOARD-04, ONBOARD-05.
 - ``GET /households/by-code/{code}`` — auth-free preview used by the join
   screen to render disabled swatches BEFORE the join attempt.
 - ``GET /households/me`` — bearer-token-protected; closes the INFRA-06
   end-to-end verification (no router beyond /healthz existed before).
+- ``PATCH /households/me`` — IDM-01 member rename. Member-scoped, enforces
+  per-household name uniqueness, broadcasts ``member.updated`` (invariant #4).
 
 The router is a thin HTTP adapter; secrets generation lives in
 ``app.auth.generate_auth_token`` and ``app.services.invite_codes``.
@@ -21,6 +24,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth import current_member, generate_auth_token, set_auth_cookie
+from app.colors import MEMBER_COLORS
 from app.db import get_db
 from app.models.household import Household
 from app.models.member import Member
@@ -32,7 +36,9 @@ from app.schemas.household import (
     OnboardingResponse,
     SessionResponse,
 )
+from app.schemas.member import MemberPublic, MemberRenameRequest
 from app.services.invite_codes import generate_unique_invite_code
+from app.services.realtime import broadcast_to_household
 
 router = APIRouter(prefix="/households", tags=["households"])
 
@@ -121,8 +127,11 @@ def join_household(
 ) -> OnboardingResponse:
     """Add a member to an existing household via invite code.
 
-    ONBOARD-04. Returns:
+    ONBOARD-04 + IDM-03. Returns:
     - 404 if the invite_code does not match any household.
+    - 422 with ``code=HOUSEHOLD_FULL`` if the household already has
+      ``len(MEMBER_COLORS)`` (5) members (IDM-03, D-18-09/10). This gate
+      runs BEFORE color uniqueness — capacity is the broader denial.
     - 409 if ``color_hex`` is already taken by an existing member.
     - 422 if ``color_hex`` is not in the locked palette (Pydantic-level).
 
@@ -158,6 +167,25 @@ def join_household(
             member_id=existing_member.id,
             auth_token=existing_member.auth_token,
             invite_code=household.invite_code,
+        )
+
+    # IDM-03 (D-18-09/10): capacity gate runs BEFORE the color check so a
+    # 6th-member attempt gets the structured HOUSEHOLD_FULL error regardless
+    # of which color they picked. The 422 status keeps the join surface's
+    # error-handler shape consistent with Pydantic palette validation, but
+    # the ``code`` discriminator lets the frontend pivot to the terminal
+    # "Foyer complet" Card per D-18-12.
+    member_count = db.scalar(
+        select(func.count(Member.id)).where(Member.household_id == household.id)
+    )
+    if member_count is not None and member_count >= len(MEMBER_COLORS):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "detail": "household full",
+                "code": "HOUSEHOLD_FULL",
+                "max_members": len(MEMBER_COLORS),
+            },
         )
 
     # Net-new member path — color uniqueness still applies.
@@ -220,3 +248,56 @@ def household_me(
         me=member,
         members=list(members),
     )
+
+
+@router.patch("/me", response_model=MemberPublic)
+async def rename_me(
+    body: MemberRenameRequest,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> MemberPublic:
+    """Rename the authenticated member — IDM-01 (D-18-01..04).
+
+    Member-scoped (``current_member``). Enforces per-household name uniqueness
+    excluding the caller's own row (D-18-02) so a no-op rename to the current
+    name is a valid 200 (idempotent). Broadcasts ``member.updated`` AFTER commit
+    per invariant #4 so partner phones reconcile via RealtimeProvider (D-18-03).
+
+    Pydantic strips whitespace + bounds 1..40 before this handler runs
+    (MemberRenameRequest in app/schemas/member.py), so an empty / 41-char body
+    short-circuits to 422 at validation.
+    """
+    new_name = body.name  # already stripped by Pydantic str_strip_whitespace
+    # D-18-02: exclude the caller's own id so renaming to current name is a no-op
+    # rather than a self-collision 409.
+    dup = db.scalar(
+        select(Member.id).where(
+            Member.household_id == member.household_id,
+            Member.name == new_name,
+            Member.id != member.id,
+        )
+    )
+    if dup is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="name already taken",
+        )
+
+    member.name = new_name
+    db.add(member)
+    db.commit()
+    db.refresh(member)
+
+    # D-18-03 / invariant #4: broadcast AFTER commit so subscribers never see
+    # a state that the DB later rolls back. ``broadcast_to_household`` swallows
+    # per-socket failures (services/realtime.py) so this await never raises.
+    await broadcast_to_household(
+        member.household_id,
+        "member.updated",
+        {
+            "id": str(member.id),
+            "name": member.name,
+            "color_hex": member.color_hex,
+        },
+    )
+    return MemberPublic.model_validate(member)
