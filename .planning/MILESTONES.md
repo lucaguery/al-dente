@@ -1,5 +1,22 @@
 # Milestones
 
+## v0.3 Audit & Uniqueness Foundation (Shipped: 2026-05-11)
+
+**Phases completed:** 4 phases (11–14), 16 plans, all 16 requirements validated (SEED × 5 + WALK × 4 + AUDIT × 4 + SYNTH × 3)
+
+**Stats:** Timeline 2026-05-09 → 2026-05-11 (3 days). 50 phase-commits. 180 files changed, +19,075 / −37 lines. **Zero product-code drift** — every line landed under `.planning/` (audit-only milestone discipline held throughout per `feedback_executor_scope_creep`).
+
+**Key accomplishments:**
+
+- **Production-accessible synthetic household** live at `https://al-dente-pink.vercel.app` (`[SYNTHETIC] Démo Al Dente`, invite code `DEMO01`). `uv run seed --prod-synthetic` runs idempotently against prod Supabase with a hard-refusal guard (uuid5 + Session.merge upsert; no duplicate-key errors across re-runs). Coverage: 1 household + 2 members + 21 recipes + 3 cooking logs + 7 votes covering all 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis). Operator-facing `RUNBOOK.md` documents refresh and teardown paths.
+- **Exploratory feature walkthrough** — `.planning/v0.3/WALKTHROUGH.md` (1,276 lines, 14 surfaces, ~64 severity-tagged findings) produced via Playwright MCP against the prod synthetic env. ~48 screenshots committed. 8 GitHub issues filed under `audit:walkthrough` label: `#1` (Sheet-01 inherited), `#2` (ingredient parser corrupts `<int> <noun>`), `#3` (stuck extraction on Gemini failure across 3 surfaces), `#4` (`MEMBER_COUNT=2` hardcoded — invariant #2 broken), `#5` (`cook_count` re-finalize idempotency — invariant #3 broken), `#6` (missing `/cooking-logs/{id}` detail route), `#7` (5-member capacity ceiling), `#8` (`PATCH /api/households/me` 405).
+- **Design quality & originality audit** — `.planning/v0.3/UI-AUDIT.md` aggregates 14 per-surface UI-REVIEWs scored under the 6-pillar rubric + new "feels generic vs feels Al Dente" originality verdict. Cumulative mean **20.21/24** across 14 surfaces (~2 below the v0.2 anchor of 22.4/24); verdict distribution **5 Feels Al Dente ✅ / 9 Mixed ⚠ / 0 Feels Generic ❌**. 13 cross-cutting observations surfaced — notably the token-completeness gap (5 surfaces share the Tailwind-palette-literal pattern where custom CSS variables would close the system) and the Pillar 6 (Experience Design) deficit (**0 of 14 surfaces score 4/4**).
+- **Synthesis & handoff** — `.planning/v0.3/ASSESSMENT.md` (510 lines, 12,582 words) combines WALK + AUDIT into a tiered ranked findings list ordered by impact on the "feels Al Dente" question. **27 ranked entries** under a locked 3-axis composite rubric (identity-signature impact / invariant-violation visible / primary-path friction; each 0-2): **2 Tier 1** (B-3 MEMBER_COUNT=2 + B-4 cook_count idempotency — both architecture-invariant violations user-visible), **8 Tier 2**, **17 Tier 3**. Closes with explicit "Inputs to next /gsd-new-milestone cycle" section (artifacts + 5 inquiry-form framing questions + 5 explicit non-prescriptions).
+- **Anti-prescription discipline enforced structurally** — `.planning/v0.3/check-assessment.sh` (24-line executable script) implements the D-08 forward-only grep gate blocking `v0.4`, prescriptive verbs (should/recommend/propose/must X), TODO/action-item, and future phase numbers (Phase 15+) while explicitly allowing past-phase citations (Phase 11/12/13). Final ASSESSMENT.md passes the gate; SYNTH-02's grep-verifiability success criterion is mechanically satisfied.
+- **Clean separation between assessment and roadmap** — ASSESSMENT.md is descriptive-only; v0.4 scoping is deliberately deferred to a separate `/gsd-new-milestone` cycle that consumes the synthesis without being authored by it.
+
+---
+
 ## v0.2.1 E2E test infrastructure (Shipped: 2026-05-09)
 
 **Phases completed:** 11 phases, 64 plans, 99 tasks
