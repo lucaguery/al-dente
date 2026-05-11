@@ -20,7 +20,7 @@ export type Recipe = {
   id: string;
   household_id: string;
   created_by_member_id: string;
-  status: "draft" | "structured" | "verified";
+  status: "draft" | "structured" | "verified" | "failed";
   title: string;
   source_capture: { type: string; payload?: unknown };
   photo_paths: string[];
