@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: executing
-stopped_at: Phase 16 context gathered (auto)
-last_updated: "2026-05-11T15:33:16.610Z"
-last_activity: 2026-05-11
+stopped_at: Phase 17 context gathered (auto)
+last_updated: "2026-05-11T15:45:25.774Z"
+last_activity: 2026-05-11 -- Phase 17 execution started
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 9
+  total_plans: 12
   completed_plans: 9
-  percent: 100
+  percent: 75
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-11 — v0.4 Current Milestone section)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 16 — Capture pipeline correctness
+**Current focus:** Phase 17 — History feature restoration
 
 ## Current Position
 
 Milestone: v0.4 (Audit Remediation & Identity Polish)
-Phase: 17
-Plan: Not started
-Status: Executing Phase 16
-Last activity: 2026-05-11
+Phase: 17 (History feature restoration) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 17
+Last activity: 2026-05-11 -- Phase 17 execution started
 
 Resume: `/gsd-discuss-phase 15` or `/gsd-plan-phase 15`.
 
@@ -105,7 +105,7 @@ None planned for v0.4 — remediation milestone consuming existing audit corpus.
 
 ## Session Continuity
 
-Last session: 2026-05-11T14:05:55.749Z
-Stopped at: Phase 16 context gathered (auto)
-Resume file: .planning/phases/16-capture-pipeline-correctness/16-CONTEXT.md
+Last session: 2026-05-11T15:35:14.478Z
+Stopped at: Phase 17 context gathered (auto)
+Resume file: .planning/phases/17-history-feature-restoration/17-CONTEXT.md
 Next: `/gsd-discuss-phase 15` or `/gsd-plan-phase 15`.
