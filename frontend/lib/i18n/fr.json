@@ -278,6 +278,17 @@
     "invite_code_copy_failed": "Impossible de copier",
     "invite_code_helper": "Partage ce code avec ton partenaire pour qu'il rejoigne le foyer.",
     "member_label": "Toi",
+    "invite_code_copy_cta": "Copier le code",
+    "member": {
+      "rename_aria": "Modifier mon prénom",
+      "rename_label": "Ton prénom",
+      "rename_placeholder": "Ton prénom",
+      "save_cta": "Enregistrer",
+      "cancel_aria": "Annuler la modification",
+      "rename_success_toast": "Nom mis à jour",
+      "rename_error_toast": "Impossible de renommer. Réessaie.",
+      "rename_409_toast": "Ce prénom est déjà pris dans le foyer."
+    },
     "export_section_title": "Exporter mes données",
     "export_body": "Télécharge toutes tes recettes au format JSON. Utile en cas de pépin.",
     "export_cta": "Télécharger mes recettes",
