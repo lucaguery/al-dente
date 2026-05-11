@@ -1,7 +1,7 @@
 """Recipe model — the canonical entity.
 
 SPEC.md §"Data model" recipes table verbatim, including:
-- recipe_status enum ('draft', 'structured', 'verified')
+- recipe_status enum ('draft', 'structured', 'verified', 'failed')
 - TEXT[] columns for mood, seasonality, tags, photo_paths
 - JSONB columns for source_capture, ingredients, steps
 - CHECK constraints on cuisine + main_protein matching the locked vocabularies
@@ -38,6 +38,7 @@ class RecipeStatus(str, enum.Enum):
     draft = "draft"
     structured = "structured"
     verified = "verified"
+    failed = "failed"
 
 
 class Recipe(Base):
