@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Copy, Check, Download, ChevronRight, Pencil, X } from "lucide-react";
+import { Bell, Copy, Check, Download, ChevronRight, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/components/SessionProvider";
 import { MemberDot } from "@/components/MemberDot";
 import { renameMe } from "@/lib/households";
+import {
+  canReceivePush,
+  registerPushSubscription,
+  unsubscribePush,
+} from "@/lib/push";
 
 // Phase 01.1 D-08: read-only settings screen with three blocks (household
 // name, invite code w/ copy, current member). Phase 01-foundations-w1
@@ -32,6 +37,19 @@ import { renameMe } from "@/lib/households";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
+// VAL-02 — Notifications Card push state. Lives at module scope so the
+// useSyncExternalStore snapshot getter is referentially stable across renders
+// (Notification.permission + canReceivePush() are read fresh each call).
+type PushState = "unsupported" | "default" | "granted" | "denied";
+
+function readPushState(): PushState {
+  if (typeof window === "undefined") return "unsupported";
+  if (!canReceivePush()) return "unsupported";
+  if (Notification.permission === "granted") return "granted";
+  if (Notification.permission === "denied") return "denied";
+  return "default";
+}
+
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const { status, session, refresh } = useSession();
@@ -44,6 +62,56 @@ export default function SettingsPage() {
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [renameSubmitting, setRenameSubmitting] = useState(false);
+
+  // VAL-02 — Notifications Card state. The Notification.permission +
+  // PushSubscription state lives outside React; read via useSyncExternalStore
+  // (same pattern as PushPermissionBanner) to avoid set-state-in-effect lint.
+  const [pushRefreshKey, setPushRefreshKey] = useState(0);
+  const [pushSubmitting, setPushSubmitting] = useState(false);
+
+  // useSyncExternalStore subscribe is a no-op: permission only flips via user
+  // action handlers below, which bump pushRefreshKey explicitly. We embed the
+  // refresh key in the snapshot so React re-evaluates after each bump.
+  const pushSnapshot = useSyncExternalStore(
+    () => () => {},
+    () => `${readPushState()}::${pushRefreshKey}`,
+    () => "unsupported::0",
+  );
+  const pushState = pushSnapshot.split("::")[0] as PushState;
+
+  const onActivatePush = async () => {
+    if (pushSubmitting) return;
+    setPushSubmitting(true);
+    try {
+      const res = await registerPushSubscription();
+      if (res.ok) {
+        toast.success(t("notifications.activated_toast"));
+      } else if (res.reason === "denied") {
+        // Permission denied at OS level — state will re-read as "denied".
+        toast(t("notifications.status_denied_explainer"));
+      } else {
+        toast.error(t("notifications.activate_failed_toast"));
+      }
+      setPushRefreshKey((k) => k + 1);
+    } finally {
+      setPushSubmitting(false);
+    }
+  };
+
+  const onDeactivatePush = async () => {
+    if (pushSubmitting) return;
+    setPushSubmitting(true);
+    try {
+      const did = await unsubscribePush();
+      // did === false just means "no subscription was active" — still ok to refresh.
+      if (did) toast.success(t("notifications.deactivated_toast"));
+      setPushRefreshKey((k) => k + 1);
+    } catch {
+      toast.error(t("notifications.activate_failed_toast"));
+    } finally {
+      setPushSubmitting(false);
+    }
+  };
 
   if (status === "loading") {
     return (
@@ -303,6 +371,61 @@ export default function SettingsPage() {
               {t("invite_code_helper")}
             </p>
           </div>
+        </Card>
+
+        {/* VAL-02 — Notifications Card. Push-recovery surface: a user who tapped
+            "Pas maintenant" on PushPermissionBanner can re-summon the request
+            from here without clearing session storage. Renders 4 states based
+            on canReceivePush() + Notification.permission. Sits between Foyer
+            and Historique to follow the semantic order: identity → group →
+            notification settings → history → backup. */}
+        <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <Bell size={18} className="text-primary" aria-hidden />
+            <span className="text-sm text-foreground-muted">
+              {t("notifications.card_title")}
+            </span>
+          </div>
+          <p className="text-sm text-foreground-muted">
+            {t("notifications.card_subtitle")}
+          </p>
+          {pushState === "unsupported" && (
+            <p className="text-sm text-foreground-muted italic">
+              {t("notifications.unsupported_note")}
+            </p>
+          )}
+          {pushState === "default" && (
+            <Button
+              className="h-12 w-full"
+              variant="default"
+              onClick={onActivatePush}
+              disabled={pushSubmitting}
+              aria-busy={pushSubmitting}
+            >
+              {t("notifications.status_default_cta")}
+            </Button>
+          )}
+          {pushState === "granted" && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-base font-medium">
+                {t("notifications.status_granted")}
+              </span>
+              <Button
+                variant="outline"
+                className="h-12"
+                onClick={onDeactivatePush}
+                disabled={pushSubmitting}
+                aria-busy={pushSubmitting}
+              >
+                {t("notifications.disable_cta")}
+              </Button>
+            </div>
+          )}
+          {pushState === "denied" && (
+            <p className="text-sm text-foreground-muted">
+              {t("notifications.status_denied_explainer")}
+            </p>
+          )}
         </Card>
 
         {/* Card 3 — Historique des cuissons. Nav entry to /cooking-logs (COOK-10
