@@ -49,7 +49,6 @@ import {
 } from "@/lib/cooking";
 
 const COOK_BANNER_SKIP_KEY = "dismissed_cooking_banner_at";
-const MEMBER_COUNT = 2; // v0.1: hard-coded household size; multi-tenant clean.
 
 type Member = { id: string; name: string; color_hex: string };
 
@@ -165,7 +164,7 @@ export function HomeDecide() {
             vote: payload.vote,
           },
         ];
-        const local = computeVoteState(recipeVotes, MEMBER_COUNT);
+        const local = computeVoteState(recipeVotes, session?.members.length ?? 0);
         if (local !== payload.state) {
           console.warn(
             "vote-state drift: local=%s server=%s",
@@ -200,7 +199,7 @@ export function HomeDecide() {
     window.addEventListener(VOTE_CREATED_DOM_EVENT, onVoteCreated);
     return () =>
       window.removeEventListener(VOTE_CREATED_DOM_EVENT, onVoteCreated);
-  }, [shortlist, me, partner, tShortlist]);
+  }, [shortlist, me, partner, session, tShortlist]);
 
   // ── Realtime: shortlist.created — APScheduler / regenerate echo ─────────
   useEffect(() => {
@@ -428,7 +427,7 @@ export function HomeDecide() {
   // upstream of both views so the same predicate applies.
   const dealableRecipes = shortlist.recipes.filter((r) => {
     const recipeVotes = shortlist.votes.filter((v) => v.recipe_id === r.id);
-    return computeVoteState(recipeVotes, MEMBER_COUNT) !== "rejete";
+    return computeVoteState(recipeVotes, session.members.length) !== "rejete";
   });
 
   // The local user's voted recipes (any vote — yes or no).
@@ -477,7 +476,6 @@ export function HomeDecide() {
           votes={shortlist.votes}
           me={me}
           partner={partner}
-          memberCount={MEMBER_COUNT}
           onCookStart={handleCookStart}
           onDelegate={handleDelegate}
           onRegenerate={() => setRegenOpen(true)}
