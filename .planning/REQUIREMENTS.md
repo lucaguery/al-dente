@@ -106,41 +106,43 @@ Explicitly excluded from v0.4. Documented to prevent scope creep.
 
 ## Traceability
 
-Empty initially; populated during roadmap creation. Each requirement maps to exactly one phase.
+Each requirement maps to exactly one phase. Coverage: 24/24 (100%).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INV-01 | TBD | Pending |
-| INV-02 | TBD | Pending |
-| CAP-01 | TBD | Pending |
-| CAP-02 | TBD | Pending |
-| CAP-03 | TBD | Pending |
-| HIST-01 | TBD | Pending |
-| HIST-02 | TBD | Pending |
-| IDM-01 | TBD | Pending |
-| IDM-02 | TBD | Pending |
-| IDM-03 | TBD | Pending |
-| IDM-04 | TBD | Pending |
-| VAL-01 | TBD | Pending |
-| VAL-02 | TBD | Pending |
-| VAL-03 | TBD | Pending |
-| VAL-04 | TBD | Pending |
-| TOK-01 | TBD | Pending |
-| TOK-02 | TBD | Pending |
-| TOK-03 | TBD | Pending |
-| P6-01 | TBD | Pending |
-| P6-02 | TBD | Pending |
-| FIX-01 | TBD | Pending |
-| FIX-02 | TBD | Pending |
-| FIX-03 | TBD | Pending |
-| FIX-04 | TBD | Pending |
+| INV-01 | Phase 15 | Pending |
+| INV-02 | Phase 15 | Pending |
+| CAP-01 | Phase 16 | Pending |
+| CAP-02 | Phase 16 | Pending |
+| CAP-03 | Phase 16 | Pending |
+| HIST-01 | Phase 17 | Pending |
+| HIST-02 | Phase 17 | Pending |
+| IDM-01 | Phase 18 | Pending |
+| IDM-02 | Phase 18 | Pending |
+| IDM-03 | Phase 18 | Pending |
+| IDM-04 | Phase 18 | Pending |
+| VAL-01 | Phase 19 | Pending |
+| VAL-02 | Phase 19 | Pending |
+| VAL-03 | Phase 19 | Pending |
+| VAL-04 | Phase 19 | Pending |
+| TOK-01 | Phase 20 | Pending |
+| TOK-02 | Phase 20 | Pending |
+| TOK-03 | Phase 20 | Pending |
+| P6-01 | Phase 21 | Pending |
+| P6-02 | Phase 21 | Pending |
+| FIX-01 | Phase 17 | Pending |
+| FIX-02 | Phase 19 | Pending |
+| FIX-03 | Phase 20 | Pending |
+| FIX-04 | Phase 18 | Pending |
 
 **Coverage:**
 - v0.4 requirements: **24** total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 24 ⚠️ (expected — populated by roadmapper)
+- Mapped to phases: **24** ✓
+- Unmapped: 0
+- Duplicate mappings: 0
+- Phase distribution: Phase 15 (2) · Phase 16 (3) · Phase 17 (3) · Phase 18 (5) · Phase 19 (5) · Phase 20 (4) · Phase 21 (2)
 
 ---
 
 *Requirements defined: 2026-05-11*
-*Last updated: 2026-05-11 — initial v0.4 definition consuming v0.3 ASSESSMENT.md*
+*Last updated: 2026-05-11 — Traceability populated by gsd-roadmapper. All 24 v0.4 requirements mapped to Phases 15-21 with 100% coverage, no orphans, no duplicates.*
