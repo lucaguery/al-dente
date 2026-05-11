@@ -41,12 +41,33 @@ export default function InboxPage() {
 
   useEffect(() => {
     let alive = true;
-    api<Recipe[]>("/api/recipes?status=draft&limit=200")
-      .then((rows) => {
-        if (alive) {
-          draftsCache = rows;
-          setDrafts(rows);
+    // Phase 16 CAP-02 / D-16-06: refetch BOTH draft and failed rows so failed
+    // cards remain visible in /inbox (the user resolves them via Réessayer or
+    // Supprimer; the row stays until one of those completes). The backend list
+    // endpoint accepts one status value at a time, so we issue two parallel
+    // GETs and merge by created_at DESC (matches the backend's ORDER BY).
+    Promise.all([
+      api<Recipe[]>("/api/recipes?status=draft&limit=200"),
+      api<Recipe[]>("/api/recipes?status=failed&limit=200"),
+    ])
+      .then(([draftRows, failedRows]) => {
+        if (!alive) return;
+        // Merge + dedupe (defensive — no overlap expected, but a race window
+        // could plausibly surface the same id in both lists during a
+        // status transition).
+        const seen = new Set<string>();
+        const merged: Recipe[] = [];
+        for (const r of [...draftRows, ...failedRows]) {
+          if (seen.has(r.id)) continue;
+          seen.add(r.id);
+          merged.push(r);
         }
+        merged.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        draftsCache = merged;
+        setDrafts(merged);
       })
       .catch(() => {
         if (alive) toast.error(tErr("network"));
@@ -63,7 +84,12 @@ export default function InboxPage() {
   useEffect(() => {
     if (!realtime) return;
     const offCreated = realtime.onEvent<Recipe>("recipe.created", (payload) => {
-      if (payload.status !== "draft") return;
+      // Phase 16 CAP-02 / D-16-06: accept both draft and failed status in the
+      // realtime add branch. Plan 16-03's retry endpoint resets failed→draft
+      // and broadcasts recipe.created with status='draft', which the existing
+      // branch handled. The 'failed' branch here is defense-in-depth for any
+      // future path that emits recipe.created on a row in the failed state.
+      if (payload.status !== "draft" && payload.status !== "failed") return;
       setDrafts((prev) => {
         const next = dedupePrepend(prev, payload);
         draftsCache = next;
@@ -74,11 +100,14 @@ export default function InboxPage() {
       setDrafts((prev) => {
         const exists = prev.some((p) => p.id === payload.id);
         let next: Recipe[];
-        if (payload.status !== "draft") {
+        // Phase 16 CAP-02 / D-16-06: keep `failed` rows in /inbox alongside
+        // `draft`. Drop only on transition to structured/verified — those are
+        // the "done" terminal states from the inbox's perspective.
+        if (payload.status !== "draft" && payload.status !== "failed") {
           // Flipped to structured/verified → drop from drafts inbox.
           next = exists ? prev.filter((p) => p.id !== payload.id) : prev;
         } else {
-          // Still draft: in-place replace, or insert if we hadn't seen it.
+          // draft or failed: in-place replace, or insert if we hadn't seen it.
           next = exists
             ? prev.map((p) => (p.id === payload.id ? payload : p))
             : dedupePrepend(prev, payload);
