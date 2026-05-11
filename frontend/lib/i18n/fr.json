@@ -85,6 +85,10 @@
       "no_match_reset": "Réinitialiser les filtres",
       "all_rejected_heading": "Aucune recette ne fait l'unanimité ce soir",
       "all_rejected_body": "Régénère le shortlist avec un autre filtre, ou choisis « Tu décides »."
+    },
+    "partner_waiting": {
+      "message": "En attente de ton/ta partenaire…",
+      "refresh_cta": "Actualiser"
     }
   },
   "vote": {
@@ -304,7 +308,11 @@
     "export_section_title": "Exporter mes données",
     "export_body": "Télécharge toutes tes recettes au format JSON. Utile en cas de pépin.",
     "export_cta": "Télécharger mes recettes",
-    "export_error": "Téléchargement impossible. Réessaie dans un instant."
+    "export_error": "Téléchargement impossible. Réessaie dans un instant.",
+    "history": {
+      "title": "Historique",
+      "cta_label": "Voir les cuissons récentes"
+    }
   },
   "onboarding": {
     "welcome": {

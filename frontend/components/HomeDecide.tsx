@@ -55,6 +55,7 @@ type Member = { id: string; name: string; color_hex: string };
 export function HomeDecide() {
   const tShortlist = useTranslations("home.shortlist");
   const tSummary = useTranslations("home.summary");
+  const tPartnerWaiting = useTranslations("home.partner_waiting");
   const { session, refresh: refreshSession } = useSession();
 
   const [shortlist, setShortlist] = useState<ShortlistResponse | null>(null);
@@ -357,7 +358,7 @@ export function HomeDecide() {
       <div className="flex flex-col flex-1 items-center justify-center px-6 gap-6">
         <div className="paper-grain shadow-card border-l-[3px] border-primary/60 rounded-xl p-6 max-w-sm w-full flex flex-col gap-4 bg-card">
           <p className="font-display italic text-base text-foreground">
-            En attente de ton/ta partenaire…
+            {tPartnerWaiting("message")}
           </p>
           {session.invite_code ? (
             <p className="font-display italic text-3xl tracking-widest text-primary text-center">
@@ -372,7 +373,7 @@ export function HomeDecide() {
               void refreshSession();
             }}
           >
-            Actualiser
+            {tPartnerWaiting("refresh_cta")}
           </Button>
         </div>
       </div>

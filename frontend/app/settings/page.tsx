@@ -430,14 +430,14 @@ export default function SettingsPage() {
 
         {/* Card 3 — Historique des cuissons. Nav entry to /cooking-logs (COOK-10
             from Phase 8). Closes audit MISSING-01 (cooking-log history page
-            had no navigation entry point). Hardcoded French copy is a
-            TODO(productize) — move to nav.cooking_history.* keys in v0.2.1
-            i18n sweep alongside the HomeDecide partner-waiting strings. */}
+            had no navigation entry point). Phase 20 FIX-03: copy routed
+            through next-intl (settings.history.*) alongside the HomeDecide
+            partner-waiting strings — invariant #6 code-layer break closed. */}
         <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
-          <span className="text-sm text-foreground-muted">Historique</span>
+          <span className="text-sm text-foreground-muted">{t("history.title")}</span>
           <Button asChild className="h-12 w-full" variant="ghost">
             <Link href="/cooking-logs" className="flex items-center justify-between">
-              <span>Voir les cuissons récentes</span>
+              <span>{t("history.cta_label")}</span>
               <ChevronRight className="h-4 w-4" aria-hidden />
             </Link>
           </Button>
