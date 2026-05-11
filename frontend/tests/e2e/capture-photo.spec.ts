@@ -70,19 +70,10 @@ test.describe('capture-photo', () => {
     expect(promoted.cuisine).toBe('french');
   });
 
-  // eslint-disable-next-line playwright/no-skipped-test -- real product bug surfaced 2026-05-09; see TODO below
-  test.fixme(
+  test(
     'photo upload sheet is reachable on iPhone-sized viewports',
     async ({ page }) => {
-      // TODO(productize): components/ui/sheet.tsx — `paper-grain` class on
-      // SheetContent overrides Tailwind `fixed`, leaving the bottom-sheet
-      // positioned in document flow at top: 702px. On iPhone SE (375x667)
-      // the entire Caméra / Photothèque sheet is offscreen; on iPhone 14
-      // (390x844) only Caméra is partially visible. Diagnosed at runtime
-      // 2026-05-09 via Playwright MCP — see 10-RUNTIME-NOTES.md "Surfaced
-      // product issues" for the root cause analysis. Re-enable this spec
-      // once sheet.tsx drops `paper-grain` (or the .paper-grain rule no
-      // longer wins over `fixed`).
+      // Guards VAL-01 / Sheet-01 (closed v0.4 Phase 19). components/ui/sheet.tsx must not re-add 'paper-grain' to SheetContent — the .paper-grain > * { position: relative } rule in globals.css would override Radix 'fixed' and push the sheet off-screen.
       await page.goto('/recipes/new');
       await page.getByRole('tab', { name: 'Photo' }).click();
 
