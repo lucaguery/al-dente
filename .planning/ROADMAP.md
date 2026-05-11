@@ -21,7 +21,7 @@
 - [x] **Phase 18: Identity management** — Member rename + household-capacity copy + invite-code Copy button. (completed 2026-05-11)
 - [x] **Phase 19: Validation surface fixes** — Sheet-01 + Push three-gap closed; seed cross-day idempotent. (completed 2026-05-11)
 - [x] **Phase 20: Token-completeness sweep** — Emerald + member colors semantic-routed; `next-intl` drift closed. (completed 2026-05-11)
-- [ ] **Phase 21: Pillar 6 deficit pass + rescore** — ≥3 surfaces flip ⚠→✅ under the v0.3 rubric; verdict shifts documented.
+- [x] **Phase 21: Pillar 6 deficit pass + rescore** — ≥3 surfaces flip ⚠→✅ under the v0.3 rubric; verdict shifts documented. (completed 2026-05-11)
 
 ## Phase Details
 
@@ -164,7 +164,7 @@
 | 18. Identity management | 4/4 | Complete    | 2026-05-11 |
 | 19. Validation surface fixes | 6/6 | Complete    | 2026-05-11 |
 | 20. Token-completeness sweep | 3/3 | Complete    | 2026-05-11 |
-| 21. Pillar 6 deficit pass + rescore | 0/0 | Not started | - |
+| 21. Pillar 6 deficit pass + rescore | 1/1 | Complete    | 2026-05-11 |
 
 ## Next Steps
 
