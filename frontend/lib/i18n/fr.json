@@ -227,8 +227,16 @@
     "promotion": {
       "in_flight": "Extraction en cours…",
       "failed_badge": "Échec",
+      "failed_label": "Extraction échouée",
+      "failed_context_fallback": "L'IA n'a pas pu extraire la recette. Réessaie ou supprime ce brouillon.",
       "retry": "Réessayer",
       "retry_aria": "Réessayer l'extraction",
+      "delete": "Supprimer",
+      "delete_aria": "Supprimer ce brouillon",
+      "delete_confirm_title": "Supprimer ce brouillon ?",
+      "delete_confirm_body": "Cette recette n'a pas pu être extraite et sera supprimée définitivement.",
+      "delete_confirm_cancel": "Annuler",
+      "delete_confirm_confirm": "Supprimer",
       "success_toast": "Ta recette « {title} » est prête !"
     },
     "voice_modify": {
