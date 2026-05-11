@@ -22,7 +22,12 @@ from app.config import settings
 from app.db import get_db
 from app.models.member import Member
 from app.models.push_subscription import PushSubscription
-from app.schemas.push import PushSubscribeResponse, PushSubscriptionRequest
+from app.schemas.push import (
+    PushSubscribeResponse,
+    PushSubscriptionRequest,
+    PushTestResponse,
+)
+from app.services.push import send_test_to_member
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/push", tags=["push"])
@@ -77,3 +82,27 @@ def subscribe(
 def vapid_public_key(_member: Member = Depends(current_member)):
     """Public-key fetch endpoint (defense-in-depth)."""
     return {"public_key": settings.vapid_public_key or ""}
+
+
+@router.post("/test", response_model=PushTestResponse, status_code=200)
+def push_test(
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+):
+    """VAL-03 — admin fire-test for Web Push.
+
+    Fires a deterministic push to every PushSubscription owned by the
+    calling member. Lets the operator verify end-to-end Web Push delivery
+    on both household iPhones without waiting for the 16:00 cron or
+    triggering a real product event.
+
+    DESIGN NOTE (D-19-11) — This endpoint does NOT emit a realtime
+    household broadcast (services/realtime is intentionally not called).
+    CLAUDE.md invariant #4 says "all household-affecting mutations
+    broadcast"; this is NOT a mutation (it only reads PushSubscription +
+    writes pywebpush + may DELETE dead subs). It is an admin-test surface,
+    not a product event. The pytest test_push_test_endpoint_fires asserts
+    the absence of any realtime broadcast call structurally.
+    """
+    delivered, failures = send_test_to_member(member.id, db)
+    return PushTestResponse(fired_to=delivered, delivery_failures=failures)
