@@ -1,5 +1,35 @@
 # Milestones
 
+## v0.4 Audit Remediation & Identity Polish (Shipped: 2026-05-11)
+
+**Phases completed:** 7 phases, 26 plans, 41 tasks
+
+**Key accomplishments:**
+
+- 1. [Rule 1 — Bug] `result.rowcount` returns `AttributeError` on `update().returning()` against an ORM-mapped entity
+- Plan:
+- Phase 17 plan-phase MUST schedule a task
+- Extended `RecipeStatus` across all three locked-vocabulary sites (Python enum, Postgres ENUM via idempotent Alembic 0006, TypeScript literal union) — terminal-state set transitioned from `{structured}` to `{structured, failed}`.
+- 1. `FRENCH_UNIT_WHITELIST` (module-level constant)
+- Closed the asymmetry between `_apply_extracted` (success path writes `status='structured'`) and `_record_failure` (was: only wrote `promotion_error`; now writes `status='failed'` alongside). Widened the list endpoint's status filter to accept `failed`, added a guarded `failed→draft` synchronous reset to the retry endpoint, and pinned both contracts with pytest regression coverage.
+- Landed the user-visible half of CAP-01 + CAP-02: failed drafts now surface a complete French recovery affordance in /inbox — Fraunces-italic "Extraction échouée" label, truncated error context, 48px Réessayer + Supprimer (with Radix AlertDialog confirm). The `isFailed` predicate switched from the legacy `promotion_error != null` workaround to the canonical `recipe.status === "failed"` now that Plan 16-03 writes status alongside the error.
+- Closed Phase 16 with two new Playwright specs under the seeded project that lock the Phase 16 contract at the E2E layer. `capture-voice-failed-recovery.spec.ts` proves CAP-01 + CAP-02 via a forced-fail seed → /inbox failed-state Card → Réessayer endpoint reset → Supprimer AlertDialog hard-delete. `recipe-form-ingredient-parser.spec.ts` proves CAP-03 via a full-form round-trip of the 4 D-16-09 French ingredient lines with a negative regression canary against the historical '4 tomates 4 tomates' duplication. The only backend change is a one-branch test-only prefix (`__TEST_FORCE_FAIL__`) added to `canned_voice_recipe` — env-flag gated and unreachable in production.
+- GET /cooking-logs list + GET /cooking-logs/{log_id} detail land in the FastAPI router, and the active-cook 409 + lookup now compute "today" in household.timezone via zoneinfo so the 22:00 Europe/Paris cook stops falling through the UTC offset.
+- Paper-grain `/cooking-logs/[id]` detail route with Fraunces italic French date header, useSession-resolved member chip, and the typed `fetchCookingLog(s)` API clients backing it.
+- `/cooking-logs` list page now consumes `fetchCookingLogs(14)` + joins recipe titles + taps through to the new HIST-02 detail page; both previously-fixme'd e2e specs (`cooking-log-history`, `cooking-log-create-finalize`) are unblocked, with the Phase 15 INV-02 double-tap idempotency assertion now load-bearing.
+- Onboarding join surface now renders a Fraunces-italic paper-grain "Foyer complet" Card with a single back CTA when the backend returns 422 with `detail.code === "HOUSEHOLD_FULL"` — replacing the silently-disabled submit button (ASSESSMENT B-6 / Issue #7).
+- Two new Playwright specs lock the Phase 18 UI contracts: settings-member-rename.spec.ts asserts the seeded Luca user can rename via Pencil → Input → Enter and see the Sonner success toast + updated Membre Card, and onboarding-household-full.spec.ts walks 6 independent BrowserContexts to fill a fresh household to capacity and assert the "Foyer complet" terminal Card renders for the 6th joiner.
+- Test-seed `CookingLog` + `DailyShortlist` UUIDs no longer encode the calendar date — `uv run seed` is now idempotent across day boundaries via `db.merge()` on stable uuid5 keys, mirroring the prod-synthetic D-10/D-11 pattern.
+- Member-scoped admin fire-test endpoint that delivers a deterministic Web Push to the caller's subscription via pywebpush, with a structurally-enforced no-realtime-broadcast invariant (D-19-11).
+- Frontend half of VAL-03 — `firePushTest` + `unsubscribePush` helpers in `frontend/lib/push.ts` and a dev-only "Tester le Web Push" button at the bottom of `/styleguide`. Backend (plan 19-03) ships the endpoint; this plan wires the operator UI.
+- Closes VAL-02 — a user who tapped "Pas maintenant" on PushPermissionBanner can now re-enable Web Push from `/settings` without clearing session storage. New paper-grain Card between Foyer and Historique renders all 4 push states (unsupported / default / granted / denied) and wires to the existing `registerPushSubscription` / `unsubscribePush` helpers from `frontend/lib/push.ts`.
+- Plan:
+- 1. [Rule 3 — Blocker] Worktree had no `node_modules`
+- 1. [Rule 1 — Doc-comment regression] RatingPicker header doc-block referenced removed literals
+- Plan:
+
+---
+
 ## v0.3 Audit & Uniqueness Foundation (Shipped: 2026-05-11)
 
 **Phases completed:** 4 phases (11–14), 16 plans, all 16 requirements validated (SEED × 5 + WALK × 4 + AUDIT × 4 + SYNTH × 3)
