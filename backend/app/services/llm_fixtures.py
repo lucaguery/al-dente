@@ -16,12 +16,32 @@ from app.services.llm import (
 )
 
 
+# Phase 16 D-16-13: test-only force-failure prefix. When the transcript
+# starts with this token, canned_voice_recipe raises so the
+# promote_voice_draft BackgroundTask hits _record_failure (Plan 16-03),
+# transitioning the row to status='failed' deterministically. The prefix
+# is a test-only convention — production transcripts never start with it.
+# Used by frontend/tests/e2e/capture-voice-failed-recovery.spec.ts.
+_FORCE_FAIL_PREFIX = "__TEST_FORCE_FAIL__"
+
+
 def canned_voice_recipe(transcript: str) -> GeminiExtractedRecipe:
     """Deterministic 'risotto' shape; ignores transcript content.
 
     The transcript is preserved in source_capture by the caller; we don't
     need to vary the output by transcript for v0.2.1 specs.
+
+    Phase 16 D-16-13: when the transcript starts with __TEST_FORCE_FAIL__,
+    raises RuntimeError so the BackgroundTask hits _record_failure (Plan
+    16-03) and the row terminates at status='failed'. The Playwright spec
+    capture-voice-failed-recovery.spec.ts uses this prefix to seed a
+    deterministic failed-state row.
     """
+    if transcript.startswith(_FORCE_FAIL_PREFIX):
+        raise RuntimeError(
+            "Extraction forcée à échouer pour les tests (D-16-13). "
+            "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
+        )
     return GeminiExtractedRecipe(
         title="Risotto aux champignons (test)",
         ingredients=[
