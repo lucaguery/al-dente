@@ -18,7 +18,7 @@
 - [x] **Phase 15: Tier 1 invariant fixes** — Vote chip computes for all household sizes; `cook_count` honors same-tx idempotency. (completed 2026-05-11)
 - [x] **Phase 16: Capture pipeline correctness** — Failed terminal state + recovery affordance; French ingredient parser round-trips cleanly. (completed 2026-05-11)
 - [x] **Phase 17: History feature restoration** — Cooking-log list + detail routes live; timezone filter correct. (completed 2026-05-11)
-- [ ] **Phase 18: Identity management** — Member rename + household-capacity copy + invite-code Copy button.
+- [x] **Phase 18: Identity management** — Member rename + household-capacity copy + invite-code Copy button. (completed 2026-05-11)
 - [ ] **Phase 19: Validation surface fixes** — Sheet-01 + Push three-gap closed; seed cross-day idempotent.
 - [ ] **Phase 20: Token-completeness sweep** — Emerald + member colors semantic-routed; `next-intl` drift closed.
 - [ ] **Phase 21: Pillar 6 deficit pass + rescore** — ≥3 surfaces flip ⚠→✅ under the v0.3 rubric; verdict shifts documented.
@@ -89,7 +89,11 @@
   2. A 6th user attempting to join a household whose 5-member `MEMBER_COLORS` palette is exhausted sees a French Fraunces-italic paper-grain Card explaining the household is full, instead of a silently-disabled submit button. The backend returns 422 with a structured error code.
   3. A user opens Settings, taps a Copy button on the invite-code Card, and sees a French `Code copié` toast confirming `navigator.clipboard.writeText` succeeded.
   4. `PATCH /api/households/me` enforces name length + uniqueness within the household, and the mutation broadcasts via `services/realtime.broadcast_to_household` (invariant #4).
-**Plans**: TBD
+**Plans**: 4 plans
+- [x] 18-01-PLAN.md — backend PATCH /households/me (rename + uniqueness + member.updated broadcast) + POST /join 422 HOUSEHOLD_FULL capacity gate + pytest regressions (IDM-01, IDM-03)
+- [x] 18-02-PLAN.md — Settings inline rename (Pencil → Input → Enter/blur, optimistic-revert) + explicit Copy button on invite-code Card + RealtimeProvider member.updated bridge → SessionProvider re-fetch + settings.member.* + invite_code_copy_cta i18n keys (IDM-02, FIX-04)
+- [x] 18-03-PLAN.md — Onboarding join 422 HOUSEHOLD_FULL discriminator → paper-grain "Foyer complet" terminal Card + onboarding.join.capacity.* i18n keys (IDM-04)
+- [x] 18-04-PLAN.md — Two new Playwright specs: settings-member-rename (seeded project) + onboarding-household-full (fresh project) (IDM-02, IDM-04)
 **UI hint**: yes
 **Key risks / threat-model flags**:
   - PATCH /households/me is a new mutation route — must broadcast per invariant #4. Phase 18 plans must call out the broadcast event name explicitly so downstream realtime consumers stay in sync.
@@ -151,15 +155,15 @@
 | 15. Tier 1 invariant fixes | 4/4 | Complete    | 2026-05-11 |
 | 16. Capture pipeline correctness | 5/5 | Complete    | 2026-05-11 |
 | 17. History feature restoration | 3/3 | Complete    | 2026-05-11 |
-| 18. Identity management | 0/0 | Not started | - |
+| 18. Identity management | 4/4 | Complete    | 2026-05-11 |
 | 19. Validation surface fixes | 0/0 | Not started | - |
 | 20. Token-completeness sweep | 0/0 | Not started | - |
 | 21. Pillar 6 deficit pass + rescore | 0/0 | Not started | - |
 
 ## Next Steps
 
-- **v0.4 Phase 17** — Run `/gsd-execute-phase 17` to land the planned 3 plans (Wave 1 parallel-safe: 17-01 backend + 17-02 frontend; Wave 2: 17-03 list-rewire + un-fixme).
+- **v0.4 Phase 18** — Run `/gsd-execute-phase 18` to land the planned 4 plans (Wave 1 parallel-safe: 18-01 backend + 18-02 settings frontend; Wave 2 parallel-safe: 18-03 onboarding capacity + 18-04 Playwright specs).
 - **Behavioral validation gate** per `SPEC.md`: ≥ 2 weeks of daily use by both household members. Still the v0.1 definition of done; orthogonal to v0.4 phases.
 
 ---
-*Last updated: 2026-05-11 — Phase 17 planned (3 plans). Wave 1 (parallel, file-disjoint): 17-01 (backend TZ-01 fix via household.timezone/zoneinfo + GET /cooking-logs list + GET /cooking-logs/{id} detail + 10 pytest regressions), 17-02 (frontend fetchCookingLogs/fetchCookingLog helpers + /cooking-logs/[id] detail page). Wave 2: 17-03 (list-page rewire to consume fetchCookingLogs + tap-to-detail navigation + un-test.fixme cooking-log-history.spec.ts AND cooking-log-create-finalize.spec.ts + detail-nav e2e assertion).*
+*Last updated: 2026-05-11 — Phase 18 planned (4 plans). Wave 1 (parallel, file-disjoint): 18-01 (backend PATCH /households/me + capacity 422 + pytest), 18-02 (Settings inline rename + explicit Copy button + RealtimeProvider member.updated bridge + i18n). Wave 2 (parallel, file-disjoint): 18-03 (Onboarding 422 → "Foyer complet" terminal Card + i18n), 18-04 (Playwright: settings-member-rename seeded + onboarding-household-full fresh).*
