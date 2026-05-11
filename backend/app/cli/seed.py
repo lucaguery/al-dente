@@ -456,7 +456,7 @@ def run_test_seed() -> None:
         for slug, rating, notes, cooked_at in log_specs:
             recipe = recipes_by_slug[slug]
             db.merge(CookingLog(
-                id=_id("cooking_log", slug, str(cooked_at.date())),
+                id=_id("cooking_log", slug),  # SEED-01 (D-19-14): NO DATE in key — cross-day idempotent. Mirrors run_prod_synthetic_seed line 782.
                 recipe_id=recipe.id,
                 household_id=household.id,
                 cooked_by_member_id=member_luca.id,
@@ -486,7 +486,7 @@ def run_test_seed() -> None:
             "ragu-bolognese", "coq-au-vin", "butter-chicken", "shawarma", "tacos-boeuf",
         ]
         shortlist = db.merge(DailyShortlist(
-            id=_id("shortlist", today.isoformat()),
+            id=_id("shortlist", "today"),  # SEED-01 (D-19-15): NO DATE in key — cross-day idempotent. Mirrors run_prod_synthetic_seed line 813.
             household_id=household.id,
             date=today,
             generation=1,
