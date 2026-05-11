@@ -16,7 +16,7 @@
 ## Phases
 
 - [x] **Phase 15: Tier 1 invariant fixes** — Vote chip computes for all household sizes; `cook_count` honors same-tx idempotency. (completed 2026-05-11)
-- [ ] **Phase 16: Capture pipeline correctness** — Failed terminal state + recovery affordance; French ingredient parser round-trips cleanly.
+- [x] **Phase 16: Capture pipeline correctness** — Failed terminal state + recovery affordance; French ingredient parser round-trips cleanly. (completed 2026-05-11)
 - [ ] **Phase 17: History feature restoration** — Cooking-log list + detail routes live; timezone filter correct.
 - [ ] **Phase 18: Identity management** — Member rename + household-capacity copy + invite-code Copy button.
 - [ ] **Phase 19: Validation surface fixes** — Sheet-01 + Push three-gap closed; seed cross-day idempotent.
@@ -52,11 +52,11 @@
   3. A user entering ingredient lines like `4 tomates`, `1 oignon rouge`, `500 g de farine` in `RecipeForm` sees them on the recipe-detail `Ingrédients` list verbatim — no `4 tomates 4 tomates` duplication.
   4. The capture pipeline still honors architecture invariant #1: all 5 surfaces (`quick`, full-form, `voice`, `photo`, `url`) return a `draft`, all promotion runs server-side in a FastAPI `BackgroundTask`, and the terminal state set is now `{structured, failed}` instead of just `{structured}`.
 **Plans**: 5 plans
-- [ ] 16-01-PLAN.md — RecipeStatus.failed enum value (Python + Postgres ENUM via Alembic 0006 + TS literal mirror) — CAP-01 foundation
-- [ ] 16-02-PLAN.md — RecipeForm ingredient parser unit-whitelist fix (CAP-03)
-- [ ] 16-03-PLAN.md — backend failed-state transition in _record_failure + retry endpoint reset + pytest regression tests (CAP-01)
-- [ ] 16-04-PLAN.md — frontend failed-state Card UI in /inbox (label + truncated error + Réessayer + Supprimer-with-AlertDialog) + inbox refetch widened to include status=failed (CAP-01, CAP-02)
-- [ ] 16-05-PLAN.md — two new Playwright specs (capture-voice-failed-recovery + recipe-form-ingredient-parser) + __TEST_FORCE_FAIL__ fixture branch (CAP-01, CAP-02, CAP-03)
+- [x] 16-01-PLAN.md — RecipeStatus.failed enum value (Python + Postgres ENUM via Alembic 0006 + TS literal mirror) — CAP-01 foundation
+- [x] 16-02-PLAN.md — RecipeForm ingredient parser unit-whitelist fix (CAP-03)
+- [x] 16-03-PLAN.md — backend failed-state transition in _record_failure + retry endpoint reset + pytest regression tests (CAP-01)
+- [x] 16-04-PLAN.md — frontend failed-state Card UI in /inbox (label + truncated error + Réessayer + Supprimer-with-AlertDialog) + inbox refetch widened to include status=failed (CAP-01, CAP-02)
+- [x] 16-05-PLAN.md — two new Playwright specs (capture-voice-failed-recovery + recipe-form-ingredient-parser) + __TEST_FORCE_FAIL__ fixture branch (CAP-01, CAP-02, CAP-03)
 **UI hint**: yes
 **Key risks / threat-model flags**:
   - Extending invariant #1 (5 capture surfaces, one shape) with a third terminal state — Alembic migration + enum update across `frontend/lib/enums.ts` AND `backend/app/models/enums.py` (locked vocabulary per `CLAUDE.md`). Drift between the two is a bug category.
@@ -146,7 +146,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Tier 1 invariant fixes | 4/4 | Complete    | 2026-05-11 |
-| 16. Capture pipeline correctness | 0/5 | Planned     | - |
+| 16. Capture pipeline correctness | 5/5 | Complete    | 2026-05-11 |
 | 17. History feature restoration | 0/0 | Not started | - |
 | 18. Identity management | 0/0 | Not started | - |
 | 19. Validation surface fixes | 0/0 | Not started | - |
