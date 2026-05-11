@@ -341,12 +341,20 @@ def _record_failure(db: Session, recipe: Recipe, exc: Exception) -> None:
     """Persist a Gemini failure to the recipe row.
 
     Truncates the message to 500 chars to limit PII leakage from a verbose
-    SDK error (T-02-01-02 mitigation). The frontend renders only an "Échec"
-    badge in v0.1 — the full message is not surfaced to the user (CONTEXT.md
-    D-09).
+    SDK error (T-02-01-02 mitigation). Phase 16 D-16-04: also flips the
+    recipe status to 'failed' so the inbox row branches on the canonical
+    terminal state rather than the `promotion_error != null` workaround.
+
+    The frontend renders the French failed-state label + truncated error
+    context + Réessayer/Supprimer actions (CONTEXT.md D-16-06; implemented
+    in Plan 16-04). The pre-Phase-16 v0.1 surface (Échec badge with retry)
+    continues to work because the failed-state branch already keys off
+    `promotion_error != null` — once the FE flips to `status === "failed"`
+    (Plan 16-04), both conditions converge.
     """
 
     log.exception("promotion failed recipe=%s", recipe.id)
+    recipe.status = "failed"
     recipe.promotion_error = str(exc)[:500]
     recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
     db.commit()
