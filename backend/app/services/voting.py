@@ -34,13 +34,15 @@ class VoteState(str, enum.Enum):
 
 def compute_vote_state(
     votes: Iterable[Vote],
-    member_count: int = 2,
+    member_count: int,
 ) -> VoteState:
     """SPEC.md §Voting state machine.
 
-    member_count defaults to 2 (v0.1 single-household couples). Parametrized
-    for future expansion (Assumption A1 in 03-RESEARCH.md). Branch order
-    matters — must be identical on the frontend mirror.
+    Phase 15 (INV-01): default removed. Callers MUST pass the live
+    `func.count(Member.id)` per household; relying on a "2" fallback
+    silently broke architecture invariant #2 in any N≠2 household (B-3).
+    Branch order matters — must be identical to the frontend mirror at
+    frontend/lib/votes.ts (drift detector at votes.ts:78-95 catches reorders).
     """
     yes_count = sum(1 for v in votes if v.vote == "yes")
     no_count = sum(1 for v in votes if v.vote == "no")
