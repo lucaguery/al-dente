@@ -92,7 +92,7 @@ Audit-only milestone. Produce a grounded, evidence-backed assessment of Al Dente
 **Out of scope:** v0.4 phase planning, v0.4 requirement definition, prescriptive recommendations. v0.4 scoping is a separate `/gsd-new-milestone` cycle that consumes (but is not authored by) `ASSESSMENT.md`.
 
 **Plans**: 2 plans
-  - [ ] 14-01-PLAN.md — Build the D-07/D-08 grep gate + draft Section 3 (Ranked findings) — 27 entries across Tier 1 (2) / Tier 2 (8) / Tier 3 (17) per locked D-03 rubric.
+  - [x] 14-01-PLAN.md — Build the D-07/D-08 grep gate + draft Section 3 (Ranked findings) — 27 entries across Tier 1 (2) / Tier 2 (8) / Tier 3 (17) per locked D-03 rubric.
   - [ ] 14-02-PLAN.md — Compose Sections 1/2/4 (Executive summary + Ranking method + Inputs to next milestone) + run pre-commit grep gate + commit + push.
 
 ## Progress
@@ -105,7 +105,7 @@ Phases execute in numeric order: 11 → 12 → 13 → 14. Phase 13 may run in pa
 | 11. Production Synthetic Household | 5/5 | Complete    | 2026-05-09 |
 | 12. Exploratory Feature Walkthrough | 5/5 | Complete    | 2026-05-09 |
 | 13. Design Quality & Originality Audit | 4/4 | Complete    | 2026-05-10 |
-| 14. Synthesis & Handoff | 0/2 | Not started | - |
+| 14. Synthesis & Handoff | 1/2 | In Progress|  |
 
 ## Next Steps
 
