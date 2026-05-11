@@ -24,6 +24,10 @@ import { test, expect } from '@playwright/test';
 // feedback_executor_scope_creep the fix is OUT of Phase 10 scope (would touch
 // product code in backend/app/routers/cooking_logs.py). Re-enable once the
 // active-cook filter uses household_tz consistently.
+//
+// Phase 15 (Plan 15-04) added the INV-02 double-tap idempotency assertion at
+// the end of the test body; still gated by TZ-01 until Phase 17 (FIX-01)
+// removes the skip marker and the eslint-disable above.
 test.describe('cooking-log-create-finalize', () => {
   // eslint-disable-next-line playwright/no-skipped-test -- backend timezone bug; see header comment
   test.fixme('cook flow updates last_cooked_at and cook_count', async ({
@@ -104,5 +108,36 @@ test.describe('cooking-log-create-finalize', () => {
         cook_count: startCookCount + 1,
         has_last_cooked: true,
       });
+
+    // ── INV-02 double-tap idempotency assertion ─────────────────────────────
+    // After the first Finaliser tap above succeeded (cook_count == start+1),
+    // simulate the user double-tapping by firing a SECOND finalize PUT
+    // against the same log_id. The backend's atomic-UPDATE-with-rowcount-gate
+    // (Phase 15 Plan 15-02) MUST return 200 with the canonical persisted
+    // state and MUST NOT increment cook_count a second time.
+    //
+    // We use `request.put` rather than navigating back to /finalize because
+    // the finalize page renders an empty state ("Cette cuisson n'est plus
+    // disponible") once the log is finalized — the second tap path is
+    // simulated via the API rather than the UI. The user-observable contract
+    // is the same: cook_count stays at start+1.
+    const secondTap = await request.put(`/api/cooking-logs/${cookingLog.id}`, {
+      data: { rating: 'liked', notes: 'Excellent ce soir.', photo_paths: [] },
+    });
+    expect(secondTap.ok()).toBeTruthy();
+
+    // cook_count must STILL be start+1 (the duplicate-tap branch of the
+    // backend's atomic guard rejects the second cook_count++ via rowcount=0).
+    await expect
+      .poll(
+        async () => {
+          const r = await request.get(`/api/recipes/${recipe!.id}`);
+          if (!r.ok()) return null;
+          const body = await r.json();
+          return body.cook_count;
+        },
+        { timeout: 5_000, intervals: [200, 500, 1000] },
+      )
+      .toBe(startCookCount + 1);
   });
 });
