@@ -222,7 +222,7 @@ function ratingChipClass(rating: LogRating): string {
     case "loved":
       return `${base} bg-surface-rose-100 text-primary border border-primary/40`;
     case "liked":
-      return `${base} bg-[var(--color-valide-tint)] text-foreground border border-emerald-500/30`;
+      return `${base} bg-[var(--color-valide-tint)] text-foreground border border-[var(--color-valide-border-faint)]`;
     case "disliked":
       return `${base} bg-muted text-muted-foreground border border-border`;
   }

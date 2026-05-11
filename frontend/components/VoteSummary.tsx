@@ -57,7 +57,7 @@ function chipClass(state: VoteState): string {
     "inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium h-8 w-fit";
   switch (state) {
     case "valide":
-      return `${base} bg-[var(--color-valide-tint)] text-foreground border border-emerald-500/30`;
+      return `${base} bg-[var(--color-valide-tint)] text-foreground border border-[var(--color-valide-border-faint)]`;
     case "pressenti":
       return `${base} bg-primary/15 text-primary border border-primary/40`;
     case "conteste":
@@ -71,7 +71,7 @@ function chipClass(state: VoteState): string {
 
 function rowBgClass(state: VoteState): string {
   return state === "valide"
-    ? "bg-valide-tint border-emerald-500/30"
+    ? "bg-valide-tint border-[var(--color-valide-border-faint)]"
     : "bg-card border-border";
 }
 

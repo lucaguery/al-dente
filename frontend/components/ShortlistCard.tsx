@@ -162,7 +162,7 @@ export function ShortlistCard({
           <>
             <motion.div
               style={{ opacity: yesOpacity }}
-              className="absolute top-6 left-6 rotate-[-15deg] origin-top-left px-3 py-1 rounded-md border-2 border-emerald-500 text-emerald-500 font-bold text-2xl tracking-wider"
+              className="absolute top-6 left-6 rotate-[-15deg] origin-top-left px-3 py-1 rounded-md border-2 border-[var(--color-valide-foreground)] text-[var(--color-valide-foreground)] font-bold text-2xl tracking-wider"
               aria-hidden
             >
               OUI
@@ -253,9 +253,9 @@ export function ShortlistThumbButtons({
         disabled={disabled}
         onClick={() => onVote("yes")}
         aria-label={t("vote_yes_aria")}
-        className="h-14 w-14 rounded-full border-2 border-emerald-500/50 hover:bg-emerald-500/10 active:scale-95 transition-transform"
+        className="h-14 w-14 rounded-full border-2 border-[var(--color-valide-border)] hover:bg-[color-mix(in_srgb,var(--color-valide-foreground)_10%,transparent)] active:scale-95 transition-transform"
       >
-        <Heart size={24} className="text-emerald-500" />
+        <Heart size={24} className="text-[var(--color-valide-foreground)]" />
       </Button>
     </div>
   );

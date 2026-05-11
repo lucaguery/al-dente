@@ -5,9 +5,10 @@
 // Required field — tapping a different card flips selection; tapping the
 // same card again does NOT clear (the Finaliser button enforces required).
 //
-// Reuses existing tokens (no new color tokens):
+// Reuses existing tokens (post-Phase 20 token sweep — emerald literals replaced by
+// semantic --color-valide-* tokens from globals.css, which carry the dark-mode swap):
 //   loved    → bg-surface-rose-100 border-2 border-primary text-primary
-//   liked    → bg-valide-tint border-2 border-emerald-500 text-emerald-700 dark:text-emerald-300
+//   liked    → bg-valide-tint border-2 border-[var(--color-valide-foreground)] text-[var(--color-valide-emphasis)]
 //   disliked → bg-surface-muted border-2 border-foreground-muted text-foreground
 
 import { Heart, ThumbsUp, Meh, type LucideIcon } from "lucide-react";
@@ -33,7 +34,7 @@ const CARDS: CardSpec[] = [
     value: "liked",
     Icon: ThumbsUp,
     selectedClass:
-      "bg-valide-tint border-2 border-emerald-500 text-emerald-700 dark:text-emerald-300",
+      "bg-valide-tint border-2 border-[var(--color-valide-foreground)] text-[var(--color-valide-emphasis)]",
   },
   {
     value: "disliked",

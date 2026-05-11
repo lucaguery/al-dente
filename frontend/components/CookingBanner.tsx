@@ -36,7 +36,7 @@ export function CookingBanner({
     >
       <ChefHat
         size={24}
-        className="text-emerald-700 dark:text-emerald-300 shrink-0"
+        className="text-[var(--color-cooking-foreground)] shrink-0"
         aria-hidden
       />
       <div className="flex-1 flex flex-col gap-0.5 min-w-0">
