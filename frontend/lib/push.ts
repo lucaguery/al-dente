@@ -93,3 +93,40 @@ export function canReceivePush(): boolean {
   if (isIos && !standalone) return false;
   return true;
 }
+
+type FirePushTestResult =
+  | { ok: true; fired_to: number; delivery_failures: number }
+  | { ok: false; reason: "post_failed" | "unsupported" };
+
+/** VAL-03 / D-19-10 — admin fire-test. POSTs to /api/push/test, returns
+ *  {fired_to, delivery_failures} on success. Same-origin via Next.js rewrite
+ *  per CLAUDE.md invariant 8. Backend endpoint shipped in plan 19-03. */
+export async function firePushTest(): Promise<FirePushTestResult> {
+  if (typeof window === "undefined") return { ok: false, reason: "unsupported" };
+  try {
+    const res = await api<{ fired_to: number; delivery_failures: number }>(
+      "/api/push/test",
+      { method: "POST" },
+    );
+    return {
+      ok: true,
+      fired_to: res.fired_to,
+      delivery_failures: res.delivery_failures,
+    };
+  } catch {
+    return { ok: false, reason: "post_failed" };
+  }
+}
+
+/** VAL-02 (consumed by plan 19-05 Settings recovery card) — unsubscribe the
+ *  active PushSubscription, if any. Returns true if a subscription existed and
+ *  was unsubscribed, false otherwise. Throws on unrecoverable errors. */
+export async function unsubscribePush(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window))
+    return false;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  if (!sub) return false;
+  return await sub.unsubscribe();
+}
