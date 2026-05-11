@@ -4,11 +4,99 @@
 
 ## Executive summary
 
-<!-- Composed in Plan 2 Task 1. Contains: 2-3 paragraphs (milestone-level conclusion, axis-(ii)-drives-Tier-1 observation, verdict-correlation finding from N-5), "How to read this document" subsection, "Calibration notes" subsection, "Limits of this assessment" subsection (T-6 P-12-Pu-01 + N-4 prod-data anomalies + iPhone-shape-Chromium scope + D-16 partial-reach push/history). -->
+The v0.3 audit corpus covers **14 surfaces** captured on iPhone-shape Chromium against the synthetic Démo Al Dente household. The Phase 13 aggregator records a verdict distribution of **5 Feels Al Dente / 9 Mixed / 0 Feels Generic** and a 6-pillar mean of **20.21/24** — below the v0.2 calibration anchor of 22.4/24 by ~2.2 points. Phase 14's synthesis collapses the 64 WALKTHROUGH probes plus the 14 UI-REVIEW pillar dockings into **27 ranked findings** distributed across three tiers: **2 in Tier 1**, **8 in Tier 2**, and **17 in Tier 3**. The 2-point delta against the v0.2 anchor does not read as a regression in design quality; it reflects Phase 13 D-13's WALKTHROUGH-evidence-pulls-scores-down docking discipline applied to the same per-surface rubric. The v0.3 audit value sits precisely in this delta — finer-grained scoring isolates the Pillar 6 (Experience Design) corpus-level deficit (0 of 14 surfaces score 4/4) that the whole-phase v0.2 averaging did not surface.
+
+The load-bearing pattern in the ranked findings is that **axis (ii) — invariant-violation visible to user — drives Tier 1**. Both Tier 1 entries (B-3 `MEMBER_COUNT=2` hardcoded; B-4 `cook_count` re-finalize doubles) score axis (ii):2 — architecture invariants from CLAUDE.md break at the user-visible layer. Identity-signature impact (axis (i)) is not absent from the corpus; it concentrates instead at Tier 2 on token-completeness clusters (C-1 emerald-Tailwind-literal across 5 surfaces, C-6 shadcn-default icons across 4 surfaces) and at the 5-member capacity-with-affordance gap (B-6). The shape of the corpus is that the design system at the rendering layer is robust — token compliance never fully fails (0 Feels Generic verdicts; 13 of 14 surfaces score 4/4 on Typography and Spacing) — while the structural correctness gaps concentrate at specific architecture-invariant break sites visible at the chip-rendering, cook-count-display, and member-count-derivation surfaces.
+
+A complementary observation drives how the verdicts and the findings correlate. Per UI-AUDIT.md "Cross-cutting observations" bullets 7-8, **the Feels Al Dente verdict correlates with editorial discipline plus identity-signature presence, NOT with the absence of bugs**. All 5 surfaces earning the Feels Al Dente verdict (capture-voice, shortlist, realtime, onboarding, settings) ALSO score Pillar 6 ≤ 2/4 — meaning each ok-verdict surface carries at least one Pillar 6 friction. The surfaces with a Fraunces-italic-display signature moment (onboarding wordmark; share-code/Settings invite code), with a `primary/60`-edged italic helper Card (capture-voice), or with a framer-motion swipe deck (shortlist) earn the verdict; utility-shaped surfaces (exports, push, capture-quick) score well on chrome but trip on Pillar 6 frictions and land in Mixed. Verdict shifts in future audits depend on multi-finding bundles and on which combination of identity-signature-vs-correctness work lands, not on single-blocker resolution. The history surface — decommissioned at the data and route layers (CL-01 missing GET endpoint + Issue #6 missing detail route) yet rendering-clean across Color, Typography, and Spacing — is the cleanest illustration: a surface can render correctly and still ship as functionally broken.
+
+### How to read this document
+
+This document is descriptive. It surfaces opportunities and tradeoffs across the v0.3 audit corpus. It does **not** order remediation, name future phases, estimate effort, or prioritize implementation. Tier ordering reflects impact on "feels Al Dente", **not** implementation priority — these are different axes. A Tier 2 cluster (e.g., C-1 token-completeness across 5 surfaces, single coordinated fix scope) may legitimately be tackled before a Tier 1 standalone entry if coordination or implementation cost considerations point that way; the next milestone weighs that tradeoff against the inputs named in Section 4.
+
+Each ranked entry exposes its 3-axis impact score inline (`(i:N / ii:N / iii:N, total N)`) per Section 2's rubric. A reader can challenge a rank by pointing at a specific axis score and the cited source artifact, then re-deriving the total. Source citations use the anchor-cite format established in Phase 12 D-04 and Phase 13 D-12 (WALKTHROUGH §surface finding-id / UI-AUDIT §surface / Issue #N / ui-reviews/surface-UI-REVIEW.md Pillar N) — no quote excerpts, deterministic navigation between artifacts.
+
+Section 4 names the artifacts, open framing questions, and explicit non-prescriptions the next `/gsd-new-milestone` cycle consumes — naming inputs without dictating outputs.
+
+### Calibration notes
+
+- **v0.2 anchor.** UI-AUDIT.md "Calibration notes" records a v0.2 milestone-level mean of **22.4/24** across 5 phases (best 23/24, whole-phase scoring). The v0.3 mean of **20.21/24** lands ~2.2 points below this anchor. Per Phase 13 D-13's WALKTHROUGH-evidence-pulls-scores-down convention, the delta is driven by per-surface docking against WALKTHROUGH-cited frictions rather than by visual-quality regression. The v0.3 mean is read as a more rigorous evidence-pulling rubric applied to the same surface family, not as a quality regression.
+
+- **Pillar 6 corpus-level deficit.** Per UI-AUDIT.md "Cross-cutting observations" bullet 5, **0 of 14 surfaces score 4/4 on Pillar 6 (Experience Design)**. The distribution: 0/4 (push), 1/4 (capture-photo, capture-url, vote, cooking-log, history, exports — 6 surfaces), 2/4 (capture-quick, capture-full, capture-voice, shortlist, realtime, onboarding, settings — 7 surfaces). The Pillar 6 deficit is the corpus-level finding that whole-phase v0.2 scoring (22.4/24 averages absorbed friction docks) did not isolate. The ranked findings in Section 3 are the specific entries that drive each Pillar 6 dock.
+
+- **Score band per Phase 13 D-15.** The v0.3 mean of 20.21/24 places the corpus in a "shipped quality, with friction" band — not in a "needs rework" band. This is descriptive context for the ranked findings, not a verdict-equivalent score. Score outliers above 22/24 (capture-voice 22/24, defensible per UI-AUDIT calibration notes) and below 18/24 (history 18/24, driven by structural decommissioning rather than visual failure) bracket the distribution.
+
+### Limits of this assessment
+
+This assessment is honest about what it does NOT cover. The "Partially reached" annotation from Phase 13 D-16 is inherited and extended to the corpus level.
+
+- **iPhone-shape-Chromium-only viewport.** The corpus exercises a **390×844 isMobile/hasTouch Chromium viewport** (matching v0.2.1 Phase 10 Playwright config). Cross-browser quirks (Safari iOS, Chrome Android, in-app browsers), tablet layouts, and desktop layouts are out of scope per `.planning/REQUIREMENTS.md` Out of Scope. Findings calibrated against this single viewport may be Chromium-specific.
+
+- **Couple-scale (4-member) synthetic household.** The audit ran against a 4-member Démo household (auditor + Joe persisted from Phase 12 cookie collisions as members 3 and 4). N>5 capacity behavior is not exercised; Issue #7 capacity ceiling stands at N=5 (per UI-AUDIT.md cross-cutting bullet 12 reconciliation against `frontend/lib/colors.ts`); behavior beyond N=5 is not extrapolated.
+
+- **D-16 partial-reach surfaces (push, history).** Phase 13 marked **2 of 14 surfaces** "Partially reached." (a) **push** — OS-rendered notification UI is not auditable as a frontend surface; the iOS-PWA-only gate cannot be exercised in headless Chromium; end-to-end delivery round-trip is operator-deferred per P-12-Pu-05. (b) **history** — the page renders empty for valid data because the GET endpoint is missing (CL-01, captured as B-10); the per-log detail route renders 404 because no `[id]/page.tsx` exists (Issue #6, captured as B-5). Ranking entries for these surfaces are read with this caveat — the visible chrome that IS reachable was scored cleanly; the rubric handles "external system isn't a frontend surface" without docking innocently.
+
+- **Audit-environment-only blockers (excluded from ranking).** P-12-Pu-01 (push subscribe blocked under headless Chromium) is an audit-process observation, not a product finding, and was excluded from the 27-entry set per the Plan 1 T-6 resolution. P-12-Pu-04 stuck-toggle reproduction folds into B-13's push UX three-gap cluster rather than surfacing as a standalone entry.
+
+- **Audit-corpus prod-data anomalies.** The audit observed corpus-state anomalies inherited across Phase 12, 13, and 14: Coq au vin's `cook_count=2` (cited as B-4 evidence), 7+ stuck `(extraction en cours…)` drafts in the inbox (cited as C-4 cluster cumulative evidence), Joe's unfinalized active cook on Pad thai tofu, the auditor + Joe persisting as members 3 and 4 from cookie collisions. These are corpus-state observations rather than product findings, but they shape what was reachable for re-probing. Phase 14 reads the live state with these anomalies present; no re-probing and no synthetic-env reset took place between Phase 12, 13, and 14.
 
 ## Ranking method
 
-<!-- Composed in Plan 2 Task 2. Contains: D-03 3-axis rubric exposed (axis i / ii / iii definitions); 0-2 scale; tier mapping (≥4 / 2-3 / 0-1); tie-breaker rule (axis i → axis ii → axis iii); reference table. -->
+Ranked findings are scored on **three orthogonal axes, each 0-2, total 0-6**. Tier mapping: total ≥ 4 → Tier 1; total 2-3 → Tier 2; total 0-1 → Tier 3. Within tier, entries are ordered by total score descending, with axis (i) as primary tie-breaker, axis (ii) as secondary, axis (iii) as tertiary. The rubric is exposed in full so a reader can audit any rank by pointing at a specific axis score and the cited source.
+
+### Axis (i) — Identity-signature impact (0-2)
+
+Does the entry compromise an Al Dente identity-bearing element? The identity-signature set inherits from Phase 13 D-02's "feels Al Dente" hybrid definition (token compliance + editorial cohesion):
+
+- Fraunces display moments (wordmark; share-code/Settings invite code; voice helper italic margin-note; shortlist `text-title`; cooking-log `text-title`).
+- Terracotta primary at hue ≈ 35° (the CTA-and-emphasis token register).
+- Paper-grain Card chassis (the warm-paper texture applied to the primary Card body across surfaces).
+- Two-layer warm-brown shadows (the `--shadow-warm-{soft,medium}` token register).
+- Framer-motion swipe-deck physics (shortlist's signature interaction).
+- Slow Food editorial copy register (second-person familiar `tu`/`te`; warm specifics like `pépin`, `J'ai prévenu ma partenaire`; refusal of generic SaaS register).
+
+Scoring:
+- **2** — entry breaks an identity-signature element directly (the visible artifact that defines a Slow Food moment misfires, is suppressed, or is replaced by a generic equivalent).
+- **1** — entry degrades an identity-bearing element peripherally (the signature register is intact at the chrome layer but compromised at a peripheral readable surface — e.g., a corrupt `Ingrédients` list under a paper-grain Card; an emerald-Tailwind-literal undermines token-completeness without breaking the visual moment).
+- **0** — no impact on identity surfaces.
+
+### Axis (ii) — Invariant-violation visible to user (0-2)
+
+Does the entry expose an architecture invariant breaking at the user-visible layer? The 8 invariants are documented in CLAUDE.md "Architecture invariants" (capture-pipeline single shape; voting state computed not stored; denormalized `last_cooked_at`/`cook_count`; realtime broadcast contract; raw inputs kept forever; next-intl French-only; single uvicorn worker; HttpOnly cookie auth).
+
+Scoring:
+- **2** — invariant breaks user-visibly (e.g., MEMBER_COUNT=2 hardcoded inverts the 5-state chip meaning in non-2-member households; cook_count doubles after re-finalize and renders as `Cuisinée 2 fois` after one cook; a route absence flips a surface to a framework-default 404; CL-01 GET endpoint missing renders history empty).
+- **1** — invariant breaks at the code layer but is masked from the user (e.g., the canonical docstring for `services/realtime` lists 6 broadcast events while the live code emits 7 — doc-vs-code drift with no user effect; a contract is "invariant-adjacent" rather than invariant-explicit).
+- **0** — no invariant impact.
+
+### Axis (iii) — Friction at primary tap-path (0-2)
+
+Does the entry friction the surface's primary user action? Primary tap-paths are defined per surface:
+
+- **Capture (quick / full / voice / photo / url):** submit the capture; see the draft become structured.
+- **Shortlist / vote:** swipe or tap a recipe; see the vote chip reflect the household's decision state.
+- **Cooking-log:** tap `Finaliser`; see the cook recorded.
+- **History:** navigate to a per-log detail; see the cook's notes and metadata.
+- **Onboarding:** copy the share-code or join via a 6-character code; see the household member list populate.
+- **Settings:** read or change the household identity (name, invite code, member list).
+- **Exports / push / realtime:** trigger the action and see the artifact (JSON download / notification / WS frame) arrive.
+
+Scoring:
+- **2** — primary tap-path is gated, blocked, or produces the wrong result (e.g., Sheet-01 clips the photo-source button 35px past the viewport; the ingredient parser corrupts `<int> <noun>` lines so the round-tripped recipe-detail page reads wrong).
+- **1** — primary tap-path completes but with friction (e.g., no-debounce-on-submit double-fires the request; a 422 surfaces as a generic `Connexion impossible` toast that conflates validation and connectivity).
+- **0** — no primary-path impact (secondary surfaces, doc rot, observability gaps).
+
+### Tier-mapping reference table
+
+| Total score | Tier | Read |
+|-------------|------|------|
+| ≥ 4 | Tier 1 | Highest "feels Al Dente" impact — the milestone-level load-bearing findings. |
+| 2-3 | Tier 2 | Mid-impact — cross-cutting clusters and standalone correctness gaps. |
+| 0-1 | Tier 3 | Low-impact — doc rot, nits, audit-time deltas, observability/i18n drift, single-axis frictions. |
+
+### Tie-breaker rule
+
+When two entries within a tier carry identical total scores, **axis (i) takes precedence**. The reasoning: identity-signature impact most directly addresses the "feels Al Dente" question that defines the rubric. Within an axis-(i) tie, **axis (ii)** (architecture-invariant correctness) is the secondary tie-breaker; within an axis-(i)+(ii) tie, **axis (iii)** (primary-path friction) is tertiary. When all three axes match, ordering within tier is arbitrary; entries grouped by total-and-axis profile are read as peers rather than as ordered 1..N.
 
 ## Ranked findings
 
