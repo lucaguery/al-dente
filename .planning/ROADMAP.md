@@ -15,7 +15,7 @@
 
 ## Phases
 
-- [ ] **Phase 15: Tier 1 invariant fixes** — Vote chip computes for all household sizes; `cook_count` honors same-tx idempotency.
+- [x] **Phase 15: Tier 1 invariant fixes** — Vote chip computes for all household sizes; `cook_count` honors same-tx idempotency. (completed 2026-05-11)
 - [ ] **Phase 16: Capture pipeline correctness** — Failed terminal state + recovery affordance; French ingredient parser round-trips cleanly.
 - [ ] **Phase 17: History feature restoration** — Cooking-log list + detail routes live; timezone filter correct.
 - [ ] **Phase 18: Identity management** — Member rename + household-capacity copy + invite-code Copy button.
@@ -34,10 +34,10 @@
   2. A user can tap `Finaliser` twice on the same `cooking_log` and the recipe's `cook_count` increments exactly once (and `last_cooked_at` stays stable) — observable on the recipe-detail surface and verifiable via DB read.
   3. Architecture invariants #2 (voting state computed) and #3 (same-tx denormalized) hold under audit-revisit: neither invariant introduces nor relaxes a contract.
 **Plans**: 4 plans
-- [ ] 15-01-PLAN.md — pytest scaffolding (pyproject.toml + tests/conftest.py)
-- [ ] 15-02-PLAN.md — backend atomic UPDATE rewrite of finalize_cooking_log + first Python tests (INV-01 backend, INV-02)
-- [ ] 15-03-PLAN.md — frontend MEMBER_COUNT removal (HomeDecide, VoteSummary) + 5-state regression canary spec (INV-01 frontend)
-- [ ] 15-04-PLAN.md — extend cooking-log-create-finalize.spec.ts with double-tap idempotency assertion (stays test.fixme until Phase 17 closes TZ-01)
+- [x] 15-01-PLAN.md — pytest scaffolding (pyproject.toml + tests/conftest.py)
+- [x] 15-02-PLAN.md — backend atomic UPDATE rewrite of finalize_cooking_log + first Python tests (INV-01 backend, INV-02)
+- [x] 15-03-PLAN.md — frontend MEMBER_COUNT removal (HomeDecide, VoteSummary) + 5-state regression canary spec (INV-01 frontend)
+- [x] 15-04-PLAN.md — extend cooking-log-create-finalize.spec.ts with double-tap idempotency assertion (stays test.fixme until Phase 17 closes TZ-01)
 **Key risks / threat-model flags**:
   - Touches shared modules (`services/voting`, `cooking_logs.py`) that later phases (17, 18) also touch — landing first minimizes merge churn.
   - Architecture invariants #2 + #3 are load-bearing per `CLAUDE.md`. Any plan reviewer must verify the invariant contract is preserved, not just the bug fix.
@@ -140,7 +140,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Tier 1 invariant fixes | 0/4 | Planned | - |
+| 15. Tier 1 invariant fixes | 4/4 | Complete    | 2026-05-11 |
 | 16. Capture pipeline correctness | 0/0 | Not started | - |
 | 17. History feature restoration | 0/0 | Not started | - |
 | 18. Identity management | 0/0 | Not started | - |
