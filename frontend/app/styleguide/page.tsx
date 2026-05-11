@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { toast } from "sonner";
 
 import { variants, transitions } from "@/lib/motion";
+import { firePushTest } from "@/lib/push";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -136,11 +137,29 @@ export default function StyleguidePage() {
 
   const [slideVisible, setSlideVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [firingPush, setFiringPush] = useState(false);
 
   const toggleDark = () => {
     if (typeof document === "undefined") return;
     document.documentElement.classList.toggle("dark");
     setDarkMode((prev) => !prev);
+  };
+
+  const onFirePushTest = async () => {
+    if (firingPush) return;
+    setFiringPush(true);
+    try {
+      const res = await firePushTest();
+      if (res.ok) {
+        toast.success(
+          `Test envoyé : ${res.fired_to} notification(s) (${res.delivery_failures} échec(s))`,
+        );
+      } else {
+        toast.error(`Test échoué — ${res.reason}`);
+      }
+    } finally {
+      setFiringPush(false);
+    }
   };
 
   return (
@@ -608,6 +627,30 @@ export default function StyleguidePage() {
           </div>
         </div>
       </section>
+
+      {/* (k) Push (dev only) — VAL-03 admin fire-test.
+          Defensive guard even though the whole /styleguide route 404s in
+          production (line 133). Calls firePushTest() which POSTs to
+          /api/push/test (backend route shipped in plan 19-03). */}
+      {process.env.NODE_ENV === "development" && (
+        <section className="flex flex-col gap-6">
+          <h2 className="text-title">Push (dev only)</h2>
+          <p className="text-body text-foreground-muted">
+            Fire-test admin pour la livraison Web Push. Envoie une notification
+            déterministe à toutes les souscriptions de ce membre. Ne diffuse PAS
+            via realtime (admin-only).
+          </p>
+          <Button
+            variant="default"
+            className="self-start"
+            onClick={onFirePushTest}
+            disabled={firingPush}
+            aria-busy={firingPush}
+          >
+            Tester le Web Push
+          </Button>
+        </section>
+      )}
     </main>
   );
 }
