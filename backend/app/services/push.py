@@ -121,3 +121,83 @@ def send_push_to_household(
         cleaned,
         len(subs),
     )
+
+
+def send_test_to_member(
+    member_id: UUID,
+    db: Session,
+) -> tuple[int, int]:
+    """VAL-03 — admin-test push fan-out scoped to a single member.
+
+    Mirrors the wire pattern of send_push_to_household but DOES NOT broadcast
+    via services/realtime (D-19-11). Hard-coded French payload per D-19-09.
+
+    Returns (delivered, delivery_failures). 404/410 responses prune the dead
+    subscription row (consistent with the fan-out path) and are NOT counted
+    as failures.
+    """
+    if webpush is None:
+        log.warning("pywebpush not installed; push.test skipping member=%s", member_id)
+        return (0, 0)
+    if not settings.vapid_private_key or not settings.vapid_email:
+        log.warning("VAPID env vars missing; push.test skipping member=%s", member_id)
+        return (0, 0)
+
+    subs = list(
+        db.scalars(
+            select(PushSubscription).where(PushSubscription.member_id == member_id)
+        ).all()
+    )
+    if not subs:
+        log.info("push.test member=%s no subscriptions", member_id)
+        return (0, 0)
+
+    # Hard-coded admin-test payload per D-19-09. Non-localized — admin tool.
+    wire_payload = {
+        "title": "Test al dente",
+        "body": "Notification de test depuis /styleguide",
+        "url": "/",
+    }
+    body = json.dumps(wire_payload, separators=(",", ":"))
+
+    delivered = 0
+    failures = 0
+    cleaned = 0
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info=sub.subscription,
+                data=body,
+                vapid_private_key=settings.vapid_private_key,
+                vapid_claims={"sub": f"mailto:{settings.vapid_email}"},
+            )
+            delivered += 1
+        except WebPushException as exc:  # type: ignore[misc]
+            status = (
+                getattr(exc, "response", None) and exc.response.status_code
+            )
+            if status in (404, 410):
+                db.delete(sub)
+                cleaned += 1
+                log.info("push.test cleaning sub=%s status=%s", sub.id, status)
+            else:
+                failures += 1
+                log.warning("push.test failed sub=%s status=%s", sub.id, status)
+        except Exception as exc:  # noqa: BLE001 — never break on push
+            failures += 1
+            log.warning(
+                "push.test unexpected error sub=%s err=%s",
+                sub.id,
+                type(exc).__name__,
+            )
+    if cleaned:
+        db.commit()
+    log.info(
+        "push.test member=%s delivered=%d failures=%d cleaned=%d total=%d",
+        member_id,
+        delivered,
+        failures,
+        cleaned,
+        len(subs),
+    )
+    return (delivered, failures)
