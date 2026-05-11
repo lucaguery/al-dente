@@ -19,7 +19,7 @@
 - [x] **Phase 16: Capture pipeline correctness** — Failed terminal state + recovery affordance; French ingredient parser round-trips cleanly. (completed 2026-05-11)
 - [x] **Phase 17: History feature restoration** — Cooking-log list + detail routes live; timezone filter correct. (completed 2026-05-11)
 - [x] **Phase 18: Identity management** — Member rename + household-capacity copy + invite-code Copy button. (completed 2026-05-11)
-- [ ] **Phase 19: Validation surface fixes** — Sheet-01 + Push three-gap closed; seed cross-day idempotent.
+- [x] **Phase 19: Validation surface fixes** — Sheet-01 + Push three-gap closed; seed cross-day idempotent. (completed 2026-05-11)
 - [ ] **Phase 20: Token-completeness sweep** — Emerald + member colors semantic-routed; `next-intl` drift closed.
 - [ ] **Phase 21: Pillar 6 deficit pass + rescore** — ≥3 surfaces flip ⚠→✅ under the v0.3 rubric; verdict shifts documented.
 
@@ -111,12 +111,12 @@
   4. The P-12-Pu-05 operator deferral is closed: a documented push delivery round-trip observation lands in `.planning/v0.4/` confirming end-to-end Web Push works on both iPhones via the new admin-test endpoint.
   5. Re-running `uv run seed` across calendar days is a no-op — no duplicate-key errors at `cli/seed.py:369,405`; `docker compose down -v` is no longer required for daily re-seeds.
 **Plans**: 6 plans
-- [ ] 19-01-PLAN.md — Drop `paper-grain` from `SheetContent` + un-`test.fixme` the `capture-photo.spec.ts` viewport spec (VAL-01)
-- [ ] 19-02-PLAN.md — Drop date components from test-seed CookingLog + DailyShortlist UUIDs + new `test_seed_cross_day_no_duplicates` pytest (FIX-02)
-- [ ] 19-03-PLAN.md — Backend `POST /push/test` admin endpoint + `send_test_to_member` service helper + `PushTestResponse` schema + pytest asserting no realtime broadcast (VAL-03 backend)
-- [ ] 19-04-PLAN.md — `firePushTest` + `unsubscribePush` helpers in `frontend/lib/push.ts` + dev-only "Tester le Web Push" button on `/styleguide` + human-verify checkpoint for round-trip on both iPhones (VAL-03 frontend)
-- [ ] 19-05-PLAN.md — Settings Notifications Card with 4-state UI (default / granted / denied / unsupported) + `settings.notifications.*` i18n keys (VAL-02)
-- [ ] 19-06-PLAN.md — `.planning/v0.4/PUSH-ROUNDTRIP.md` template with `[pending: operator]` evidence slots closing P-12-Pu-05 (VAL-04)
+- [x] 19-01-PLAN.md — Drop `paper-grain` from `SheetContent` + un-`test.fixme` the `capture-photo.spec.ts` viewport spec (VAL-01)
+- [x] 19-02-PLAN.md — Drop date components from test-seed CookingLog + DailyShortlist UUIDs + new `test_seed_cross_day_no_duplicates` pytest (FIX-02)
+- [x] 19-03-PLAN.md — Backend `POST /push/test` admin endpoint + `send_test_to_member` service helper + `PushTestResponse` schema + pytest asserting no realtime broadcast (VAL-03 backend)
+- [x] 19-04-PLAN.md — `firePushTest` + `unsubscribePush` helpers in `frontend/lib/push.ts` + dev-only "Tester le Web Push" button on `/styleguide` + human-verify checkpoint for round-trip on both iPhones (VAL-03 frontend)
+- [x] 19-05-PLAN.md — Settings Notifications Card with 4-state UI (default / granted / denied / unsupported) + `settings.notifications.*` i18n keys (VAL-02)
+- [x] 19-06-PLAN.md — `.planning/v0.4/PUSH-ROUNDTRIP.md` template with `[pending: operator]` evidence slots closing P-12-Pu-05 (VAL-04)
 **UI hint**: yes
 **Key risks / threat-model flags**:
   - VAL-01 is a CSS source-order fix with no API change — but Sheet-01 has been the gating block on `capture-photo.spec.ts` since v0.2.1 Phase 10. Verification gate must confirm the `test.fixme` removal, not just the visual fix.
@@ -162,7 +162,7 @@
 | 16. Capture pipeline correctness | 5/5 | Complete    | 2026-05-11 |
 | 17. History feature restoration | 3/3 | Complete    | 2026-05-11 |
 | 18. Identity management | 4/4 | Complete    | 2026-05-11 |
-| 19. Validation surface fixes | 0/6 | Planned     | - |
+| 19. Validation surface fixes | 6/6 | Complete    | 2026-05-11 |
 | 20. Token-completeness sweep | 0/0 | Not started | - |
 | 21. Pillar 6 deficit pass + rescore | 0/0 | Not started | - |
 
