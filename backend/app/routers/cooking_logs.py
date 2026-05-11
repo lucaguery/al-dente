@@ -11,11 +11,23 @@ COOK-02: GET /cooking-logs/active returns the unfinalized log for today's
 household (rating IS NULL proxy per A5 in 03-RESEARCH.md), or null. Used
 by the home banner.
 
+FIX-01 / TZ-01 (Phase 17): the COOK-01 409 guard and COOK-02 active
+lookup compute "today" in the household's IANA timezone via
+_household_today_in_tz(), and compare against `cooked_at AT TIME ZONE
+household.timezone` via _cooked_at_in_tz_date(). Late-evening cooks no
+longer fall through across the UTC offset window.
+
 COOK-03 + COOK-05: PUT /cooking-logs/{id} accepts {photo_paths, rating,
 notes}, finalizes the log, and in the SAME DB TRANSACTION updates the
 parent recipe's last_cooked_at, cook_count (only on first finalization),
 and last_cooked_photo_path. Broadcasts both `cooking.finalized` and
 `recipe.updated` so the partner phone refreshes immediately.
+
+Phase 17 / HIST-01 + HIST-02: GET /cooking-logs?days=N returns the
+household's finalized logs from the last N days (sorted cooked_at
+DESC). GET /cooking-logs/{log_id} returns a single household-scoped
+log (404 not 403 on cross-household per T-04-01-03). Both are
+read-only — no realtime broadcast (invariant #4 unaffected).
 
 Phase 4 photos: POST /cooking-logs/{id}/photos mirrors the recipe-photos
 endpoint (magic-byte sniff, 8 MiB cap, server-side path under
@@ -26,8 +38,10 @@ Per Pattern 7: 409 Conflict if an unfinalized log already exists today.
 """
 from __future__ import annotations
 
+import logging
 from datetime import date as DateType, datetime, timezone
 from uuid import UUID
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, select, update
@@ -36,6 +50,7 @@ from sqlalchemy.orm import Session
 from app.auth import current_member
 from app.db import get_db
 from app.models.cooking_log import CookingLog
+from app.models.household import Household
 from app.models.member import Member
 from app.models.recipe import Recipe
 from app.schemas.cooking_log import CookingLogFinalizeRequest, CookingLogResponse
@@ -50,6 +65,54 @@ from app.services.storage import (
 
 # SPEC.md: photo_paths ≤ 4 — mirror the recipe rule for cooking-log photos.
 MAX_PHOTOS_PER_COOKING_LOG = 4
+
+logger = logging.getLogger(__name__)
+
+
+def _household_today_in_tz(household: Household) -> DateType:
+    """Return today's date in household.timezone.
+
+    FIX-01 / TZ-01 (per D-17-08): the active-cook filter must compare
+    household-tz date to `cooked_at AT TIME ZONE household.timezone` —
+    not Python's local-tz date to UTC. Late-evening cooks at 22:00
+    Europe/Paris previously fell through because cooked_at stored UTC
+    was already the next UTC day while the filter used local-tz today.
+
+    Defensive fallback: invalid IANA timezone names (legacy 'PST',
+    typos) emit a warning log and default to UTC — D-17 Claude's
+    Discretion: "default to UTC fallback with a warn log".
+    """
+    try:
+        tz = ZoneInfo(household.timezone)
+    except ZoneInfoNotFoundError:
+        logger.warning(
+            "household_invalid_timezone household_id=%s timezone=%r fallback=UTC",
+            household.id,
+            household.timezone,
+        )
+        tz = ZoneInfo("UTC")
+    return datetime.now(tz).date()
+
+
+def _cooked_at_in_tz_date(household: Household):
+    """SQL expression: date(cooked_at AT TIME ZONE household.timezone).
+
+    `func.timezone(tz, ts)` shifts a timestamptz to a NAIVE timestamp in
+    the named zone — `func.date(...)` then extracts the calendar date in
+    that zone. Mirrors `_household_today_in_tz` so the Python "today"
+    and the SQL "log's cooked-day" use the SAME tz.
+
+    Bad-tz fallback is consistent with the Python helper: if the
+    household timezone is invalid we fall back to 'UTC' here too so the
+    filter at least functions instead of raising at query time.
+    """
+    tz_name = household.timezone
+    try:
+        ZoneInfo(tz_name)
+    except ZoneInfoNotFoundError:
+        tz_name = "UTC"
+    return func.date(func.timezone(tz_name, CookingLog.cooked_at))
+
 
 # Two prefixes — POST is /recipes/{id}/cook (lives under /recipes for
 # discoverability), GET is /cooking-logs/active. Use one router with no
@@ -74,12 +137,21 @@ async def start_cooking(
     if recipe is None or recipe.household_id != member.household_id:
         raise HTTPException(404, "recipe not found")
 
-    # 409 if an unfinalized session exists today for this household
-    today = DateType.today()
+    # 409 if an unfinalized session exists today for this household.
+    # FIX-01 / TZ-01 (D-17-08, D-17-09): "today" is the household's
+    # IANA-timezone calendar day, compared against the log's `cooked_at AT TIME
+    # ZONE household.timezone` date. Late-evening cooks no longer fall through.
+    household = db.get(Household, member.household_id)
+    if household is None:
+        # current_member guarantees household_id refers to a real row, but
+        # defensive guard: 404 rather than 500 if the row was deleted between
+        # auth and this read.
+        raise HTTPException(404, "household not found")
+    today = _household_today_in_tz(household)
     existing = db.scalar(
         select(CookingLog).where(
             CookingLog.household_id == member.household_id,
-            func.date(CookingLog.cooked_at) == today,
+            _cooked_at_in_tz_date(household) == today,
             CookingLog.rating.is_(None),
         )
     )
@@ -119,12 +191,20 @@ def get_active_cooking_log(
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
 ):
-    """COOK-02: today's unfinalized cooking log for the household, or null."""
-    today = DateType.today()
+    """COOK-02: today's unfinalized cooking log for the household, or null.
+
+    FIX-01 / TZ-01: "today" is the household's IANA-timezone calendar day; the
+    SQL comparison shifts `cooked_at` into the same zone before extracting the
+    date (D-17-09 — both callsites share the same TZ boundary).
+    """
+    household = db.get(Household, member.household_id)
+    if household is None:
+        return None
+    today = _household_today_in_tz(household)
     log_row = db.scalar(
         select(CookingLog).where(
             CookingLog.household_id == member.household_id,
-            func.date(CookingLog.cooked_at) == today,
+            _cooked_at_in_tz_date(household) == today,
             CookingLog.rating.is_(None),
         )
     )
