@@ -146,14 +146,20 @@ async def finalize_cooking_log(
     """COOK-03 + COOK-05: finalize a cooking log and denormalize the parent
     recipe in the SAME DB TRANSACTION (architecture invariant #3).
 
-    Same household-scoped 404 policy as photos.py — cross-household reads do
-    not leak existence (T-04-01-03).
+    Phase 15 (INV-02 / B-4): atomic UPDATE-with-rowcount-gate replaces the
+    Python check-then-act `is_first_finalize = log_row.rating is None`. Two
+    concurrent PUTs can no longer both observe rating=NULL and both fire
+    `cook_count + 1`; Postgres row-level UPDATE locking serializes the
+    contenders, and rowcount=0 on the loser cleanly returns the canonical
+    persisted state.
 
-    Idempotency: re-PUT of an already-finalized log does NOT double-count
-    cook_count (T-04-01-06). The "is_first_finalize" check is captured BEFORE
-    the rating assignment so subsequent finalizations only refresh
-    last_cooked_at + last_cooked_photo_path.
+    Same household-scoped 404 policy as photos.py — cross-household reads do
+    not leak existence (T-04-01-03). We do a SELECT-first existence check so
+    rowcount=0 means unambiguously "already finalized" (not "wrong
+    household") — Option A from 15-RESEARCH §Pattern 1.
     """
+    # Step 1: cross-household 404 guard (T-04-01-03). MUST precede the atomic
+    # UPDATE so rowcount=0 unambiguously means "already finalized".
     log_row = db.scalar(
         select(CookingLog).where(
             CookingLog.id == log_id,
@@ -163,9 +169,7 @@ async def finalize_cooking_log(
     if log_row is None:
         raise HTTPException(404, "cooking log not found")
 
-    # Defense-in-depth (T-04-01-01): all proposed photo_paths MUST already be
-    # persisted on this log via the photos endpoint. A malicious client cannot
-    # bind storage objects from another log/recipe to this log.
+    # Step 2: defense-in-depth photo_paths subset check (T-04-01-01).
     persisted = set(log_row.photo_paths or [])
     proposed = list(body.photo_paths)
     for p in proposed:
@@ -175,55 +179,86 @@ async def finalize_cooking_log(
                 detail="photo_paths must be a subset of paths uploaded to this log",
             )
 
-    # Capture the "was unfinalized" flag BEFORE any mutation to log_row.rating
-    # (T-04-01-06 — repudiation/cook_count inflation guard).
-    is_first_finalize = log_row.rating is None
-
-    log_row.photo_paths = proposed
-    log_row.rating = body.rating
-    log_row.notes = body.notes
-
-    # Denormalized update on the parent recipe (COOK-05 / architecture
-    # invariant #3 — same DB transaction). Three columns:
-    #   - last_cooked_at         = log_row.cooked_at
-    #   - cook_count             = cook_count + 1  (FIRST finalization only)
-    #   - last_cooked_photo_path = proposed[0] if proposed else NULL
-    new_photo_path = proposed[0] if proposed else None
-    recipe_values: dict = {
-        "last_cooked_at": log_row.cooked_at,
-        "last_cooked_photo_path": new_photo_path,
-    }
-    if is_first_finalize:
-        recipe_values["cook_count"] = Recipe.cook_count + 1
-
-    db.execute(
-        update(Recipe)
-        .where(Recipe.id == log_row.recipe_id)
-        .values(**recipe_values)
+    # Step 3: atomic guard — UPDATE only if rating IS NULL. rowcount=1 means
+    # this PUT was the first finalize; rowcount=0 means another concurrent
+    # request (or this client's retry) won the race.
+    result = db.execute(
+        update(CookingLog)
+        .where(
+            CookingLog.id == log_id,
+            CookingLog.rating.is_(None),
+        )
+        .values(
+            rating=body.rating,
+            photo_paths=proposed,
+            notes=body.notes,
+        )
+        .returning(CookingLog.id)
     )
-    db.commit()
-    db.refresh(log_row)
+    is_first_finalize = result.rowcount == 1
 
-    # Reload recipe to broadcast the freshest shape — frontend's existing
-    # `recipe.updated` handler (Phase 1) refreshes the recipe-card living image
-    # via this event with no new client-side wiring (D-05).
-    recipe = db.get(Recipe, log_row.recipe_id)
-    if recipe is not None:
+    if is_first_finalize:
+        # Step 4a: same-tx denormalized recipe update (invariant #3).
+        # last_cooked_at uses log_row.cooked_at (stable across re-finalize
+        # because cooked_at is set at POST /cooking-logs/start and never
+        # mutates — D-15-06).
+        new_photo_path = proposed[0] if proposed else None
+        db.execute(
+            update(Recipe)
+            .where(Recipe.id == log_row.recipe_id)
+            .values(
+                last_cooked_at=log_row.cooked_at,
+                last_cooked_photo_path=new_photo_path,
+                cook_count=Recipe.cook_count + 1,
+            )
+        )
+        db.commit()
+        # Refresh the ORM-cached log_row — the atomic UPDATE bypassed the
+        # session cache so rating/notes/photo_paths in memory are stale
+        # (15-RESEARCH §Pitfall 1).
+        db.refresh(log_row)
+
+        # Step 5a: both broadcasts on first-finalize path (invariant #4).
+        recipe = db.get(Recipe, log_row.recipe_id)
+        if recipe is not None:
+            await broadcast_to_household(
+                member.household_id,
+                "recipe.updated",
+                RecipeResponse.model_validate(recipe).model_dump(mode="json"),
+            )
         await broadcast_to_household(
             member.household_id,
-            "recipe.updated",
-            RecipeResponse.model_validate(recipe).model_dump(mode="json"),
+            "cooking.finalized",
+            {
+                "log_id": str(log_row.id),
+                "recipe_id": str(log_row.recipe_id),
+                "rating": log_row.rating,
+            },
         )
+        return CookingLogResponse.model_validate(log_row)
+
+    # Step 4b: duplicate-tap path (rowcount == 0). Close the empty transaction
+    # and re-read the canonical persisted state. The cross-household SELECT
+    # at Step 1 already proved the log exists for this household.
+    db.commit()
+    log_row = db.scalar(
+        select(CookingLog).where(
+            CookingLog.id == log_id,
+            CookingLog.household_id == member.household_id,
+        )
+    )
+
+    # Step 5b: idempotent broadcast — clients tolerate redelivery per
+    # invariant #4 (D-15-05). NOT recipe.updated (recipe didn't change).
     await broadcast_to_household(
         member.household_id,
         "cooking.finalized",
         {
             "log_id": str(log_row.id),
             "recipe_id": str(log_row.recipe_id),
-            "rating": log_row.rating if log_row.rating else None,
+            "rating": log_row.rating,
         },
     )
-
     return CookingLogResponse.model_validate(log_row)
 
 
