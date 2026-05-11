@@ -110,7 +110,13 @@
   3. An operator can fire a test push via `POST /api/push/test` (reachable from `/styleguide` in development) and verify delivery on both household iPhones without triggering a real product event (16:00 cron / partner cooking-started broadcast).
   4. The P-12-Pu-05 operator deferral is closed: a documented push delivery round-trip observation lands in `.planning/v0.4/` confirming end-to-end Web Push works on both iPhones via the new admin-test endpoint.
   5. Re-running `uv run seed` across calendar days is a no-op — no duplicate-key errors at `cli/seed.py:369,405`; `docker compose down -v` is no longer required for daily re-seeds.
-**Plans**: TBD
+**Plans**: 6 plans
+- [ ] 19-01-PLAN.md — Drop `paper-grain` from `SheetContent` + un-`test.fixme` the `capture-photo.spec.ts` viewport spec (VAL-01)
+- [ ] 19-02-PLAN.md — Drop date components from test-seed CookingLog + DailyShortlist UUIDs + new `test_seed_cross_day_no_duplicates` pytest (FIX-02)
+- [ ] 19-03-PLAN.md — Backend `POST /push/test` admin endpoint + `send_test_to_member` service helper + `PushTestResponse` schema + pytest asserting no realtime broadcast (VAL-03 backend)
+- [ ] 19-04-PLAN.md — `firePushTest` + `unsubscribePush` helpers in `frontend/lib/push.ts` + dev-only "Tester le Web Push" button on `/styleguide` + human-verify checkpoint for round-trip on both iPhones (VAL-03 frontend)
+- [ ] 19-05-PLAN.md — Settings Notifications Card with 4-state UI (default / granted / denied / unsupported) + `settings.notifications.*` i18n keys (VAL-02)
+- [ ] 19-06-PLAN.md — `.planning/v0.4/PUSH-ROUNDTRIP.md` template with `[pending: operator]` evidence slots closing P-12-Pu-05 (VAL-04)
 **UI hint**: yes
 **Key risks / threat-model flags**:
   - VAL-01 is a CSS source-order fix with no API change — but Sheet-01 has been the gating block on `capture-photo.spec.ts` since v0.2.1 Phase 10. Verification gate must confirm the `test.fixme` removal, not just the visual fix.
@@ -156,14 +162,14 @@
 | 16. Capture pipeline correctness | 5/5 | Complete    | 2026-05-11 |
 | 17. History feature restoration | 3/3 | Complete    | 2026-05-11 |
 | 18. Identity management | 4/4 | Complete    | 2026-05-11 |
-| 19. Validation surface fixes | 0/0 | Not started | - |
+| 19. Validation surface fixes | 0/6 | Planned     | - |
 | 20. Token-completeness sweep | 0/0 | Not started | - |
 | 21. Pillar 6 deficit pass + rescore | 0/0 | Not started | - |
 
 ## Next Steps
 
-- **v0.4 Phase 18** — Run `/gsd-execute-phase 18` to land the planned 4 plans (Wave 1 parallel-safe: 18-01 backend + 18-02 settings frontend; Wave 2 parallel-safe: 18-03 onboarding capacity + 18-04 Playwright specs).
+- **v0.4 Phase 19** — Run `/gsd-execute-phase 19` to land the planned 6 plans. Wave 1 (parallel, file-disjoint): 19-01 (sheet.tsx + capture-photo.spec.ts), 19-02 (seed.py + test_seed_idempotency.py), 19-03 (backend POST /push/test + service helper + pytest), 19-06 (PUSH-ROUNDTRIP.md template). Wave 2: 19-04 (frontend lib/push.ts firePushTest+unsubscribePush helpers + /styleguide button — depends on 19-03 endpoint contract; ends with a human-verify checkpoint for the operator round-trip on both iPhones). Wave 3: 19-05 (Settings Notifications Card with 4-state UI + i18n — depends on 19-04 push.ts helpers).
 - **Behavioral validation gate** per `SPEC.md`: ≥ 2 weeks of daily use by both household members. Still the v0.1 definition of done; orthogonal to v0.4 phases.
 
 ---
-*Last updated: 2026-05-11 — Phase 18 planned (4 plans). Wave 1 (parallel, file-disjoint): 18-01 (backend PATCH /households/me + capacity 422 + pytest), 18-02 (Settings inline rename + explicit Copy button + RealtimeProvider member.updated bridge + i18n). Wave 2 (parallel, file-disjoint): 18-03 (Onboarding 422 → "Foyer complet" terminal Card + i18n), 18-04 (Playwright: settings-member-rename seeded + onboarding-household-full fresh).*
+*Last updated: 2026-05-11 — Phase 19 planned (6 plans, 3 waves). Wave 1 (4 parallel, file-disjoint): 19-01 Sheet-01 viewport fix + spec un-fixme (VAL-01), 19-02 seed cross-day idempotency (FIX-02), 19-03 backend POST /push/test admin endpoint (VAL-03 backend), 19-06 PUSH-ROUNDTRIP.md template (VAL-04). Wave 2: 19-04 frontend push.ts helpers + /styleguide button + human-verify round-trip checkpoint (VAL-03 frontend). Wave 3: 19-05 Settings Notifications Card 4-state UI (VAL-02).*
