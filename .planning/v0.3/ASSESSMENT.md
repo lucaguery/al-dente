@@ -463,4 +463,48 @@ When two entries within a tier carry identical total scores, **axis (i) takes pr
 
 ## Inputs to next /gsd-new-milestone cycle
 
-<!-- Composed in Plan 2 Task 3. Contains: (a) Source artifacts; (b) Open framing questions (3-5 inquiries); (c) Explicit non-prescriptions. -->
+This section names the artifacts, open framing questions, and explicit non-prescriptions the next `/gsd-new-milestone` cycle consumes. It names inputs; it does not dictate outputs.
+
+### (a) Source artifacts
+
+The artifact corpus the next milestone-discovery cycle reads:
+
+- **`.planning/v0.3/WALKTHROUGH.md`** — Phase 12 exploratory-feature output. 1,276 lines; ~64 severity-tagged findings (blocker / friction / nit) across 14 surfaces; cross-links to 7 of the 8 GitHub issues filed under the `audit:walkthrough` label plus 4 backlog cross-links. Closing "Inputs to Phase 14" subsection pre-clusters 9 candidate themes.
+- **`.planning/v0.3/UI-AUDIT.md`** — Phase 13 milestone aggregator. 14 surface verdicts (5 Feels Al Dente / 9 Mixed / 0 Feels Generic); 6-pillar mean 20.21/24; 13 cross-cutting observations; calibration notes against the v0.2 22.4/24 anchor; D-16 partial-reach annotation on push + history.
+- **`.planning/v0.3/ui-reviews/`** — 14 per-surface 6-pillar UI-REVIEW files with verdict + boilerplate/earned table + pillar findings + WALKTHROUGH cross-link footers.
+- **`.planning/v0.3/walkthrough-screenshots/`** (51 PNGs) + **`.planning/v0.3/ui-reviews/screenshots/`** (27 PNGs) — visual evidence committed in git alongside the prose findings.
+- **GitHub issues `lucaguery/al-dente` `audit:walkthrough` label** — 8 issues filed during Phase 12:
+  - Issue #1 — Sheet-01 photo-source button clipped 35px past viewport.
+  - Issue #2 — ingredient parser corrupts `<int> <noun>` lines.
+  - Issue #3 — Voice/Photo stuck-extraction cross-surface dedupe.
+  - Issue #4 — `MEMBER_COUNT=2` hardcoded; invariant #2 broken.
+  - Issue #5 — cooking-log re-finalize doubles `cook_count`; invariant #3 violated.
+  - Issue #6 — missing `/cooking-logs/{id}` detail route.
+  - Issue #7 — 5-member household capacity ceiling.
+  - Issue #8 — `PATCH /api/households/me` returns 405.
+- **`.planning/REQUIREMENTS.md`** (v0.3 milestone) and **`.planning/PROJECT.md`** "Surfaced for follow-up (v0.2.2 backlog)" — orthogonal backlog state at v0.3 ship (POLISH-01 i18n drift, POLISH-02 invite-Copy-button reconciliation, TZ-01, URL-01, CL-01, SEED-01, Sheet-01).
+- **This document (`.planning/v0.3/ASSESSMENT.md`)** Section 3 — the 27 ranked findings with anchor-cite Sources fields bidirectionally navigable back to the artifacts above.
+
+### (b) Open framing questions
+
+The questions below are inquiries the next milestone-discovery cycle reckons with. Each cites the assessment input that surfaces the inquiry. The phrasing pattern "How does X weigh Y?" / "Are X handled per-Z or per-W?" surfaces the question without dictating the answer.
+
+1. **How does the next milestone weigh remediation depth vs. new capability development?** Cites the impact distribution: 2 Tier 1 architecture-invariant violations (B-3, B-4) plus 8 Tier 2 entries spanning capacity (B-6, B-7), capture-pipeline correctness (C-4, B-2), history-feature decommissioning (B-5, B-10), and validation surfaces (B-1, B-13) — without ordering them against new-capability work.
+
+2. **Are architecture-invariant violations (axis (ii) ≥ 1) bundled into a single coordinated phase, or surfaced into independent per-invariant phases?** Cites the cluster taxonomy plus the 5-surface invariant-violation footprint per UI-AUDIT.md "Cross-cutting observations" bullet 9 (vote chip semantics; cooking-log doubled cook_count; history decommissioning; settings member-name unchangeable; realtime `cooking.finalized` doc rot) — without dictating bundle shape.
+
+3. **How does the next milestone weigh closing structural-correctness gaps (axis (ii)) vs. closing identity-signature gaps (axis (i))?** Cites the axis distribution: Tier 1 is axis-(ii)-heavy (both entries score axis (ii):2); Tier 2 is axis-(i)-heavy on token-completeness clusters (C-1 emerald-Tailwind-literal across 5 surfaces) and on the capacity-ceiling-with-affordance gap (B-6) — without ordering the axes.
+
+4. **Are cluster entries with cross-surface footprint handled per-cluster or per-surface?** Cites C-1 emerald-Tailwind-literal across 5 surfaces, C-2 no-debounce-on-submit across 4 surfaces, C-4 capture-pipeline-missing-terminal-state across 3 surfaces, C-3 validation-error-UX cluster across 5 surfaces — without dictating phase shape. A cluster entry collapses N surface findings into a single coordinated fix scope; the question is whether the next milestone tackles the coordinated fix as one phase or decomposes by surface.
+
+5. **What does the audit corpus's iPhone-shape-Chromium-only scope imply for the next audit budget?** Cites the "Limits of this assessment" subsection — the 14 surfaces were exercised against a 390×844 Chromium viewport with a 4-member synthetic household. Cross-browser (Safari iOS, Chrome Android), tablet/desktop layouts, and N>5 capacity behavior were out of scope. The question surfaces the scope without naming a future audit phase.
+
+### (c) Explicit non-prescriptions
+
+This document is bounded. The following statements describe what the assessment does NOT do.
+
+- ASSESSMENT.md does not order remediation.
+- ASSESSMENT.md does not estimate effort.
+- ASSESSMENT.md does not name future phase shapes, plan shapes, or future-milestone requirements.
+- ASSESSMENT.md does not assert that addressing a Tier 1 finding will flip a surface verdict from Mixed to Feels Al Dente — verdict shifts depend on multi-finding bundles and future implementation choices.
+- Tier ordering reflects impact on "feels Al Dente", not implementation priority — these are not the same axis.
