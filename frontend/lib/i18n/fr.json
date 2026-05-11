@@ -315,7 +315,12 @@
       "code_helper": "6 caractères donnés par ta partenaire",
       "member_name_label": "Ton prénom",
       "color_label": "Ta couleur (les couleurs déjà prises sont grisées)",
-      "submit": "Rejoindre"
+      "submit": "Rejoindre",
+      "capacity": {
+        "title": "Foyer complet",
+        "body": "Ce foyer a déjà 5 membres. Demande au foyer d'origine de créer un nouveau code.",
+        "back_cta": "Revenir à l'accueil"
+      }
     },
     "share_code": {
       "title": "Foyer créé",
