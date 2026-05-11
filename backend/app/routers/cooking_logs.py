@@ -179,10 +179,13 @@ async def finalize_cooking_log(
                 detail="photo_paths must be a subset of paths uploaded to this log",
             )
 
-    # Step 3: atomic guard — UPDATE only if rating IS NULL. rowcount=1 means
-    # this PUT was the first finalize; rowcount=0 means another concurrent
-    # request (or this client's retry) won the race.
-    result = db.execute(
+    # Step 3: atomic guard — UPDATE only if rating IS NULL. One returned row
+    # means this PUT was the first finalize; zero rows means another
+    # concurrent request (or this client's retry) won the race.
+    # NOTE: with `.returning(...)`, SQLAlchemy gives back a CursorResult-like
+    # object whose `.rowcount` is implementation-dependent for RETURNING
+    # statements — consume the result rows and count them directly.
+    returned_ids = db.execute(
         update(CookingLog)
         .where(
             CookingLog.id == log_id,
@@ -194,8 +197,8 @@ async def finalize_cooking_log(
             notes=body.notes,
         )
         .returning(CookingLog.id)
-    )
-    is_first_finalize = result.rowcount == 1
+    ).all()
+    is_first_finalize = len(returned_ids) == 1
 
     if is_first_finalize:
         # Step 4a: same-tx denormalized recipe update (invariant #3).
