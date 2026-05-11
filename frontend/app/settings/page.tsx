@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Copy, Check, Download, ChevronRight } from "lucide-react";
+import { Copy, Check, Download, ChevronRight, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useSession } from "@/components/SessionProvider";
 import { MemberDot } from "@/components/MemberDot";
+import { renameMe } from "@/lib/households";
 
 // Phase 01.1 D-08: read-only settings screen with three blocks (household
 // name, invite code w/ copy, current member). Phase 01-foundations-w1
@@ -32,9 +34,16 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
-  const { status, session } = useSession();
+  const { status, session, refresh } = useSession();
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
+  // Phase 18 IDM-02 — Membre Card inline rename.
+  // `renaming` toggles the name <span> ↔ <Input> swap. `renameValue` is the
+  // controlled input. `renameSubmitting` guards against double-submit when
+  // Enter and onBlur both fire (Enter triggers blur on most browsers).
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameSubmitting, setRenameSubmitting] = useState(false);
 
   if (status === "loading") {
     return (
@@ -57,6 +66,64 @@ export default function SettingsPage() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error(t("invite_code_copy_failed"));
+    }
+  };
+
+  // Phase 18 IDM-02 — extract numeric status from api()'s Error("<status> <text>").
+  // The generic api() wrapper has no typed-error surface; this matches the
+  // statusOf-style pattern used elsewhere in the codebase.
+  const statusOf = (err: unknown): number | null => {
+    if (err instanceof Error) {
+      const m = err.message.match(/^(\d{3})\s/);
+      if (m) return Number(m[1]);
+    }
+    return null;
+  };
+
+  const onStartRename = () => {
+    setRenameValue(session.me.name);
+    setRenaming(true);
+  };
+
+  const onCancelRename = () => {
+    setRenaming(false);
+    setRenameValue("");
+  };
+
+  const onSubmitRename = async () => {
+    if (renameSubmitting) return;
+    const trimmed = renameValue.trim();
+    // Empty submits are a no-op; same-name submits close the input as a no-op
+    // (the user opened the input and committed without changes — treat as cancel).
+    if (trimmed.length === 0) return;
+    if (trimmed === session.me.name) {
+      onCancelRename();
+      return;
+    }
+    setRenameSubmitting(true);
+    try {
+      await renameMe(trimmed);
+      toast.success(t("member.rename_success_toast"));
+      // Canonical reconciliation: re-fetch /households/me so SessionProvider's
+      // snapshot reflects the server truth (optimistic+canonical merge per
+      // D-18-07). Both phones converge through this same path — the renamer's
+      // phone via this direct refresh call, the partner's phone via
+      // RealtimeProvider's member.updated handler (Task 3).
+      await refresh();
+      setRenaming(false);
+      setRenameValue("");
+    } catch (err) {
+      const status = statusOf(err);
+      if (status === 409) {
+        toast.error(t("member.rename_409_toast"));
+      } else {
+        toast.error(t("member.rename_error_toast"));
+      }
+      // Keep the input open with the rejected value so the user can adjust + retry.
+      // useSession().refresh() is NOT called on error — UI never diverges from
+      // the server's truth (T-18-02-06).
+    } finally {
+      setRenameSubmitting(false);
     }
   };
 
@@ -110,14 +177,70 @@ export default function SettingsPage() {
         {/* Card 1 — Membre. Member color attribution + name.
             The "Membre" mental model is delivered by the Card grouping;
             the existing `settings.member_label` ("Toi") field-label inside
-            carries the section meaning. NO new section-heading string. */}
+            carries the section meaning. NO new section-heading string.
+            Phase 18 IDM-02: Pencil affordance swaps the name <span> into an
+            <Input>; Enter/blur submit, Escape/cancel-X revert. The submit
+            path is renameMe() (PATCH /households/me) with toast + canonical
+            session refresh on success, optimistic+canonical merge on error. */}
         <Card className="paper-grain shadow-card p-6 flex flex-col gap-2">
           <span className="text-sm text-foreground-muted">
             {t("member_label")}
           </span>
           <div className="flex items-center gap-3">
             <MemberDot colorHex={session.me.color_hex} />
-            <span className="text-base font-medium">{session.me.name}</span>
+            {renaming ? (
+              <div className="flex flex-1 items-center gap-2">
+                <Input
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void onSubmitRename();
+                    } else if (e.key === "Escape") {
+                      e.preventDefault();
+                      onCancelRename();
+                    }
+                  }}
+                  onBlur={() => void onSubmitRename()}
+                  maxLength={40}
+                  aria-label={t("member.rename_label")}
+                  autoFocus
+                  disabled={renameSubmitting}
+                  className="text-base font-medium"
+                />
+                {/* Cancel-X — onMouseDown (not onClick) so the cancel fires
+                    BEFORE the Input's blur handler would trigger onSubmitRename. */}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-12 w-12 shrink-0"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onCancelRename();
+                  }}
+                  aria-label={t("member.cancel_aria")}
+                  disabled={renameSubmitting}
+                >
+                  <X size={20} />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <span className="text-base font-medium flex-1">
+                  {session.me.name}
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-12 w-12"
+                  onClick={onStartRename}
+                  aria-label={t("member.rename_aria")}
+                >
+                  <Pencil size={18} />
+                </Button>
+              </>
+            )}
           </div>
         </Card>
 
@@ -161,6 +284,21 @@ export default function SettingsPage() {
                 {copied ? <Check size={20} /> : <Copy size={20} />}
               </Button>
             </div>
+            {/* FIX-04 (Phase 18): explicit text Copy button — discoverable
+                affordance the audit found missing. The icon-only Button
+                above stays as the keyboard / screen-reader-friendly alias
+                AND as the inline visual pair with the invite code itself;
+                this h-12 full-width Button is the primary visual affordance.
+                Both share `onCopy` so the copy state and toast stay unified. */}
+            <Button
+              variant="outline"
+              className="h-12 w-full"
+              onClick={onCopy}
+              disabled={copied}
+            >
+              <Copy className="h-4 w-4 mr-2" aria-hidden />
+              {copied ? t("invite_code_copied") : t("invite_code_copy_cta")}
+            </Button>
             <p className="text-sm text-foreground-muted">
               {t("invite_code_helper")}
             </p>
