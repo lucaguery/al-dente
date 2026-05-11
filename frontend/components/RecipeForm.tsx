@@ -31,6 +31,49 @@ import type { Recipe } from "@/lib/recipes";
 // it to undefined at submit time.
 const NONE_VALUE = "__none__";
 
+// CAP-03 / D-16-09 — French ingredient unit whitelist.
+//
+// Lowercased, accent-stripped, with both singular and plural forms covered.
+// Compound forms (c.s. / càs / c. à s.) are normalized via a punctuation-
+// and-whitespace strip before lookup. The lookup is case-insensitive and
+// accent-insensitive — `g`, `G`, `gr`, `gramme`, `grammes` all collapse to
+// the canonical wire-format value stored on `recipes.ingredients[].unit`.
+//
+// When the second token of an ingredient line matches the whitelist, it is
+// the `unit`; everything after is the `name`. When it does NOT match,
+// the qty stays parsed and the second-token-plus-rest becomes the `name`.
+//
+// Out of scope (v2): localized rendering — the wire value is whatever the
+// user typed (preserving casing/accents), passed through verbatim to the
+// detail page. The Gemini extraction path (services/llm.py) returns
+// structured `{name, quantity, unit}` directly; the whitelist only governs
+// the manual full-form parse (D-16-11).
+const FRENCH_UNIT_WHITELIST = new Set([
+  // Mass
+  "g", "gr", "gramme", "grammes", "kg", "kilo", "kilos", "mg",
+  // Volume
+  "ml", "cl", "dl", "l", "litre", "litres",
+  // US units (occasional French-bilingual recipes)
+  "oz", "lb",
+  // Spoons / cups — compound forms normalized below before lookup
+  "c", "cs", "cc", "c.s.", "c.c.", "cas", "cac",
+  "tasse", "tasses",
+  // Counts
+  "pcs", "piece", "pieces", "gousse", "gousses",
+  "pincee", "pincees",
+  "branche", "branches", "brin", "brins",
+]);
+
+// Normalize a token for whitelist lookup: lowercase, strip accents, collapse
+// internal whitespace. Keeps the user's original token for the wire value.
+function _normalizeUnitToken(token: string): string {
+  return token
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // strip combining accents
+    .replace(/\s+/g, ""); // "c. s." → "c.s." → matches "c.s." in whitelist
+}
+
 export type RecipeFormValues = {
   title: string;
   ingredients_text: string; // one per line — server expects array; we split on save
@@ -93,17 +136,46 @@ export function formValuesToBody(v: RecipeFormValues): RecipeBody {
     .map((s) => s.trim())
     .filter(Boolean)
     .map((line) => {
-      // Best-effort parse: leading number (with optional decimal) + optional
-      // unit + rest = name. Falls back to {name: line} on parse failure.
-      const m = line.match(
-        /^(\d+(?:[.,]\d+)?)\s*([a-zA-Zàâéèêëïîôùûç]+)?\s*(.*)$/,
-      );
-      if (!m) return { name: line };
-      const qty = parseFloat(m[1].replace(",", "."));
+      // CAP-03 — leading-qty + whitelisted-unit parser. Falls back to
+      // {name: line} when no leading qty. The second token is treated as
+      // a unit ONLY if its accent-stripped lowercase form is in the
+      // FRENCH_UNIT_WHITELIST; otherwise it is the start of the name.
+      // See .planning/phases/16-capture-pipeline-correctness/16-CONTEXT.md
+      // §D-16-09 for the worked examples.
+      const qtyMatch = line.match(/^(\d+(?:[.,]\d+)?)\s+(.*)$/);
+      if (!qtyMatch) return { name: line };
+      const qtyRaw = qtyMatch[1].replace(",", ".");
+      const qty = parseFloat(qtyRaw);
+      const rest = qtyMatch[2].trim();
+      if (!rest) {
+        // "500" with nothing after → treat as name-less qty; keep current
+        // fallback behavior (the original parser also fell through here).
+        return { name: line };
+      }
+      // Split rest into [first_token, remainder]. Use a single-space split
+      // to keep the user's original casing/accents on the kept tokens.
+      const spaceIdx = rest.indexOf(" ");
+      const firstToken = spaceIdx === -1 ? rest : rest.slice(0, spaceIdx);
+      const remainder =
+        spaceIdx === -1 ? "" : rest.slice(spaceIdx + 1).trim();
+
+      const normalized = _normalizeUnitToken(firstToken);
+      if (FRENCH_UNIT_WHITELIST.has(normalized)) {
+        // The second token is a unit. Everything after is the name.
+        // If there's nothing after the unit (e.g. "500 g"), preserve the
+        // line as the name to avoid an empty-name row.
+        return {
+          name: remainder || line,
+          quantity: isNaN(qty) ? null : qty,
+          unit: firstToken, // preserve the user's original casing
+        };
+      }
+      // The second token is NOT a unit. Treat first_token + remainder as
+      // the full name and keep the parsed qty (unit stays null).
       return {
-        name: m[3] || line,
+        name: rest,
         quantity: isNaN(qty) ? null : qty,
-        unit: m[2] || null,
+        unit: null,
       };
     });
   const steps = v.steps_text
