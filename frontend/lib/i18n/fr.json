@@ -289,6 +289,18 @@
       "rename_error_toast": "Impossible de renommer. Réessaie.",
       "rename_409_toast": "Ce prénom est déjà pris dans le foyer."
     },
+    "notifications": {
+      "card_title": "Notifications",
+      "card_subtitle": "Active les notifications push pour savoir quand ta shortlist du jour est prête et quand ton partenaire commence à cuisiner.",
+      "status_granted": "Notifications activées",
+      "status_default_cta": "Activer les notifications",
+      "status_denied_explainer": "Notifications bloquées. Pour les réactiver, ouvre Réglages iOS → Safari → Notifications et autorise « Al Dente ».",
+      "unsupported_note": "Ton appareil ne supporte pas les notifications push (PWA requise sur iOS).",
+      "disable_cta": "Désactiver",
+      "activated_toast": "Notifications activées",
+      "activate_failed_toast": "Impossible d'activer. Réessaie.",
+      "deactivated_toast": "Notifications désactivées"
+    },
     "export_section_title": "Exporter mes données",
     "export_body": "Télécharge toutes tes recettes au format JSON. Utile en cas de pépin.",
     "export_cta": "Télécharger mes recettes",
