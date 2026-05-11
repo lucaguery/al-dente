@@ -20,6 +20,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { variants } from "@/lib/motion";
 import { deleteRecipe, postRetryPromotion } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
@@ -31,10 +42,14 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
   const [retrying, setRetrying] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  async function handleDelete(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!window.confirm(t("delete_confirm"))) return;
+  async function handleDelete() {
+    // Phase 16 CAP-02 / D-16-06: confirmation is provided by the AlertDialog
+    // wrapping the failed-variant Supprimer button. The manual variant's
+    // trailing-icon delete routes through this same function — its small
+    // tap target affords less misclick risk than an inline labeled button,
+    // so we intentionally keep it confirm-less. (Pre-Plan-16-04 we gated
+    // both paths with window.confirm; that path is replaced by AlertDialog
+    // for the failed variant.)
     setDeleting(true);
     try {
       await deleteRecipe(recipe.id);
@@ -47,12 +62,17 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
   }
 
   const captureType = recipe.source_capture?.type;
+  // Phase 16 CAP-01 / D-16-04: status='failed' is the canonical terminal
+  // state. The legacy `promotion_error != null` workaround used pre-Plan-16-03
+  // is removed — Plan 16-03's _record_failure now writes status alongside
+  // the error, so the two conditions converge. We key off status for
+  // clarity at the variant-selection layer.
   const isProcessing =
     recipe.status === "draft" &&
     recipe.promotion_error == null &&
     captureType !== "manual" &&
     captureType !== "url"; // URL drafts are user-completed (CAPTURE-03 deferral)
-  const isFailed = recipe.promotion_error != null;
+  const isFailed = recipe.status === "failed";
   const isManual = !isProcessing && !isFailed;
 
   async function handleRetry(event: React.MouseEvent<HTMLButtonElement>) {
@@ -114,23 +134,74 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
             </span>
           ) : null}
           {isFailed ? (
-            <div className="flex items-center gap-2">
-              <Badge variant="destructive">{tPromo("failed_badge")}</Badge>
-              <Button
-                variant="ghost"
-                className="h-12"
-                onClick={handleRetry}
-                disabled={retrying}
-                aria-label={tPromo("retry_aria")}
-              >
-                <RefreshCw size={14} className="mr-1.5" />
-                {tPromo("retry")}
-              </Button>
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-display italic text-base text-destructive">
+                  {tPromo("failed_label")}
+                </span>
+                <p className="text-sm text-foreground-muted line-clamp-2">
+                  {recipe.promotion_error || tPromo("failed_context_fallback")}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="default"
+                  className="h-12 flex-1"
+                  onClick={handleRetry}
+                  disabled={retrying}
+                  aria-label={tPromo("retry_aria")}
+                >
+                  {retrying ? (
+                    <Loader2 size={14} className="animate-spin mr-1.5" />
+                  ) : (
+                    <RefreshCw size={14} className="mr-1.5" />
+                  )}
+                  {tPromo("retry")}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="h-12 flex-1 text-destructive hover:text-destructive"
+                      disabled={deleting}
+                      aria-label={tPromo("delete_aria")}
+                    >
+                      {deleting ? (
+                        <Loader2 size={14} className="animate-spin mr-1.5" />
+                      ) : (
+                        <Trash2 size={14} className="mr-1.5" />
+                      )}
+                      {tPromo("delete")}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {tPromo("delete_confirm_title")}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {tPromo("delete_confirm_body")}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>
+                        {tPromo("delete_confirm_cancel")}
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {tPromo("delete_confirm_confirm")}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           ) : null}
         </div>
       </div>
-      {!isProcessing ? (
+      {!isProcessing && !isFailed ? (
         <Button
           type="button"
           variant="ghost"
@@ -150,7 +221,12 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
     </>
   );
 
-  if (isProcessing) {
+  if (isProcessing || isFailed) {
+    // Failed and processing variants are non-navigable — the row's CTA buttons
+    // are the only tap targets. Failed variant: Réessayer + Supprimer (with
+    // AlertDialog). Processing variant: nothing (D-07 in-flight rows are
+    // non-tappable). Wrapping in a Link would conflict with the AlertDialog
+    // portal in the failed variant.
     return <div className={containerClass}>{inner}</div>;
   }
 
