@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.4
-milestone_name: audit-remediation-and-identity-polish
-status: roadmap-defined
-stopped_at: Roadmap defined, awaiting Phase 15 plan
-last_updated: "2026-05-11T13:00:00.000Z"
-last_activity: 2026-05-11
+milestone: v0.1
+milestone_name: milestone
+status: Roadmap defined; awaiting Phase 15 plan
+stopped_at: Phase 15 context gathered (auto)
+last_updated: "2026-05-11T11:56:37.250Z"
+last_activity: 2026-05-11 — v0.4 roadmap created (7 phases, 24 requirements)
 progress:
   total_phases: 7
   completed_phases: 0
@@ -105,7 +105,7 @@ None planned for v0.4 — remediation milestone consuming existing audit corpus.
 
 ## Session Continuity
 
-Last session: 2026-05-11T13:00:00.000Z
-Stopped at: v0.4 roadmap created (7 phases, 24 requirements). Awaiting Phase 15 plan.
-Resume file: `.planning/ROADMAP.md` (Phase 15 detail section).
+Last session: 2026-05-11T11:56:37.245Z
+Stopped at: Phase 15 context gathered (auto)
+Resume file: .planning/phases/15-tier-1-invariant-fixes/15-CONTEXT.md
 Next: `/gsd-discuss-phase 15` or `/gsd-plan-phase 15`.
