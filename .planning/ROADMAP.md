@@ -51,7 +51,12 @@
   2. A user opening `/inbox` on a `failed` draft sees a French failed-state label explaining the failure mode, plus inline `Réessayer` and `Supprimer` actions at a 48px tap target.
   3. A user entering ingredient lines like `4 tomates`, `1 oignon rouge`, `500 g de farine` in `RecipeForm` sees them on the recipe-detail `Ingrédients` list verbatim — no `4 tomates 4 tomates` duplication.
   4. The capture pipeline still honors architecture invariant #1: all 5 surfaces (`quick`, full-form, `voice`, `photo`, `url`) return a `draft`, all promotion runs server-side in a FastAPI `BackgroundTask`, and the terminal state set is now `{structured, failed}` instead of just `{structured}`.
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 16-01-PLAN.md — RecipeStatus.failed enum value (Python + Postgres ENUM via Alembic 0006 + TS literal mirror) — CAP-01 foundation
+- [ ] 16-02-PLAN.md — RecipeForm ingredient parser unit-whitelist fix (CAP-03)
+- [ ] 16-03-PLAN.md — backend failed-state transition in _record_failure + retry endpoint reset + pytest regression tests (CAP-01)
+- [ ] 16-04-PLAN.md — frontend failed-state Card UI in /inbox (label + truncated error + Réessayer + Supprimer-with-AlertDialog) + inbox refetch widened to include status=failed (CAP-01, CAP-02)
+- [ ] 16-05-PLAN.md — two new Playwright specs (capture-voice-failed-recovery + recipe-form-ingredient-parser) + __TEST_FORCE_FAIL__ fixture branch (CAP-01, CAP-02, CAP-03)
 **UI hint**: yes
 **Key risks / threat-model flags**:
   - Extending invariant #1 (5 capture surfaces, one shape) with a third terminal state — Alembic migration + enum update across `frontend/lib/enums.ts` AND `backend/app/models/enums.py` (locked vocabulary per `CLAUDE.md`). Drift between the two is a bug category.
@@ -141,7 +146,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Tier 1 invariant fixes | 4/4 | Complete    | 2026-05-11 |
-| 16. Capture pipeline correctness | 0/0 | Not started | - |
+| 16. Capture pipeline correctness | 0/5 | Planned     | - |
 | 17. History feature restoration | 0/0 | Not started | - |
 | 18. Identity management | 0/0 | Not started | - |
 | 19. Validation surface fixes | 0/0 | Not started | - |
@@ -154,4 +159,4 @@
 - **Behavioral validation gate** per `SPEC.md`: ≥ 2 weeks of daily use by both household members. Still the v0.1 definition of done; orthogonal to v0.4 phases.
 
 ---
-*Last updated: 2026-05-11 — Phase 15 planned (4 plans). Wave 0: 15-01 (pytest scaffold). Wave 1: 15-02 (backend atomic UPDATE + tests), 15-03 (frontend MEMBER_COUNT removal + canary spec), 15-04 (E2E double-tap assertion, gated by TZ-01).*
+*Last updated: 2026-05-11 — Phase 16 planned (5 plans). Wave 1 (parallel, file-disjoint): 16-01 (RecipeStatus.failed enum + migration 0006 + TS mirror), 16-02 (ingredient parser unit-whitelist). Wave 2 (parallel, file-disjoint, both depend on 16-01): 16-03 (backend failed transition + retry reset + pytest), 16-04 (frontend failed Card UI + inbox refetch). Wave 3: 16-05 (two new Playwright specs + __TEST_FORCE_FAIL__ fixture branch).*
