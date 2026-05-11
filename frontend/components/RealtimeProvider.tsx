@@ -29,7 +29,7 @@ import {
   type RealtimeClient,
   type RealtimeStatus,
 } from "@/lib/ws";
-import { useSession } from "@/components/SessionProvider";
+import { useSession, SESSION_CHANGED_EVENT } from "@/components/SessionProvider";
 import type { Recipe } from "@/lib/recipes";
 
 // --- Singleton store ---------------------------------------------------------
@@ -235,6 +235,27 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     return off;
   }, [client]);
 
+  // Phase 18 IDM-02 — member.updated. Bridges to SessionProvider so the
+  // partner's phone re-fetches /households/me and re-renders their member
+  // name + MemberDot displays within ~200ms of the broadcast. The renamer's
+  // own phone already calls useSession().refresh() directly from the
+  // settings page; this WS-driven path is the partner-phone path that has
+  // no local trigger.
+  useEffect(() => {
+    if (!client) return;
+    const off = client.onEvent<MemberUpdatedEvent>("member.updated", (payload) => {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(MEMBER_UPDATED_DOM_EVENT, { detail: payload }),
+      );
+      // Load-bearing: SessionProvider listens on this event and re-runs
+      // fetchSession(). Without this dispatch the partner's UI wouldn't
+      // converge until they navigated or refreshed.
+      window.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
+    });
+    return off;
+  }, [client]);
+
   return (
     <RealtimeContext.Provider value={client}>
       {children}
@@ -287,3 +308,24 @@ export type Phase4CookingFinalizedEvent = {
 };
 
 export const COOKING_FINALIZED_DOM_EVENT = "aldente:cooking.finalized";
+
+// Phase 18 IDM-02 — member.updated event.
+//
+// Backend broadcasts `member.updated` from PATCH /households/me with payload
+// {id, name, color_hex} (per CLAUDE.md invariant #4 — every household-affecting
+// mutation broadcasts). The frontend's contract is:
+//   1. Re-fire as a window CustomEvent so any future consumer that cares about
+//      a specific member id can subscribe directly (not load-bearing for v0.4).
+//   2. Dispatch SESSION_CHANGED_EVENT so SessionProvider re-fetches
+//      /households/me — this IS the load-bearing path. Both the renaming
+//      member's own phone (optimistic update + canonical refresh from the
+//      Settings page) and the partner's phone re-render their member name +
+//      MemberDot displays through this channel.
+
+export type MemberUpdatedEvent = {
+  id: string;
+  name: string;
+  color_hex: string;
+};
+
+export const MEMBER_UPDATED_DOM_EVENT = "aldente:member.updated";
