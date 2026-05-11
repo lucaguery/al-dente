@@ -206,7 +206,10 @@ def list_recipes(
     status_filter: Optional[str] = Query(
         default=None,
         alias="status",
-        pattern="^(draft|structured|verified)$",
+        # Phase 16 CAP-01: accepts the new 'failed' terminal state added in
+        # Plan 16-01 / migration 0006. The inbox refetches with status=draft
+        # AND status=failed in Plan 16-04 so the failed cards remain in /inbox.
+        pattern="^(draft|structured|verified|failed)$",
     ),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -573,10 +576,19 @@ async def retry_promote(
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
 ) -> PromotionRetryResponse:
-    """D-09 — retry a failed promotion. Clears promotion_error inline (so
-    the FE can refetch and see the spinner state immediately), then queues
-    retry_promotion which re-reads source_capture and re-runs the appropriate
-    BackgroundTask."""
+    """Phase 16 D-16-05 — retry a failed promotion. Resets the row from
+    `failed` to `draft` (so the FE refetch sees the in-flight/spinner
+    variant) and clears `promotion_error`, then queues retry_promotion
+    which re-reads source_capture and re-runs the appropriate BackgroundTask.
+
+    Idempotency contract: retrying a recipe already in `structured` is a
+    no-op 202 (status untouched; we still queue retry_promotion but the
+    BackgroundTask body short-circuits on non-failed input). Retrying a
+    recipe in `draft` (e.g. mid-flight) is also a no-op 202.
+
+    Returns 404 for cross-household or missing recipes — existence not
+    leaked (matches the contract on GET /{id}).
+    """
 
     recipe = db.scalar(
         select(Recipe).where(
@@ -588,6 +600,16 @@ async def retry_promote(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
         )
+
+    # Phase 16 D-16-04 / D-16-06: when the recipe is in the terminal `failed`
+    # state, reset to `draft` so the FE inbox row flips from the failed
+    # variant (label + Réessayer/Supprimer) to the in-flight/spinner variant.
+    # For non-failed inputs (structured / draft) we leave status alone — the
+    # FE only reaches the retry endpoint from the failed-state branch, but
+    # other clients (curl, manual ops) MUST not be able to flip a structured
+    # recipe back to draft via this endpoint.
+    if recipe.status == "failed":
+        recipe.status = "draft"
     # Clear the error optimistically so the FE inbox row swaps from "Échec"
     # to "Extraction en cours…" (D-07) when it refetches.
     recipe.promotion_error = None
