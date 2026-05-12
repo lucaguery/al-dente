@@ -5,9 +5,11 @@
 // Garamond title (font-display, upright, line-clamp-2) and a meta row
 // (cuisine Badge · relative last-cooked).
 //
-// The photo path is fetched as a 5-minute signed URL on mount; if the
-// recipe has no photos OR the request fails, we render a surface-muted
-// placeholder sized to the same 4:3 aspect-ratio container.
+// Photo fallback chain (round-2): real signed-URL photo → dev cuisine
+// fixture SVG → default.svg → surface-muted placeholder div. Mirrors
+// ShortlistCard.tsx photo fallback (the seed populates `photo_paths`
+// but never uploads bytes in dev; without the fixture path the <img>
+// 404s and Safari paints its broken-image icon).
 //
 // D-05 living image: the photo path prefers the most recent cooking-log
 // photo over the canonical recipe photo, so the library list reflects
@@ -35,15 +37,23 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     recipe.last_cooked_photo_path ??
     recipe.photo_paths[0] ??
     "";
-  const [src, setSrc] = useState<string | null>(null);
+
+  // Dev fallback (round-2): when the seed populates photo_paths but doesn't
+  // upload bytes (typical dev setup), the signed-URL fetch resolves to a
+  // missing-object URL and <img> 404s. Fall through to a bundled cuisine
+  // fixture so the library renders real-looking cards in dev. Production:
+  // null — surface-muted div is the only fallback.
+  const devFallbackUrl =
+    process.env.NODE_ENV !== "production"
+      ? `/demo-fixtures/${(recipe.cuisine ?? "default").toString()}.svg`
+      : null;
+
+  const [src, setSrc] = useState<string | null>(
+    firstPath ? null : devFallbackUrl,
+  );
 
   useEffect(() => {
-    if (!firstPath) {
-      // No photo on this recipe — `src` is already null at mount; don't
-      // setState here (would trigger a cascading render and trip React
-      // 19's `react-hooks/set-state-in-effect` rule).
-      return;
-    }
+    if (!firstPath) return;
     let alive = true;
     // D-05: living image — the path may be either a recipe photo
     // (recipes/{id}/{uuid}.ext) or a cooking-log photo
@@ -58,7 +68,6 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
     const urlPromise = isCookingLogPath
       ? (async () => {
           const segs = firstPath.split("/");
-          // segs[0] = "cooking-logs", segs[1] = household_id, segs[2] = log_id
           const logId = segs[2];
           if (!logId) throw new Error("malformed cooking-log path");
           return getCookingLogSignedPhotoUrl(logId, firstPath);
@@ -69,24 +78,36 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         if (alive) setSrc(url);
       })
       .catch(() => {
-        // Silent fallback to surface-muted placeholder; URL state stays null.
+        if (alive && devFallbackUrl) setSrc(devFallbackUrl);
       });
     return () => {
       alive = false;
     };
-  }, [recipe.id, firstPath]);
+  }, [recipe.id, firstPath, devFallbackUrl]);
 
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="paper-grain flex flex-col bg-card rounded-2xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150 overflow-hidden"
+      className="paper-grain flex flex-col bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150 overflow-hidden"
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill
         <img
           src={src}
           alt=""
-          className="w-full aspect-[4/3] object-cover"
+          className="w-full aspect-[4/3] object-cover bg-surface-muted"
+          onError={(e) => {
+            // Dev-only — when a cuisine-specific fixture is missing
+            // (e.g. asian.svg hasn't been authored), fall through to the
+            // generic default fixture before giving up entirely.
+            if (
+              process.env.NODE_ENV !== "production" &&
+              e.currentTarget.src.includes("/demo-fixtures/") &&
+              !e.currentTarget.src.endsWith("/default.svg")
+            ) {
+              e.currentTarget.src = "/demo-fixtures/default.svg";
+            }
+          }}
         />
       ) : (
         <div
@@ -94,8 +115,8 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           className="w-full aspect-[4/3] bg-surface-muted"
         />
       )}
-      <div className="flex flex-col gap-1 px-3.5 pt-3 pb-3.5 min-w-0">
-        <h3 className="font-display text-lg font-medium leading-tight tracking-tight line-clamp-2">
+      <div className="flex flex-col gap-1 px-2.5 pt-2 pb-2.5 min-w-0">
+        <h3 className="font-display text-base font-medium leading-tight tracking-tight line-clamp-2">
           {recipe.title}
         </h3>
         <div className="flex items-center gap-1.5 flex-wrap text-xs text-foreground-muted">

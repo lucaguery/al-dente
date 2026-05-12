@@ -392,7 +392,11 @@
     background-image: url('/textures/paper-grain.svg');
     background-repeat: repeat;
     background-size: 240px 240px;
-    opacity: 0.06;
+    /* Round-2 (260512-gpl): bumped 0.06 → 0.12. The original "perceptible
+       up close, invisible from across the room" target read as no texture
+       at all on a phone screen at arm's length. 0.12 keeps it tone-on-tone
+       (still well below "noisy") but actually shows. */
+    opacity: 0.12;
     mix-blend-mode: multiply;
     pointer-events: none;
     border-radius: inherit;
@@ -425,7 +429,8 @@
    lighten rather than darken. Lives outside `@layer utilities` so its
    cascade weight matches other `.dark` overrides elsewhere. */
 .dark .paper-grain::before {
-  opacity: 0.10;
+  /* Round-2 (260512-gpl) parallel bump 0.10 → 0.18 for dark mode. */
+  opacity: 0.18;
   mix-blend-mode: overlay;
 }
 
