@@ -144,7 +144,7 @@ export default function SettingsPage() {
 
   if (status === "loading") {
     return (
-      <section className="flex flex-col flex-1 px-6 pt-6">
+      <section className="flex flex-col flex-1 px-(--spacing-page-x) pt-6">
         <div className="h-6 w-32 bg-surface-muted animate-pulse rounded" />
       </section>
     );
@@ -265,11 +265,11 @@ export default function SettingsPage() {
 
   return (
     <section className="flex flex-col flex-1 bg-background">
-      <header className="sticky top-0 h-12 px-6 flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <h1 className="text-base font-semibold">{t("title")}</h1>
+      <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
+        <h1 className="text-page-header">{t("title")}</h1>
       </header>
 
-      <div className="flex flex-col gap-6 px-6 pt-6 pb-24">
+      <div className="flex flex-col gap-(--spacing-section-y) px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe)">
 
         {/* Card 1 — Membre. Member color attribution + name.
             The "Membre" mental model is delivered by the Card grouping;

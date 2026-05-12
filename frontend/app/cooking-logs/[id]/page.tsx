@@ -127,7 +127,7 @@ export default function CookingLogDetailPage() {
   return (
     <OnboardingGuard>
       <section className="flex flex-col flex-1 bg-background">
-        <div className="px-6 pt-8 pb-24 flex flex-col gap-6">
+        <div className="px-(--spacing-page-x) pt-8 pb-(--spacing-bottom-safe) flex flex-col gap-(--spacing-section-y)">
           {error === "notfound" ? (
             // Reuse the existing `cooking_log.finalize.gone_heading` copy —
             // the user-facing affordance is the same: a recognisable

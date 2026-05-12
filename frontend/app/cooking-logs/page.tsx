@@ -114,7 +114,7 @@ export default function CookingLogsHistoryPage() {
   return (
     <OnboardingGuard>
       <section className="flex flex-col flex-1 bg-background">
-        <div className="px-6 pt-8 pb-24 flex flex-col gap-6">
+        <div className="px-(--spacing-page-x) pt-8 pb-(--spacing-bottom-safe) flex flex-col gap-(--spacing-section-y)">
           {logs === null ? (
             // Loading: render nothing rather than a spinner — couple-scale
             // payloads are tiny, the fetch typically resolves in < 200ms.
@@ -134,7 +134,7 @@ export default function CookingLogsHistoryPage() {
                 className="flex flex-col gap-3"
                 aria-label={dateLabel}
               >
-                <h2 className="font-display italic text-base text-foreground pt-6 pb-2">
+                <h2 className="text-title italic text-foreground pt-6 pb-2">
                   {dateLabel}
                 </h2>
                 {logsInGroup.map((log) => (

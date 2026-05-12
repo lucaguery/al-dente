@@ -256,7 +256,7 @@ export function RecipeForm({
   }
 
   const fields = (
-    <div className="flex flex-col gap-6 px-6 pt-6 pb-32">
+    <div className="flex flex-col gap-(--spacing-section-y) px-(--spacing-page-x) pt-6 pb-32">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="rf-title">{t("title_label")}</Label>
         <Input
@@ -430,7 +430,7 @@ export function RecipeForm({
   );
 
   const submitBar = (
-    <div className="fixed bottom-16 inset-x-0 px-6 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 bg-background/80 backdrop-blur-sm border-t border-border z-30">
+    <div className="fixed bottom-16 inset-x-0 px-(--spacing-page-x) pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 bg-background/80 backdrop-blur-sm border-t border-border z-30">
       <Button
         className="h-12 w-full"
         disabled={!v.title.trim() || submitting}
@@ -459,7 +459,7 @@ export function RecipeForm({
 
   return (
     <>
-      <header className="sticky top-0 z-10 h-12 px-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border">
+      <header className="sticky top-0 z-10 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border">
         <Button
           size="icon"
           variant="ghost"
@@ -470,7 +470,7 @@ export function RecipeForm({
             <ChevronLeft className="h-5 w-5" />
           </Link>
         </Button>
-        <span className="text-base font-semibold">{title}</span>
+        <span className="text-page-header">{title}</span>
         <span className="w-10" aria-hidden />
       </header>
       {fields}

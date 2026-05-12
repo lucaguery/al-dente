@@ -217,7 +217,7 @@ export default function StyleguidePage() {
   };
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-12 px-6 pt-12 pb-24">
+    <main className="mx-auto flex max-w-2xl flex-col gap-12 px-(--spacing-page-x) pt-12 pb-(--spacing-bottom-safe)">
       {/* Header + dark-mode toggle */}
       <header className="flex flex-col gap-4">
         <h1 className="text-display">« Al Dente. À la maison. »</h1>

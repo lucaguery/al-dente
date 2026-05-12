@@ -126,7 +126,7 @@ export default function RecipeDetailPage() {
     return (
       <OnboardingGuard>
         <section className="flex flex-col flex-1 bg-background">
-          <header className="sticky top-0 h-12 px-6 flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
+          <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
             <Button
               size="icon"
               variant="ghost"
@@ -152,7 +152,7 @@ export default function RecipeDetailPage() {
     return (
       <OnboardingGuard>
         <section className="flex flex-col flex-1 bg-background">
-          <header className="sticky top-0 h-12 px-6 flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
+          <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
             <Button
               size="icon"
               variant="ghost"
@@ -163,7 +163,7 @@ export default function RecipeDetailPage() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
           </header>
-          <div className="px-6 pt-6 flex flex-col gap-3">
+          <div className="px-(--spacing-page-x) pt-6 flex flex-col gap-3">
             <div className="h-44 w-full rounded-lg bg-surface-muted animate-pulse" />
             <div className="h-7 w-2/3 rounded bg-surface-muted animate-pulse" />
             <div className="h-4 w-1/2 rounded bg-surface-muted animate-pulse" />
@@ -188,7 +188,7 @@ export default function RecipeDetailPage() {
   return (
     <OnboardingGuard>
       <section className="flex flex-col flex-1 bg-background">
-        <header className="sticky top-0 h-12 px-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
+        <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
           <Button
             size="icon"
             variant="ghost"
@@ -249,7 +249,7 @@ export default function RecipeDetailPage() {
           </Card>
         )}
 
-        <div className="px-6 flex flex-col gap-6 pb-24 mt-6">
+        <div className="px-(--spacing-page-x) flex flex-col gap-(--spacing-section-y) pb-(--spacing-bottom-safe) mt-6">
           {/* Metadata pill row — cuisine, moods, protein, prep/servings */}
           <div className="flex flex-wrap gap-2 items-center">
             {recipe.cuisine ? (

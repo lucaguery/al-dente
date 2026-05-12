@@ -45,7 +45,7 @@ function ShareCodeInner() {
   }
 
   return (
-    <section className="flex flex-col flex-1 bg-background px-6 pt-12 pb-32">
+    <section className="flex flex-col flex-1 bg-background px-(--spacing-page-x) pt-12 pb-32">
       <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-4">
         {/* Editorial title — Fraunces italic display register. */}
         <h1 className="text-display">{t("title")}</h1>
@@ -70,7 +70,7 @@ function ShareCodeInner() {
 
       {/* Bottom-fixed done CTA — h-12 default (terracotta). */}
       <div
-        className="fixed bottom-0 inset-x-0 px-6 pb-6 bg-background/80 backdrop-blur-sm"
+        className="fixed bottom-0 inset-x-0 px-(--spacing-page-x) pb-6 bg-background/80 backdrop-blur-sm"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
       >
         <Button

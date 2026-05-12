@@ -17,7 +17,7 @@ export default function OnboardingWelcomePage() {
   const t = useTranslations("onboarding.welcome");
 
   return (
-    <section className="flex flex-col flex-1 items-center justify-center px-6 py-16 bg-background">
+    <section className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x) py-16 bg-background">
       <header className="flex flex-col items-center gap-2 text-center">
         {/* Wordmark — Fraunces italic display register (mirrors Phase 7
             daily date header + Phase 8 recipe-detail hero). */}

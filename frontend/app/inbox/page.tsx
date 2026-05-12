@@ -148,11 +148,11 @@ export default function InboxPage() {
   return (
     <OnboardingGuard>
       <section className="flex flex-col flex-1 bg-background">
-        <header className="sticky top-0 h-12 px-6 flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
-          <h1 className="text-xl font-semibold">{t("tab_title")}</h1>
+        <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
+          <h1 className="text-page-header">{t("tab_title")}</h1>
         </header>
 
-        <div className="px-6 pt-3 flex flex-col gap-3 pb-24">
+        <div className="px-(--spacing-page-x) pt-3 flex flex-col gap-3 pb-(--spacing-bottom-safe)">
           {!loading && drafts.length === 0 ? (
             <EmptyState
               icon={Inbox}

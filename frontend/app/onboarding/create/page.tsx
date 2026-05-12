@@ -73,7 +73,7 @@ export default function OnboardingCreatePage() {
 
   return (
     <section className="flex flex-col flex-1 bg-background">
-      <header className="sticky top-0 h-12 px-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
+      <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
         <Button
           size="icon"
           variant="ghost"
@@ -87,7 +87,7 @@ export default function OnboardingCreatePage() {
         <span className="w-12" aria-hidden />
       </header>
 
-      <div className="px-6 pt-6 pb-32">
+      <div className="px-(--spacing-page-x) pt-6 pb-32">
         <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-6">
           {/* Form-body editorial title — Fraunces italic display register.
               Mirrors header chrome label one level deeper inside the form. */}
@@ -130,7 +130,7 @@ export default function OnboardingCreatePage() {
       </div>
 
       <div
-        className="fixed bottom-0 inset-x-0 px-6 pb-6 bg-background/80 backdrop-blur-sm"
+        className="fixed bottom-0 inset-x-0 px-(--spacing-page-x) pb-6 bg-background/80 backdrop-blur-sm"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
       >
         <Button

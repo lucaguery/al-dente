@@ -338,7 +338,7 @@ export function HomeDecide() {
   // network round-trip on cold launch.
   if (!session || !me) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center px-6">
+      <div className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x)">
         <Loader2
           aria-hidden
           className="h-8 w-8 animate-spin text-primary"
@@ -354,7 +354,7 @@ export function HomeDecide() {
   // the user is past onboarding.
   if (!partner) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center px-6 gap-6">
+      <div className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x) gap-(--spacing-section-y)">
         <div className="paper-grain shadow-card border-l-[3px] border-primary/60 rounded-xl p-6 max-w-sm w-full flex flex-col gap-4 bg-card">
           <p className="font-display italic text-base text-foreground">
             {tPartnerWaiting("message")}
@@ -381,7 +381,7 @@ export function HomeDecide() {
 
   if (!shortlistLoaded) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center px-6">
+      <div className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x)">
         <Loader2
           aria-hidden
           className="h-8 w-8 animate-spin text-primary"
@@ -406,7 +406,7 @@ export function HomeDecide() {
             onSkip={handleBannerSkip}
           />
         )}
-        <div className="px-6 mt-6">
+        <div className="px-(--spacing-page-x) mt-6">
           <EmptyState
             icon={Sparkles}
             heading={tShortlist("empty_heading")}
@@ -482,7 +482,7 @@ export function HomeDecide() {
           onSkip={handleBannerSkip}
         />
       )}
-      <header className="px-6 pt-8 pb-2">
+      <header className="px-(--spacing-page-x) pt-8 pb-2">
         <h1 className="text-display text-foreground">{formattedDate}</h1>
       </header>
 
@@ -490,7 +490,7 @@ export function HomeDecide() {
         // bug 4 fix (260512-df0): shortlist exists but has zero recipes —
         // surface the regenerate affordance directly instead of falling
         // into VoteSummary's degenerate "heading + no rows + no CTA" path.
-        <div className="px-6 mt-6">
+        <div className="px-(--spacing-page-x) mt-6">
           <EmptyState
             icon={Sparkles}
             heading={tShortlist("empty_heading")}

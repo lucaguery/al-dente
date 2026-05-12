@@ -110,8 +110,8 @@ export default function RecipesPage() {
   return (
     <OnboardingGuard>
       <section className="flex flex-col flex-1 bg-background">
-        <header className="sticky top-0 h-12 px-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-20">
-          <h1 className="text-xl font-semibold">{t("tab_title")}</h1>
+        <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-20">
+          <h1 className="text-page-header">{t("tab_title")}</h1>
           <Button
             size="icon"
             variant="ghost"
@@ -123,12 +123,12 @@ export default function RecipesPage() {
           </Button>
         </header>
 
-        <div className="px-6 py-3 sticky top-12 z-10 bg-background/80 backdrop-blur-sm">
+        <div className="px-(--spacing-page-x) py-3 sticky top-12 z-10 bg-background/80 backdrop-blur-sm">
           <SearchInput onQueryChange={handleSearch} />
         </div>
 
         {!loading && recipes.length === 0 ? (
-          <div className="px-6 pb-24">
+          <div className="px-(--spacing-page-x) pb-(--spacing-bottom-safe)">
             {query.trim().length > 0 ? (
               <EmptyState
                 icon={Search}
@@ -145,7 +145,7 @@ export default function RecipesPage() {
             )}
           </div>
         ) : (
-          <div className="px-4 grid grid-cols-2 gap-2 pb-24 md:grid-cols-3 lg:grid-cols-4">
+          <div className="px-(--spacing-page-x) grid grid-cols-2 gap-3 pb-(--spacing-bottom-safe) md:grid-cols-3 lg:grid-cols-4">
             {recipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
           </div>
         )}

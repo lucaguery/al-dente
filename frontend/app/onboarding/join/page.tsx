@@ -187,7 +187,7 @@ export default function OnboardingJoinPage() {
     // signature; no second CTA (D-18-12 says single neutral back).
     return (
       <section className="flex flex-col flex-1 bg-background">
-        <header className="sticky top-0 h-12 px-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
+        <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
           <Button
             size="icon"
             variant="ghost"
@@ -200,7 +200,7 @@ export default function OnboardingJoinPage() {
           <span className="text-base font-semibold">{t("title")}</span>
           <span className="w-12" aria-hidden />
         </header>
-        <div className="px-6 pt-6 pb-32">
+        <div className="px-(--spacing-page-x) pt-6 pb-32">
           <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-4">
             <h2 className="text-display">{t("capacity.title")}</h2>
             <p className="text-base text-foreground-muted">
@@ -209,7 +209,7 @@ export default function OnboardingJoinPage() {
           </Card>
         </div>
         <div
-          className="fixed bottom-0 inset-x-0 px-6 pb-6 bg-background/80 backdrop-blur-sm"
+          className="fixed bottom-0 inset-x-0 px-(--spacing-page-x) pb-6 bg-background/80 backdrop-blur-sm"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
         >
           <Button
@@ -226,7 +226,7 @@ export default function OnboardingJoinPage() {
 
   return (
     <section className="flex flex-col flex-1 bg-background">
-      <header className="sticky top-0 h-12 px-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
+      <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
         <Button
           size="icon"
           variant="ghost"
@@ -240,7 +240,7 @@ export default function OnboardingJoinPage() {
         <span className="w-12" aria-hidden />
       </header>
 
-      <div className="px-6 pt-6 pb-32">
+      <div className="px-(--spacing-page-x) pt-6 pb-32">
         <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-6">
           {/* Form-body editorial title — Fraunces italic display register. */}
           <h2 className="text-display">{t("title")}</h2>
@@ -332,7 +332,7 @@ export default function OnboardingJoinPage() {
       </div>
 
       <div
-        className="fixed bottom-0 inset-x-0 px-6 pb-6 bg-background/80 backdrop-blur-sm"
+        className="fixed bottom-0 inset-x-0 px-(--spacing-page-x) pb-6 bg-background/80 backdrop-blur-sm"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
       >
         <Button
