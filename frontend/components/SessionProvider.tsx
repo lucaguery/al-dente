@@ -48,7 +48,17 @@ export type SessionContextValue = {
 
 type Snapshot = { status: SessionStatus; session: SessionData | null };
 
-let snapshot: Snapshot = { status: "loading", session: null };
+// Frozen sentinel — `useSyncExternalStore` calls getServerSnapshot on every
+// render and demands a stable reference. Returning a fresh object literal
+// triggers a "result of getServerSnapshot should be cached" warning and an
+// infinite render loop in React 19 + Next.js 16. The same sentinel doubles
+// as the initial client snapshot so SSR/CSR see the same identity.
+const LOADING_SNAPSHOT: Snapshot = Object.freeze({
+  status: "loading",
+  session: null,
+}) as Snapshot;
+
+let snapshot: Snapshot = LOADING_SNAPSHOT;
 const subscribers = new Set<() => void>();
 
 function notify() {
@@ -65,7 +75,7 @@ function getSnapshot(): Snapshot {
 }
 
 function getServerSnapshot(): Snapshot {
-  return { status: "loading", session: null };
+  return LOADING_SNAPSHOT;
 }
 
 function subscribe(cb: () => void): () => void {
