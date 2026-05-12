@@ -39,7 +39,7 @@ from app.config import settings
 from app.db import SessionLocal
 from app.models.cooking_log import CookingLog
 from app.models.daily_shortlist import DailyShortlist
-from app.models.enums import Cuisine, Difficulty, Mood, Protein, Season  # NO duplicates!
+from app.models.enums import Cuisine, Mood, Protein, Season  # NO duplicates!
 from app.models.household import Household
 from app.models.member import Member
 from app.models.recipe import Recipe
@@ -188,12 +188,7 @@ def _recipe_specs() -> list[dict]:
          "prep_time_minutes": 25, "servings": 4,
          "ingredients": [{"name": "poulet", "quantity": 600, "unit": "g"},
                          {"name": "citron", "quantity": 2, "unit": None}],
-         "steps": ["Mariner le poulet.", "Cuire a la poele."],
-         # Phase 24 RID-02 — seed deterministic values for new fields so
-         # Playwright fixtures can assert on them.
-         "cook_time_minutes": 20,
-         "difficulty": Difficulty.easy.value,
-         "description": "Poulet rôti aux citrons confits — un classique méditerranéen (seed)."},
+         "steps": ["Mariner le poulet.", "Cuire a la poele."]},
         # 2. Italian / red_meat / comfort / autumn-winter
         {"slug": "ragu-bolognese", "title": "Ragu bolognese",
          "cuisine": Cuisine.italian.value, "mood": [Mood.comfort.value],
@@ -209,10 +204,7 @@ def _recipe_specs() -> list[dict]:
          "seasonality": [Season.autumn.value, Season.winter.value],
          "prep_time_minutes": 35, "servings": 2,
          "ingredients": [{"name": "riz arborio", "quantity": 300, "unit": "g"}],
-         "steps": ["Nacrer le riz.", "Mouiller au bouillon."],
-         "cook_time_minutes": 25,
-         "difficulty": Difficulty.medium.value,
-         "description": "Risotto crémeux aux champignons et parmesan (seed)."},
+         "steps": ["Nacrer le riz.", "Mouiller au bouillon."]},
         # 4. French / poultry / celebratory / autumn
         {"slug": "coq-au-vin", "title": "Coq au vin", "cuisine": Cuisine.french.value,
          "mood": [Mood.celebratory.value, Mood.comfort.value],
@@ -232,10 +224,7 @@ def _recipe_specs() -> list[dict]:
          "main_protein": Protein.none.value, "seasonality": [Season.autumn.value],
          "prep_time_minutes": 60, "servings": 6,
          "ingredients": [{"name": "pommes", "quantity": 6, "unit": None}],
-         "steps": ["Carameliser.", "Cuire 30 min."],
-         "cook_time_minutes": 30,
-         "difficulty": Difficulty.hard.value,
-         "description": "Tarte aux pommes caramélisées renversée — technique classique française (seed)."},
+         "steps": ["Carameliser.", "Cuire 30 min."]},
         # 7. Asian / poultry / quick / all-seasons
         {"slug": "poulet-teriyaki", "title": "Poulet teriyaki",
          "cuisine": Cuisine.asian.value, "mood": [Mood.quick.value],

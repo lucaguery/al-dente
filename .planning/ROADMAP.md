@@ -60,8 +60,8 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
   4. Recipes with `computeCompleteness(recipe).percent < 100` display a `CompletenessCard` above the body on `/recipes/[id]`; recipes at 100% show nothing; the chip-links navigate to the edit page with a `?focus=` param that scrolls/focuses the matching input
   5. Recipe list rows in the inbox and recipes library show a small (~40×40) per-recipe SVG illustration; missing or failed illustrations fall back to the `BrandIcon`; no `<script>`, `<foreignObject>`, `<text>`, `<image>`, `<use>`, `<a>`, `<style>`, or `on*=` content survives the server-side sanitizer (unit tests confirm)
 **Plans**: 5 plans (Wave 1 parallel: 24-01 + 24-02 / Wave 2 serial: 24-03 → 24-04 → 24-05)
-- [ ] 24-01-brand-icon-PLAN.md — BrandIcon component extracted from app/icon.tsx + EmptyState type widen + mount on welcome + 3 empty states (RID-01 / gh#11)
-- [ ] 24-02-data-model-PLAN.md — Alembic 0007 + 3 new optional fields + Difficulty enum on both sides + Pydantic / Gemini schema / RecipeForm / detail page (RID-02 / gh#22 Part A)
+- [x] 24-01-brand-icon-PLAN.md — BrandIcon component extracted from app/icon.tsx + EmptyState type widen + mount on welcome + 3 empty states (RID-01 / gh#11)
+- [x] 24-02-data-model-PLAN.md — Alembic 0007 + 3 new optional fields + Difficulty enum on both sides + Pydantic / Gemini schema / RecipeForm / detail page (RID-02 / gh#22 Part A)
 - [ ] 24-03-completeness-PLAN.md — computeCompleteness() pure helper + CompletenessCard + ?focus= ref-focus on edit page (Suspense-wrapped) (RID-03 / gh#22 Part B)
 - [ ] 24-04-title-rewrite-PLAN.md — rewrite_title() + promote_quick_draft / promote_full_draft BackgroundTasks + voice/photo prompt extension + CLAUDE.md invariant #1 shift (RID-04 / gh#10)
 - [ ] 24-05-illustration-PLAN.md — Alembic 0008 + svg_sanitizer with allowlist + unit tests + generate_recipe_illustration + 4 BackgroundTask extensions + RecipeIllustration component (RID-05 / gh#12)
@@ -73,7 +73,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 |-------|----------------|--------|-----------|
 | 22. Quick wins | 3/3 | Complete    | 2026-05-12 |
 | 23. Deck polish | 1/1 | Complete    | 2026-05-12 |
-| 24. Recipe identity | 0/5 | Not started | - |
+| 24. Recipe identity | 2/5 | In Progress|  |
 
 ---
 *Last updated: 2026-05-12 — v0.5 Mixed Sweep roadmap created. 3 phases (22–24), 12 requirements mapped (QW × 3 / DECK × 4 / RID × 5). 100% coverage. Phase 24 serial order load-bearing: RID-01 → RID-02 → RID-03 → RID-04 → RID-05. Invariant #1 shift ships inside Phase 24 plan for RID-04.*

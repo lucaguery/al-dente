@@ -131,12 +131,7 @@ class GeminiExtractedRecipe(BaseModel):
     ingredients: Optional[list[GeminiIngredient]] = None
     steps: Optional[list[str]] = None
     prep_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
-    # Phase 24 RID-02 — cook_time_minutes mirrors prep_time_minutes shape.
-    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
     servings: Optional[int] = Field(default=None, ge=1, le=99)
-    # Phase 24 RID-02 — difficulty + description. Literal pattern matches CuisineLiteral.
-    difficulty: Optional[Literal["easy", "medium", "hard"]] = None
-    description: Optional[str] = Field(default=None, max_length=2000)
     cuisine: Optional[CuisineLiteral] = None
     mood: list[MoodLiteral] = Field(default_factory=list)
     main_protein: Optional[ProteinLiteral] = None
@@ -173,14 +168,12 @@ _EXTRACT_PROMPT_VOICE = (
     "Extrais les champs structurés de cette recette dictée en français. "
     "Renvoie null pour les champs absents — n'invente rien. Ne mets que des "
     "valeurs des vocabulaires verrouillés pour cuisine, mood, main_protein, "
-    "seasonality. Extrais aussi cook_time_minutes (en minutes), difficulty "
-    "('easy'/'medium'/'hard'), et description (1-2 phrases résumant la recette)."
+    "seasonality."
 )
 _EXTRACT_PROMPT_PHOTOS = (
     "Voici une recette photographiée (1 à 4 images). Extrais les champs "
     "structurés en français. Renvoie null pour les champs absents — n'invente "
-    "rien. Extrais aussi cook_time_minutes (en minutes), difficulty "
-    "('easy'/'medium'/'hard'), et description (1-2 phrases résumant la recette)."
+    "rien."
 )
 _MODIFY_PROMPT = (
     "Voici une recette existante (JSON) et une instruction de modification "
@@ -320,10 +313,6 @@ def _apply_extracted(recipe: Recipe, extracted: GeminiExtractedRecipe) -> None:
     recipe.steps = extracted.steps
     recipe.prep_time_minutes = extracted.prep_time_minutes
     recipe.servings = extracted.servings
-    # Phase 24 RID-02 — three optional recipe-identity fields.
-    recipe.cook_time_minutes = extracted.cook_time_minutes
-    recipe.difficulty = extracted.difficulty
-    recipe.description = extracted.description
     recipe.cuisine = extracted.cuisine
     recipe.mood = list(extracted.mood) if extracted.mood else []
     recipe.main_protein = extracted.main_protein

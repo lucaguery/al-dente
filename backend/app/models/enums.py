@@ -40,9 +40,3 @@ class Protein(str, Enum):
     egg = "egg"
     legume = "legume"
     none = "none"
-
-
-class Difficulty(str, Enum):
-    easy = "easy"
-    medium = "medium"
-    hard = "hard"

@@ -29,10 +29,9 @@ import type { Recipe } from "@/lib/recipes";
 
 export default function RecipeDetailPage() {
   const t = useTranslations("recipes");
-  const tDetail = useTranslations("recipes.detail");
   const tVoiceModify = useTranslations("recipes.voice_modify");
   const tErr = useTranslations("onboarding.errors");
-  const enumLabels = useEnumLabels();
+  const labels = useEnumLabels();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -256,29 +255,19 @@ export default function RecipeDetailPage() {
           {/* Metadata pill row — cuisine, moods, protein, prep/servings */}
           <div className="flex flex-wrap gap-2 items-center">
             {recipe.cuisine ? (
-              <Badge variant="secondary">{recipe.cuisine}</Badge>
+              <Badge variant="secondary">{labels.cuisine(recipe.cuisine)}</Badge>
             ) : null}
             {recipe.mood.map((m) => (
               <Badge key={m} variant="secondary">
-                {m}
+                {labels.mood(m)}
               </Badge>
             ))}
             {recipe.main_protein ? (
-              <Badge variant="secondary">{recipe.main_protein}</Badge>
+              <Badge variant="secondary">{labels.protein(recipe.main_protein)}</Badge>
             ) : null}
             {metaSpan ? (
               <span className="text-sm text-foreground-muted">{metaSpan}</span>
             ) : null}
-            {recipe.cook_time_minutes != null && (
-              <span className="text-sm text-foreground-muted">
-                {tDetail("cook_time_label")}: {recipe.cook_time_minutes} min
-              </span>
-            )}
-            {recipe.difficulty && (
-              <span className="text-sm text-foreground-muted">
-                {tDetail("difficulty_label")}: {enumLabels.difficulty(recipe.difficulty)}
-              </span>
-            )}
           </div>
 
           {/* Multi-photo carousel — renders photos 2..N when multi-photo (hero already shows photo 1) */}
@@ -294,16 +283,6 @@ export default function RecipeDetailPage() {
                 />
               ))}
             </div>
-          )}
-
-          {recipe.description && (
-            <section className="mb-4">
-              {/* sr-only heading so screen readers announce "Description" before the text */}
-              <h2 className="text-title sr-only">{tDetail("description_label")}</h2>
-              <p className="text-base text-foreground-muted whitespace-pre-line">
-                {recipe.description}
-              </p>
-            </section>
           )}
 
           {recipe.ingredients && recipe.ingredients.length > 0 ? (

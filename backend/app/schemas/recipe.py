@@ -28,12 +28,6 @@ from pydantic import BaseModel, Field
 
 from app.models.enums import Cuisine, Mood, Protein, Season
 
-# Phase 24 RID-02 — locked difficulty vocabulary. Mirrors backend/app/models/enums.py
-# Difficulty AND frontend/lib/enums.ts Difficulty (drift is a bug category per
-# CLAUDE.md §"Locked vocabularies"). The Literal shape lets Pydantic v2 validate
-# the wire value at parse time without requiring callers to import the Enum class.
-DifficultyLiteral = Literal["easy", "medium", "hard"]
-
 
 # --- Sub-shapes -------------------------------------------------------------
 
@@ -79,10 +73,6 @@ class RecipeFullCreate(BaseModel):
         ]
     )
     tags: List[str] = Field(default_factory=list)
-    # Phase 24 RID-02 — three optional recipe-identity fields.
-    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
-    difficulty: Optional[DifficultyLiteral] = None
-    description: Optional[str] = Field(default=None, max_length=2000)
 
 
 class RecipeQuickCreate(BaseModel):
@@ -121,10 +111,6 @@ class RecipeUpdate(BaseModel):
     main_protein: Optional[Protein] = None
     seasonality: Optional[List[Season]] = None
     tags: Optional[List[str]] = None
-    # Phase 24 RID-02 — three optional recipe-identity fields.
-    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
-    difficulty: Optional[DifficultyLiteral] = None
-    description: Optional[str] = Field(default=None, max_length=2000)
 
 
 # --- Response shape ---------------------------------------------------------
@@ -153,12 +139,6 @@ class RecipeResponse(BaseModel):
     servings: Optional[int] = None
     cuisine: Optional[str] = None
     main_protein: Optional[str] = None
-    # Phase 24 RID-02 — three optional recipe-identity fields. Mirrors the
-    # recipes.cook_time_minutes / difficulty / description columns. NULL on
-    # rows that existed before migration 0007 (intentional per D-16).
-    cook_time_minutes: Optional[int] = None
-    difficulty: Optional[str] = None
-    description: Optional[str] = None
     mood: List[str]
     seasonality: List[str]
     tags: List[str]

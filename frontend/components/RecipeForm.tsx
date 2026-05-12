@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Cuisine, Difficulty, Mood, Protein, Season } from "@/lib/enums";
+import { Cuisine, Mood, Protein, Season } from "@/lib/enums";
 import { useEnumLabels } from "@/lib/enum-labels";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import type { Recipe } from "@/lib/recipes";
@@ -79,10 +79,6 @@ export type RecipeFormValues = {
   ingredients_text: string; // one per line — server expects array; we split on save
   steps_text: string; // one per line
   prep_time_minutes: string;
-  // Phase 24 RID-02 — three optional recipe-identity fields.
-  cook_time_minutes: string;
-  difficulty: string; // "" or one of easy/medium/hard
-  description: string;
   servings: string;
   cuisine: string; // "" means none
   mood: string[];
@@ -97,10 +93,6 @@ export type RecipeBody = {
   ingredients?: { name: string; quantity?: number | null; unit?: string | null }[];
   steps?: string[];
   prep_time_minutes?: number;
-  // Phase 24 RID-02 — three optional recipe-identity fields.
-  cook_time_minutes?: number;
-  difficulty?: string;
-  description?: string;
   servings?: number;
   cuisine?: string;
   mood: string[];
@@ -125,9 +117,6 @@ export function recipeToFormValues(r: Recipe): RecipeFormValues {
       .join("\n"),
     steps_text: (r.steps ?? []).join("\n"),
     prep_time_minutes: r.prep_time_minutes?.toString() ?? "",
-    cook_time_minutes: r.cook_time_minutes != null ? String(r.cook_time_minutes) : "",
-    difficulty: r.difficulty ?? "",
-    description: r.description ?? "",
     servings: r.servings?.toString() ?? "",
     cuisine: r.cuisine ?? "",
     mood: r.mood ?? [],
@@ -204,12 +193,6 @@ export function formValuesToBody(v: RecipeFormValues): RecipeBody {
     prep_time_minutes: v.prep_time_minutes
       ? parseInt(v.prep_time_minutes, 10)
       : undefined,
-    cook_time_minutes:
-      v.cook_time_minutes.trim() !== "" ? Number(v.cook_time_minutes) : undefined,
-    difficulty:
-      v.difficulty === "" || v.difficulty === NONE_VALUE ? undefined : v.difficulty,
-    description:
-      v.description.trim() !== "" ? v.description.trim() : undefined,
     servings: v.servings ? parseInt(v.servings, 10) : undefined,
     cuisine: v.cuisine || undefined,
     mood: v.mood,
@@ -252,9 +235,6 @@ export function RecipeForm({
       ingredients_text: "",
       steps_text: "",
       prep_time_minutes: "",
-      cook_time_minutes: "",
-      difficulty: "",
-      description: "",
       servings: "",
       cuisine: "",
       mood: [],
@@ -334,49 +314,6 @@ export function RecipeForm({
             onChange={(e) => setV({ ...v, servings: e.target.value })}
           />
         </div>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="cook_time_minutes">{t("cook_time_minutes_label")}</Label>
-        <Input
-          id="cook_time_minutes"
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={1440}
-          placeholder={t("cook_time_minutes_placeholder")}
-          value={v.cook_time_minutes}
-          onChange={(e) => setV({ ...v, cook_time_minutes: e.target.value })}
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="difficulty">{t("difficulty_label")}</Label>
-        <Select
-          value={v.difficulty || NONE_VALUE}
-          onValueChange={(val) =>
-            setV({ ...v, difficulty: val === NONE_VALUE ? "" : val })
-          }
-        >
-          <SelectTrigger id="difficulty">
-            <SelectValue placeholder={t("difficulty_placeholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE_VALUE}>{t("difficulty_placeholder")}</SelectItem>
-            <SelectItem value={Difficulty.easy}>{labels.difficulty(Difficulty.easy)}</SelectItem>
-            <SelectItem value={Difficulty.medium}>{labels.difficulty(Difficulty.medium)}</SelectItem>
-            <SelectItem value={Difficulty.hard}>{labels.difficulty(Difficulty.hard)}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="description">{t("description_label")}</Label>
-        <Textarea
-          id="description"
-          placeholder={t("description_placeholder")}
-          value={v.description}
-          onChange={(e) => setV({ ...v, description: e.target.value })}
-          maxLength={2000}
-          rows={3}
-        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>{t("cuisine_label")}</Label>
