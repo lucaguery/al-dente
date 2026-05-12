@@ -32,6 +32,8 @@ Both household members have a fully working app installed on their iPhones. The 
 
 **v0.3 Phase 14 shipped** — 2026-05-11. Synthesis & handoff completed — v0.3 milestone closes. 2 plans, 510-line `.planning/v0.3/ASSESSMENT.md` combining WALKTHROUGH.md + UI-AUDIT.md into a tiered ranked findings list ordered by impact on the "feels Al Dente" question. **27 ranked entries: 2 Tier 1 / 8 Tier 2 / 17 Tier 3** under a locked 3-axis composite rubric (identity-signature impact / invariant-violation visible / primary-path friction; each 0-2; total 0-6). Tier 1 anchored by B-3 (`MEMBER_COUNT=2` hardcoded — architecture invariant #2 broken, Issue #4) and B-4 (`cook_count` re-finalize idempotency — invariant #3 broken, Issue #5). Anti-prescription discipline enforced structurally via `.planning/v0.3/check-assessment.sh` grep gate (D-08 forward-only regex blocks `v0.4`, prescriptive verbs, future phase numbers); doc passes the gate. Closes with explicit "Inputs to next /gsd-new-milestone cycle" section (artifacts + 5 inquiry-form framing questions + 5 explicit non-prescriptions). Zero product-code drift; zero new GitHub issues. Verified passed (3/3 must-haves) by gsd-verifier.
 
+**v0.5 Phase 22 shipped** — 2026-05-12. Three independent polish drops closing `audit:walkthrough`-era issues #13/#15/#21. **QW-01** (gh#13): `Geist_Mono` font import + `geistMono` className mount removed from `app/layout.tsx`; `--font-mono` self-reference removed from `globals.css`; the two `font-mono` call sites (invite-code input on `/onboarding/join` + URL input on `UrlCaptureTab`) swapped to `tabular-nums` — letter-spacing + IBM Plex Sans's tabular-nums variant carry the "code" signal without a second font request. D-18 grep gate passes: zero `font-mono|--font-mono|Geist_Mono` across `frontend/{app,components,lib}`. **QW-02** (gh#15): NEW `frontend/components/VersionFooter.tsx` client component renders a centered `v{version} · {sha} · {env}` muted line at the bottom of `/settings` (U+00B7 middle-dot separators, always-visible env label, plain-text SHA — no GitHub link coupling per D-09); `frontend/next.config.ts` gained an `env: {}` block re-exporting `npm_package_version` → `NEXT_PUBLIC_APP_VERSION`, `VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev"` → `NEXT_PUBLIC_GIT_SHA`, and `VERCEL_ENV ?? "development"` → `NEXT_PUBLIC_VERCEL_ENV` (build-time only; full SHA never reaches the client bundle). `aria-label="Version de l'application"` added for screen-reader accessibility. **QW-03** (gh#21): `ShortlistCard.tsx` and `recipes/[id]/page.tsx` now wrap their cuisine/mood/protein renders with the existing `useEnumLabels()` hook (`frontend/lib/enum-labels.ts`, the canonical translator — not modified per D-13), so raw enum keys like `mediterranean` / `italian` / `beef` no longer leak to the user. Inbox `D-14` no-op confirmed (drafts inbox renders no cuisine/mood/protein today); `recipe.season` `D-15` grep returned zero matches. 3 plans / 3 wave-1 parallel executor agents / 12 atomic commits via worktree isolation. Code review: 0 critical / 0 warning / 3 info (all expected — hardcoded `aria-label` accepted per D-06, no-op `tabular-nums` on URL field intentional per D-02, `npm_package_version` fallback already in place). Phase verifier skipped per `workflow.verifier: false` — D-18 grep gates serve as the goal-achievement check. v0.5 Active progress: 1/3 phases complete.
+
 **Behavioral validation gate:** ≥ 2 weeks of daily use by both members (the v0.1 definition of done per SPEC.md). This is the next observable milestone before broader scope decisions.
 
 **Infrastructure:** Next.js 16 PWA on Vercel + FastAPI on Railway + Supabase Postgres + Storage. Auto-deploy on push to `main`. Free-tier hosting throughout.
@@ -75,6 +77,8 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 ### Active
 
 **v0.5 — Mixed Sweep** (3 phases, ~10 GitHub issues). Closes a coherent cluster of `audit:walkthrough`-era issues + post-v0.4 polish across three themes: quick wins (#13/#15/#21), swipe-deck polish (#14/#18/#17/#16), and recipe identity (#11/#22/#10/#12). Locked decisions: #10 LLM title rewrite is **silent overwrite** with `promotion_error` fallback on rewrite failure (shifts invariant #1 — quick/full-form become async); #17 thumb-button direction is **filled Heart / outline Heart** (emerald for filled, neutral for empty). Out of scope: #20 (defers to v0.6 — needs its own `/gsd-explore`).
+
+**Progress:** 1/3 phases complete. Phase 22 (Quick wins: QW-01/02/03 → gh#13/#15/#21) shipped 2026-05-12 — see Current State. Phase 23 (Deck polish) and Phase 24 (Recipe identity) remain.
 
 ### Surfaced for follow-up (deferred to v2 or future milestone)
 
@@ -165,7 +169,7 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 **Phase shape (continues numbering from v0.4 — starts at Phase 22):**
 
-- Phase 22 — Quick wins (#13, #15, #21)
+- ✅ Phase 22 — Quick wins (#13, #15, #21) — shipped 2026-05-12
 - Phase 23 — Deck polish (#14 + #18 paired → #17 → #16)
 - Phase 24 — Recipe identity (#11 → #22 → #10 → #12; serial to avoid `_apply_extracted` / `services/llm.py` merge churn)
 
@@ -201,4 +205,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-12 — v0.5 Mixed Sweep opened (3 phases: 22 Quick wins / 23 Deck polish / 24 Recipe identity). Scope: ~10 GitHub issues (#10–#22 minus #19 already shipped via fast-19 and #20 deferred to v0.6). Milestone-level decisions locked: silent LLM title overwrite with promotion_error fallback (#10), filled/outline Heart for thumb buttons (#17), invariant #1 updates when #10 ships. Source: `.planning/notes/v0.5-shape-mixed-sweep.md`.*
+*Last updated: 2026-05-12 — v0.5 Phase 22 (Quick wins) shipped. Closed gh#13 (Geist Mono removal — zero `font-mono` matches across `frontend/{app,components,lib}`), gh#15 (VersionFooter component + `next.config.ts` build-time env re-export), gh#21 (cuisine/mood/protein renders on `ShortlistCard` + `recipes/[id]` now route through `useEnumLabels()`). 3 plans / 3 parallel executor agents / 12 atomic commits via worktree isolation. Code review clean (0 critical / 0 warning / 3 info — all expected). Verifier skipped per `workflow.verifier: false`; D-18 grep gates serve as goal check. v0.5 Active progress: 1/3 phases. Next: Phase 23 (Deck polish — #14/#18/#17/#16).*
