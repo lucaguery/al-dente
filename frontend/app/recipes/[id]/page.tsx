@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CompletenessCard } from "@/components/CompletenessCard";
 import { EmptyState } from "@/components/EmptyState";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { VoiceModifySheet } from "@/components/VoiceModifySheet";
@@ -252,6 +253,9 @@ export default function RecipeDetailPage() {
         )}
 
         <div className="px-(--spacing-page-x) flex flex-col gap-(--spacing-section-y) pb-(--spacing-bottom-safe) mt-6">
+          {/* RID-03 — CompletenessCard above body content when percent < 100 (D-20) */}
+          <CompletenessCard recipe={recipe} />
+
           {/* Metadata pill row — cuisine, moods, protein, prep/servings */}
           <div className="flex flex-wrap gap-2 items-center">
             {recipe.cuisine ? (
