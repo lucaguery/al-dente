@@ -46,6 +46,7 @@ import {
   postStartCooking,
   type CookingLogResponse,
 } from "@/lib/cooking";
+import { useDelayedFlag } from "@/lib/hooks/useDelayedFlag";
 
 const COOK_BANNER_SKIP_KEY = "dismissed_cooking_banner_at";
 
@@ -69,6 +70,11 @@ export function HomeDecide() {
   // toast again this session. A ref keeps the Set stable across renders
   // without being part of the React state tree.
   const validéToastedFor = useRef<Set<string>>(new Set());
+
+  // Suppress spinner for 250ms on mount — SW cache resolves in 5-50ms, so
+  // showing the Loader2 synchronously causes a visible flash on every warm
+  // nav. If data lands before the timer, the spinner block is skipped entirely.
+  const showSpinner = useDelayedFlag(250);
 
   // ── Resolve me + partner from useSession() ───────────────────────────────
   // SessionProvider returns { status, session, refresh } where session is
@@ -337,6 +343,7 @@ export function HomeDecide() {
   // upstream already gates "unauthenticated", so this is purely the
   // network round-trip on cold launch.
   if (!session || !me) {
+    if (!showSpinner) return null;
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x)">
         <Loader2
@@ -380,6 +387,7 @@ export function HomeDecide() {
   }
 
   if (!shortlistLoaded) {
+    if (!showSpinner) return null;
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x)">
         <Loader2
