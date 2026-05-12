@@ -273,7 +273,7 @@ export default function OnboardingJoinPage() {
               required
               aria-invalid={codeError !== null}
               aria-describedby={codeError ? "join-code-error" : undefined}
-              className="text-center font-mono tracking-[0.3em] uppercase"
+              className="text-center tabular-nums tracking-[0.3em] uppercase"
             />
             {codeError ? (
               <p
