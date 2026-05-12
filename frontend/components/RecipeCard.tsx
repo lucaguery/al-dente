@@ -97,14 +97,20 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           alt=""
           className="w-full aspect-[4/3] object-cover bg-surface-muted"
           onError={(e) => {
-            // Dev-only — when a cuisine-specific fixture is missing
-            // (e.g. asian.svg hasn't been authored), fall through to the
-            // generic default fixture before giving up entirely.
-            if (
-              process.env.NODE_ENV !== "production" &&
-              e.currentTarget.src.includes("/demo-fixtures/") &&
-              !e.currentTarget.src.endsWith("/default.svg")
-            ) {
+            // Three-stage dev fallback (round-3 260512-gpl):
+            //   1. Signed URL 404 (typical seed: photo_paths populated but no
+            //      bytes uploaded) → swap to cuisine fixture.
+            //   2. Cuisine fixture missing (e.g. asian.svg not authored) →
+            //      swap to generic default.svg.
+            //   3. Everything failed → leave broken; browser default icon.
+            // Production keeps the original behavior — no onError handling,
+            // a real missing photo just shows the broken icon (signal of an
+            // actual problem, not noise from seed data).
+            if (process.env.NODE_ENV === "production" || !devFallbackUrl) return;
+            const currentSrc = e.currentTarget.src;
+            if (!currentSrc.includes("/demo-fixtures/")) {
+              e.currentTarget.src = devFallbackUrl;
+            } else if (!currentSrc.endsWith("/default.svg")) {
               e.currentTarget.src = "/demo-fixtures/default.svg";
             }
           }}

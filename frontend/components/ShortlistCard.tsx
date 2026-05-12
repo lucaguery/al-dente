@@ -246,14 +246,20 @@ export function ShortlistCard({
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
-              // Dev-only — when the cuisine-specific fixture is missing
-              // (e.g. "asian.svg" hasn't been authored), fall through to the
-              // generic default fixture before showing the placeholder icon.
-              if (
-                process.env.NODE_ENV !== "production" &&
-                e.currentTarget.src.includes("/demo-fixtures/") &&
-                !e.currentTarget.src.endsWith("/default.svg")
-              ) {
+              // Three-stage dev fallback (round-3 260512-gpl, mirrors
+              // RecipeCard):
+              //   1. Signed URL 404 (typical seed: photo_paths populated but
+              //      no bytes uploaded) → swap to cuisine fixture.
+              //   2. Cuisine fixture missing (e.g. asian.svg not authored) →
+              //      swap to generic default.svg.
+              //   3. Everything failed → leave broken; the UtensilsCrossed
+              //      placeholder only shows when photoSrc is null, not when
+              //      a loaded URL errors mid-flight.
+              if (process.env.NODE_ENV === "production" || !devFallbackUrl) return;
+              const currentSrc = e.currentTarget.src;
+              if (!currentSrc.includes("/demo-fixtures/")) {
+                e.currentTarget.src = devFallbackUrl;
+              } else if (!currentSrc.endsWith("/default.svg")) {
                 e.currentTarget.src = "/demo-fixtures/default.svg";
               }
             }}
