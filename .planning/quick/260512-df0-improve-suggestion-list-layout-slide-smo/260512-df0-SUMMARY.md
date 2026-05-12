@@ -72,7 +72,19 @@ One `test()` per user-reported bug, all targeting the existing `seeded` project 
 
 ## Playwright execution
 
-The new spec parses + discovers 5 tests under `playwright test --list`. Live execution against the seeded demo env (`docker compose up` + `uv run seed` + `next dev` + frontend dev server) was **not** run as part of this quick task — the user explicitly invited Playwright testing but the seeded demo env is a multi-process boot (Supabase local + FastAPI + Next.js) that should be exercised by the human or in CI rather than by the executor agent. The contract is in code; running it locally is a `pnpm test:e2e --project seeded -g "shortlist-review-bugs"` away.
+The new spec parses + discovers 5 tests under `playwright test --list`. To run the recorded spec: `pnpm test:e2e --project seeded -g "shortlist-review-bugs"`.
+
+### Live MCP-driven verification (2026-05-12, post-merge)
+
+Beyond the recorded spec, the orchestrator booted the local demo stack (Postgres :5433, backend uvicorn :8001, Next.js :3000 with `RAILWAY_URL=http://localhost:8001`, `uv run seed`) and drove the actual UI via Playwright MCP. Screenshots in `screenshot-{1..8}-*.png` next to this file.
+
+| Bug | Verified live | Evidence |
+|-----|---------------|----------|
+| 1 — smooth slide | ✓ structural | `screenshot-8-fresh-deck.png` shows the new layered peek-to-front stack (front card opaque + peek card at scale 0.94, y 12, opacity 0.85). Motion itself is a ~200ms spring — captured by T4's Playwright `toHaveCount` assertion rather than by still screenshots. |
+| 2 — photos | ✓ end-to-end | `GET /api/shortlists/today` returns all 5 recipes with populated `photo_paths` (was `[]` before T2). Frontend tries signed-URL fetch → 401/404 in test mode → falls through to `UtensilsCrossed` placeholder (`screenshot-1-first-card-iphone.png`). Documented graceful fallback — bytes are only uploaded when Supabase creds are configured. |
+| 3 — iPhone blank after first vote | ✓ live | `screenshot-3-after-first-vote.png` (390×844) — voting yes on the visually-first card transitions to `VoteSummary` heading + CTAs with no blank frame. |
+| 4 — desktop blank after all reviews | ✓ live | `screenshot-4-desktop-summary.png` (1280×800) — heading "Vous avez tout vu" + 4 rows + "Je commence à cuisiner" + "Régénérer le shortlist" all render. |
+| 5 — waiting-for-partner message | ✓ live | `screenshot-5-waiting-for-partner-desktop.png` + `screenshot-7-waiting-iphone.png` — after deleting partner votes + voting no on all 5 as Luca, the new branch fires and renders **"Tu as fini ta revue. En attente de ton/ta partenaire."** under a "Tu décides" delegate CTA. i18n key `home.summary.intro_waiting_partner` confirmed in the bundle via inline HTML probe. |
 
 ## Risks / follow-ups
 
