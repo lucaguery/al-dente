@@ -12,10 +12,11 @@
 // 03-UI-SPEC.md §"Home tab content tree" + §"Interaction Patterns".
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { BrandIcon } from "@/components/BrandIcon";
 import { EmptyState } from "@/components/EmptyState";
 import { ShortlistDeck } from "@/components/ShortlistDeck";
 import { VoteSummary } from "@/components/VoteSummary";
@@ -416,7 +417,7 @@ export function HomeDecide() {
         )}
         <div className="px-(--spacing-page-x) mt-6">
           <EmptyState
-            icon={Sparkles}
+            icon={BrandIcon}
             heading={tShortlist("empty_heading")}
             body={tShortlist("empty_body")}
             cta={{
@@ -500,7 +501,7 @@ export function HomeDecide() {
         // into VoteSummary's degenerate "heading + no rows + no CTA" path.
         <div className="px-(--spacing-page-x) mt-6">
           <EmptyState
-            icon={Sparkles}
+            icon={BrandIcon}
             heading={tShortlist("empty_heading")}
             body={tShortlist("empty_body")}
             cta={{
