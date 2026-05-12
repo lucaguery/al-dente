@@ -122,6 +122,14 @@ export function ShortlistCard({
   // bug 2 fix — fetch a 5-minute signed URL for the primary photo, mirroring
   // RecipeCard.tsx. photo_paths on the wire are bucket-relative; rendering
   // them directly into <img src> was the root cause (broken image icon).
+  //
+  // Dev-only fallback: the test seed populates photo_paths but does NOT upload
+  // bytes to Supabase storage (the bucket isn't even configured in test mode,
+  // so the photo-url endpoint returns 500). Without a fallback the demo deck
+  // shows a plate-of-utensils placeholder on every card, which looks broken.
+  // In development, fall through to a bundled cuisine-themed SVG so the demo
+  // looks like real cards. Production code path is unchanged: signed URL on
+  // success, UtensilsCrossed placeholder on failure (no fixture lookup).
   const [photoSrc, setPhotoSrc] = useState<string | null>(null);
   useEffect(() => {
     if (!primaryPhoto) return;
@@ -131,14 +139,15 @@ export function ShortlistCard({
         if (alive) setPhotoSrc(url);
       })
       .catch(() => {
-        // Silent fallback to UtensilsCrossed placeholder. The signed-URL
-        // endpoint can transiently 404 right after recipe creation; we
-        // don't want to spam toast errors for that race.
+        if (alive && process.env.NODE_ENV !== "production") {
+          const slug = (cuisine ?? "default").toString();
+          setPhotoSrc(`/demo-fixtures/${slug}.svg`);
+        }
       });
     return () => {
       alive = false;
     };
-  }, [recipe.id, primaryPhoto]);
+  }, [recipe.id, primaryPhoto, cuisine]);
 
   const partnerAriaKey =
     partnerVote === "yes"
@@ -225,6 +234,18 @@ export function ShortlistCard({
             src={photoSrc}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
+            onError={(e) => {
+              // Dev-only — when the cuisine-specific fixture is missing
+              // (e.g. "asian.svg" hasn't been authored), fall through to the
+              // generic default fixture before showing the placeholder icon.
+              if (
+                process.env.NODE_ENV !== "production" &&
+                e.currentTarget.src.includes("/demo-fixtures/") &&
+                !e.currentTarget.src.endsWith("/default.svg")
+              ) {
+                e.currentTarget.src = "/demo-fixtures/default.svg";
+              }
+            }}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">

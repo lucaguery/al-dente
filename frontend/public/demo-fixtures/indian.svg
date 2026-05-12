@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.55" r="0.75">
+      <stop offset="0" stop-color="#f59e0b"/>
+      <stop offset="0.5" stop-color="#b45309"/>
+      <stop offset="1" stop-color="#5b1a08"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="450" fill="url(#bg)"/>
+  <circle cx="300" cy="240" r="170" fill="#fcd34d" opacity="0.35"/>
+  <circle cx="300" cy="240" r="120" fill="#fb923c" opacity="0.6"/>
+  <circle cx="300" cy="240" r="78" fill="#ea580c" opacity="0.85"/>
+  <g fill="#fef3c7" opacity="0.7">
+    <circle cx="270" cy="220" r="4"/>
+    <circle cx="320" cy="225" r="3"/>
+    <circle cx="295" cy="255" r="5"/>
+    <circle cx="335" cy="260" r="3"/>
+    <circle cx="260" cy="265" r="3"/>
+  </g>
+  <g stroke="#b91c1c" stroke-width="2" fill="none" opacity="0.5">
+    <path d="M280 200 q15 -10 30 0"/>
+    <path d="M260 240 q20 -10 40 0"/>
+    <path d="M300 280 q20 -10 40 0"/>
+  </g>
+  <text x="50" y="430" font-family="Georgia, serif" font-style="italic" font-size="22" fill="#fef3c7" opacity="0.7">indian</text>
+</svg>
