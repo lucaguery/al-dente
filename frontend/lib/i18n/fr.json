@@ -37,6 +37,7 @@
       "heading": "Vous avez tout vu",
       "intro_validated": "Tu commences ?",
       "intro_pressenti": "Ta partenaire n'a pas encore voté. Tu peux déléguer.",
+      "intro_waiting_partner": "Tu as fini ta revue. En attente de ton/ta partenaire.",
       "intro_none": "Aucune recette ne fait l'unanimité ce soir.",
       "cook_cta": "Je commence à cuisiner",
       "delegate_cta": "Tu décides",

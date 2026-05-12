@@ -439,6 +439,16 @@ export function HomeDecide() {
   const unvotedByMe = dealableRecipes.filter((r) => !myVotes.has(r.id));
   const allVoted = unvotedByMe.length === 0;
 
+  // bug 4 fix (260512-df0): explicit empty-shortlist guard. If
+  // `shortlist.recipes` is empty (e.g. a regenerate produced a zero-result
+  // list), the original code would fall through to `allVoted=true` and
+  // render VoteSummary with empty rows — heading + nothing actionable.
+  // VoteSummary now defensively short-circuits to an EmptyState when its
+  // own rows[] is empty (after the rejete filter), but this guard keeps
+  // the empty-state messaging consistent between the "no shortlist today"
+  // path (line ~400) and the "shortlist exists but is empty" path.
+  const shortlistIsEmpty = shortlist.recipes.length === 0;
+
   // Cold-start chip when corpus < 10 (same heuristic as VoteSummary lives by).
   const showCorpusColdStart =
     shortlist.recipes.length > 0 && shortlist.recipes.length < 10;
@@ -471,7 +481,22 @@ export function HomeDecide() {
         <h1 className="text-display text-foreground">{formattedDate}</h1>
       </header>
 
-      {allVoted ? (
+      {shortlistIsEmpty ? (
+        // bug 4 fix (260512-df0): shortlist exists but has zero recipes —
+        // surface the regenerate affordance directly instead of falling
+        // into VoteSummary's degenerate "heading + no rows + no CTA" path.
+        <div className="px-6 mt-6">
+          <EmptyState
+            icon={Sparkles}
+            heading={tShortlist("empty_heading")}
+            body={tShortlist("empty_body")}
+            cta={{
+              href: "/recipes/new",
+              label: tShortlist("empty_cta"),
+            }}
+          />
+        </div>
+      ) : allVoted ? (
         <VoteSummary
           recipes={dealableRecipes}
           votes={shortlist.votes}

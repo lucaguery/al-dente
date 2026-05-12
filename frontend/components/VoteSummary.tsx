@@ -9,10 +9,11 @@
 //   - Always: regenerate ghost button at the bottom (opens RegenerateSheet)
 
 import { useMemo } from "react";
-import { ChefHat, RotateCw } from "lucide-react";
+import { ChefHat, RotateCw, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/EmptyState";
 import { MemberDot } from "@/components/MemberDot";
 import { useSession } from "@/components/SessionProvider";
 import {
@@ -114,6 +115,39 @@ export function VoteSummary({
 
   const validatedRow = rows.find((r) => r.state === "valide");
   const pressentiRow = rows.find((r) => r.state === "pressenti");
+  // bug 5 fix (260512-df0): waiting-for-partner branch. The local user has
+  // finished their review (allVoted upstream → VoteSummary mounted) but no
+  // Validé exists yet AND no Pressenti is leading either AND the partner
+  // still has rows they haven't weighed in on. Anchored to an i18n key —
+  // no hardcoded French (CLAUDE.md invariant 6).
+  const partnerHasUnvotedRows = rows.some((r) => r.partnerVote === undefined);
+  const showWaitingForPartner =
+    !validatedRow && !pressentiRow && partnerHasUnvotedRows;
+
+  // bug 4 fix (260512-df0): defensive empty-rows short-circuit. If every
+  // recipe in the shortlist is Rejeté (rows[] filters those out at line
+  // 113), or if upstream passed an empty `recipes` prop, render an
+  // EmptyState rather than an empty heading + degenerate intro_none card.
+  // Reuses the existing `home.empty.all_rejected_*` keys — no new copy.
+  // CTA points back to /recipes/new (regenerate is a heavier action that
+  // belongs in the parent sheet; this branch covers the truly-rare
+  // "nothing here" terminal state).
+  const tEmpty = useTranslations("home.empty");
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col flex-1 px-6 pt-6 pb-24 gap-6">
+        <EmptyState
+          icon={Sparkles}
+          heading={tEmpty("all_rejected_heading")}
+          body={tEmpty("all_rejected_body")}
+          cta={{
+            href: "/recipes/new",
+            label: t("regenerate_cta"),
+          }}
+        />
+      </div>
+    );
+  }
 
   function dotForVote(vote: "yes" | "no" | undefined, colorHex: string) {
     if (vote === "yes") {
@@ -179,6 +213,25 @@ export function VoteSummary({
           <Card className="paper-grain shadow-card border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-3">
             <p className="font-display italic text-base text-foreground">
               {t("intro_pressenti")}
+            </p>
+            <Button
+              type="button"
+              variant="default"
+              className="h-12 w-full"
+              disabled={delegateInFlight}
+              onClick={onDelegate}
+            >
+              {t("delegate_cta")}
+            </Button>
+          </Card>
+        ) : showWaitingForPartner ? (
+          // bug 5 fix (260512-df0): the local user has finished but no
+          // recipe is leading and the partner has not voted on at least
+          // one. Render an explicit waiting message + delegate-cta so
+          // the user always has a forward action even while they wait.
+          <Card className="paper-grain shadow-card border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-3">
+            <p className="font-display italic text-base text-foreground">
+              {t("intro_waiting_partner")}
             </p>
             <Button
               type="button"
