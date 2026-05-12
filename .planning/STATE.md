@@ -29,7 +29,7 @@ Milestone: v0.4 (Audit Remediation & Identity Polish)
 Phase: 21
 Plan: Not started
 Status: Executing Phase 21
-Last activity: 2026-05-12 - Completed quick task 260512-df0: improve suggestion list layout (slide smoothness, photos, blank states, completion message)
+Last activity: 2026-05-12 - Completed quick task 260512-gpl: swap display font Fraunces → Cormorant Garamond globally; rebuild RecipeCard as vertical 2-col photo-grid (Direction B)
 
 Resume: `/gsd-discuss-phase 15` or `/gsd-plan-phase 15`.
 
@@ -108,6 +108,7 @@ None planned for v0.4 — remediation milestone consuming existing audit corpus.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260512-df0 | Improve suggestion list layout (slide smoothness, photos, blank states, completion message) | 2026-05-12 | 4937f3e | [260512-df0-improve-suggestion-list-layout-slide-smo](./quick/260512-df0-improve-suggestion-list-layout-slide-smo/) |
+| 260512-gpl | Swap display font Fraunces → Cormorant Garamond globally; rebuild RecipeCard as vertical 2-col photo-grid (Direction B) | 2026-05-12 | 5441edb | [260512-gpl-ui-cormorant-garamond-font-swap-directio](./quick/260512-gpl-ui-cormorant-garamond-font-swap-directio/) |
 
 ## Session Continuity
 
