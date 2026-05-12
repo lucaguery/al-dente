@@ -11,7 +11,7 @@
     "home": "Accueil",
     "recipes": "Recettes",
     "drafts": "À compléter",
-    "more": "Plus"
+    "settings": "Réglages"
   },
   "home": {
     "title": "Al Dente",
@@ -23,6 +23,7 @@
       "empty_heading": "Pas encore de shortlist",
       "empty_body": "Ton shortlist du jour n'est pas encore prêt. Reviens plus tard ou ajoute des recettes.",
       "empty_cta": "Ajouter une recette",
+      "regenerate_cta": "Régénérer le shortlist",
       "vote_yes_aria": "J'aime cette recette",
       "vote_no_aria": "Pas envie ce soir",
       "partner_unvoted_aria": "{name} : pas encore voté",
@@ -63,9 +64,6 @@
       "subscribe_failed": "Notifications partiellement activées. Réessaie depuis Réglages.",
       "post_failed": "Notifications activées. Synchronisation avec le serveur échouée, réessaie.",
       "toast_activated": "Notifications activées."
-    },
-    "cold_start": {
-      "body": "Ajoute plus de recettes pour de meilleures suggestions."
     },
     "filters": {
       "title": "Régénérer le shortlist",
@@ -313,6 +311,15 @@
     "history": {
       "title": "Historique",
       "cta_label": "Voir les cuissons récentes"
+    },
+    "disconnect": {
+      "title": "Compte",
+      "body": "Te déconnecter ne supprime rien — tes recettes et ton foyer restent intacts. Tu pourras te reconnecter avec le code d'invitation.",
+      "cta": "Se déconnecter du foyer",
+      "confirm_question": "Confirmer la déconnexion ?",
+      "confirm_cta": "Oui, me déconnecter",
+      "cancel": "Annuler",
+      "error": "Déconnexion impossible. Réessaie."
     }
   },
   "onboarding": {

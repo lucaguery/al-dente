@@ -59,14 +59,54 @@ export type Member = {
  * Backend endpoint: GET /api/recipes/{id}/photo-url?path=...
  * (T-01-10-01 mitigation: backend verifies path is in `recipe.photo_paths`.)
  */
+// In-memory signed-URL cache. The backend mints URLs with a 5-minute TTL
+// (SIGNED_URL_TTL_SECONDS in backend/app/services/storage.py); cache for 4
+// minutes so we keep a 1-minute safety margin before the URL would 403.
+// Scope is per-tab process — the cache resets on hard reload, which is the
+// correct behavior (the user wants fresh URLs when they manually refresh).
+// Without this cache, every BottomNav round-trip back to /recipes refetched
+// signed URLs for every visible thumbnail, producing a visible flicker and
+// hammering the backend (one /photo-url per card per nav).
+const PHOTO_URL_CACHE_TTL_MS = 4 * 60 * 1000;
+const photoUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+function photoUrlCacheKey(recipeId: string, path: string): string {
+  return `${recipeId}::${path}`;
+}
+
 export async function getSignedPhotoUrl(
   recipeId: string,
   path: string,
 ): Promise<string> {
+  const key = photoUrlCacheKey(recipeId, path);
+  const cached = photoUrlCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.url;
+  }
   const res = await api<{ url: string; expires_in: number }>(
     `/api/recipes/${recipeId}/photo-url?path=${encodeURIComponent(path)}`,
   );
+  photoUrlCache.set(key, {
+    url: res.url,
+    expiresAt: Date.now() + PHOTO_URL_CACHE_TTL_MS,
+  });
   return res.url;
+}
+
+/** Invalidate a single cached signed URL — call after the underlying photo
+ *  changes (e.g. user uploaded a new one). Pass null `path` to drop every
+ *  entry for the recipe. */
+export function invalidateSignedPhotoUrl(
+  recipeId: string,
+  path: string | null = null,
+): void {
+  if (path) {
+    photoUrlCache.delete(photoUrlCacheKey(recipeId, path));
+    return;
+  }
+  for (const key of photoUrlCache.keys()) {
+    if (key.startsWith(`${recipeId}::`)) photoUrlCache.delete(key);
+  }
 }
 
 // --- Phase 2 capture surfaces (W2) ----------------------------------------

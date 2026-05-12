@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Home, BookOpen, Inbox, MoreHorizontal } from "lucide-react";
+import { Home, BookOpen, Inbox, Settings } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { api } from "@/lib/api";
@@ -16,7 +16,7 @@ type Tab = {
   href: string;
   segment: string | null; // selected-segment value when this tab is active; null = home
   icon: LucideIcon;
-  labelKey: "home" | "recipes" | "drafts" | "more";
+  labelKey: "home" | "recipes" | "drafts" | "settings";
 };
 
 const TABS: ReadonlyArray<Tab> = [
@@ -26,8 +26,8 @@ const TABS: ReadonlyArray<Tab> = [
   {
     href: "/settings",
     segment: "settings",
-    icon: MoreHorizontal,
-    labelKey: "more",
+    icon: Settings,
+    labelKey: "settings",
   },
 ];
 

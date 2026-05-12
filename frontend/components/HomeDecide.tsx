@@ -20,7 +20,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { ShortlistDeck } from "@/components/ShortlistDeck";
 import { VoteSummary } from "@/components/VoteSummary";
 import { CookingBanner } from "@/components/CookingBanner";
-import { ColdStartChip } from "@/components/ColdStartChip";
 import { PushPermissionBanner } from "@/components/PushPermissionBanner";
 import { RegenerateSheet } from "@/components/RegenerateSheet";
 import { useSession } from "@/components/SessionProvider";
@@ -393,10 +392,9 @@ export function HomeDecide() {
 
   const cookingBannerVisible = activeLog !== null && !bannerSkipped;
 
-  // No shortlist for today — empty state + (always-on) cold-start chip.
-  // Wrap both in a single padded container so the ColdStartChip's mx-6
-  // and the EmptyState card share the same horizontal rhythm (otherwise
-  // the chip floats indented and the EmptyState card sprawls full-width).
+  // No shortlist for today — render EmptyState + a "Régénérer le shortlist"
+  // CTA so the user can trigger generation without having to navigate to
+  // /recipes/new first.
   if (shortlist === null) {
     return (
       <div className="flex flex-col flex-1">
@@ -408,7 +406,6 @@ export function HomeDecide() {
             onSkip={handleBannerSkip}
           />
         )}
-        <ColdStartChip />
         <div className="px-6 mt-6">
           <EmptyState
             icon={Sparkles}
@@ -419,7 +416,21 @@ export function HomeDecide() {
               label: tShortlist("empty_cta"),
             }}
           />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 mt-4"
+            onClick={() => setRegenOpen(true)}
+          >
+            {tShortlist("regenerate_cta")}
+          </Button>
         </div>
+        <RegenerateSheet
+          open={regenOpen}
+          onOpenChange={setRegenOpen}
+          onApply={handleRegenerate}
+          submitting={regenSubmitting}
+        />
       </div>
     );
   }
@@ -449,10 +460,6 @@ export function HomeDecide() {
   // path (line ~400) and the "shortlist exists but is empty" path.
   const shortlistIsEmpty = shortlist.recipes.length === 0;
 
-  // Cold-start chip when corpus < 10 (same heuristic as VoteSummary lives by).
-  const showCorpusColdStart =
-    shortlist.recipes.length > 0 && shortlist.recipes.length < 10;
-
   // Phase 7 / DECIDE-01 — display-serif date header above the deck.
   // Locale-aware via the standard browser Intl API (no new i18n key per
   // 07-UI-SPEC §"Surface 1" point 3). Lowercase per French convention.
@@ -475,8 +482,6 @@ export function HomeDecide() {
           onSkip={handleBannerSkip}
         />
       )}
-      {showCorpusColdStart && <ColdStartChip />}
-
       <header className="px-6 pt-8 pb-2">
         <h1 className="text-display text-foreground">{formattedDate}</h1>
       </header>
@@ -495,6 +500,14 @@ export function HomeDecide() {
               label: tShortlist("empty_cta"),
             }}
           />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 mt-4"
+            onClick={() => setRegenOpen(true)}
+          >
+            {tShortlist("regenerate_cta")}
+          </Button>
         </div>
       ) : allVoted ? (
         <VoteSummary

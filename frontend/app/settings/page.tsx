@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Bell, Copy, Check, Download, ChevronRight, Pencil, X } from "lucide-react";
+import { Bell, Copy, Check, Download, ChevronRight, LogOut, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,12 @@ export default function SettingsPage() {
   const [renameValue, setRenameValue] = useState("");
   const [renameSubmitting, setRenameSubmitting] = useState(false);
 
+  // "Compte" card — two-step disconnect (Se déconnecter → Confirmer).
+  // No localStorage to clear ourselves (cookie-auth, invariant 8); the
+  // DELETE /api/auth/session endpoint clears the HttpOnly cookie server-side.
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+
   // VAL-02 — Notifications Card state. The Notification.permission +
   // PushSubscription state lives outside React; read via useSyncExternalStore
   // (same pattern as PushPermissionBanner) to avoid set-state-in-effect lint.
@@ -95,6 +101,29 @@ export default function SettingsPage() {
       setPushRefreshKey((k) => k + 1);
     } finally {
       setPushSubmitting(false);
+    }
+  };
+
+  const onDisconnect = async () => {
+    if (disconnecting) return;
+    setDisconnecting(true);
+    try {
+      // Clear HttpOnly cookie server-side. Mirrors the same path-selection
+      // logic as `lib/api.ts` so the call works in both prod (rewrite via
+      // next.config.ts → Railway) and local dev (direct hit on backend).
+      const sessionPath =
+        API_BASE === "" ? "/api/auth/session" : "/auth/session";
+      await fetch(`${API_BASE}${sessionPath}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      // Hard navigate so SessionProvider re-fetches and OnboardingGuard
+      // routes the user to /onboarding/welcome on a clean slate.
+      window.location.href = "/onboarding/welcome";
+    } catch {
+      toast.error(t("disconnect.error"));
+      setDisconnecting(false);
+      setConfirmingDisconnect(false);
     }
   };
 
@@ -464,6 +493,53 @@ export default function SettingsPage() {
             <Download className="h-4 w-4 mr-2" />
             {t("export_cta")}
           </Button>
+        </Card>
+
+        {/* Card 5 — Compte. Two-step disconnect. The body line explains that
+            disconnecting does NOT delete the household or recipes — the user
+            can rejoin with the invite code. Confirmation is inline (no
+            modal) to match the rest of the page's interaction language. */}
+        <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
+          <span className="text-sm text-foreground-muted">
+            {t("disconnect.title")}
+          </span>
+          <p className="text-sm text-foreground-muted">{t("disconnect.body")}</p>
+          {confirmingDisconnect ? (
+            <>
+              <p className="text-sm font-medium text-foreground">
+                {t("disconnect.confirm_question")}
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button
+                  className="h-12 w-full"
+                  variant="destructive"
+                  onClick={onDisconnect}
+                  disabled={disconnecting}
+                  aria-busy={disconnecting}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {t("disconnect.confirm_cta")}
+                </Button>
+                <Button
+                  className="h-12 w-full"
+                  variant="ghost"
+                  onClick={() => setConfirmingDisconnect(false)}
+                  disabled={disconnecting}
+                >
+                  {t("disconnect.cancel")}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Button
+              className="h-12 w-full"
+              variant="outline"
+              onClick={() => setConfirmingDisconnect(true)}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              {t("disconnect.cta")}
+            </Button>
+          )}
         </Card>
 
       </div>

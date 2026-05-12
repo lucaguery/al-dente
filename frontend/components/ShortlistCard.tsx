@@ -130,7 +130,21 @@ export function ShortlistCard({
   // In development, fall through to a bundled cuisine-themed SVG so the demo
   // looks like real cards. Production code path is unchanged: signed URL on
   // success, UtensilsCrossed placeholder on failure (no fixture lookup).
-  const [photoSrc, setPhotoSrc] = useState<string | null>(null);
+  // Compute the dev fallback URL at render time (cuisine never changes for a
+  // given recipe, so this is referentially stable). Production: null — the
+  // UtensilsCrossed placeholder is the only fallback.
+  const devFallbackUrl =
+    process.env.NODE_ENV !== "production"
+      ? `/demo-fixtures/${(cuisine ?? "default").toString()}.svg`
+      : null;
+
+  // Initial state seeds with the fallback when there's no photo path — that
+  // covers the "recipe has no photos yet" case without calling setState
+  // inside an effect (react-hooks/set-state-in-effect). The effect only
+  // touches photoSrc when an actual signed-URL fetch is required.
+  const [photoSrc, setPhotoSrc] = useState<string | null>(
+    primaryPhoto ? null : devFallbackUrl,
+  );
   useEffect(() => {
     if (!primaryPhoto) return;
     let alive = true;
@@ -139,15 +153,12 @@ export function ShortlistCard({
         if (alive) setPhotoSrc(url);
       })
       .catch(() => {
-        if (alive && process.env.NODE_ENV !== "production") {
-          const slug = (cuisine ?? "default").toString();
-          setPhotoSrc(`/demo-fixtures/${slug}.svg`);
-        }
+        if (alive && devFallbackUrl) setPhotoSrc(devFallbackUrl);
       });
     return () => {
       alive = false;
     };
-  }, [recipe.id, primaryPhoto, cuisine]);
+  }, [recipe.id, primaryPhoto, devFallbackUrl]);
 
   const partnerAriaKey =
     partnerVote === "yes"
@@ -223,7 +234,7 @@ export function ShortlistCard({
     >
       {/* Photo region */}
       <div className="relative aspect-[4/3] bg-surface-muted rounded-t-2xl overflow-hidden">
-        {primaryPhoto && photoSrc ? (
+        {photoSrc ? (
           // bug 2 fix — render the signed URL once resolved. While the
           // signed-URL fetch is in flight (or if it failed), fall through
           // to the UtensilsCrossed placeholder rather than rendering a
