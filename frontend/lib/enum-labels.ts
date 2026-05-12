@@ -12,6 +12,7 @@ export function useEnumLabels() {
   const tMood = useTranslations("enums.mood");
   const tProtein = useTranslations("enums.protein");
   const tSeason = useTranslations("enums.season");
+  const tDifficulty = useTranslations("enums.difficulty");
   return {
     cuisine: (v: string) => {
       try {
@@ -37,6 +38,18 @@ export function useEnumLabels() {
     season: (v: string) => {
       try {
         return tSeason(v as never);
+      } catch {
+        return v;
+      }
+    },
+    // Phase 24 RID-02 — Difficulty enum label translator. Returns French
+    // label for easy/medium/hard; returns the raw value (or empty) for nulls
+    // or unknown values (defensive — DB CHECK constraint should already gate
+    // this).
+    difficulty: (v: string | null | undefined): string => {
+      if (!v) return "";
+      try {
+        return tDifficulty(v as never);
       } catch {
         return v;
       }

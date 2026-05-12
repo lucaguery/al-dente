@@ -27,6 +27,10 @@ export type Recipe = {
   ingredients?: IngredientItem[] | null;
   steps?: string[] | null;
   prep_time_minutes?: number | null;
+  // Phase 24 RID-02 — three optional recipe-identity fields (migration 0007).
+  cook_time_minutes?: number | null;
+  difficulty?: string | null;
+  description?: string | null;
   servings?: number | null;
   cuisine?: string | null;
   main_protein?: string | null;

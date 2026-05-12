@@ -140,6 +140,11 @@
       "summer": "Été",
       "autumn": "Automne",
       "winter": "Hiver"
+    },
+    "difficulty": {
+      "easy": "Facile",
+      "medium": "Moyen",
+      "hard": "Difficile"
     }
   },
   "recipes": {
@@ -185,6 +190,12 @@
       "mood_label": "Ambiance",
       "protein_label": "Protéine principale",
       "seasonality_label": "Saisons",
+      "cook_time_minutes_label": "Temps de cuisson (min)",
+      "cook_time_minutes_placeholder": "30",
+      "difficulty_label": "Difficulté",
+      "difficulty_placeholder": "Pas indiqué",
+      "description_label": "Description",
+      "description_placeholder": "Une phrase ou deux pour résumer…",
       "tags_label": "Tags (un par ligne)",
       "photo_section_label": "Photos",
       "submit_quick": "Ajouter",
@@ -192,6 +203,11 @@
       "uploading_photo": "Envoi de la photo…",
       "saved_toast": "Recette enregistrée",
       "saved_without_photo": "Recette enregistrée, mais la photo n'a pas pu être ajoutée."
+    },
+    "detail": {
+      "cook_time_label": "Cuisson",
+      "difficulty_label": "Difficulté",
+      "description_label": "Description"
     },
     "edit": {
       "title": "Modifier la recette",
