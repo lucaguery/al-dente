@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.5
-milestone_name: Mixed Sweep
-status: planned
-stopped_at: Roadmap created — Phase 22 planned, awaiting discuss/plan
-last_updated: "2026-05-12T00:00:00.000Z"
-last_activity: 2026-05-12
+milestone: v0.1
+milestone_name: milestone
+status: Planned — awaiting Phase 22 discuss/plan
+stopped_at: Phase 22 context gathered
+last_updated: "2026-05-12T20:50:10.472Z"
+last_activity: "2026-05-12 — v0.5 roadmap created (3 phases: 22 Quick wins / 23 Deck polish / 24 Recipe identity)"
 progress:
   total_phases: 3
   completed_phases: 0
@@ -122,6 +122,6 @@ To be decided at the milestone-level research gate in `/gsd-new-milestone`. v0.5
 ## Session Continuity
 
 Last activity: 2026-05-12 — v0.5 roadmap created (ROADMAP.md written, STATE.md updated)
-Stopped at: Roadmap complete — 3 phases (22–24), 12 requirements, 100% coverage
-Resume file: .planning/ROADMAP.md (Phase 22 detail section)
+Stopped at: Phase 22 context gathered
+Resume file: .planning/phases/22-quick-wins/22-CONTEXT.md
 Next: `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`
