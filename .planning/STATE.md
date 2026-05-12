@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: executing
-stopped_at: Phase 23 context gathered
-last_updated: "2026-05-12T21:36:40.115Z"
-last_activity: 2026-05-12
+stopped_at: Phase 23 UI-SPEC approved
+last_updated: "2026-05-12T22:02:44.353Z"
+last_activity: 2026-05-12 -- Phase 23 execution started
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 3
+  total_plans: 4
   completed_plans: 3
-  percent: 100
+  percent: 75
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12 — v0.5 Mixed Sweep Current Milestone section)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 22 — quick-wins
+**Current focus:** Phase 23 — deck-polish
 
 ## Current Position
 
 Milestone: v0.5 (Mixed Sweep)
-Phase: 23
-Plan: Not started
-Status: Executing Phase 22
-Last activity: 2026-05-12
+Phase: 23 (deck-polish) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 23
+Last activity: 2026-05-12 -- Phase 23 execution started
 
 Resume: `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`
 
@@ -122,6 +122,6 @@ To be decided at the milestone-level research gate in `/gsd-new-milestone`. v0.5
 ## Session Continuity
 
 Last activity: 2026-05-12 — v0.5 roadmap created (ROADMAP.md written, STATE.md updated)
-Stopped at: Phase 23 context gathered
-Resume file: .planning/phases/23-deck-polish/23-CONTEXT.md
+Stopped at: Phase 23 UI-SPEC approved
+Resume file: .planning/phases/23-deck-polish/23-UI-SPEC.md
 Next: `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`
