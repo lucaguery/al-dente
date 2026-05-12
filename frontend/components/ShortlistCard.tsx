@@ -30,6 +30,7 @@ import {
   SWIPE_VELOCITY_PX_S,
 } from "@/lib/swipe-tokens";
 import { easeCraft, transitions } from "@/lib/motion";
+import { useEnumLabels } from "@/lib/enum-labels";
 import { getSignedPhotoUrl, type Recipe } from "@/lib/recipes";
 import type { VoteValue } from "@/lib/votes";
 
@@ -85,6 +86,7 @@ export function ShortlistCard({
   peekDepth = 1,
 }: ShortlistCardProps) {
   const t = useTranslations("home.shortlist");
+  const labels = useEnumLabels();
   const reducedMotion = usePrefersReducedMotion();
 
   const x = useMotionValue(0);
@@ -304,10 +306,10 @@ export function ShortlistCard({
           {recipe.title}
         </h2>
         <div className="flex items-center gap-2 flex-wrap">
-          {cuisine && <Badge variant="secondary">{cuisine}</Badge>}
+          {cuisine && <Badge variant="secondary">{labels.cuisine(cuisine)}</Badge>}
           {moods.map((m) => (
             <Badge key={m} variant="secondary">
-              {m}
+              {labels.mood(m)}
             </Badge>
           ))}
           {prepTime != null && (
