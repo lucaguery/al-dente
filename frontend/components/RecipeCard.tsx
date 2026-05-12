@@ -1,11 +1,21 @@
 "use client";
 
-// UI-SPEC §6 — RecipeCard list-row. Photo thumbnail (16x16) + title +
-// meta row (cuisine Badge + relative-last-cooked).
+// Recipe library card — Direction B (quick-260512-gpl).
+// Vertical photo-grid card: 4:3 photo on top + body below with Cormorant
+// Garamond title (font-display, upright, line-clamp-2) and a meta row
+// (cuisine Badge · relative last-cooked).
 //
 // The photo path is fetched as a 5-minute signed URL on mount; if the
-// recipe has no photos OR the request fails, we render the zinc-100
-// placeholder per UI-SPEC §6 line "or zinc-100 placeholder".
+// recipe has no photos OR the request fails, we render a surface-muted
+// placeholder sized to the same 4:3 aspect-ratio container.
+//
+// D-05 living image: the photo path prefers the most recent cooking-log
+// photo over the canonical recipe photo, so the library list reflects
+// "your own food". The cooking-log path needs a different signed-URL
+// endpoint (path-on-recipe validation T-04-01-02 rejects it on the
+// recipe endpoint); we detect it by the `cooking-logs/` prefix and
+// extract the log_id from the path layout
+// `cooking-logs/{household_id}/{log_id}/{uuid}.{ext}` (segs[2] = log_id).
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -59,7 +69,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         if (alive) setSrc(url);
       })
       .catch(() => {
-        // Silent fallback to zinc-100 placeholder; URL state stays null.
+        // Silent fallback to surface-muted placeholder; URL state stays null.
       });
     return () => {
       alive = false;
@@ -69,30 +79,33 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="paper-grain flex gap-4 p-3 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150"
+      className="paper-grain flex flex-col bg-card rounded-2xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150 overflow-hidden"
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill
         <img
           src={src}
           alt=""
-          className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+          className="w-full aspect-[4/3] object-cover"
         />
       ) : (
         <div
           aria-hidden
-          className="h-16 w-16 rounded-lg bg-surface-muted flex-shrink-0"
+          className="w-full aspect-[4/3] bg-surface-muted"
         />
       )}
-      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-        <h3 className="text-base font-semibold leading-6 tracking-tight line-clamp-1">
+      <div className="flex flex-col gap-1 px-3.5 pt-3 pb-3.5 min-w-0">
+        <h3 className="font-display text-lg font-medium leading-tight tracking-tight line-clamp-2">
           {recipe.title}
         </h3>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap text-xs text-foreground-muted">
           {recipe.cuisine ? (
-            <Badge variant="secondary">{recipe.cuisine}</Badge>
+            <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
+              {recipe.cuisine}
+            </Badge>
           ) : null}
-          <span className="text-sm text-foreground-muted">
+          {recipe.cuisine ? <span aria-hidden>·</span> : null}
+          <span>
             {recipe.last_cooked_at
               ? formatRelativeFr(recipe.last_cooked_at)
               : t("never_cooked")}
