@@ -413,10 +413,39 @@ def run_test_seed() -> None:
         # Pitfall 5 mitigation: explicitly set every NOT NULL column.
         # `status` would otherwise default to 'draft' via server_default; we want
         # 'structured' so specs see populated structured fields immediately.
+        #
+        # bug 2 fix (260512-df0): pre-populate photo_paths for the 5
+        # shortlist-recipe slugs so the seeded demo env exercises
+        # ShortlistCard's signed-URL render path. Other recipes stay at [].
+        # The path layout mirrors what the live capture pipeline writes
+        # ({household_id}/{recipe_id}/{stable_uuid}.jpg) so the
+        # `path in recipe.photo_paths` check in routers/photos.py:173 lets
+        # the signed-URL endpoint authorize the request.
+        # NOTE: this seed does NOT upload bytes — uploads need Supabase
+        # creds which the test env intentionally lacks (playwright.config.ts
+        # withholds SUPABASE_* env). If Supabase credentials are
+        # present, the prod-synthetic seed (run_prod_synthetic_seed) is the
+        # path that uploads JPGs end-to-end. Frontend silently falls back
+        # to the UtensilsCrossed placeholder on a signed-URL fetch failure
+        # (ShortlistCard.tsx catch handler), so an unconfigured test env
+        # still renders cleanly — just without photos.
+        shortlist_slugs_with_photos = {
+            "ragu-bolognese", "coq-au-vin", "butter-chicken", "shawarma", "tacos-boeuf",
+        }
         recipes_by_slug: dict[str, Recipe] = {}
         for spec in _recipe_specs():
+            recipe_id = _id("recipe", spec["slug"])
+            if spec["slug"] in shortlist_slugs_with_photos:
+                # Stable uuid5 photo filename — re-running the seed never
+                # changes the path, so signed-URL authz is stable across runs.
+                photo_uuid = _id("photo", spec["slug"])
+                recipe_photo_paths = [
+                    f"{household.id}/{recipe_id}/{photo_uuid}.jpg"
+                ]
+            else:
+                recipe_photo_paths = []
             r = db.merge(Recipe(
-                id=_id("recipe", spec["slug"]),
+                id=recipe_id,
                 household_id=household.id,
                 created_by_member_id=member_luca.id,
                 status="structured",
@@ -425,7 +454,7 @@ def run_test_seed() -> None:
                     "type": "manual",
                     "payload": {"title": spec["title"]},
                 },
-                photo_paths=[],
+                photo_paths=recipe_photo_paths,
                 ingredients=spec["ingredients"],
                 steps=spec["steps"],
                 prep_time_minutes=spec["prep_time_minutes"],

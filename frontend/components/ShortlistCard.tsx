@@ -9,7 +9,7 @@
 //
 // 03-UI-SPEC.md §Surface 6 + §Surface 7 + §"Interaction Patterns > Swipe deck"
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   motion,
   useMotionValue,
@@ -30,7 +30,7 @@ import {
   SWIPE_VELOCITY_PX_S,
 } from "@/lib/swipe-tokens";
 import { easeCraft, transitions } from "@/lib/motion";
-import type { Recipe } from "@/lib/recipes";
+import { getSignedPhotoUrl, type Recipe } from "@/lib/recipes";
 import type { VoteValue } from "@/lib/votes";
 
 type PartnerVoteDot = "yes" | "no" | "unvoted";
@@ -114,6 +114,27 @@ export function ShortlistCard({
   const prepTime = recipe.prep_time_minutes;
   const primaryPhoto = recipe.photo_paths?.[0];
 
+  // bug 2 fix — fetch a 5-minute signed URL for the primary photo, mirroring
+  // RecipeCard.tsx. photo_paths on the wire are bucket-relative; rendering
+  // them directly into <img src> was the root cause (broken image icon).
+  const [photoSrc, setPhotoSrc] = useState<string | null>(null);
+  useEffect(() => {
+    if (!primaryPhoto) return;
+    let alive = true;
+    getSignedPhotoUrl(recipe.id, primaryPhoto)
+      .then((url) => {
+        if (alive) setPhotoSrc(url);
+      })
+      .catch(() => {
+        // Silent fallback to UtensilsCrossed placeholder. The signed-URL
+        // endpoint can transiently 404 right after recipe creation; we
+        // don't want to spam toast errors for that race.
+      });
+    return () => {
+      alive = false;
+    };
+  }, [recipe.id, primaryPhoto]);
+
   const partnerAriaKey =
     partnerVote === "yes"
       ? "partner_yes_aria"
@@ -181,12 +202,15 @@ export function ShortlistCard({
     >
       {/* Photo region */}
       <div className="relative aspect-[4/3] bg-surface-muted rounded-t-2xl overflow-hidden">
-        {primaryPhoto ? (
-          // Note: photo_paths are bucket-relative; consumer (Plan 04) supplies signed URLs via
-          // a wrapping component if needed. For now, render directly — placeholder behavior.
+        {primaryPhoto && photoSrc ? (
+          // bug 2 fix — render the signed URL once resolved. While the
+          // signed-URL fetch is in flight (or if it failed), fall through
+          // to the UtensilsCrossed placeholder rather than rendering a
+          // broken bucket-relative path. Mirrors RecipeCard.tsx (same
+          // signed-URL reasoning for short-lived photo URLs).
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={primaryPhoto}
+            src={photoSrc}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
           />
