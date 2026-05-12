@@ -22,12 +22,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MemberDot } from "@/components/MemberDot";
 import {
+  SWIPE_FLY_OFFSCREEN_FACTOR,
+  SWIPE_FLYOFF_DURATION_S,
   SWIPE_OVERLAY_INPUT_PX,
   SWIPE_ROTATE_RANGE_DEG,
   SWIPE_THRESHOLD_PX,
   SWIPE_VELOCITY_PX_S,
 } from "@/lib/swipe-tokens";
-import { transitions } from "@/lib/motion";
+import { easeCraft, transitions } from "@/lib/motion";
 import type { Recipe } from "@/lib/recipes";
 import type { VoteValue } from "@/lib/votes";
 
@@ -41,6 +43,11 @@ export type ShortlistCardProps = {
   onVote: (value: VoteValue) => void;
   /** True when this is the front card; false for peek (drag disabled, scaled). */
   isFront: boolean;
+  /** bug 1 + 3 fix — the direction of the most-recent commit (from parent
+   *  ShortlistDeck). Determines the front card's `exit` x-translation so the
+   *  thumb-tap pathway animates as smoothly as the swipe pathway. `null` for
+   *  the peek card (drag disabled, never exits via this path). */
+  committedDirection?: "left" | "right" | null;
 };
 
 // `prefers-reduced-motion` is an external state that can flip at runtime when
@@ -70,6 +77,7 @@ export function ShortlistCard({
   partnerColorHex,
   onVote,
   isFront,
+  committedDirection,
 }: ShortlistCardProps) {
   const t = useTranslations("home.shortlist");
   const reducedMotion = usePrefersReducedMotion();
@@ -114,6 +122,38 @@ export function ShortlistCard({
         : "partner_unvoted_aria";
   const partnerAria = t(partnerAriaKey, { name: partnerName });
 
+  // bug 1 + 3 fix — motion props for the front card only. When the parent
+  // ShortlistDeck advances `index`, this card's key changes and
+  // AnimatePresence unmounts the old front; `exit` drives a directional
+  // fly-off (~200ms). The new front card mounts with `initial` from the
+  // peek-position transform (scale 0.94, y 12, opacity 0.85) and springs
+  // into `animate={{ scale: 1, y: 0, opacity: 1 }}` — visual continuity
+  // with the peek card that just promoted.
+  //
+  // Reduced-motion path: leave everything `undefined` so cards mount/unmount
+  // instantly (no exit, no scale/y entry). Honors the OS-level a11y toggle.
+  const flyX =
+    typeof window === "undefined"
+      ? 480
+      : window.innerWidth * SWIPE_FLY_OFFSCREEN_FACTOR;
+  const motionExit =
+    isFront && !reducedMotion && committedDirection
+      ? {
+          x: committedDirection === "right" ? flyX : -flyX,
+          rotate: committedDirection === "right" ? 12 : -12,
+          opacity: 0,
+          transition: { duration: SWIPE_FLYOFF_DURATION_S, ease: easeCraft },
+        }
+      : undefined;
+  const motionInitial =
+    isFront && !reducedMotion
+      ? { scale: 0.94, y: 12, opacity: 0.85 }
+      : undefined;
+  const motionAnimate =
+    isFront && !reducedMotion
+      ? { scale: 1, y: 0, opacity: 1 }
+      : undefined;
+
   return (
     <motion.div
       role="article"
@@ -129,6 +169,9 @@ export function ShortlistCard({
       }
       onDragEnd={dragEnabled ? handleDragEnd : undefined}
       whileTap={dragEnabled ? { cursor: "grabbing" } : undefined}
+      initial={motionInitial}
+      animate={motionAnimate}
+      exit={motionExit}
       transition={isFront && !reducedMotion ? transitions.springSnap : undefined}
       className={
         isFront

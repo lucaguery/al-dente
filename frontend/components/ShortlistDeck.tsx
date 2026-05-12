@@ -26,6 +26,12 @@ import {
 import { postVote, type ShortlistVote, type VoteValue } from "@/lib/votes";
 import type { Recipe } from "@/lib/recipes";
 
+/** Direction of the most-recent vote commit, used to animate the front
+ *  card's `exit` regardless of whether the user swiped or tapped a thumb.
+ *  Reset to `null` after the new front card mounts so subsequent renders
+ *  don't accidentally re-trigger the exit transform. */
+export type CommittedDirection = "left" | "right" | null;
+
 export type DeckMember = {
   id: string;
   name: string;
@@ -68,8 +74,24 @@ export function ShortlistDeck({
   const t = useTranslations("home.shortlist");
   const [index, setIndex] = useState(0);
   const [submittingFor, setSubmittingFor] = useState<string | null>(null);
+  // bug 1 + 3 fix: track the direction of the most-recent commit so the
+  // front card can apply a directional `exit` regardless of whether the
+  // vote came from a swipe or a thumb-button tap. Reset after the new
+  // front card mounts (effect below) so a stale value never leaks into
+  // the next render's exit variant.
+  const [committedDirection, setCommittedDirection] =
+    useState<CommittedDirection>(null);
 
   const remaining = recipes.slice(index);
+
+  // NOTE: `committedDirection` is set fresh inside handleVote() at the start
+  // of every vote and ONLY drives the front card's `exit` variant. The new
+  // front card's `initial`/`animate` ignore it (peek-promotion is the same
+  // regardless of which direction the previous card flew). We deliberately
+  // don't reset it via useEffect — React 19's set-state-in-effect rule
+  // flags that pattern as cascading-render, and it's unnecessary here:
+  // every commit overwrites the value before the next exit reads it.
+
   if (remaining.length === 0) {
     // Caller renders VoteSummary in this case; the deck only owns the active
     // voting phase. Returning null keeps the layout chain honest.
@@ -92,7 +114,13 @@ export function ShortlistDeck({
     };
     onVoteApplied(optimistic);
     const previousIndex = index;
-    setIndex((i) => i + 1);
+    // bug 1 fix: set direction BEFORE advancing the index so the exiting
+    // card sees a non-null direction in the same render that triggers its
+    // AnimatePresence-driven unmount. yes → right, no → left.
+    setCommittedDirection(value === "yes" ? "right" : "left");
+    // bug 3 fix: defensive cap — a double-tap can never overshoot the
+    // recipes list, so allVoted upstream resolves cleanly.
+    setIndex((i) => Math.min(i + 1, recipes.length));
     try {
       await postVote(shortlistId, recipeId, value);
     } catch {
@@ -129,6 +157,7 @@ export function ShortlistDeck({
             partnerColorHex={partner.color_hex}
             onVote={handleVote}
             isFront={true}
+            committedDirection={committedDirection}
           />
         </AnimatePresence>
       </div>
