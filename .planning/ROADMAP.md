@@ -10,13 +10,61 @@
 
 ## Current Milestone
 
-_None — awaiting next milestone via `/gsd-new-milestone`._
+**v0.5 — Mixed Sweep**
 
-## Next Steps
+Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-deck polish, and recipe identity — in a single tight sweep that pays down post-audit backlog without expanding scope.
 
-- **Operator runtime pass** — 15 HUMAN-UAT items across phases 16/17/18/19/21 await physical-iPhone validation: Playwright suites against live dev stack, Web Push round-trip on both iPhones (`.planning/v0.4/PUSH-ROUNDTRIP.md`), Settings Notifications Card 4-state lifecycle, member-rename cross-phone realtime feel.
-- **Behavioral validation gate** per `SPEC.md`: ≥ 2 weeks of daily use by both household members. Still the v0.1 definition of done; orthogonal to v0.4 phases.
-- **Next milestone** — `/gsd-new-milestone` to start v0.5 (or v1.0 if dogfood gate passes).
+## Phases
+
+- [ ] **Phase 22: Quick wins** — Drop Geist Mono, add version footer, fix French tag labels on deck/detail/inbox
+- [ ] **Phase 23: Deck polish** — Replace OUI/NON overlays with tint, tune swipe thresholds, swap thumb buttons to Heart icons, add tap-to-detail
+- [ ] **Phase 24: Recipe identity** — BrandIcon component, completeness scorecard + 3 new fields, LLM title rewrite (shifts invariant #1), per-recipe SVG illustration
+
+## Phase Details
+
+### Phase 22: Quick wins
+**Goal**: Users experience a lighter, more polished app with no dead-weight font, an identifiable build stamp in Settings, and correct French labels on recipe tags everywhere
+**Depends on**: Nothing — all three requirements are independent of each other and of Phase 23/24
+**Requirements**: QW-01, QW-02, QW-03
+**Success Criteria** (what must be TRUE):
+  1. `grep -rn "font-mono\|--font-mono\|Geist_Mono" frontend/` returns zero matches and the invite-code display in the join screen remains visually correct
+  2. The bottom of the Settings page shows the running version, short git SHA, and Vercel environment — identifiable per device after a prod deploy
+  3. Recipe tags on the shortlist deck card, recipe detail page, and drafts inbox all display French labels (e.g. "Méditerranéen" not "mediterranean") with no hardcoded English strings visible
+**Plans**: TBD
+
+### Phase 23: Deck polish
+**Goal**: The swipe deck feels deliberate and immersive — subtle tint feedback replaces text overlays, a lively spring snap rewards intentional swipes, Heart icons replace thumbs, and cards open to full detail on tap
+**Depends on**: Phase 22 (cosmetically independent; may run immediately after)
+**Requirements**: DECK-01, DECK-02, DECK-03, DECK-04
+**Success Criteria** (what must be TRUE):
+  1. Dragging a shortlist card in either direction shows a full-card color tint (emerald-tinted for yes, destructive-tinted for no) with no OUI/NON text overlay visible anywhere on the card
+  2. A casual ~50 px drift snaps the card back cleanly; a deliberate ~150 px drag commits the swipe; a fast flick also commits — no ambiguous in-between state visible on device
+  3. The thumb-button row shows a filled emerald Heart for "like" and an outline neutral Heart for "dislike" — no thumbs-up/thumbs-down icons remain anywhere on the deck
+  4. Tapping (not dragging) a shortlist card opens `/recipes/[id]` detail; pressing Back returns to the deck with the same card on top; thumb-button taps still vote without navigating
+  5. All four behaviors above pass a manual `prefers-reduced-motion` device pass (motion paths disabled; functional paths unchanged)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 24: Recipe identity
+**Goal**: Every recipe acquires a catchy French title, optional difficulty/cook-time/description fields, a completeness nudge when fields are missing, a brand-consistent BrandIcon for empty states, and a small per-recipe SVG illustration in list views
+**Depends on**: Phase 23 (BrandIcon RID-01 must land before RID-05 can use it as a fallback; full serial order within phase is load-bearing — RID-01 → RID-02 → RID-03 → RID-04 → RID-05)
+**Requirements**: RID-01, RID-02, RID-03, RID-04, RID-05
+**Success Criteria** (what must be TRUE):
+  1. A `BrandIcon` component exists at `frontend/components/BrandIcon.tsx` and is visible on the onboarding welcome screen and on shortlist/inbox/recipes empty states
+  2. A recipe captured via any surface (quick/full/voice/photo) acquires a LLM-rewritten "catchy" French title by the time its status reaches `structured`; the original user-entered title is preserved in `source_capture` JSONB; on rewrite failure the user title is kept unchanged and `promotion_error` is set
+  3. `CLAUDE.md` invariant #1 wording is updated in the same plan that ships the title-rewrite `BackgroundTask` to reflect that quick and full-form captures are now async (draft → BackgroundTask rewrite → structured)
+  4. Recipes with `computeCompleteness(recipe).percent < 100` display a `CompletenessCard` above the body on `/recipes/[id]`; recipes at 100% show nothing; the chip-links navigate to the edit page with a `?focus=` param that scrolls/focuses the matching input
+  5. Recipe list rows in the inbox and recipes library show a small (~40×40) per-recipe SVG illustration; missing or failed illustrations fall back to the `BrandIcon`; no `<script>`, `<foreignObject>`, `<text>`, `<image>`, `<use>`, `<a>`, `<style>`, or `on*=` content survives the server-side sanitizer (unit tests confirm)
+**Plans**: TBD
+**UI hint**: yes
+
+## Progress Table
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 22. Quick wins | 0/? | Not started | - |
+| 23. Deck polish | 0/? | Not started | - |
+| 24. Recipe identity | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-05-11 — v0.4 milestone shipped and archived. Cumulative-mean UI delta +1.50 under same 6-pillar rubric; verdict distribution 5✅/9⚠/0❌ → 11✅/3⚠/0❌.*
+*Last updated: 2026-05-12 — v0.5 Mixed Sweep roadmap created. 3 phases (22–24), 12 requirements mapped (QW × 3 / DECK × 4 / RID × 5). 100% coverage. Phase 24 serial order load-bearing: RID-01 → RID-02 → RID-03 → RID-04 → RID-05. Invariant #1 shift ships inside Phase 24 plan for RID-04.*

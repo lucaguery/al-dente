@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: Mixed Sweep
-status: defining requirements
-stopped_at: Milestone opened — awaiting requirements + roadmap
+status: planned
+stopped_at: Roadmap created — Phase 22 planned, awaiting discuss/plan
 last_updated: "2026-05-12T00:00:00.000Z"
 last_activity: 2026-05-12
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12 — v0.5 Mixed Sweep Current Milestone section)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** v0.5 — defining requirements (sweep across ~10 GitHub issues)
+**Current focus:** v0.5 — Phase 22 next (Quick wins: #13/#15/#21)
 
 ## Current Position
 
 Milestone: v0.5 (Mixed Sweep)
-Phase: Not started (defining requirements)
+Phase: 22 — Quick wins (next)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-12 — Milestone v0.5 opened from `.planning/notes/v0.5-shape-mixed-sweep.md`
+Status: Planned — awaiting Phase 22 discuss/plan
+Last activity: 2026-05-12 — v0.5 roadmap created (3 phases: 22 Quick wins / 23 Deck polish / 24 Recipe identity)
 
-Resume: requirements step in `/gsd-new-milestone`, then `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`.
+Resume: `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`
 
 Progress: [░░░░░░░░░░] 0% (5 milestones shipped: v0.1 / v0.2 / v0.2.1 / v0.3 / v0.4; v0.5 opened, 0/3 phases)
 
@@ -54,12 +54,13 @@ Progress: [░░░░░░░░░░] 0% (5 milestones shipped: v0.1 / v0.2
 | v0.2.1 (Phase 10) | 1 | ✅ Complete |
 | v0.3 (Phases 11-14) | 4 | ✅ Complete |
 | v0.4 (Phases 15-21) | 7 | ✅ Complete |
-| v0.5 (Phases 22-24) | 3 | 🚧 In progress (defining requirements) |
+| v0.5 (Phases 22-24) | 3 | 🚧 In progress (0/3 phases — Phase 22 next) |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- v0.5 roadmap created 2026-05-12: 3 phases (22–24), 12 requirements across 3 categories (QW × 3 / DECK × 4 / RID × 5). Phase 22 Quick wins (#13/#15/#21) → Phase 23 Deck polish (#14/#18/#17/#16) → Phase 24 Recipe identity (#11/#22/#10/#12, serial — load-bearing order). Milestone-level decisions locked: silent title overwrite + `promotion_error` fallback (invariant #1 shifts in Phase 24 RID-04 plan); filled/outline Heart icons (Phase 23 DECK-03). UI hint on Phase 23 and Phase 24.
 - v0.5 milestone opened 2026-05-12: tight 3-phase "Mixed Sweep" closing ~10 GitHub issues across three coherent themes — quick wins (Phase 22: #13/#15/#21), deck polish (Phase 23: #14/#18/#17/#16), recipe identity (Phase 24: #11/#22/#10/#12). Inputs: `.planning/notes/v0.5-shape-mixed-sweep.md` (`/gsd-explore` output 2026-05-12). Phase numbering continues from v0.4 — starts at Phase 22. Out of scope: #20 → v0.6; #19 already shipped via `fast-19`. Milestone-level decisions locked: #10 silent title overwrite + `promotion_error` fallback (shifts invariant #1 when Phase 24 ships); #17 filled/outline Heart icons.
 - v0.4 roadmap created 2026-05-11: 7 phases (15-21), 24 requirements across 8 categories (INV / CAP / HIST / IDM / VAL / TOK / P6 / FIX). Tight-scope cluster: Phase 15 Tier 1 invariant fixes (INV-01/02) → Phase 16 capture-pipeline correctness (CAP-01/02/03) → Phase 17 history restoration (HIST-01/02 + FIX-01 TZ-01) → Phase 18 identity management (IDM-01..04 + FIX-04 Copy) → Phase 19 validation surfaces (VAL-01..04 + FIX-02 SEED-01) → Phase 20 token-completeness (TOK-01/02/03 + FIX-03 POLISH-01 i18n) → Phase 21 Pillar 6 deficit pass + rescore (P6-01/02). 100% req coverage, no orphans. UI hint on phases 16-21; Phase 15 is invariant-fix-only.
 - v0.4 milestone scoped 2026-05-11: tight ~5-7 phase remediation + polish cycle. Inputs: v0.3 `ASSESSMENT.md` (27 ranked findings), `UI-AUDIT.md`, `WALKTHROUGH.md`, GitHub Issues #1–#8, + v0.2.2 orthogonal backlog. Phase numbering continues from v0.3 — starts at Phase 15.
@@ -120,7 +121,7 @@ To be decided at the milestone-level research gate in `/gsd-new-milestone`. v0.5
 
 ## Session Continuity
 
-Last activity: 2026-05-12 — Opened v0.5 Mixed Sweep milestone from `.planning/notes/v0.5-shape-mixed-sweep.md`
-Stopped at: PROJECT.md / STATE.md written; next step is requirements + roadmap
-Resume file: .planning/PROJECT.md (`Current Milestone: v0.5 Mixed Sweep` section)
-Next: continue `/gsd-new-milestone` → research gate → REQUIREMENTS.md → ROADMAP.md → then `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`.
+Last activity: 2026-05-12 — v0.5 roadmap created (ROADMAP.md written, STATE.md updated)
+Stopped at: Roadmap complete — 3 phases (22–24), 12 requirements, 100% coverage
+Resume file: .planning/ROADMAP.md (Phase 22 detail section)
+Next: `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`
