@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 
 // UI-SPEC §"Component Inventory > EmptyState.tsx" — paper-grain Card surface
@@ -14,7 +14,7 @@ export function EmptyState({
   body,
   cta,
 }: {
-  icon: LucideIcon;
+  icon: ComponentType<{ size?: number; className?: string; "aria-hidden"?: boolean }>;
   heading: string;
   body: string;
   cta?: { label: string; href: string };
