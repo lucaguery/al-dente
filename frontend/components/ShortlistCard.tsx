@@ -9,15 +9,14 @@
 //
 // 03-UI-SPEC.md §Surface 6 + §Surface 7 + §"Interaction Patterns > Swipe deck"
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   motion,
   useMotionValue,
   useTransform,
   type PanInfo,
 } from "framer-motion";
-import { Heart, UtensilsCrossed } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Heart, X, UtensilsCrossed } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ import {
   SWIPE_VELOCITY_PX_S,
 } from "@/lib/swipe-tokens";
 import { easeCraft, transitions } from "@/lib/motion";
-import { useEnumLabels } from "@/lib/enum-labels";
 import { getSignedPhotoUrl, type Recipe } from "@/lib/recipes";
 import type { VoteValue } from "@/lib/votes";
 
@@ -87,16 +85,7 @@ export function ShortlistCard({
   peekDepth = 1,
 }: ShortlistCardProps) {
   const t = useTranslations("home.shortlist");
-  const labels = useEnumLabels();
   const reducedMotion = usePrefersReducedMotion();
-  const router = useRouter();
-  // Phase 23 DECK-04 — pan-vs-tap disambiguation. Set true on onPanStart,
-  // cleared on the next macrotask after onPanEnd (setTimeout 0) so a synthetic
-  // tap fired right after a drag-release still sees panRef.current === true
-  // and bails. framer-motion v12 already filters tap during active drag via
-  // isDragActive(); this is defensive belt-and-suspenders for an iOS-Safari
-  // frame-ordering pathology (see 23-RESEARCH.md W-02).
-  const panRef = useRef(false);
 
   const x = useMotionValue(0);
   const rotateInput: [number, number] = [-200, 200];
@@ -225,31 +214,6 @@ export function ShortlistCard({
           : { x, rotate }
       }
       onDragEnd={dragEnabled ? handleDragEnd : undefined}
-      onPanStart={
-        isFront
-          ? () => {
-              panRef.current = true;
-            }
-          : undefined
-      }
-      onPanEnd={
-        isFront
-          ? () => {
-              // setTimeout(0) defers the reset past iOS Safari's same-task
-              // synthetic-tap event (rAF/microtask are too short — W-02).
-              setTimeout(() => {
-                panRef.current = false;
-              }, 0);
-            }
-          : undefined
-      }
-      onTap={
-        isFront
-          ? () => {
-              if (!panRef.current) router.push(`/recipes/${recipe.id}`);
-            }
-          : undefined
-      }
       whileTap={dragEnabled ? { cursor: "grabbing" } : undefined}
       initial={motionInitial}
       animate={motionAnimate}
@@ -310,28 +274,26 @@ export function ShortlistCard({
           </div>
         )}
 
+        {/* Yes / No overlays — only visible while dragging the front card */}
+        {isFront && !reducedMotion && (
+          <>
+            <motion.div
+              style={{ opacity: yesOpacity }}
+              className="absolute top-6 left-6 rotate-[-15deg] origin-top-left px-3 py-1 rounded-md border-2 border-[var(--color-valide-foreground)] text-[var(--color-valide-foreground)] font-bold text-2xl tracking-wider"
+              aria-hidden
+            >
+              OUI
+            </motion.div>
+            <motion.div
+              style={{ opacity: noOpacity }}
+              className="absolute top-6 right-6 rotate-[15deg] origin-top-right px-3 py-1 rounded-md border-2 border-destructive text-destructive font-bold text-2xl tracking-wider"
+              aria-hidden
+            >
+              NON
+            </motion.div>
+          </>
+        )}
       </div>
-
-      {/* Drag-feedback rings — Phase 23 DECK-01. Two stacked motion.divs with
-          ring-inset (inset box-shadow) so the 2px ring isn't clipped by the
-          card's overflow-hidden (W-05 in 23-RESEARCH.md). Opacity ramps
-          linearly from 0 → 1 across 0..SWIPE_OVERLAY_INPUT_PX (80px), well
-          before the 140px commit threshold. Gated by isFront && !reducedMotion
-          (same guard as the deleted yes/no text-overlay block). */}
-      {isFront && !reducedMotion && (
-        <>
-          <motion.div
-            aria-hidden
-            style={{ opacity: yesOpacity }}
-            className="absolute inset-0 rounded-2xl ring-2 ring-inset ring-[var(--color-valide-foreground)] pointer-events-none"
-          />
-          <motion.div
-            aria-hidden
-            style={{ opacity: noOpacity }}
-            className="absolute inset-0 rounded-2xl ring-2 ring-inset ring-destructive pointer-events-none"
-          />
-        </>
-      )}
 
       {/* Body */}
       <div className="flex-1 flex flex-col gap-3 p-5">
@@ -342,10 +304,10 @@ export function ShortlistCard({
           {recipe.title}
         </h2>
         <div className="flex items-center gap-2 flex-wrap">
-          {cuisine && <Badge variant="secondary">{labels.cuisine(cuisine)}</Badge>}
+          {cuisine && <Badge variant="secondary">{cuisine}</Badge>}
           {moods.map((m) => (
             <Badge key={m} variant="secondary">
-              {labels.mood(m)}
+              {m}
             </Badge>
           ))}
           {prepTime != null && (
@@ -397,9 +359,9 @@ export function ShortlistThumbButtons({
         disabled={disabled}
         onClick={() => onVote("no")}
         aria-label={t("vote_no_aria")}
-        className="h-14 w-14 rounded-full border-2 border-border hover:bg-foreground-muted/10 active:scale-95 transition-transform"
+        className="h-14 w-14 rounded-full border-2 border-destructive/50 hover:bg-destructive/10 active:scale-95 transition-transform"
       >
-        <Heart size={24} className="text-foreground-muted" />
+        <X size={24} className="text-destructive" />
       </Button>
       <Button
         type="button"
@@ -410,7 +372,7 @@ export function ShortlistThumbButtons({
         aria-label={t("vote_yes_aria")}
         className="h-14 w-14 rounded-full border-2 border-[var(--color-valide-border)] hover:bg-[color-mix(in_srgb,var(--color-valide-foreground)_10%,transparent)] active:scale-95 transition-transform"
       >
-        <Heart size={24} fill="currentColor" className="text-[var(--color-valide-foreground)]" />
+        <Heart size={24} className="text-[var(--color-valide-foreground)]" />
       </Button>
     </div>
   );

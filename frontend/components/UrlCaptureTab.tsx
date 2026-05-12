@@ -68,7 +68,7 @@ export function UrlCaptureTab() {
           inputMode="url"
           autoCapitalize="off"
           autoCorrect="off"
-          className="tabular-nums text-sm"
+          className="font-mono text-sm"
           placeholder={t("field_placeholder")}
           value={value}
           onChange={(e) => setValue(e.target.value)}

@@ -32,10 +32,6 @@ Both household members have a fully working app installed on their iPhones. The 
 
 **v0.3 Phase 14 shipped** — 2026-05-11. Synthesis & handoff completed — v0.3 milestone closes. 2 plans, 510-line `.planning/v0.3/ASSESSMENT.md` combining WALKTHROUGH.md + UI-AUDIT.md into a tiered ranked findings list ordered by impact on the "feels Al Dente" question. **27 ranked entries: 2 Tier 1 / 8 Tier 2 / 17 Tier 3** under a locked 3-axis composite rubric (identity-signature impact / invariant-violation visible / primary-path friction; each 0-2; total 0-6). Tier 1 anchored by B-3 (`MEMBER_COUNT=2` hardcoded — architecture invariant #2 broken, Issue #4) and B-4 (`cook_count` re-finalize idempotency — invariant #3 broken, Issue #5). Anti-prescription discipline enforced structurally via `.planning/v0.3/check-assessment.sh` grep gate (D-08 forward-only regex blocks `v0.4`, prescriptive verbs, future phase numbers); doc passes the gate. Closes with explicit "Inputs to next /gsd-new-milestone cycle" section (artifacts + 5 inquiry-form framing questions + 5 explicit non-prescriptions). Zero product-code drift; zero new GitHub issues. Verified passed (3/3 must-haves) by gsd-verifier.
 
-**v0.5 Phase 22 shipped** — 2026-05-12. Three independent polish drops closing `audit:walkthrough`-era issues #13/#15/#21. **QW-01** (gh#13): `Geist_Mono` font import + `geistMono` className mount removed from `app/layout.tsx`; `--font-mono` self-reference removed from `globals.css`; the two `font-mono` call sites (invite-code input on `/onboarding/join` + URL input on `UrlCaptureTab`) swapped to `tabular-nums` — letter-spacing + IBM Plex Sans's tabular-nums variant carry the "code" signal without a second font request. D-18 grep gate passes: zero `font-mono|--font-mono|Geist_Mono` across `frontend/{app,components,lib}`. **QW-02** (gh#15): NEW `frontend/components/VersionFooter.tsx` client component renders a centered `v{version} · {sha} · {env}` muted line at the bottom of `/settings` (U+00B7 middle-dot separators, always-visible env label, plain-text SHA — no GitHub link coupling per D-09); `frontend/next.config.ts` gained an `env: {}` block re-exporting `npm_package_version` → `NEXT_PUBLIC_APP_VERSION`, `VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev"` → `NEXT_PUBLIC_GIT_SHA`, and `VERCEL_ENV ?? "development"` → `NEXT_PUBLIC_VERCEL_ENV` (build-time only; full SHA never reaches the client bundle). `aria-label="Version de l'application"` added for screen-reader accessibility. **QW-03** (gh#21): `ShortlistCard.tsx` and `recipes/[id]/page.tsx` now wrap their cuisine/mood/protein renders with the existing `useEnumLabels()` hook (`frontend/lib/enum-labels.ts`, the canonical translator — not modified per D-13), so raw enum keys like `mediterranean` / `italian` / `beef` no longer leak to the user. Inbox `D-14` no-op confirmed (drafts inbox renders no cuisine/mood/protein today); `recipe.season` `D-15` grep returned zero matches. 3 plans / 3 wave-1 parallel executor agents / 12 atomic commits via worktree isolation. Code review: 0 critical / 0 warning / 3 info (all expected — hardcoded `aria-label` accepted per D-06, no-op `tabular-nums` on URL field intentional per D-02, `npm_package_version` fallback already in place). Phase verifier skipped per `workflow.verifier: false` — D-18 grep gates serve as the goal-achievement check. v0.5 Active progress: 1/3 phases complete.
-
-**v0.5 Phase 23 shipped** — 2026-05-13. Four DECK-* requirements landed in **one atomic commit** per D-23, closing `audit:walkthrough`-era issues #14/#16/#17/#18. **DECK-01** (gh#14): OUI/NON text overlays at `ShortlistCard.tsx:280-296` replaced by **two stacked `motion.div`s with `ring-2 ring-inset` strokes** — yes-ring `--color-valide-foreground` (emerald), no-ring `--destructive`, opacity driven by the existing `yesOpacity`/`noOpacity` `useTransform` hooks; **deliberate design deviation** from REQUIREMENTS.md DECK-01's literal "full-card background tint" wording (rewritten in same commit per D-01). `ring-inset` chosen (not plain `ring-*`) because Tailwind's `ring-*` utility renders as `box-shadow` and gets clipped by the outer card's `overflow-hidden` (RESEARCH SE-1). Conditional MOUNT under `{isFront && !reducedMotion && (...)}` — not opacity-zero — so reduced-motion path skips `useTransform` updates entirely. **DECK-02** (gh#18): four `swipe-tokens.ts` constants retuned — `SWIPE_THRESHOLD_PX` 100→**140**, `SWIPE_VELOCITY_PX_S` 500→**750**, `SWIPE_OVERLAY_INPUT_PX` 100→**80** (ring full at ~80px, well before commit), `SWIPE_FLYOFF_DURATION_S` 0.2→**0.28**. Legacy `SWIPE_SPRING` constant deleted (grep-confirmed zero importers). Snap-back already uses `transitions.springSnap` (240/28/1.1) from Phase 7 — no change there. **DECK-03** (gh#17): `ShortlistThumbButtons` icons swap to filled/outline Hearts — yes button `<Heart fill="currentColor" />` in emerald, no button `<Heart />` outline in `text-foreground-muted` with `border-border` (destructive-red removed entirely; reads "unloved" not "rejected"). `X` removed from lucide-react import at L19. **DECK-04** (gh#16): `useRouter` from `next/navigation` + `panRef = useRef(false)` pattern — `onPanStart` sets true; `onPanEnd` does `setTimeout(() => { panRef.current = false }, 0)` (RESEARCH W-02: `setTimeout(0)` is the right primitive — rAF and microtask have iOS Safari edge cases); `onTap` checks `!panRef.current && isFront` before `router.push(\`/recipes/${recipe.id}\`)`. Thumb-button taps still vote (structurally separate component, no propagation). Back-button preserved free via the unvoted-filter (no `?card=` URL state needed). 1 plan / 1 wave-1 executor / 1 atomic commit (`98a0112` + post-hoc summary/REQ housekeeping commits). Code review: 0 critical / 0 warning / 3 info (all optional nits: noOpacity symmetric form, ring DOM order vs partner-vote footer, flyX render-cost). Phase verifier skipped per `workflow.verifier: false` — D-26 grep gates serve as the goal-achievement check. v0.5 Active progress: 2/3 phases complete (Phase 24 Recipe identity remains).
-
 **Behavioral validation gate:** ≥ 2 weeks of daily use by both members (the v0.1 definition of done per SPEC.md). This is the next observable milestone before broader scope decisions.
 
 **Infrastructure:** Next.js 16 PWA on Vercel + FastAPI on Railway + Supabase Postgres + Storage. Auto-deploy on push to `main`. Free-tier hosting throughout.
@@ -78,9 +74,7 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 ### Active
 
-**v0.5 — Mixed Sweep** (3 phases, ~10 GitHub issues). Closes a coherent cluster of `audit:walkthrough`-era issues + post-v0.4 polish across three themes: quick wins (#13/#15/#21), swipe-deck polish (#14/#18/#17/#16), and recipe identity (#11/#22/#10/#12). Locked decisions: #10 LLM title rewrite is **silent overwrite** with `promotion_error` fallback on rewrite failure (shifts invariant #1 — quick/full-form become async); #17 thumb-button direction is **filled Heart / outline Heart** (emerald for filled, neutral for empty). Out of scope: #20 (defers to v0.6 — needs its own `/gsd-explore`).
-
-**Progress:** 1/3 phases complete. Phase 22 (Quick wins: QW-01/02/03 → gh#13/#15/#21) shipped 2026-05-12 — see Current State. Phase 23 (Deck polish) and Phase 24 (Recipe identity) remain.
+_None — v0.4 complete. Awaiting next milestone via `/gsd-new-milestone`._
 
 ### Surfaced for follow-up (deferred to v2 or future milestone)
 
@@ -148,40 +142,13 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 | uuid5 + Session.merge upsert seed (v0.2.1 D-09) | Idempotency is in the success criteria; TRUNCATE+INSERT breaks "re-running mid-test." uuid5 is deterministic across runs and machines | ✅ Validated — same household / member / shortlist UUIDs across re-runs, no duplicate-key errors on second invocation within the same day. Cross-day hole surfaced (SEED-01) — workaround documented |
 | iPhone-shape Chromium viewport for tests (v0.2.1 post-ship) | The PWA ships to two iPhones; testing at desktop-sized viewports masks mobile-only layout bugs (e.g. Sheet-01 [#1](https://github.com/lucaguery/al-dente/issues/1)). 390×844 + isMobile + hasTouch + Chromium catches them while staying under the cross-browser non-goal | ✅ Validated — surfaced the Sheet-01 bug via Playwright MCP, then encoded `toBeInViewport()` assertion that catches future regressions |
 
-## Current Milestone: v0.5 Mixed Sweep
+## Current Milestone
 
-**Goal:** Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-deck polish, and recipe identity — into a single tight sweep that pays down post-audit backlog without expanding scope.
+_None — v0.4 shipped 2026-05-11. Awaiting next milestone via `/gsd-new-milestone`._
 
-**Target features (by theme):**
+**v0.4 outcome:** 7 phases / 27 plans / 24 requirements all validated. Closed both Tier 1 invariant breaks (INV-01, INV-02), 4 Tier 2 correctness clusters (capture pipeline, history, identity, validation), the C-1 token-completeness gap (15 new semantic CSS variables), the FIX-03 next-intl drift, and the entire v0.2.2 backlog (TZ-01, SEED-01, POLISH-01/02). Cumulative UI score 20.21/24 → 21.71/24 (+1.50) under the SAME 6-pillar rubric; verdict distribution shifted from 5✅/9⚠/0❌ to 11✅/3⚠/0❌. See `.planning/milestones/v0.4-ROADMAP.md`, `.planning/v0.4/UI-RESCORE.md`, and `.planning/v0.4-MILESTONE-AUDIT.md`.
 
-- **Quick wins** — drop the Geist Mono dependency (#13), surface a build-time version footer (#15), and finish the i18n tags display sweep (#21).
-- **Deck polish** — replace OUI/NON drag overlays with tint (#14), tune swipe thresholds + spring (#18), rework like/dislike thumb buttons to filled Heart / outline Heart (#17), and add tap-to-detail on shortlist cards (#16).
-- **Recipe identity** — add a BrandIcon component (#11), build the recipe completeness scorecard + 3 new fields including a Difficulty enum (#22), generate LLM "catchy" titles across all capture surfaces (#10), and produce per-recipe SVG illustrations (#12).
-
-**Locked decisions (milestone-level):**
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| #10 title-rewrite UX | Silent overwrite | Matches voice/photo flow; title stays editable on detail page. No new confirmation UI to ship. |
-| #10 failure mode | Keep user title + `promotion_error` | Mirrors v0.4 Phase 16 failed-state handling. Retry endpoint can re-attempt with better model later (invariant #5 preserved). |
-| #17 icon direction | Filled Heart / outline Heart | Single-glyph language; softer than thumbs; emerald for filled (matches Validé color story), neutral for outline. |
-| Invariant #1 shift | Quick/full-form become async with #10 | When Phase 24 ships #10, quick + full-form capture move from sync `structured`-on-return to `draft` → `BackgroundTask` rewrite → `structured`. `CLAUDE.md` invariant #1 updates in the same change. |
-| #20 (unified capture) | Deferred to v0.6 | Needs its own `/gsd-explore` UX cycle; out of scope for v0.5. |
-| #19 (Accueil spinner flash) | Already shipped out-of-band | `fast-19` (commit 7a1f39c, 2026-05-12) closed gh#19 before v0.5 opened. |
-
-**Phase shape (continues numbering from v0.4 — starts at Phase 22):**
-
-- ✅ Phase 22 — Quick wins (#13, #15, #21) — shipped 2026-05-12
-- Phase 23 — Deck polish (#14 + #18 paired → #17 → #16)
-- Phase 24 — Recipe identity (#11 → #22 → #10 → #12; serial to avoid `_apply_extracted` / `services/llm.py` merge churn)
-
-**Source:** `.planning/notes/v0.5-shape-mixed-sweep.md` (output of `/gsd-explore` 2026-05-12 against 13 open GitHub issues #10–#22).
-
----
-
-**v0.4 outcome (preserved for reference):** 7 phases / 27 plans / 24 requirements all validated. Closed both Tier 1 invariant breaks (INV-01, INV-02), 4 Tier 2 correctness clusters (capture pipeline, history, identity, validation), the C-1 token-completeness gap (15 new semantic CSS variables), the FIX-03 next-intl drift, and the entire v0.2.2 backlog (TZ-01, SEED-01, POLISH-01/02). Cumulative UI score 20.21/24 → 21.71/24 (+1.50) under the SAME 6-pillar rubric; verdict distribution shifted from 5✅/9⚠/0❌ to 11✅/3⚠/0❌. See `.planning/milestones/v0.4-ROADMAP.md`, `.planning/v0.4/UI-RESCORE.md`, and `.planning/v0.4-MILESTONE-AUDIT.md`.
-
-**Pending operator validation (orthogonal to v0.5):** 15 HUMAN-UAT items across phases 16/17/18/19/21 — Playwright suites need live dev-stack runs, Web Push round-trip on both iPhones needs operator fill of `.planning/v0.4/PUSH-ROUNDTRIP.md`, manual UX exercise of failed-state inbox + 4-state Notifications Card. None blocking deploy; tracked via `/gsd-audit-uat`.
+**Pending operator validation:** 15 HUMAN-UAT items across phases 16/17/18/19/21 — Playwright suites need live dev-stack runs, Web Push round-trip on both iPhones needs operator fill of `.planning/v0.4/PUSH-ROUNDTRIP.md`, manual UX exercise of failed-state inbox + 4-state Notifications Card. None blocking deploy; tracked via `/gsd-audit-uat`.
 
 ## Future Milestones (deferred)
 
@@ -207,4 +174,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-13 — v0.5 Phase 23 (Deck polish) shipped. Closed gh#14 (OUI/NON overlays → `ring-2 ring-inset` motion divs; deliberate design deviation from REQUIREMENTS.md DECK-01 wording, rewritten in same commit), gh#16 (tap-to-detail via `useRouter` + `panRef` disambiguation with `setTimeout(0)` reset), gh#17 (filled emerald Heart yes / outline neutral Heart no — destructive-red removed entirely), gh#18 (swipe threshold/velocity/overlay/fly-off constants retuned 140/750/80/0.28s + legacy `SWIPE_SPRING` deleted). 1 plan / 1 atomic commit per D-23. Code review clean (0 critical / 0 warning / 3 info — all optional nits). Verifier skipped per `workflow.verifier: false`; D-26 grep gates serve as goal check. v0.5 Active progress: 2/3 phases complete. Next: Phase 24 (Recipe identity — #11/#22/#10/#12, serial order load-bearing).*
+*Last updated: 2026-05-11 — v0.4 shipped (7 phases / 27 plans / 24 reqs). 6 surfaces flipped Mixed → Al Dente under SAME 6-pillar rubric (UI cumulative-mean delta +1.50). Architecture invariants 1-8 all preserved. 15 HUMAN-UAT items deferred to operator runtime validation; none block deploy. Next: `/gsd-new-milestone` to scope v0.5 (or v1.0 after the ≥2-week behavioral validation gate from SPEC.md).*

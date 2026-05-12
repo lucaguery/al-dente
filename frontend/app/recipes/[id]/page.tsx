@@ -22,7 +22,6 @@ import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { VoiceModifySheet } from "@/components/VoiceModifySheet";
 import { api } from "@/lib/api";
 import { formatRelativeFr } from "@/lib/datetime";
-import { useEnumLabels } from "@/lib/enum-labels";
 import { deleteRecipe, getSignedPhotoUrl } from "@/lib/recipes";
 import { useRealtime } from "@/components/RealtimeProvider";
 import type { Recipe } from "@/lib/recipes";
@@ -31,7 +30,6 @@ export default function RecipeDetailPage() {
   const t = useTranslations("recipes");
   const tVoiceModify = useTranslations("recipes.voice_modify");
   const tErr = useTranslations("onboarding.errors");
-  const labels = useEnumLabels();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -255,15 +253,15 @@ export default function RecipeDetailPage() {
           {/* Metadata pill row — cuisine, moods, protein, prep/servings */}
           <div className="flex flex-wrap gap-2 items-center">
             {recipe.cuisine ? (
-              <Badge variant="secondary">{labels.cuisine(recipe.cuisine)}</Badge>
+              <Badge variant="secondary">{recipe.cuisine}</Badge>
             ) : null}
             {recipe.mood.map((m) => (
               <Badge key={m} variant="secondary">
-                {labels.mood(m)}
+                {m}
               </Badge>
             ))}
             {recipe.main_protein ? (
-              <Badge variant="secondary">{labels.protein(recipe.main_protein)}</Badge>
+              <Badge variant="secondary">{recipe.main_protein}</Badge>
             ) : null}
             {metaSpan ? (
               <span className="text-sm text-foreground-muted">{metaSpan}</span>
