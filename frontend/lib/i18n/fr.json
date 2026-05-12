@@ -140,6 +140,11 @@
       "summer": "Été",
       "autumn": "Automne",
       "winter": "Hiver"
+    },
+    "difficulty": {
+      "easy": "Facile",
+      "medium": "Moyen",
+      "hard": "Difficile"
     }
   },
   "recipes": {
@@ -179,6 +184,12 @@
       "ingredients_placeholder": "200 g de pâtes\n2 oeufs\n80 g de pancetta",
       "steps_label": "Étapes (une par ligne)",
       "prep_time_label": "Temps de prép. (min)",
+      "cook_time_minutes_label": "Temps de cuisson (min)",
+      "cook_time_minutes_placeholder": "30",
+      "difficulty_label": "Difficulté",
+      "difficulty_placeholder": "Non précisé",
+      "description_label": "Description",
+      "description_placeholder": "Une phrase ou deux pour résumer…",
       "servings_label": "Personnes",
       "cuisine_label": "Cuisine",
       "cuisine_none": "Non précisé",
@@ -401,5 +412,20 @@
     "notes": {
       "helper_keyboard_mic": "Tu peux dicter avec le micro du clavier."
     }
+  },
+  "completeness": {
+    "header": "À compléter — {filled}/11",
+    "progress_aria": "{percent} % complète",
+    "description": "Description",
+    "ingredients": "Ingrédients",
+    "steps": "Étapes",
+    "prep_time_minutes": "Temps de préparation",
+    "cook_time_minutes": "Temps de cuisson",
+    "servings": "Portions",
+    "difficulty": "Difficulté",
+    "cuisine": "Cuisine",
+    "mood": "Ambiance",
+    "main_protein": "Protéine",
+    "title": "Titre"
   }
 }
