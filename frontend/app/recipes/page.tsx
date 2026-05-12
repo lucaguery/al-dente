@@ -13,9 +13,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { BookOpen, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { BrandIcon } from "@/components/BrandIcon";
 import { EmptyState } from "@/components/EmptyState";
 import { RecipeCard } from "@/components/RecipeCard";
 import { SearchInput } from "@/components/SearchInput";
@@ -137,7 +138,7 @@ export default function RecipesPage() {
               />
             ) : (
               <EmptyState
-                icon={BookOpen}
+                icon={BrandIcon}
                 heading={t("empty_heading")}
                 body={t("empty_body")}
                 cta={{ label: t("empty_cta"), href: "/recipes/new" }}

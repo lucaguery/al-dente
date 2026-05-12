@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ChevronRight } from "lucide-react";
+import { BrandIcon } from "@/components/BrandIcon";
 import { Card } from "@/components/ui/card";
 
 // UI-SPEC §"Surface-by-Surface Pinning" §1 — Onboarding Welcome.
@@ -19,6 +20,11 @@ export default function OnboardingWelcomePage() {
   return (
     <section className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x) py-16 bg-background">
       <header className="flex flex-col items-center gap-2 text-center">
+        <BrandIcon
+          size={72}
+          aria-label="al dente"
+          className="text-primary mb-2"
+        />
         {/* Wordmark — Fraunces italic display register (mirrors Phase 7
             daily date header + Phase 8 recipe-detail hero). */}
         <h1 className="text-display">{tHome("title")}</h1>
