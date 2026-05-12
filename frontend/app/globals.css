@@ -320,12 +320,13 @@
    choices per page. They supplement (do not replace) Tailwind's
    text-* utilities. */
 @layer utilities {
-  /* Phase 5 §Typography type-scale — Fraunces italic at opsz=96 for the hero
+  /* Phase 5 §Typography type-scale — Cormorant Garamond italic for the hero
      wordmark and primary display text. Weight 500 (not 700) is the Slow Food
      restraint principle: heavier reads as advertising, not editorial. Italic
      is the cookbook-cover signature. Letter-spacing -0.02em counteracts the
      optical loosening that occurs at large sizes. clamp(32px, 6vw, 44px)
-     keeps the headline responsive between iPhone-narrow and desktop reads. */
+     keeps the headline responsive between iPhone-narrow and desktop reads.
+     (Cormorant Garamond is not a variable font — no opsz axis.) */
   .text-display {
     font-family: var(--font-display), ui-serif, Georgia, serif;
     font-size: clamp(2rem, 6vw, 2.75rem);
@@ -333,19 +334,18 @@
     letter-spacing: -0.02em;
     font-weight: 500;
     font-style: italic;
-    font-variation-settings: "opsz" 96;
   }
-  /* Phase 5 §Typography type-scale — Fraunces upright at opsz=36 for page
-     titles, section headings, and dialog/sheet titles. 24px sits in Fraunces'
-     opsz=36 sweet spot. Upright (not italic) for legibility in longer
-     strings. Weight 500 holds the restraint pairing with the display class. */
+  /* Phase 5 §Typography type-scale — Cormorant Garamond upright for page
+     titles, section headings, and dialog/sheet titles. 24px sits at the
+     title-sweet-spot for the family. Upright (not italic) for legibility in
+     longer strings. Weight 500 holds the restraint pairing with the display
+     class. (Cormorant Garamond is not a variable font — no opsz axis.) */
   .text-title {
     font-family: var(--font-display), ui-serif, Georgia, serif;
     font-size: 1.5rem;
     line-height: 1.2;
     letter-spacing: -0.015em;
     font-weight: 500;
-    font-variation-settings: "opsz" 36;
   }
   /* Phase 5 §Typography type-scale — IBM Plex Sans 16/1.55 for body running
      text. Verified-readable for French long-form on iOS Safari at PWA-

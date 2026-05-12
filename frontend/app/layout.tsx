@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, IBM_Plex_Sans, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, IBM_Plex_Sans, Geist_Mono } from "next/font/google";
 import { getMessages } from "next-intl/server";
 import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
@@ -8,10 +8,10 @@ import { RealtimeProvider } from "@/components/RealtimeProvider";
 import { SessionProvider } from "@/components/SessionProvider";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const cormorantGaramond = Cormorant_Garamond({
   variable: "--font-display",
   subsets: ["latin", "latin-ext"],
-  axes: ["opsz"],
+  weight: ["400", "500"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -60,7 +60,7 @@ export default async function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${fraunces.variable} ${ibmPlexSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${cormorantGaramond.variable} ${ibmPlexSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body
         className="min-h-dvh flex flex-col bg-background text-foreground"
