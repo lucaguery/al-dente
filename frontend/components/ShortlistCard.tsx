@@ -48,6 +48,10 @@ export type ShortlistCardProps = {
    *  thumb-tap pathway animates as smoothly as the swipe pathway. `null` for
    *  the peek card (drag disabled, never exits via this path). */
   committedDirection?: "left" | "right" | null;
+  /** Depth of the peek slot (1 = directly behind front, 2 = one behind that).
+   *  Drives progressive scale/y/opacity for a real "pile" look. Ignored when
+   *  `isFront` is true. */
+  peekDepth?: 1 | 2;
 };
 
 // `prefers-reduced-motion` is an external state that can flip at runtime when
@@ -78,6 +82,7 @@ export function ShortlistCard({
   onVote,
   isFront,
   committedDirection,
+  peekDepth = 1,
 }: ShortlistCardProps) {
   const t = useTranslations("home.shortlist");
   const reducedMotion = usePrefersReducedMotion();
@@ -195,9 +200,16 @@ export function ShortlistCard({
       exit={motionExit}
       transition={isFront && !reducedMotion ? transitions.springSnap : undefined}
       className={
+        // `!absolute !inset-0` defeats `.paper-grain { position: relative }`
+        // in globals.css (defined later in @layer utilities than Tailwind's
+        // .absolute). Without !important, both cards collapse into document
+        // flow and stack vertically instead of overlapping — that's why the
+        // peek covered the thumb buttons and the deck didn't look like a pile.
         isFront
-          ? "absolute inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card-hover overflow-hidden flex flex-col touch-pan-y"
-          : "absolute inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col scale-[0.94] translate-y-3 opacity-60 pointer-events-none"
+          ? "!absolute !inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card-hover overflow-hidden flex flex-col touch-pan-y"
+          : peekDepth === 2
+            ? "!absolute !inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col scale-[0.88] translate-y-6 opacity-40 pointer-events-none"
+            : "!absolute !inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col scale-[0.94] translate-y-3 opacity-60 pointer-events-none"
       }
     >
       {/* Photo region */}

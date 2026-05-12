@@ -72,7 +72,6 @@ export function ShortlistDeck({
   onVoteApplied,
 }: ShortlistDeckProps) {
   const t = useTranslations("home.shortlist");
-  const [index, setIndex] = useState(0);
   const [submittingFor, setSubmittingFor] = useState<string | null>(null);
   // bug 1 + 3 fix: track the direction of the most-recent commit so the
   // front card can apply a directional `exit` regardless of whether the
@@ -82,7 +81,10 @@ export function ShortlistDeck({
   const [committedDirection, setCommittedDirection] =
     useState<CommittedDirection>(null);
 
-  const remaining = recipes.slice(index);
+  // recipes is the unvoted slice from HomeDecide (filtered each render). We
+  // always read from the head — the deck advance happens via the parent's
+  // filter when the optimistic vote lands in votes[]. No local index.
+  const remaining = recipes;
 
   // NOTE: `committedDirection` is set fresh inside handleVote() at the start
   // of every vote and ONLY drives the front card's `exit` variant. The new
@@ -99,6 +101,10 @@ export function ShortlistDeck({
   }
   const current = remaining[0];
   const next = remaining[1];
+  // Render up to two peeks for a real pile look — the deeper peek sits behind
+  // the closer one and barely shows around the edges. Drives the
+  // pile-of-cards feel called out in the user complaint.
+  const nextNext = remaining[2];
 
   async function handleVote(value: VoteValue) {
     // T-03-04-08 mitigation: only one POST in flight at a time. Rapid swipes
@@ -112,22 +118,22 @@ export function ShortlistDeck({
       member_id: me.id,
       vote: value,
     };
-    onVoteApplied(optimistic);
-    const previousIndex = index;
-    // bug 1 fix: set direction BEFORE advancing the index so the exiting
-    // card sees a non-null direction in the same render that triggers its
-    // AnimatePresence-driven unmount. yes → right, no → left.
+    // Set the exit direction BEFORE the optimistic vote so the exiting card
+    // sees a non-null direction in the same AnimatePresence cycle that
+    // unmounts it (yes → right, no → left).
     setCommittedDirection(value === "yes" ? "right" : "left");
-    // bug 3 fix: defensive cap — a double-tap can never overshoot the
-    // recipes list, so allVoted upstream resolves cleanly.
-    setIndex((i) => Math.min(i + 1, recipes.length));
+    // onVoteApplied updates the parent's votes[] synchronously; HomeDecide
+    // then re-filters `unvotedByMe` and re-passes recipes here without the
+    // just-voted card. That filter IS the deck's advance — we deliberately
+    // do NOT also bump a local index, otherwise the next render slices off
+    // an extra recipe and the user skips a card. On POST failure the
+    // optimistic row lingers in votes[] until the vote.created event
+    // overwrites it or the user retries; the deck stays on the post-vote
+    // front card either way (no rollback to a previous-index state needed).
+    onVoteApplied(optimistic);
     try {
       await postVote(shortlistId, recipeId, value);
     } catch {
-      // Rollback the deck position. The optimistic row in votes[] will be
-      // overwritten by the next vote.created event, OR will linger until the
-      // user retries — either way, the server is the authoritative source.
-      setIndex(previousIndex);
       toast.error(t("vote_failed"));
     } finally {
       setSubmittingFor(null);
@@ -137,6 +143,18 @@ export function ShortlistDeck({
   return (
     <div className="flex flex-col flex-1 items-center justify-center px-4 pt-4 pb-8 gap-6">
       <div className="relative w-full max-w-sm aspect-[3/4]">
+        {nextNext && (
+          <ShortlistCard
+            key={`peek2-${nextNext.id}`}
+            recipe={nextNext}
+            partnerVote={partnerVoteFor(votes, nextNext.id, partner.id)}
+            partnerName={partner.name}
+            partnerColorHex={partner.color_hex}
+            onVote={() => {}}
+            isFront={false}
+            peekDepth={2}
+          />
+        )}
         {next && (
           <ShortlistCard
             key={`peek-${next.id}`}
@@ -146,6 +164,7 @@ export function ShortlistDeck({
             partnerColorHex={partner.color_hex}
             onVote={() => {}}
             isFront={false}
+            peekDepth={1}
           />
         )}
         <AnimatePresence mode="wait">
