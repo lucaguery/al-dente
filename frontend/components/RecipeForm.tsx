@@ -5,7 +5,7 @@
 // own sticky bottom CTA; the global BottomNav is also visible (z-40), and the
 // form's CTA layer sits above it.
 
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, ChevronLeft } from "lucide-react";
 import Link from "next/link";
@@ -21,9 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Cuisine, Mood, Protein, Season } from "@/lib/enums";
+import { Cuisine, Difficulty, Mood, Protein, Season } from "@/lib/enums";
 import { useEnumLabels } from "@/lib/enum-labels";
 import { PhotoUploader } from "@/components/PhotoUploader";
+import type { FieldKey } from "@/lib/recipe-completeness";
 import type { Recipe } from "@/lib/recipes";
 
 // Sentinel select value for "no selection" — Radix Select rejects empty
@@ -79,6 +80,10 @@ export type RecipeFormValues = {
   ingredients_text: string; // one per line — server expects array; we split on save
   steps_text: string; // one per line
   prep_time_minutes: string;
+  // Phase 24 RID-02 new fields
+  cook_time_minutes: string;
+  difficulty: string; // "" means none (NONE_VALUE sentinel at select)
+  description: string;
   servings: string;
   cuisine: string; // "" means none
   mood: string[];
@@ -88,11 +93,22 @@ export type RecipeFormValues = {
   photo_paths: string[];
 };
 
+// RID-03 — ref map for scroll/focus on ?focus= param (D-22, D-23).
+// The edit page constructs this map and passes it down so RecipeForm
+// stays ignorant of the routing layer. focusRefs is optional so the
+// new-recipe full tab can render RecipeForm without any focus wiring.
+export type RecipeFormRefs = Partial<Record<FieldKey, RefObject<HTMLElement>>>;
+
+
 export type RecipeBody = {
   title: string;
   ingredients?: { name: string; quantity?: number | null; unit?: string | null }[];
   steps?: string[];
   prep_time_minutes?: number;
+  // Phase 24 RID-02 new fields
+  cook_time_minutes?: number;
+  difficulty?: string;
+  description?: string;
   servings?: number;
   cuisine?: string;
   mood: string[];
@@ -117,6 +133,9 @@ export function recipeToFormValues(r: Recipe): RecipeFormValues {
       .join("\n"),
     steps_text: (r.steps ?? []).join("\n"),
     prep_time_minutes: r.prep_time_minutes?.toString() ?? "",
+    cook_time_minutes: r.cook_time_minutes?.toString() ?? "",
+    difficulty: r.difficulty ?? "",
+    description: r.description ?? "",
     servings: r.servings?.toString() ?? "",
     cuisine: r.cuisine ?? "",
     mood: r.mood ?? [],
@@ -193,6 +212,11 @@ export function formValuesToBody(v: RecipeFormValues): RecipeBody {
     prep_time_minutes: v.prep_time_minutes
       ? parseInt(v.prep_time_minutes, 10)
       : undefined,
+    cook_time_minutes: v.cook_time_minutes
+      ? parseInt(v.cook_time_minutes, 10)
+      : undefined,
+    difficulty: v.difficulty || undefined,
+    description: v.description.trim() || undefined,
     servings: v.servings ? parseInt(v.servings, 10) : undefined,
     cuisine: v.cuisine || undefined,
     mood: v.mood,
@@ -215,6 +239,9 @@ type Props = {
   /** When true, render with own header + sticky CTA. /recipes/new full tab
    *  passes false because the page already owns the chrome. */
   withChrome?: boolean;
+  /** RID-03 — ref map keyed by FieldKey for scroll/focus via ?focus= param.
+   *  Only needed on the edit page; new-recipe form omits it (D-23). */
+  focusRefs?: RecipeFormRefs;
 };
 
 export function RecipeForm({
@@ -225,6 +252,7 @@ export function RecipeForm({
   backHref,
   title,
   withChrome = true,
+  focusRefs,
 }: Props) {
   const t = useTranslations("recipes.new");
   const tCommon = useTranslations("common");
@@ -235,6 +263,9 @@ export function RecipeForm({
       ingredients_text: "",
       steps_text: "",
       prep_time_minutes: "",
+      cook_time_minutes: "",
+      difficulty: "",
+      description: "",
       servings: "",
       cuisine: "",
       mood: [],
@@ -261,6 +292,7 @@ export function RecipeForm({
         <Label htmlFor="rf-title">{t("title_label")}</Label>
         <Input
           id="rf-title"
+          ref={focusRefs?.title as RefObject<HTMLInputElement> | undefined}
           value={v.title}
           onChange={(e) => setV({ ...v, title: e.target.value })}
           placeholder={t("title_placeholder")}
@@ -268,10 +300,24 @@ export function RecipeForm({
           maxLength={200}
         />
       </div>
+      {/* RID-02 — Description textarea (D-14). Renders above ingredients so the
+          CompletenessCard ?focus=description chip scrolls to it naturally. */}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="rf-description">{t("description_label")}</Label>
+        <Textarea
+          id="rf-description"
+          ref={focusRefs?.description as RefObject<HTMLTextAreaElement> | undefined}
+          rows={3}
+          value={v.description}
+          onChange={(e) => setV({ ...v, description: e.target.value })}
+          placeholder={t("description_placeholder")}
+        />
+      </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="rf-ingredients">{t("ingredients_label")}</Label>
         <Textarea
           id="rf-ingredients"
+          ref={focusRefs?.ingredients as RefObject<HTMLTextAreaElement> | undefined}
           rows={6}
           value={v.ingredients_text}
           onChange={(e) => setV({ ...v, ingredients_text: e.target.value })}
@@ -282,6 +328,7 @@ export function RecipeForm({
         <Label htmlFor="rf-steps">{t("steps_label")}</Label>
         <Textarea
           id="rf-steps"
+          ref={focusRefs?.steps as RefObject<HTMLTextAreaElement> | undefined}
           rows={6}
           value={v.steps_text}
           onChange={(e) => setV({ ...v, steps_text: e.target.value })}
@@ -292,6 +339,7 @@ export function RecipeForm({
           <Label htmlFor="rf-prep">{t("prep_time_label")}</Label>
           <Input
             id="rf-prep"
+            ref={focusRefs?.prep_time_minutes as RefObject<HTMLInputElement> | undefined}
             type="number"
             inputMode="numeric"
             min={0}
@@ -302,10 +350,54 @@ export function RecipeForm({
             }
           />
         </div>
+        {/* RID-02 — Cook time input (D-14) */}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="rf-cook">{t("cook_time_minutes_label")}</Label>
+          <Input
+            id="rf-cook"
+            ref={focusRefs?.cook_time_minutes as RefObject<HTMLInputElement> | undefined}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={1440}
+            value={v.cook_time_minutes}
+            onChange={(e) =>
+              setV({ ...v, cook_time_minutes: e.target.value })
+            }
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        {/* RID-02 — Difficulty select (D-14) */}
+        <div className="flex flex-col gap-1.5">
+          <Label>{t("difficulty_label")}</Label>
+          <Select
+            value={v.difficulty === "" ? NONE_VALUE : v.difficulty}
+            onValueChange={(val) =>
+              setV({ ...v, difficulty: val === NONE_VALUE ? "" : val })
+            }
+          >
+            <SelectTrigger
+              className="w-full"
+              ref={focusRefs?.difficulty as RefObject<HTMLButtonElement> | undefined}
+            >
+              <SelectValue placeholder={t("difficulty_placeholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE_VALUE}>{t("difficulty_placeholder")}</SelectItem>
+              {Object.values(Difficulty).map((d) => (
+                <SelectItem key={d} value={d}>
+                  {labels.difficulty(d)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="rf-servings">{t("servings_label")}</Label>
           <Input
             id="rf-servings"
+            ref={focusRefs?.servings as RefObject<HTMLInputElement> | undefined}
             type="number"
             inputMode="numeric"
             min={1}
@@ -323,7 +415,10 @@ export function RecipeForm({
             setV({ ...v, cuisine: val === NONE_VALUE ? "" : val })
           }
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger
+            className="w-full"
+            ref={focusRefs?.cuisine as RefObject<HTMLButtonElement> | undefined}
+          >
             <SelectValue placeholder={t("cuisine_none")} />
           </SelectTrigger>
           <SelectContent>
@@ -338,7 +433,11 @@ export function RecipeForm({
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>{t("mood_label")}</Label>
-        <div className="flex flex-wrap gap-2">
+        <div
+          className="flex flex-wrap gap-2"
+          ref={focusRefs?.mood as RefObject<HTMLDivElement> | undefined}
+          tabIndex={focusRefs?.mood ? -1 : undefined}
+        >
           {Object.values(Mood).map((m) => {
             const on = v.mood.includes(m);
             return (
@@ -370,7 +469,10 @@ export function RecipeForm({
             setV({ ...v, main_protein: val === NONE_VALUE ? "" : val })
           }
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger
+            className="w-full"
+            ref={focusRefs?.main_protein as RefObject<HTMLButtonElement> | undefined}
+          >
             <SelectValue placeholder={t("cuisine_none")} />
           </SelectTrigger>
           <SelectContent>

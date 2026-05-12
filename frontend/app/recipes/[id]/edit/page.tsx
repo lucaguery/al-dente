@@ -5,9 +5,18 @@
 // PUTs the form body. If the recipe was a draft and the form is being saved
 // with title + ingredients, we promote it to `structured` in the SAME PUT
 // (status field on RecipeUpdate, accepted threat T-01-08-08 in 01-08-PLAN).
+//
+// RID-03 — ?focus= consumption (D-22, D-23):
+// useSearchParams() requires a <Suspense> boundary in Next.js 16 production
+// builds (production static prerendering cannot know query params at build
+// time). Pattern follows the live project precedent at
+// frontend/app/onboarding/share-code/page.tsx. The Inner component reads
+// focus, constructs a ref map keyed by FieldKey, passes it to RecipeForm,
+// and after firing scroll/focus strips the param via router.replace(pathname)
+// so a re-mount doesn't re-fire.
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -17,8 +26,10 @@ import {
   recipeToFormValues,
   type RecipeFormValues,
   type RecipeBody,
+  type RecipeFormRefs,
 } from "@/components/RecipeForm";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
+import { isFieldKey } from "@/lib/recipe-completeness";
 import type { GeminiExtractedRecipe, Recipe } from "@/lib/recipes";
 
 // CAPTURE-05 / D-11: voice-modify prefill. After POST /recipes/{id}/voice-modify
@@ -41,29 +52,55 @@ function readPrefill(): GeminiExtractedRecipe | null {
   }
 }
 
+// useSearchParams must be wrapped in <Suspense> in Next.js App Router so
+// the page can be statically rendered while client-side params hydrate.
+// See RESEARCH.md §Pitfall 1 and Pattern 4.
 export default function RecipeEditPage() {
   return (
     <OnboardingGuard>
-      <Inner />
+      <Suspense fallback={null}>
+        <EditInner />
+      </Suspense>
     </OnboardingGuard>
   );
 }
 
-function Inner() {
+function EditInner() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const t = useTranslations("recipes.edit");
   const tErr = useTranslations("onboarding.errors");
   const [initial, setInitial] = useState<RecipeFormValues | null>(null);
   const [origStatus, setOrigStatus] = useState<string>("structured");
 
+  // RID-03 — build ref map for all 11 FieldKey targets (D-22, D-23).
+  // Refs are stable objects; only the focusRefs object itself is recreated
+  // on mount (once). RecipeForm attaches each ref to the matching DOM node.
+  const focusRefs: RecipeFormRefs = {
+    title: useRef<HTMLInputElement>(null),
+    description: useRef<HTMLTextAreaElement>(null),
+    ingredients: useRef<HTMLTextAreaElement>(null),
+    steps: useRef<HTMLTextAreaElement>(null),
+    prep_time_minutes: useRef<HTMLInputElement>(null),
+    cook_time_minutes: useRef<HTMLInputElement>(null),
+    servings: useRef<HTMLInputElement>(null),
+    difficulty: useRef<HTMLButtonElement>(null),
+    cuisine: useRef<HTMLButtonElement>(null),
+    mood: useRef<HTMLDivElement>(null),
+    main_protein: useRef<HTMLButtonElement>(null),
+  };
+
+  // Read the ?focus= param once. isFieldKey() validates it — unknown values
+  // are silently ignored (D-22).
+  const focusParam = searchParams.get("focus");
+  const focus = focusParam && isFieldKey(focusParam) ? focusParam : null;
+
   useEffect(() => {
     if (!id) return;
     let alive = true;
-    // Read sessionStorage prefill ONCE on mount and clear it. If present,
-    // we merge it onto the loaded recipe before running recipeToFormValues
-    // so the form opens with Gemini's modified values pre-applied.
     const prefill = readPrefill();
     api<Recipe>(`/api/recipes/${id}`)
       .then((r) => {
@@ -72,9 +109,6 @@ function Inner() {
           ? {
               ...r,
               ...prefill,
-              // Preserve recipe arrays when prefill omits them; Gemini may
-              // return an empty array intentionally, so only fall back to
-              // the recipe's value when prefill's value is null/undefined.
               mood:
                 prefill.mood !== undefined && prefill.mood !== null
                   ? prefill.mood
@@ -97,13 +131,29 @@ function Inner() {
     };
   }, [id, tErr]);
 
+  // RID-03 — fire scroll/focus after the form mounts and initial data loads.
+  // Runs when focus + initial both become non-null (form is rendered).
+  // After firing, strips ?focus= from the URL so a re-mount doesn't re-fire.
+  useEffect(() => {
+    if (!focus || !initial) return;
+    // Small tick to let React finish painting the form inputs into the DOM.
+    const timer = setTimeout(() => {
+      const node = focusRefs[focus]?.current;
+      if (node) {
+        node.scrollIntoView({ behavior: "smooth", block: "center" });
+        node.focus();
+      }
+      // Strip the ?focus= param — router.replace(pathname) removes all query
+      // params cleanly (usePathname returns pathname without query string).
+      router.replace(pathname);
+    }, 50);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus, initial]);
+
   async function onSubmit(body: RecipeBody) {
     if (!id) return;
     try {
-      // Promote draft → structured if the form is being saved with title +
-      // ingredients. This is the W1 path that lets users finish a quick-add
-      // via the edit form (W2 layers Gemini promotion via BackgroundTask on
-      // top, overwriting the same column with extracted fields).
       const promote =
         origStatus === "draft" &&
         body.title.trim().length > 0 &&
@@ -131,6 +181,7 @@ function Inner() {
       submitLabel={t("submit")}
       backHref={`/recipes/${id}`}
       title={t("title")}
+      focusRefs={focusRefs}
     />
   );
 }

@@ -43,3 +43,13 @@ export const Protein = {
   none: "none",
 } as const;
 export type Protein = (typeof Protein)[keyof typeof Protein];
+
+// Phase 24 RID-02 — Difficulty locked vocabulary (migration 0007).
+// Mirror of backend/app/models/enums.py class Difficulty — both must stay in sync.
+// Restored in 24-03 after the Wave 1 HEAD commit reverted this block.
+export const Difficulty = {
+  easy: "easy",
+  medium: "medium",
+  hard: "hard",
+} as const;
+export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];

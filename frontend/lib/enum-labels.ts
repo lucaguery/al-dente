@@ -12,6 +12,8 @@ export function useEnumLabels() {
   const tMood = useTranslations("enums.mood");
   const tProtein = useTranslations("enums.protein");
   const tSeason = useTranslations("enums.season");
+  // Phase 24 RID-02 — Difficulty labels (fr.json enums.difficulty namespace)
+  const tDifficulty = useTranslations("enums.difficulty");
   return {
     cuisine: (v: string) => {
       try {
@@ -37,6 +39,13 @@ export function useEnumLabels() {
     season: (v: string) => {
       try {
         return tSeason(v as never);
+      } catch {
+        return v;
+      }
+    },
+    difficulty: (v: string) => {
+      try {
+        return tDifficulty(v as never);
       } catch {
         return v;
       }
