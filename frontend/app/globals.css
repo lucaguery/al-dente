@@ -102,6 +102,41 @@
   --ease-craft: cubic-bezier(0.32, 0.72, 0.0, 1);
   --duration-fast: 150ms;
   --duration-normal: 280ms;
+
+  /* Quick-260512-l0l — page-rhythm tokens. Single source of truth for the
+     phone-mobile-PWA chrome: horizontal gutter, vertical section rhythm,
+     and bottom clearance for content sitting above the fixed BottomNav.
+     `.scratch/ui-proposals.html` is the visual contract.
+
+     - `--spacing-page-x`     : 1.5rem (24px). Matches the prior `px-6` default
+                                AND ui-proposals.html `.page { padding ... 24px }`.
+                                The recipes library grid was the lone `px-4`
+                                outlier; aligning to 24px makes 2-col cards
+                                breathe consistently with the rest of the app.
+     - `--spacing-section-y`  : 1.5rem (24px). Inter-Card / inter-section gap.
+                                Used as `gap-(--spacing-section-y)` on flex/grid
+                                stacks (e.g. Settings 5-Card stack).
+     - `--spacing-stack-y`    : 0.75rem (12px). Intra-section list density
+                                (draft rows, log rows within a day group).
+     - `--spacing-bottom-safe`: 6rem (96px). Bottom padding on scrollable page
+                                content so a tap-target at the last item clears
+                                the BottomNav comfortably. Layout.tsx ALREADY
+                                pads <main> by `4rem + env(safe-area-inset-bottom)`
+                                to clear the nav itself; this token is the
+                                additional content breathing room — equivalent
+                                to the prior `pb-24` (24*0.25 = 6rem) most pages
+                                already used. Sticky-CTA pages (onboarding flows,
+                                recipes/new) need MORE room for their floating
+                                action bar and stay on `pb-32` literal — they're
+                                deliberately NOT converted by this plan.
+
+     Tailwind v4 emits these as `(--spacing-page-x)` arbitrary values via the
+     `px-(--var)` / `pb-(--var)` / `gap-(--var)` syntax. No `tailwind.config.*`
+     is created (Tailwind v4 reads @theme directly). */
+  --spacing-page-x: 1.5rem;
+  --spacing-section-y: 1.5rem;
+  --spacing-stack-y: 0.75rem;
+  --spacing-bottom-safe: 6rem;
 }
 
 :root {
@@ -369,6 +404,23 @@
     letter-spacing: 0;
     font-weight: 400;
     color: var(--foreground-muted);
+  }
+
+  /* Quick-260512-l0l — page-chrome header register. Sits between
+     `.text-display` (hero / wordmark) and `.text-body` (running text).
+     Mirrors `.scratch/ui-proposals.html` `.frame-head h3` (Cormorant
+     italic 22px) — the "you are on this surface" gesture for sticky
+     headers (Bibliothèque, Réception, Réglages, recipe detail).
+     Italic differentiates it from `.text-title` (used for Card titles
+     inside the page, which stay upright). 1.25rem = 20px, sits just
+     above body for a chrome-density read on phone. */
+  .text-page-header {
+    font-family: var(--font-display), ui-serif, Georgia, serif;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    font-weight: 500;
+    font-style: italic;
   }
 
   /* Phase 5 paper-grain texture (DESIGN-04). Single SVG asset at
