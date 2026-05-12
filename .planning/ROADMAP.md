@@ -30,7 +30,10 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
   1. `grep -rn "font-mono\|--font-mono\|Geist_Mono" frontend/` returns zero matches and the invite-code display in the join screen remains visually correct
   2. The bottom of the Settings page shows the running version, short git SHA, and Vercel environment — identifiable per device after a prod deploy
   3. Recipe tags on the shortlist deck card, recipe detail page, and drafts inbox all display French labels (e.g. "Méditerranéen" not "mediterranean") with no hardcoded English strings visible
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 22-01-PLAN.md — Drop Geist Mono font + swap two font-mono call sites to tabular-nums (QW-01 / gh#13)
+- [ ] 22-02-PLAN.md — Build-time env re-export + VersionFooter component mounted at bottom of /settings (QW-02 / gh#15)
+- [ ] 22-03-PLAN.md — Wrap cuisine/mood/protein renders on ShortlistCard + recipe detail in useEnumLabels() (QW-03 / gh#21)
 
 ### Phase 23: Deck polish
 **Goal**: The swipe deck feels deliberate and immersive — subtle tint feedback replaces text overlays, a lively spring snap rewards intentional swipes, Heart icons replace thumbs, and cards open to full detail on tap
@@ -62,7 +65,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 22. Quick wins | 0/? | Not started | - |
+| 22. Quick wins | 0/3 | Not started | - |
 | 23. Deck polish | 0/? | Not started | - |
 | 24. Recipe identity | 0/? | Not started | - |
 
