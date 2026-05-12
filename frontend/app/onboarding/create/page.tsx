@@ -83,7 +83,7 @@ export default function OnboardingCreatePage() {
         >
           <ChevronLeft />
         </Button>
-        <span className="text-base font-semibold">{t("title")}</span>
+        <span className="text-page-header">{t("title")}</span>
         <span className="w-12" aria-hidden />
       </header>
 

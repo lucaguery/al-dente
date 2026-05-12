@@ -197,7 +197,7 @@ export default function OnboardingJoinPage() {
           >
             <ChevronLeft />
           </Button>
-          <span className="text-base font-semibold">{t("title")}</span>
+          <span className="text-page-header">{t("title")}</span>
           <span className="w-12" aria-hidden />
         </header>
         <div className="px-(--spacing-page-x) pt-6 pb-32">
@@ -236,7 +236,7 @@ export default function OnboardingJoinPage() {
         >
           <ChevronLeft />
         </Button>
-        <span className="text-base font-semibold">{t("title")}</span>
+        <span className="text-page-header">{t("title")}</span>
         <span className="w-12" aria-hidden />
       </header>
 
