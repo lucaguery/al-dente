@@ -135,7 +135,7 @@ export function VoteSummary({
   const tEmpty = useTranslations("home.empty");
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col flex-1 px-6 pt-6 pb-24 gap-6">
+      <div className="flex flex-col flex-1 px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe) gap-(--spacing-section-y)">
         <EmptyState
           icon={Sparkles}
           heading={tEmpty("all_rejected_heading")}
@@ -164,7 +164,7 @@ export function VoteSummary({
   }
 
   return (
-    <div className="flex flex-col flex-1 px-6 pt-6 pb-24 gap-6">
+    <div className="flex flex-col flex-1 px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe) gap-(--spacing-section-y)">
       <h2 className="text-title">{t("heading")}</h2>
 
       <div className="flex flex-col gap-3">

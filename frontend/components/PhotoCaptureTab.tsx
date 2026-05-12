@@ -111,7 +111,7 @@ export function PhotoCaptureTab() {
   while (slots.length < MAX_PHOTOS) slots.push({ kind: "locked" });
 
   return (
-    <div className="px-6 pt-6 pb-32 flex flex-col gap-6">
+    <div className="px-(--spacing-page-x) pt-6 pb-32 flex flex-col gap-(--spacing-section-y)">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-xl font-semibold">{t("empty_heading")}</h2>
         <p className="text-sm text-muted-foreground">{t("empty_body")}</p>

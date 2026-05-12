@@ -62,7 +62,7 @@ export function VoiceCaptureTab() {
   }
 
   return (
-    <div className="px-6 pt-6 pb-32 flex flex-col gap-6">
+    <div className="px-(--spacing-page-x) pt-6 pb-32 flex flex-col gap-(--spacing-section-y)">
       {/* D-Voice deviation callout (CAPTURE-10): the keyboard-mic affordance
           IS this card. iOS PWA standalone has no working browser speech-recognition
           (D-Voice locked since Phase 2), so we do NOT render an in-app mic

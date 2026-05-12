@@ -111,7 +111,7 @@ export function CookingLogFinalize({ logId }: Props) {
 
   if (state.kind === "loading") {
     return (
-      <main className="flex flex-col flex-1 px-6 pt-6 pb-24 gap-4">
+      <main className="flex flex-col flex-1 px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe) gap-4">
         <div className="h-8 w-2/3 rounded bg-surface-muted animate-pulse" />
         <div className="h-4 w-1/2 rounded bg-surface-muted animate-pulse" />
         <div className="h-32 w-full rounded-lg bg-surface-muted animate-pulse" />
@@ -135,7 +135,7 @@ export function CookingLogFinalize({ logId }: Props) {
   const canSubmit = !!rating && !submitting;
 
   return (
-    <main className="flex flex-col flex-1 px-6 pt-6 pb-24 gap-8">
+    <main className="flex flex-col flex-1 px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe) gap-8">
       <header className="flex flex-col gap-1">
         <h1 className="text-title text-foreground">{t("page_title")}</h1>
         <p className="text-base text-foreground-muted line-clamp-1">

@@ -59,7 +59,7 @@ export function UrlCaptureTab() {
   }
 
   return (
-    <div className="px-6 pt-6 pb-32 flex flex-col gap-6">
+    <div className="px-(--spacing-page-x) pt-6 pb-32 flex flex-col gap-(--spacing-section-y)">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="url-input">{t("field_label")}</Label>
         <Input
