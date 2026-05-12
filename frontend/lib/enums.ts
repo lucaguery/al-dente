@@ -43,3 +43,10 @@ export const Protein = {
   none: "none",
 } as const;
 export type Protein = (typeof Protein)[keyof typeof Protein];
+
+export const Difficulty = {
+  easy: "easy",
+  medium: "medium",
+  hard: "hard",
+} as const;
+export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];
