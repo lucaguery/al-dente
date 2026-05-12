@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/components/SessionProvider";
 import { MemberDot } from "@/components/MemberDot";
+import { VersionFooter } from "@/components/VersionFooter";
 import { renameMe } from "@/lib/households";
 import {
   canReceivePush,
@@ -542,6 +543,7 @@ export default function SettingsPage() {
           )}
         </Card>
 
+        <VersionFooter />
       </div>
     </section>
   );
