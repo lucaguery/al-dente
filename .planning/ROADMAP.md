@@ -17,7 +17,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 ## Phases
 
 - [x] **Phase 22: Quick wins** — Drop Geist Mono, add version footer, fix French tag labels on deck/detail/inbox (completed 2026-05-12)
-- [ ] **Phase 23: Deck polish** — Replace OUI/NON overlays with tint, tune swipe thresholds, swap thumb buttons to Heart icons, add tap-to-detail
+- [x] **Phase 23: Deck polish** — Replace OUI/NON overlays with tint, tune swipe thresholds, swap thumb buttons to Heart icons, add tap-to-detail (completed 2026-05-12)
 - [ ] **Phase 24: Recipe identity** — BrandIcon component, completeness scorecard + 3 new fields, LLM title rewrite (shifts invariant #1), per-recipe SVG illustration
 
 ## Phase Details
@@ -46,7 +46,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
   4. Tapping (not dragging) a shortlist card opens `/recipes/[id]` detail; pressing Back returns to the deck with the same card on top; thumb-button taps still vote without navigating
   5. All four behaviors above pass a manual `prefers-reduced-motion` device pass (motion paths disabled; functional paths unchanged)
 **Plans**: 1 plan (single atomic plan per D-23 — deviates intentionally from Phase 22 1-req-1-plan pattern since all 4 DECK reqs share files and ship as one coherent user-visible beat)
-- [ ] 23-01-deck-polish-PLAN.md — Ring overlays replace OUI/NON + swipe threshold retune + filled/outline Heart icons + tap-to-detail (DECK-01..04 / gh#14, gh#16, gh#17, gh#18)
+- [x] 23-01-deck-polish-PLAN.md — Ring overlays replace OUI/NON + swipe threshold retune + filled/outline Heart icons + tap-to-detail (DECK-01..04 / gh#14, gh#16, gh#17, gh#18)
 **UI hint**: yes
 
 ### Phase 24: Recipe identity
@@ -67,7 +67,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 22. Quick wins | 3/3 | Complete    | 2026-05-12 |
-| 23. Deck polish | 0/1 | Not started | - |
+| 23. Deck polish | 1/1 | Complete    | 2026-05-12 |
 | 24. Recipe identity | 0/? | Not started | - |
 
 ---
