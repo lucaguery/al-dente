@@ -1,39 +1,39 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1
-milestone_name: milestone
-status: executing
-stopped_at: Phase 17 context gathered (auto)
-last_updated: "2026-05-11T17:48:12.112Z"
-last_activity: 2026-05-11
+milestone: v0.5
+milestone_name: Mixed Sweep
+status: defining requirements
+stopped_at: Milestone opened — awaiting requirements + roadmap
+last_updated: "2026-05-12T00:00:00.000Z"
+last_activity: 2026-05-12
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 26
-  completed_plans: 26
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-11 — v0.4 Current Milestone section)
+See: .planning/PROJECT.md (updated 2026-05-12 — v0.5 Mixed Sweep Current Milestone section)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 21 — Pillar 6 deficit pass + rescore
+**Current focus:** v0.5 — defining requirements (sweep across ~10 GitHub issues)
 
 ## Current Position
 
-Milestone: v0.4 (Audit Remediation & Identity Polish)
-Phase: 21
-Plan: Not started
-Status: Executing Phase 21
-Last activity: 2026-05-12 - Completed quick task 260512-gpl: swap display font Fraunces → Cormorant Garamond globally; rebuild RecipeCard as vertical 2-col photo-grid (Direction B)
+Milestone: v0.5 (Mixed Sweep)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-12 — Milestone v0.5 opened from `.planning/notes/v0.5-shape-mixed-sweep.md`
 
-Resume: `/gsd-discuss-phase 15` or `/gsd-plan-phase 15`.
+Resume: requirements step in `/gsd-new-milestone`, then `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`.
 
-Progress: [░░░░░░░░░░] 0% (4 milestones shipped: v0.1 / v0.2 / v0.2.1 / v0.3; v0.4 in progress, 0/7 phases)
+Progress: [░░░░░░░░░░] 0% (5 milestones shipped: v0.1 / v0.2 / v0.2.1 / v0.3 / v0.4; v0.5 opened, 0/3 phases)
 
 ## Performance Metrics
 
@@ -53,12 +53,14 @@ Progress: [░░░░░░░░░░] 0% (4 milestones shipped: v0.1 / v0.2
 | v0.2 (Phases 5-9) | 5 | ✅ Complete |
 | v0.2.1 (Phase 10) | 1 | ✅ Complete |
 | v0.3 (Phases 11-14) | 4 | ✅ Complete |
-| v0.4 (Phases 15-21) | 7 | 🚧 In progress (0/7) |
+| v0.4 (Phases 15-21) | 7 | ✅ Complete |
+| v0.5 (Phases 22-24) | 3 | 🚧 In progress (defining requirements) |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- v0.5 milestone opened 2026-05-12: tight 3-phase "Mixed Sweep" closing ~10 GitHub issues across three coherent themes — quick wins (Phase 22: #13/#15/#21), deck polish (Phase 23: #14/#18/#17/#16), recipe identity (Phase 24: #11/#22/#10/#12). Inputs: `.planning/notes/v0.5-shape-mixed-sweep.md` (`/gsd-explore` output 2026-05-12). Phase numbering continues from v0.4 — starts at Phase 22. Out of scope: #20 → v0.6; #19 already shipped via `fast-19`. Milestone-level decisions locked: #10 silent title overwrite + `promotion_error` fallback (shifts invariant #1 when Phase 24 ships); #17 filled/outline Heart icons.
 - v0.4 roadmap created 2026-05-11: 7 phases (15-21), 24 requirements across 8 categories (INV / CAP / HIST / IDM / VAL / TOK / P6 / FIX). Tight-scope cluster: Phase 15 Tier 1 invariant fixes (INV-01/02) → Phase 16 capture-pipeline correctness (CAP-01/02/03) → Phase 17 history restoration (HIST-01/02 + FIX-01 TZ-01) → Phase 18 identity management (IDM-01..04 + FIX-04 Copy) → Phase 19 validation surfaces (VAL-01..04 + FIX-02 SEED-01) → Phase 20 token-completeness (TOK-01/02/03 + FIX-03 POLISH-01 i18n) → Phase 21 Pillar 6 deficit pass + rescore (P6-01/02). 100% req coverage, no orphans. UI hint on phases 16-21; Phase 15 is invariant-fix-only.
 - v0.4 milestone scoped 2026-05-11: tight ~5-7 phase remediation + polish cycle. Inputs: v0.3 `ASSESSMENT.md` (27 ranked findings), `UI-AUDIT.md`, `WALKTHROUGH.md`, GitHub Issues #1–#8, + v0.2.2 orthogonal backlog. Phase numbering continues from v0.3 — starts at Phase 15.
 - v0.3 milestone shipped 2026-05-11: 4 phases (11-14), 16 requirements across 4 categories (SEED / WALK / AUDIT / SYNTH). Audit-only — zero product-code drift. Produced 4 milestone-level artifacts in `.planning/v0.3/` + 8 GitHub issues (#1-#8).
@@ -71,7 +73,7 @@ Progress: [░░░░░░░░░░] 0% (4 milestones shipped: v0.1 / v0.2
 
 ### Decisions
 
-See PROJECT.md Key Decisions table — all 13 v0.1 decisions validated, v0.2 design direction locked, v0.2.1 test-infrastructure decisions added, v0.3 audit decisions to be folded in during the next `/gsd-transition`. v0.4 decisions to be logged as phases complete.
+See PROJECT.md Key Decisions table — all 13 v0.1 decisions validated, v0.2 design direction locked, v0.2.1 test-infrastructure decisions added, v0.3 audit decisions to be folded in during the next `/gsd-transition`, v0.4 decisions logged as phases complete. v0.5 milestone-level decisions live in PROJECT.md `Current Milestone: v0.5` table (silent overwrite for #10 + Heart filled/outline for #17 + invariant #1 shift).
 
 ### v0.3 audit inputs to v0.4 (canonical references)
 
@@ -94,14 +96,17 @@ See PROJECT.md Key Decisions table — all 13 v0.1 decisions validated, v0.2 des
 
 ### Open Research
 
-None planned for v0.4 — remediation milestone consuming existing audit corpus. Research deliberately deferred. Phase plans may invoke `/gsd-research` ad-hoc if a phase surfaces a new unknown.
+To be decided at the milestone-level research gate in `/gsd-new-milestone`. v0.5 issues are tightly scoped against existing GitHub triage notes (#10–#22); the main unknown is the SVG-sanitizer choice for #12. Phase 24 may invoke `/gsd-research` ad-hoc when #12 lands.
 
 ### Blockers/Concerns
 
-- None blocking. Tight-scope discipline (7 phases at the max edge of 5-7 bound) honored — every phase clusters 2-5 requirements into a thematically-coherent atomic bundle.
-- **No URL-01 in scope** — URL extraction stays `# TODO(productize)`. Phase 16 (CAP-01) surfaces the deferred stub via the new `failed` terminal state with a recovery affordance instead.
-- Behavioral validation gate (≥ 2 weeks daily use by both members, v0.1 definition-of-done) still pending — orthogonal to v0.4.
-- Phase ordering invariants: Phase 15 first (correctness foundation), Phase 20 must precede Phase 21 (Pillar 6 polish consumes the new semantic tokens). Phases 16-19 are mutually parallel-safe but share `cooking_logs.py` / `households` router surfaces, so serial execution is the safe default.
+- None blocking. Tight 3-phase shape mirrors v0.3's audit-only discipline applied to feature work.
+- **Phase 24 serial order is load-bearing** — #11 → #22 → #10 → #12 all touch `services/llm.py` / `_apply_extracted`. Parallel work here will conflict. Sequencing also lets #11's BrandIcon land before #12 needs it as a fallback.
+- **Invariant #1 shift inside the milestone** — quick/full-form move from sync `structured`-on-return to async `BackgroundTask` rewrite when Phase 24 ships #10. `CLAUDE.md` invariant #1 must update in the same plan.
+- **#12 SVG sanitizer is a security surface** — non-negotiable unit tests required before storing LLM-generated markup.
+- **Phase 23 reduced-motion regression risk** — multiple changes to swipe deck (overlays, thresholds, thumb buttons, tap-to-detail). Manual real-device `prefers-reduced-motion` pass at end of Phase 23.
+- Behavioral validation gate (≥ 2 weeks daily use by both members, v0.1 definition-of-done) still pending — orthogonal to v0.5.
+- 15 HUMAN-UAT items deferred from v0.4 phases 16/17/18/19/21 remain orthogonal to v0.5; tracked via `/gsd-audit-uat`.
 
 ### Quick Tasks Completed
 
@@ -115,7 +120,7 @@ None planned for v0.4 — remediation milestone consuming existing audit corpus.
 
 ## Session Continuity
 
-Last activity: 2026-05-12 - Completed quick task 260512-lif: Follow-up sweep extending typography/spacing tokens into capture components and onboarding
-Stopped at: Phase 17 context gathered (auto)
-Resume file: .planning/phases/17-history-feature-restoration/17-CONTEXT.md
-Next: `/gsd-discuss-phase 15` or `/gsd-plan-phase 15`.
+Last activity: 2026-05-12 — Opened v0.5 Mixed Sweep milestone from `.planning/notes/v0.5-shape-mixed-sweep.md`
+Stopped at: PROJECT.md / STATE.md written; next step is requirements + roadmap
+Resume file: .planning/PROJECT.md (`Current Milestone: v0.5 Mixed Sweep` section)
+Next: continue `/gsd-new-milestone` → research gate → REQUIREMENTS.md → ROADMAP.md → then `/gsd-discuss-phase 22` or `/gsd-plan-phase 22`.

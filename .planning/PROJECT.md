@@ -74,7 +74,7 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 ### Active
 
-_None — v0.4 complete. Awaiting next milestone via `/gsd-new-milestone`._
+**v0.5 — Mixed Sweep** (3 phases, ~10 GitHub issues). Closes a coherent cluster of `audit:walkthrough`-era issues + post-v0.4 polish across three themes: quick wins (#13/#15/#21), swipe-deck polish (#14/#18/#17/#16), and recipe identity (#11/#22/#10/#12). Locked decisions: #10 LLM title rewrite is **silent overwrite** with `promotion_error` fallback on rewrite failure (shifts invariant #1 — quick/full-form become async); #17 thumb-button direction is **filled Heart / outline Heart** (emerald for filled, neutral for empty). Out of scope: #20 (defers to v0.6 — needs its own `/gsd-explore`).
 
 ### Surfaced for follow-up (deferred to v2 or future milestone)
 
@@ -142,13 +142,40 @@ _None — v0.4 complete. Awaiting next milestone via `/gsd-new-milestone`._
 | uuid5 + Session.merge upsert seed (v0.2.1 D-09) | Idempotency is in the success criteria; TRUNCATE+INSERT breaks "re-running mid-test." uuid5 is deterministic across runs and machines | ✅ Validated — same household / member / shortlist UUIDs across re-runs, no duplicate-key errors on second invocation within the same day. Cross-day hole surfaced (SEED-01) — workaround documented |
 | iPhone-shape Chromium viewport for tests (v0.2.1 post-ship) | The PWA ships to two iPhones; testing at desktop-sized viewports masks mobile-only layout bugs (e.g. Sheet-01 [#1](https://github.com/lucaguery/al-dente/issues/1)). 390×844 + isMobile + hasTouch + Chromium catches them while staying under the cross-browser non-goal | ✅ Validated — surfaced the Sheet-01 bug via Playwright MCP, then encoded `toBeInViewport()` assertion that catches future regressions |
 
-## Current Milestone
+## Current Milestone: v0.5 Mixed Sweep
 
-_None — v0.4 shipped 2026-05-11. Awaiting next milestone via `/gsd-new-milestone`._
+**Goal:** Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-deck polish, and recipe identity — into a single tight sweep that pays down post-audit backlog without expanding scope.
 
-**v0.4 outcome:** 7 phases / 27 plans / 24 requirements all validated. Closed both Tier 1 invariant breaks (INV-01, INV-02), 4 Tier 2 correctness clusters (capture pipeline, history, identity, validation), the C-1 token-completeness gap (15 new semantic CSS variables), the FIX-03 next-intl drift, and the entire v0.2.2 backlog (TZ-01, SEED-01, POLISH-01/02). Cumulative UI score 20.21/24 → 21.71/24 (+1.50) under the SAME 6-pillar rubric; verdict distribution shifted from 5✅/9⚠/0❌ to 11✅/3⚠/0❌. See `.planning/milestones/v0.4-ROADMAP.md`, `.planning/v0.4/UI-RESCORE.md`, and `.planning/v0.4-MILESTONE-AUDIT.md`.
+**Target features (by theme):**
 
-**Pending operator validation:** 15 HUMAN-UAT items across phases 16/17/18/19/21 — Playwright suites need live dev-stack runs, Web Push round-trip on both iPhones needs operator fill of `.planning/v0.4/PUSH-ROUNDTRIP.md`, manual UX exercise of failed-state inbox + 4-state Notifications Card. None blocking deploy; tracked via `/gsd-audit-uat`.
+- **Quick wins** — drop the Geist Mono dependency (#13), surface a build-time version footer (#15), and finish the i18n tags display sweep (#21).
+- **Deck polish** — replace OUI/NON drag overlays with tint (#14), tune swipe thresholds + spring (#18), rework like/dislike thumb buttons to filled Heart / outline Heart (#17), and add tap-to-detail on shortlist cards (#16).
+- **Recipe identity** — add a BrandIcon component (#11), build the recipe completeness scorecard + 3 new fields including a Difficulty enum (#22), generate LLM "catchy" titles across all capture surfaces (#10), and produce per-recipe SVG illustrations (#12).
+
+**Locked decisions (milestone-level):**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| #10 title-rewrite UX | Silent overwrite | Matches voice/photo flow; title stays editable on detail page. No new confirmation UI to ship. |
+| #10 failure mode | Keep user title + `promotion_error` | Mirrors v0.4 Phase 16 failed-state handling. Retry endpoint can re-attempt with better model later (invariant #5 preserved). |
+| #17 icon direction | Filled Heart / outline Heart | Single-glyph language; softer than thumbs; emerald for filled (matches Validé color story), neutral for outline. |
+| Invariant #1 shift | Quick/full-form become async with #10 | When Phase 24 ships #10, quick + full-form capture move from sync `structured`-on-return to `draft` → `BackgroundTask` rewrite → `structured`. `CLAUDE.md` invariant #1 updates in the same change. |
+| #20 (unified capture) | Deferred to v0.6 | Needs its own `/gsd-explore` UX cycle; out of scope for v0.5. |
+| #19 (Accueil spinner flash) | Already shipped out-of-band | `fast-19` (commit 7a1f39c, 2026-05-12) closed gh#19 before v0.5 opened. |
+
+**Phase shape (continues numbering from v0.4 — starts at Phase 22):**
+
+- Phase 22 — Quick wins (#13, #15, #21)
+- Phase 23 — Deck polish (#14 + #18 paired → #17 → #16)
+- Phase 24 — Recipe identity (#11 → #22 → #10 → #12; serial to avoid `_apply_extracted` / `services/llm.py` merge churn)
+
+**Source:** `.planning/notes/v0.5-shape-mixed-sweep.md` (output of `/gsd-explore` 2026-05-12 against 13 open GitHub issues #10–#22).
+
+---
+
+**v0.4 outcome (preserved for reference):** 7 phases / 27 plans / 24 requirements all validated. Closed both Tier 1 invariant breaks (INV-01, INV-02), 4 Tier 2 correctness clusters (capture pipeline, history, identity, validation), the C-1 token-completeness gap (15 new semantic CSS variables), the FIX-03 next-intl drift, and the entire v0.2.2 backlog (TZ-01, SEED-01, POLISH-01/02). Cumulative UI score 20.21/24 → 21.71/24 (+1.50) under the SAME 6-pillar rubric; verdict distribution shifted from 5✅/9⚠/0❌ to 11✅/3⚠/0❌. See `.planning/milestones/v0.4-ROADMAP.md`, `.planning/v0.4/UI-RESCORE.md`, and `.planning/v0.4-MILESTONE-AUDIT.md`.
+
+**Pending operator validation (orthogonal to v0.5):** 15 HUMAN-UAT items across phases 16/17/18/19/21 — Playwright suites need live dev-stack runs, Web Push round-trip on both iPhones needs operator fill of `.planning/v0.4/PUSH-ROUNDTRIP.md`, manual UX exercise of failed-state inbox + 4-state Notifications Card. None blocking deploy; tracked via `/gsd-audit-uat`.
 
 ## Future Milestones (deferred)
 
@@ -174,4 +201,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-11 — v0.4 shipped (7 phases / 27 plans / 24 reqs). 6 surfaces flipped Mixed → Al Dente under SAME 6-pillar rubric (UI cumulative-mean delta +1.50). Architecture invariants 1-8 all preserved. 15 HUMAN-UAT items deferred to operator runtime validation; none block deploy. Next: `/gsd-new-milestone` to scope v0.5 (or v1.0 after the ≥2-week behavioral validation gate from SPEC.md).*
+*Last updated: 2026-05-12 — v0.5 Mixed Sweep opened (3 phases: 22 Quick wins / 23 Deck polish / 24 Recipe identity). Scope: ~10 GitHub issues (#10–#22 minus #19 already shipped via fast-19 and #20 deferred to v0.6). Milestone-level decisions locked: silent LLM title overwrite with promotion_error fallback (#10), filled/outline Heart for thumb buttons (#17), invariant #1 updates when #10 ships. Source: `.planning/notes/v0.5-shape-mixed-sweep.md`.*
