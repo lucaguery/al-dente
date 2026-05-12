@@ -8,9 +8,9 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Inbox } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
+import { BrandIcon } from "@/components/BrandIcon";
 import { EmptyState } from "@/components/EmptyState";
 import { RecipeDraftCard } from "@/components/RecipeDraftCard";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
@@ -155,7 +155,7 @@ export default function InboxPage() {
         <div className="px-(--spacing-page-x) pt-3 flex flex-col gap-3 pb-(--spacing-bottom-safe)">
           {!loading && drafts.length === 0 ? (
             <EmptyState
-              icon={Inbox}
+              icon={BrandIcon}
               heading={t("empty_heading")}
               body={t("empty_body")}
             />
