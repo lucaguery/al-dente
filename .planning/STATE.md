@@ -111,6 +111,7 @@ None planned for v0.4 — remediation milestone consuming existing audit corpus.
 | 260512-gpl | Swap display font Fraunces → Cormorant Garamond globally; rebuild RecipeCard as vertical 2-col photo-grid (Direction B) | 2026-05-12 | 5441edb | [260512-gpl-ui-cormorant-garamond-font-swap-directio](./quick/260512-gpl-ui-cormorant-garamond-font-swap-directio/) |
 | 260512-l0l | Harmonize typography and spacing across all frontend pages (page-rhythm tokens + text-page-header utility) | 2026-05-12 | db3fb44 | [260512-l0l-harmonize-typography-and-spacing-across-](./quick/260512-l0l-harmonize-typography-and-spacing-across-/) |
 | 260512-lif | Follow-up sweep: extend page-rhythm tokens into capture/summary components + onboarding sticky-header register | 2026-05-12 | 665f613 | [260512-lif-harmonize-capture-tab-summary-components](./quick/260512-lif-harmonize-capture-tab-summary-components/) |
+| fast-19 | Fix Accueil spinner flash on cache hits — `useDelayedFlag(250)` gates both spinner returns in `HomeDecide` | 2026-05-12 | 7a1f39c | gh#19 (closed) |
 
 ## Session Continuity
 
