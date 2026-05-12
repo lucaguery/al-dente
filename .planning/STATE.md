@@ -29,7 +29,7 @@ Milestone: v0.4 (Audit Remediation & Identity Polish)
 Phase: 21
 Plan: Not started
 Status: Executing Phase 21
-Last activity: 2026-05-11
+Last activity: 2026-05-12 - Completed quick task 260512-df0: improve suggestion list layout (slide smoothness, photos, blank states, completion message)
 
 Resume: `/gsd-discuss-phase 15` or `/gsd-plan-phase 15`.
 
@@ -102,6 +102,12 @@ None planned for v0.4 — remediation milestone consuming existing audit corpus.
 - **No URL-01 in scope** — URL extraction stays `# TODO(productize)`. Phase 16 (CAP-01) surfaces the deferred stub via the new `failed` terminal state with a recovery affordance instead.
 - Behavioral validation gate (≥ 2 weeks daily use by both members, v0.1 definition-of-done) still pending — orthogonal to v0.4.
 - Phase ordering invariants: Phase 15 first (correctness foundation), Phase 20 must precede Phase 21 (Pillar 6 polish consumes the new semantic tokens). Phases 16-19 are mutually parallel-safe but share `cooking_logs.py` / `households` router surfaces, so serial execution is the safe default.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260512-df0 | Improve suggestion list layout (slide smoothness, photos, blank states, completion message) | 2026-05-12 | 4937f3e | [260512-df0-improve-suggestion-list-layout-slide-smo](./quick/260512-df0-improve-suggestion-list-layout-slide-smo/) |
 
 ## Session Continuity
 

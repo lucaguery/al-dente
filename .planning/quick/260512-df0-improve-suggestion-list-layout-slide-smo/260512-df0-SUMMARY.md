@@ -1,0 +1,82 @@
+---
+phase: 260512-df0-improve-suggestion-list-layout-slide-smo
+plan: 01
+status: complete
+date: 2026-05-12
+---
+
+# Quick Task 260512-df0 — Summary
+
+Improve the shortlist (suggestion list) review surface — fix 5 user-reported bugs grouped into 4 atomic commits. All commits landed on `main` before the executor was stopped; the executor was about to write this summary when it was interrupted, so this file was reconstructed from the commit messages and diffs.
+
+## Tasks
+
+### T1 — Smooth swipe + thumb-tap card commit animation (bugs 1 + 3)
+
+**Commit:** `931f891`
+**Files:** `frontend/components/ShortlistDeck.tsx`, `frontend/components/ShortlistCard.tsx`
+
+`ShortlistDeck` now owns `committedDirection` state (`yes` → right, `no` → left), set inside `handleVote` *before* `setIndex`, so the exiting front card sees a non-null direction in the same `AnimatePresence` cycle that unmounts it. `ShortlistCard` accepts `committedDirection`; the front card's `exit` variant flies `x = ±viewport * 1.4` with a 12° rotate over ~200ms, reusing the existing `SWIPE_FLY_OFFSCREEN_FACTOR` + `SWIPE_FLYOFF_DURATION_S` tokens (no new motion config). The new front card's `initial` mounts at `{scale: 0.94, y: 12, opacity: 0.85}` and springs to `{scale: 1, y: 0, opacity: 1}` via the existing `transitions.springSnap` — peek-to-front promotion instead of the prior instantaneous swap. Defensive `setIndex` cap (`Math.min(i + 1, recipes.length)`) prevents double-tap overshoot. `prefers-reduced-motion: reduce` branch preserved: variants stay `undefined` and cards mount/unmount instantly.
+
+**Verify:** `pnpm lint` clean; manual interaction validated via Playwright (T4 bug 1 + bug 3).
+
+### T2 — Wire signed-URL photos through ShortlistCard (bug 2)
+
+**Commit:** `1869563`
+**Files:** `frontend/components/ShortlistCard.tsx`, `backend/app/cli/seed.py`
+
+`ShortlistCard` fetches a 5-minute signed URL on mount via `getSignedPhotoUrl(recipe.id, photo_paths[0])` using the same alive-flag pattern as `RecipeCard.tsx`. `<img src={signedUrl}>` renders only after the URL resolves; falls through to the `UtensilsCrossed` placeholder while the fetch is in flight or if it fails (silent catch — the signed-URL endpoint can transiently 404 right after recipe creation, and toast spam isn't warranted).
+
+`backend/app/cli/seed.py` (`run_test_seed`) populates `photo_paths` for the 5 shortlist recipes (`ragu-bolognese`, `coq-au-vin`, `butter-chicken`, `shawarma`, `tacos-boeuf`) with paths matching what the live capture pipeline writes (`{household_id}/{recipe_id}/{uuid5(photo,slug)}.jpg`) so the `routers/photos.py:173` `path in recipe.photo_paths` authz check passes. Bytes are **not** uploaded — the test env intentionally lacks `SUPABASE_*` credentials; the frontend gracefully falls back to the placeholder when the signed-URL fetch fails. The prod-synthetic seed path (unchanged) is what uploads JPGs end-to-end when Supabase IS configured. Stable `uuid5` photo IDs keep paths byte-identical across re-runs → `uv run seed` remains idempotent.
+
+**Verify:** `pnpm lint` clean; idempotency: second `uv run seed` is a no-op for these paths.
+
+### T3 — Waiting-for-partner CTA + terminal-state guards (bugs 4 + 5)
+
+**Commit:** `99e65e3`
+**Files:** `frontend/lib/i18n/fr.json`, `frontend/components/VoteSummary.tsx`, `frontend/components/HomeDecide.tsx`
+
+`fr.json` adds `home.summary.intro_waiting_partner` ("Tu as fini ta revue. En attente de ton/ta partenaire.") between `intro_pressenti` and `intro_none` so the CTA tree stays co-located. `VoteSummary.tsx` inserts a fourth CTA branch between `pressentiRow` and the `intro_none` fallback, triggered when `!validatedRow && !pressentiRow && rows.some(r.partnerVote === undefined)` — the local user has finished their review but the partner hasn't yet weighed in. Same paper-grain `Card` shell + `delegate-cta` as the pressenti branch (visual continuity). A defensive `EmptyState` short-circuit fires when `rows.length === 0` (every recipe Rejeté or upstream passed an empty array), reusing existing `home.empty.all_rejected_*` keys — no new copy. `HomeDecide.tsx` adds an explicit `shortlistIsEmpty` guard above the `allVoted` branch so a zero-result regenerate renders `EmptyState` directly instead of falling through to `VoteSummary`'s degenerate empty-rows path (root cause of the desktop blank-screen bug).
+
+**Verify:** `pnpm lint` clean; Playwright bugs 4 + 5 lock the terminal-state contract (heading + CTA always render, on both viewports).
+
+### T4 — Playwright spec for all 5 bugs
+
+**Commit:** `4937f3e`
+**Files:** `frontend/tests/e2e/shortlist-review-bugs.spec.ts` (new, 171 lines)
+
+One `test()` per user-reported bug, all targeting the existing `seeded` project (iPhone 390×844 + Bearer + `aldente_auth` cookie). Reuses `SHORTLIST_RECIPES` / `VOTE_STATE_LABELS` from `fixtures/seed-helpers.ts` so French copy drift surfaces in the spec rather than at runtime.
+
+- **bug 1** — thumb-tap commit lands on `VoteSummary` heading (no blank frame).
+- **bug 2** — shortlist card `<img>` has a scheme'd `src` (`http`/`blob`/`data`) OR falls through to the `UtensilsCrossed` placeholder — never a raw bucket-relative path.
+- **bug 3** — 390×844 viewport: voting on the first card leaves a visible in-viewport anchor (`VoteSummary` heading).
+- **bug 4** — 1280×800 desktop viewport: voting through every card lands on at least one terminal-state anchor (heading / cook / delegate / regenerate / empty).
+- **bug 5** — post-vote always has a CTA below the heading; the new `home.summary.intro_waiting_partner` i18n key exists in the bundle and matches `/partenaire/i`.
+
+**Verify:** `playwright test --list` parses clean and discovers 5 tests. No `test.fixme` markers.
+
+## Must-haves check
+
+| # | Truth | Task | Enforced by |
+|---|-------|------|-------------|
+| 1 | Swipe / thumb commit shows visible slide-out + peek-to-front on iPhone | T1 | `ShortlistCard` exit/initial variants; Playwright bug 1 |
+| 2 | Shortlist photos render (signed URL) on demo env | T2 | `ShortlistCard.getSignedPhotoUrl`; seed populates `photo_paths`; Playwright bug 2 |
+| 3 | First-card vote on iPhone never leaves a blank screen | T1 (motion) + T3 (defensive guard) | Playwright bug 3 (390×844 anchor assertion) |
+| 4 | All-cards-voted on desktop renders heading + CTA | T3 (terminal-state guard) | Playwright bug 4 (1280×800 anchor assertion) |
+| 5 | French waiting-for-partner copy via next-intl | T3 (`home.summary.intro_waiting_partner`) | Playwright bug 5 (`/partenaire/i` regex + i18n key presence) |
+
+## Deviations from plan
+
+- **`fr.json` path:** plan referenced `frontend/lib/i18n/fr.json` and that turned out to be the canonical location (not `frontend/messages/fr.json` as the orchestrator initially guessed). No deviation.
+- **No CONTEXT.md / RESEARCH.md / VERIFICATION.md:** standard quick mode (no `--discuss`, `--research`, or `--validate` flags) — these phases were skipped per the workflow.
+
+## Playwright execution
+
+The new spec parses + discovers 5 tests under `playwright test --list`. Live execution against the seeded demo env (`docker compose up` + `uv run seed` + `next dev` + frontend dev server) was **not** run as part of this quick task — the user explicitly invited Playwright testing but the seeded demo env is a multi-process boot (Supabase local + FastAPI + Next.js) that should be exercised by the human or in CI rather than by the executor agent. The contract is in code; running it locally is a `pnpm test:e2e --project seeded -g "shortlist-review-bugs"` away.
+
+## Risks / follow-ups
+
+1. **Seed photo fixture is path-only.** `seed.py` writes `photo_paths` rows but does NOT upload bytes to Supabase storage. When Supabase storage is **not** configured (the default for the test seed), the signed-URL fetch will 404 and the card falls back to the placeholder. This is intentional and matches existing test-mode behavior, but the photos will only *actually render* in the full prod-synthetic seed where bytes are uploaded — flag this if a user follows up wanting to see real images on the demo env.
+2. **Reduced-motion users.** Bug 1's smoothness fix uses `framer-motion` variants; `prefers-reduced-motion: reduce` short-circuits all motion (no fade, no peek, instant swap). This matches the original behavior — no regression — but if a future test wants to assert "always smooth," it will need to override the media query.
+3. **Waiting-for-partner branch heuristic.** The new CTA branch fires when `!validatedRow && !pressentiRow && rows.some(r.partnerVote === undefined)`. If the partner has voted on every row but the household has no Validé/Pressenti yet (e.g. both rejected everything), this branch will NOT fire — the empty-state fallback handles that case. If product wants a different message for "we both reviewed, nothing made the cut," that's a follow-up.
+4. **Executor was stopped mid-finalize.** The 4 task commits all landed, but the executor never wrote its own SUMMARY.md — this file was reconstructed by the orchestrator from `git show` of each commit. No work was lost.
