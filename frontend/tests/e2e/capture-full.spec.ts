@@ -28,12 +28,12 @@ test.describe('capture-full', () => {
         mood: ['light', 'quick'],
         main_protein: 'none',
         seasonality: ['summer'],
-        source_capture: { type: 'manual', payload: { title } },
       },
     });
     expect(create.ok()).toBeTruthy();
     const created = await create.json();
     expect(created.status).toBe('structured');
+    expect(created.initial_turn_kind).toBe('text');
 
     await page.goto('/recipes');
     await expect(page.getByText(title, { exact: true })).toBeVisible();

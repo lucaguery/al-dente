@@ -4,12 +4,12 @@
 //
 // v0.1 ships a deliberately minimal flow: the user pastes a recipe URL, we
 // validate it client-side (`new URL(...)` + http/https scheme), then POST
-// it via `postUrlCapture`. The backend creates a draft with the URL stored
-// in `source_capture` and routes the user to /inbox. There is no Gemini
-// scrape in v0.1 — the helper notice (recipes.url.helper) sets that
-// expectation with the user. Auto-extraction is a productize-later
-// enhancement (T-02-04-03 mitigation: client validates the scheme,
-// backend re-validates with stricter rules).
+// it via `postUrlCapture`. The backend creates a draft with the URL captured
+// as the recipe's first user turn (kind='url', payload `{url}`) and routes
+// the user to /inbox. There is no Gemini scrape in v0.1 — the helper notice
+// (recipes.url.helper) sets that expectation with the user. Auto-extraction
+// is a productize-later enhancement (T-02-04-03 mitigation: client validates
+// the scheme, backend re-validates with stricter rules).
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";

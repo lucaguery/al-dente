@@ -10,7 +10,7 @@
 // Variant selection looks at `recipe.status`, `recipe.promotion_error`, and
 // `recipe.initial_turn_kind` together because URL drafts (CAPTURE-03) are
 // user-completed, not Gemini-promoted — they render the manual variant even
-// though their `initial_turn_kind !== 'text'`. Phase 25 replaces source_capture.type.
+// though their `initial_turn_kind !== 'text'`. Phase 25 cutover (recipe_turns).
 
 import { useState } from "react";
 import Link from "next/link";

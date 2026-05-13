@@ -4,8 +4,8 @@ import { test, expect } from '@playwright/test';
 // promotion is marked TODO(productize) at backend/app/routers/recipes.py:481-490
 // (no BackgroundTask scheduled, the recipe stays in 'draft' permanently). The
 // CONTEXT D-07 expectation that URL would promote via the LLM stub assumed an
-// existing extraction path; the actual code defers extraction. Keep the draft
-// creation + source_capture assertions; structured promotion is a follow-up.
+// existing extraction path; the actual code defers extraction. Phase 25 cutover:
+// initial_turn_kind='url' replaces the legacy capture shape assertion.
 test.describe('capture-url', () => {
   test('url capture creates draft (stub-driven, no network fetch)', async ({
     request,
@@ -16,10 +16,7 @@ test.describe('capture-url', () => {
     expect(create.ok()).toBeTruthy();
     const draft = await create.json();
     expect(draft.status).toBe('draft');
-    expect(draft.source_capture).toMatchObject({
-      type: 'url',
-      payload: { url: 'https://example.test/recettes/risotto' },
-    });
+    expect(draft.initial_turn_kind).toBe('url');
     expect(typeof draft.id).toBe('string');
   });
 

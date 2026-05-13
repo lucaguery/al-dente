@@ -7,11 +7,11 @@
 // returned in missingFields.
 //
 // The 11 fields are scored with equal weight (1/11 ≈ 9.09% each) per
-// CONTEXT.md D-17. Tags, seasonality, photo_paths, and source_capture are
-// intentionally excluded — they're system fields, defaulted fields, or not
-// part of the "recipe identity" scope. Title is in the list for completeness
-// but is NOT NULL on the model — it will never appear in missingFields in
-// practice.
+// CONTEXT.md D-17. Tags, seasonality, photo_paths, and thread metadata
+// (initial_turn_kind, recipe_turns) are intentionally excluded — they're
+// system fields, defaulted fields, or not part of the "recipe identity"
+// scope. Title is in the list for completeness but is NOT NULL on the
+// model — it will never appear in missingFields in practice.
 
 // The Recipe type from recipes.ts is augmented here with the RID-02 fields
 // (cook_time_minutes, difficulty, description). These fields were added in

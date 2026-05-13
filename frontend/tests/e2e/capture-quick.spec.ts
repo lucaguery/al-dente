@@ -19,11 +19,12 @@ test.describe('capture-quick', () => {
     const title = `Quick spec ${Date.now()}`;
 
     const create = await request.post('/api/recipes/quick', {
-      data: { title, source_capture: { type: 'manual', payload: { title } } },
+      data: { title },
     });
     expect(create.ok()).toBeTruthy();
     const created = await create.json();
     expect(created.status).toBe('draft');
+    expect(created.initial_turn_kind).toBe('text');
 
     await page.goto('/inbox');
     // Drafts inbox renders the title verbatim.

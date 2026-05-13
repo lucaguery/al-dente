@@ -96,9 +96,10 @@ test.describe('capture-voice-failed-recovery', () => {
 
     // After the synchronous reset, status is 'draft'. Then the queued retry
     // BackgroundTask re-runs and re-fails (because the same
-    // __TEST_FORCE_FAIL__ transcript is reused from source_capture), so
-    // status ends up 'failed' again. We accept EITHER intermediate state —
-    // the assertion is "no longer stuck post-reset; observable in DB".
+    // __TEST_FORCE_FAIL__ transcript is reused from the recipe_turns initial
+    // user turn), so status ends up 'failed' again. We accept EITHER
+    // intermediate state — the assertion is "no longer stuck post-reset;
+    // observable in DB".
     await expect
       .poll(
         async () => {
