@@ -5,6 +5,8 @@ status: draft
 shadcn_initialized: true
 preset: radix-nova
 created: 2026-05-13
+revised: 2026-05-13
+revision_reason: "BLOCK-1 typography (4 weights → 2) + BLOCK-2 spacing (14px/10px → 16px/8px); non-blocking flags addressed"
 ---
 
 # Phase 27 — UI Design Contract
@@ -22,8 +24,8 @@ created: 2026-05-13
 | Preset | `radix-nova` (confirmed in `frontend/components.json`) |
 | Component library | Radix UI (via shadcn wrappers) |
 | Icon library | Lucide (`iconLibrary: "lucide"` in `components.json`) |
-| Display font | Cormorant Garamond — `var(--font-display)` — weight 400/500, italic variant used in thread-meta and D-Voice helper |
-| Body font | IBM Plex Sans — `var(--font-body)` — weight 300/400/500/600 |
+| Display font | Cormorant Garamond — `var(--font-display)` — weight 400/600, italic variant used in thread-meta and D-Voice helper |
+| Body font | IBM Plex Sans — `var(--font-body)` — weight 400/600 only |
 | Marginalia font | Caveat — `var(--font-marginalia)` — weight 400–700, reserved for marginalia register only |
 
 Source: `docs/design-system.html` `:root` block — locked Sober Kitchen system.
@@ -37,23 +39,24 @@ Declared values (all multiples of 4). Token names map to the `--spacing-*` CSS c
 | Token | Value | Usage in Phase 27 |
 |-------|-------|-------------------|
 | xs | 4px | Icon gaps inside bubbles; bubble waveform bar gap |
-| sm | 8px | Bubble internal vertical padding (voice/text); save-bar top padding; thread-meta padding |
-| md | 16px | Default element spacing; composer horizontal padding; sheet item gap |
+| sm | 8px | Bubble internal vertical padding (voice/text); save-bar top padding; thread-meta padding; chat-body inter-bubble gap |
+| md | 16px | Default element spacing; composer horizontal padding; sheet item gap; chat-body horizontal padding; thread-meta horizontal padding |
 | lg | 24px | Section padding `--spacing-page-x` (1.5rem = 24px); sheet content vertical padding |
 | xl | 32px | Layout gaps — not primary in this phase |
 | 2xl | 48px | Not used in this phase |
 | 3xl | 64px | Not used in this phase |
 
 Exceptions:
-- **Composer bottom padding**: `8px + env(safe-area-inset-bottom)` — required for iOS home-indicator clearance (source: mockup `.composer` CSS).
+- **Composer bottom padding**: `8px + env(safe-area-inset-bottom)` — required for iOS home-indicator clearance (source: mockup `.composer` CSS). `env(safe-area-inset-bottom)` is an exempt dynamic value and is not a grid violation.
 - **Touch targets for + and mic/send buttons**: 36px diameter minimum (9×4 grid unit, per mockup). The mic button when used as primary CTA is 36×36px. Not 44px because the `send-bar` above the composer provides the dominant full-width 44px save CTA.
-- **Chat body horizontal padding**: 14px (mockup `padding: 14px 14px 8px`) — not a multiple of 4. Token this as `chat-x: 14px` (new token request — see §New Token Requests below).
-- **Bubble vertical inter-gap**: 10px (`gap: 10px` in `.chat-body`). Not a multiple of 4. Token as `bubble-gap: 10px` (new token request).
-- **Thread-meta padding**: `8px 14px` — uses the same 14px horizontal as the chat body for alignment continuity.
+
+Note: The mockup used 14px for chat-body horizontal padding and 10px for inter-bubble gap. These were snapped to the nearest grid values: **16px** (`var(--spacing-md)`) and **8px** (`var(--spacing-sm)`) respectively. The perceptual difference is negligible at mobile widths; 16px aligns with the locked `--spacing-page-x` register at 24px for clear cross-surface ratio consistency.
 
 ---
 
 ## Typography
+
+**Only two font weights are used across this entire phase: 400 (regular) and 600 (semibold).** No weight 500 or 700 appears anywhere in the component specs.
 
 Four type roles used in the chat interface. All pre-exist in the design system; no new type styles are needed.
 
@@ -61,13 +64,17 @@ Four type roles used in the chat interface. All pre-exist in the design system; 
 |------|------|------|--------|-------------|-------|
 | Body | IBM Plex Sans | 14px (0.875rem) | 400 | 1.45 | User bubble text, system bubble body |
 | Caption | IBM Plex Sans | 13px (0.8125rem) | 400 | 1.5 | System bubble body text, sub-labels |
-| Label-small | IBM Plex Sans | 10px | 700 | 1.0 | Bubble header labels (`sys-head`), state pills, progress chips |
+| Label-small | IBM Plex Sans | 10px | 600 | 1.0 | Bubble header labels (`sys-head`), state pills, progress chips — `text-transform: uppercase` + `letter-spacing: 0.04–0.06em` provides sufficient visual emphasis at weight 600 |
 | Thread-meta title | Cormorant Garamond | 13px | 600 | 1.2 | `.title-meta` in `thread-meta` header strip |
 | Voice helper | Cormorant Garamond | 16px (1rem) | 400 italic | 1.4 | D-Voice helper card in `VoiceSheet`; mirrors existing `VoiceCaptureTab` pattern |
 | Composer placeholder | IBM Plex Sans | 14px | 400 | 1.4 | `var(--muted-foreground)` colored |
 | Enregistrer button | IBM Plex Sans | 14px | 600 | 1.0 | Save bar CTA |
 
 Source: `docs/design-system.html` `.text-body` (0.975rem / line-height 1.55) and mockup inline font-size declarations. The 14px body in bubbles is deliberately slightly smaller than the 15.6px page body — intimacy register matching iMessage convention.
+
+**Revision note — weight consolidation (BLOCK-1 fix):**
+- Former weight 700 (`label-small` for sys-head, state pills, bubble count badge) → **600**. `text-transform: uppercase` + letter-spacing provides sufficient differentiation without a heavier weight.
+- Former weight 500 (answer chips, url-bubble domain) → **600** (emphasised) for url-bubble domain (domain IS the emphasis vs. the truncated path); answer chip value text → **600** (matches stepper `.val` register).
 
 ---
 
@@ -120,7 +127,7 @@ Appears only in detail mode, between appheader and chat-body.
 height: auto (min ~36px)
 background: var(--card)
 border-bottom: 1px solid var(--border)
-padding: 8px 14px
+padding: 8px 16px
 display: flex; align-items: center; gap: 8px
 ```
 
@@ -131,19 +138,30 @@ Contains:
 **State pill anatomy:**
 - `display: inline-flex; align-items: center; gap: 5px`
 - `border-radius: 999px; padding: 3px 8px`
-- `font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase`
+- `font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase`
 - Contains a 9×9px SVG icon + label string
 
 ### Chat body (`chat-body`)
 
 ```
 flex: 1; overflow-y: auto
-padding: 14px 14px 8px
-display: flex; flex-direction: column; gap: 10px
+padding: 16px 16px 8px
+display: flex; flex-direction: column; gap: 8px
 background: var(--background)
 ```
 
 Scroll behavior: `scroll-behavior: smooth` on new turn append. The container auto-scrolls to bottom when a new bubble is added (imperatively via `scrollIntoView` on the last element).
+
+**Empty state:** When `pendingBubbles.length === 0` (capture mode) or no turns exist yet (detail mode), a centered hint row is shown inside `chat-body`:
+```
+align-self: center
+color: var(--muted-foreground)
+font-size: 13px
+font-style: italic
+padding: 6px 12px
+text-align: center
+```
+Copy: `recipes.thread.empty_capture_hint` = « Ajoute une note, dicte une idée, ou joins une photo pour commencer. » This prevents the chat body from appearing empty or broken when the composer is open but no content exists yet.
 
 ### User bubble (`Bubble.tsx`) — text kind
 
@@ -196,7 +214,7 @@ Inner image: `width: 100%; aspect-ratio: 4/3; border-radius: 15px; object-fit: c
 ### User bubble — url kind
 
 Same shell as text bubble (same `var(--primary)` fill, same border-radius) but body contains:
-- URL domain in `font-weight: 500; font-size: 13px`.
+- URL domain in `font-weight: 600; font-size: 13px`.
 - Optional description in `font-size: 12px; opacity: 0.85` below domain.
 - A link icon (Lucide `Link2`, 12×12px, `opacity: 0.75`) inline-start.
 
@@ -210,7 +228,7 @@ background: var(--primary)
 color: var(--primary-foreground)
 border-radius: 14px
 padding: 5px 11px
-font-size: 13px; font-weight: 500
+font-size: 13px; font-weight: 600
 display: inline-flex; align-items: center; gap: 6px
 ```
 
@@ -243,7 +261,7 @@ display: flex; flex-direction: column; gap: 9px
 
 ```
 display: inline-flex; align-items: center; gap: 6px
-font-size: 10px; font-weight: 700
+font-size: 10px; font-weight: 600
 letter-spacing: 0.06em; text-transform: uppercase
 color: var(--primary)
 ```
@@ -257,7 +275,7 @@ Contains: 11×11px sparkle icon (Lucide `Sparkles`) + label string per kind.
 | `advisory` | « Information : champ modifié manuellement » |
 
 **Summary bubble internals:**
-- Summary chips: `display: flex; flex-wrap: wrap; gap: 5px` — each chip `background: oklch(0.96 0.012 50); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 500; color: var(--foreground)`.
+- Summary chips: `display: flex; flex-wrap: wrap; gap: 5px` — each chip `background: oklch(0.96 0.012 50); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; color: var(--foreground)`.
 - Body text if present: 13.5px body below chips.
 - Two CTAs (Phase 27: rendered as stubs, non-interactive — Phase 28 wires them):
 
@@ -279,7 +297,7 @@ background: var(--background)
 border: 1.5px solid var(--border)
 border-radius: 999px
 padding: 7px 14px
-font-size: 13px; font-weight: 500
+font-size: 13px; font-weight: 600
 color: var(--foreground)
 ```
 
@@ -329,7 +347,7 @@ Visible from the moment `pendingBubbles.length >= 1`. Sits above the composer.
 
 ```
 flex-shrink: 0
-padding: 8px 14px 0
+padding: 8px 16px 0
 background: var(--background)
 ```
 
@@ -357,7 +375,7 @@ Save button contains:
 
 ```
 flex-shrink: 0
-padding: 8px 14px 0
+padding: 8px 16px 0
 text-align: center
 ```
 
@@ -386,6 +404,8 @@ border: 0; display: inline-flex; align-items: center; justify-content: center
 ```
 
 Icon: Lucide `Plus`, 18×18px. Tap opens the `+` menu sheet (see §+Menu Sheet).
+
+**Intentionally icon-only:** The `+` button carries no visible text label. This matches the iMessage/WhatsApp composer convention where attachment affordances are universally recognized icons. Screen readers receive `aria-label` (see §Accessibility). No tooltip is shown.
 
 **Input wrap:**
 
@@ -426,6 +446,8 @@ Same shell. Icon: Lucide `ArrowUp`, 18×18px. Tap creates text pending bubble (c
 
 Morph transition: icon swap animated with `AnimatePresence` using `variants.fadeIn` (`opacity: 0 → 1`, `transitions.fast` = 150ms). The button shell stays at the same size; only the inner icon cross-fades.
 
+**Intentionally icon-only:** The mic and send buttons carry no visible text label. This matches the iMessage/WhatsApp composer convention where these icons are universally recognized in the chat context. Screen readers receive `aria-label` (see §Accessibility). No tooltip is shown. This is an explicit design choice.
+
 ### + Menu Sheet
 
 Opens as a bottom sheet (`SheetContent side="bottom"`). Uses the existing `frontend/components/ui/sheet.tsx` which already has the Phase 18 Sheet-01 fix applied (no texture class, no position-override regression).
@@ -463,7 +485,7 @@ Followed by a `Textarea` (`min-h-32 max-h-64`, `autoFocus`, same pattern as `Voi
 
 Action row at bottom: `flex items-center justify-between gap-3`.
 - Left: `Button variant="ghost" h-12` — « Recommencer » (clears textarea)
-- Right: `Button variant="default" h-12` — « Ajouter » (creates voice pending bubble)
+- Right: `Button variant="default" h-12` — « Ajouter la note » (creates voice pending bubble)
 
 ### UrlSheet
 
@@ -475,7 +497,7 @@ Contains a `Label` + `Input` (`type="url" inputMode="url" autoCapitalize="off" a
 
 Validation: `new URL(v).protocol === "http:" || "https:"` — mirrors `UrlCaptureTab.tsx` exactly.
 
-Action: single `Button variant="default" className="h-12 w-full"` — « Ajouter » — disabled until URL is valid. Creates url pending bubble on confirm.
+Action: single `Button variant="default" className="h-12 w-full"` — « Ajouter le lien » — disabled until URL is valid. Creates url pending bubble on confirm.
 
 ### RecipeCard « Échec » pill (D-10)
 
@@ -546,6 +568,7 @@ All motion values sourced from `frontend/lib/motion.ts` — no new tokens introd
     <AppHeader />                     // sticky h-12, back arrow, "Nouvelle recette", info button
     <RecipeThread mode="capture" recipeId={null} />
       └── chat-body (flex-1, overflow-y-auto)
+          └── empty-state hint row (when pendingBubbles.length === 0)
           └── pending bubble list + extraction placeholder when saving
       └── save-bar (shown when pendingBubbles.length >= 1)
       └── composer
@@ -593,11 +616,11 @@ All strings under the new `recipes.thread.*` namespace in `fr.json`. Keys marked
 | VoiceSheet title | `recipes.thread.voice_sheet_title` | « Dicter une note » |
 | VoiceSheet D-Voice helper | `recipes.thread.voice_helper` | « Dicte ta recette en français. On la met en forme automatiquement. » (reuse pattern from `recipes.voice.idle_helper`) |
 | VoiceSheet textarea placeholder | `recipes.thread.voice_placeholder` | « Dictez via le clavier 🎤 ou tapez votre note… » |
-| VoiceSheet add button | `recipes.thread.voice_add` | « Ajouter » |
+| VoiceSheet add button | `recipes.thread.voice_add` | « Ajouter la note » |
 | VoiceSheet restart | `recipes.thread.voice_restart` | « Recommencer » |
 | UrlSheet title | `recipes.thread.url_sheet_title` | « Coller un lien » |
 | UrlSheet URL placeholder | `recipes.thread.url_placeholder` | « https://… » |
-| UrlSheet add button | `recipes.thread.url_add` | « Ajouter » |
+| UrlSheet add button | `recipes.thread.url_add` | « Ajouter le lien » |
 | UrlSheet URL invalid | `recipes.thread.url_invalid` | « URL invalide. Vérifie le format (https://…). » (reuse `recipes.url.invalid`) [existing] |
 | Pending bubble dismiss aria | `recipes.thread.bubble_dismiss_aria` | « Retirer cette note » |
 | Bubble count display | `recipes.thread.bubble_count` | `{count, plural, one {# note} other {# notes}}` |
@@ -619,6 +642,7 @@ All strings under the new `recipes.thread.*` namespace in `fr.json`. Keys marked
 | Photo count limit toast | `recipes.thread.photo_count_exceeded` | « Maximum 4 photos par recette. » (reuse `photo_uploader.error_limit`) [existing] |
 | RecipeCard failed pill | — | `recipes.promotion.failed_badge` [existing] = « Échec » |
 | Network error on turn POST | `recipes.thread.turn_failed` | « Envoi impossible. Vérifie ta connexion et réessaie. » |
+| Empty chat body hint | `recipes.thread.empty_capture_hint` | « Ajoute une note, dicte une idée, ou joins une photo pour commencer. » |
 
 **Pruned i18n keys** (deleted by Phase 27):
 
@@ -668,8 +692,6 @@ The following values appear in the mockup but do not exist as named tokens in `d
 
 | Token request | Value | Used by |
 |---------------|-------|---------|
-| `--chat-x` | `14px` | `chat-body` horizontal padding; `thread-meta` horizontal padding |
-| `--bubble-gap` | `10px` | `chat-body` gap between bubbles |
 | `--state-pill-structured-bg` | `oklch(0.92 0.10 130)` | `thread-meta` state pill when `status='structured'` |
 | `--state-pill-structured-fg` | `oklch(0.30 0.10 130)` | |
 | `--state-pill-structured-border` | `oklch(0.78 0.10 130)` | |
@@ -678,7 +700,9 @@ The following values appear in the mockup but do not exist as named tokens in `d
 | `--state-pill-draft-border` | `oklch(0.82 0.06 35)` | |
 | `--save-btn-shadow` | `0 2px 6px oklch(0.595 0.135 35 / 0.25)` | save-bar button |
 
-**Implementation guidance:** The executor should define these as inline Tailwind arbitrary values or as component-scoped CSS variables in `RecipeThread/index.tsx` rather than adding them to `globals.css` immediately. If more than one Phase 27 component needs a value, add it to `globals.css @theme` block at that point. Do not request a design-system update for these — they are scoped to the chat shell.
+Note: `--chat-x` (14px) and `--bubble-gap` (10px) from the previous version have been removed. Their grid-snapped replacements — `var(--spacing-md)` (16px) for horizontal padding and `var(--spacing-sm)` (8px) for inter-bubble gap — map directly to existing tokens and require no new token definition.
+
+**Implementation guidance:** The executor should define the state-pill tokens as inline Tailwind arbitrary values or as component-scoped CSS variables in `RecipeThread/index.tsx` rather than adding them to `globals.css` immediately. If more than one Phase 27 component needs a value, add it to `globals.css @theme` block at that point. Do not request a design-system update for these — they are scoped to the chat shell.
 
 ---
 
@@ -700,8 +724,8 @@ No third-party registries declared for this phase. All new components are custom
 | Bubble list semantic structure | `<ol>` for turn list, each `<li>` for a turn — ordered list maps to conversation sequence |
 | Chat region landmark | `role="log"` on `chat-body` with `aria-live="polite"` for screen-reader turn announcements |
 | Composer text input | `aria-label={t("recipes.thread.composer_placeholder_capture")}` on textarea |
-| + button | `aria-label={t("recipes.thread.plus_menu_title")}` |
-| Mic/send button | `aria-label` toggles between `t("recipes.thread.mic_aria")` and `t("recipes.thread.send_aria")` |
+| + button | `aria-label={t("recipes.thread.plus_menu_title")}` — icon-only by design (iMessage/WhatsApp convention); `aria-label` is the label fallback |
+| Mic/send button | `aria-label` toggles between `t("recipes.thread.mic_aria")` and `t("recipes.thread.send_aria")` — icon-only by design (iMessage/WhatsApp convention); icons are universally recognized in chat context |
 | Save button disabled state | `aria-disabled="true"` in addition to `disabled` attribute |
 | Pending bubble dismiss | `aria-label={t("recipes.thread.bubble_dismiss_aria")}` on X button |
 | State pill | `aria-label` = full status string (e.g. « Statut : Structurée ») |
