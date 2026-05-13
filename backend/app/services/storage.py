@@ -35,6 +35,11 @@ BUCKET = "recipe-photos"
 MAX_BYTES = 8 * 1024 * 1024  # 8 MiB hard cap (T-01-09-03 mitigation)
 SIGNED_URL_TTL_SECONDS = 60 * 5  # 5 minutes; FE re-fetches on each detail mount (01-10)
 
+# Phase 26 D-26 — URL extracted-markdown bucket (separate from recipe-photos
+# so bucket-level MIME enforcement stays clean: photos vs text/markdown).
+URL_BUCKET = "recipe-urls"
+URL_BUCKET_FILE_SIZE_LIMIT = 5 * 1024 * 1024  # 5 MB — matches D-24 fetch cap
+
 
 def detect_mime_and_ext(content: bytes) -> tuple[str, str] | None:
     """Sniff magic bytes. Returns ``(mime, ext)`` or ``None`` if unrecognized.
@@ -152,6 +157,101 @@ def upload_recipe_photo(
         len(content),
     )
     return path
+
+
+def upload_recipe_url_extract(
+    *,
+    household_id: UUID,
+    recipe_id: UUID,
+    turn_id: UUID,
+    content: bytes,
+) -> str:
+    """Upload extracted URL markdown to the recipe-urls Supabase Storage bucket.
+
+    Phase 26 D-26 — mirrors upload_recipe_photo but writes text/markdown to
+    the recipe-urls bucket. Returns the bucket-relative path stored in the
+    url-turn payload's `extracted_html_path`.
+
+    Path shape: `{household_id}/{recipe_id}/{turn_id}.md` — deterministic per
+    turn, so a re-extraction (retry-promotion path) upserts at the same path.
+    Photo uploads use upsert=false (collision protection); URL extracts use
+    upsert=true (idempotent re-extraction is the desired behavior).
+
+    Args:
+        household_id: trust-boundary scope; the on-disk folder root.
+        recipe_id: recipe owning the URL turn.
+        turn_id: the specific url turn being extracted (path includes for idempotent retry).
+        content: extracted markdown bytes (caller passes utf-8-encoded text).
+
+    Raises:
+        Whatever Supabase raises on network/permission errors. Caller
+        (extract_and_process_url_turn) wraps in try/except → _record_failure.
+
+    Returns:
+        Bucket-relative path: `"{household_id}/{recipe_id}/{turn_id}.md"`.
+    """
+    # Test-mode short-circuit (Phase 10 D-04 pattern, matches upload_recipe_photo:117).
+    if settings.environment == "test":
+        return f"{household_id}/{recipe_id}/{turn_id}.md"
+
+    path = f"{household_id}/{recipe_id}/{turn_id}.md"
+    client = _supabase()
+    try:
+        client.storage.from_(URL_BUCKET).upload(
+            path=path,
+            file=content,
+            file_options={
+                "content-type": "text/markdown; charset=utf-8",
+                "upsert": "true",  # D-26: re-extraction overwrites at same path
+            },
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.exception("supabase upload (url extract) failed path=%s err=%s", path, exc)
+        raise
+    log.info(
+        "url_extract.uploaded household=%s recipe=%s turn=%s path=%s bytes=%d",
+        household_id, recipe_id, turn_id, path, len(content),
+    )
+    return path
+
+
+def ensure_url_bucket_exists() -> None:
+    """Idempotent: create the recipe-urls bucket if it doesn't exist.
+
+    Phase 26 D-26 — called once from app/main.py lifespan on startup
+    (RESEARCH §Area 9 — Alembic SQL access to storage.buckets may fail on
+    non-superuser Supabase connections; startup helper uses service-role
+    key and is unambiguously authorized).
+
+    No-op under settings.environment='test'.
+    """
+    if settings.environment == "test":
+        return
+    try:
+        client = _supabase()
+        existing = client.storage.list_buckets() or []
+        # storage3 returns objects with a `.name` attribute; some SDK versions
+        # return dicts. Handle both.
+        names = {
+            (b.name if hasattr(b, "name") else b.get("name"))  # type: ignore[union-attr]
+            for b in existing
+        }
+        if URL_BUCKET in names:
+            log.debug("storage.bucket_exists name=%s", URL_BUCKET)
+            return
+        client.storage.create_bucket(
+            URL_BUCKET,
+            options={
+                "public": False,
+                "file_size_limit": URL_BUCKET_FILE_SIZE_LIMIT,
+                "allowed_mime_types": ["text/plain", "text/markdown"],
+            },
+        )
+        log.info("storage.bucket_created name=%s", URL_BUCKET)
+    except Exception as exc:  # noqa: BLE001 — startup must succeed
+        # Match main.py lifespan posture: log + continue. A missing bucket
+        # will surface later as an upload failure → _record_failure.
+        log.warning("ensure_url_bucket_exists failed err=%s", exc)
 
 
 def upload_cooking_log_photo(

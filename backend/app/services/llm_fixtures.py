@@ -157,3 +157,45 @@ def canned_modified_recipe(
         main_protein=recipe_json.get("main_protein"),
         seasonality=recipe_json.get("seasonality") or [],
     )
+
+
+# Phase 26 D-30 — deterministic URL-extract markdown for test mode.
+# Mirrors canned_voice_recipe's __TEST_FORCE_FAIL__ convention (D-16-13).
+# Used by services/llm.extract_and_process_url_turn when settings.environment == "test".
+_FORCE_FAIL_URL_PREFIX = "https://__TEST_FORCE_FAIL_URL__"
+
+
+def canned_url_extract(url: str) -> str:
+    """Deterministic recipe-shaped markdown for URL-turn extraction tests.
+
+    Returns ~400-byte markdown matching what trafilatura would emit for a
+    well-formed French recipe page (ingredients table + numbered steps).
+    Playwright + pytest assertions can grep for known tokens.
+
+    The __TEST_FORCE_FAIL_URL__ prefix forces a RuntimeError so the
+    extract_and_process_url_turn BackgroundTask hits _record_failure
+    deterministically (mirrors canned_voice_recipe D-16-13 force-fail).
+    """
+    if url.startswith(_FORCE_FAIL_URL_PREFIX):
+        raise RuntimeError(
+            "URL extraction forcée à échouer pour les tests (Phase 26 D-30). "
+            "Le préfixe https://__TEST_FORCE_FAIL_URL__ active ce chemin."
+        )
+    return (
+        "# Tarte aux poireaux (test)\n"
+        "\n"
+        "## Ingrédients\n"
+        "\n"
+        "| Quantité | Ingrédient |\n"
+        "|----------|------------|\n"
+        "| 4        | poireaux   |\n"
+        "| 200 g    | lardons    |\n"
+        "| 200 ml   | crème fraîche |\n"
+        "| 1        | pâte brisée |\n"
+        "\n"
+        "## Préparation\n"
+        "\n"
+        "1. Émincer les poireaux et les faire revenir 10 min.\n"
+        "2. Ajouter les lardons et la crème.\n"
+        "3. Verser sur la pâte et cuire 30 min à 200°C.\n"
+    )

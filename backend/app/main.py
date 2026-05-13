@@ -78,6 +78,16 @@ async def lifespan(app: FastAPI):
                 )
     except Exception as exc:  # noqa: BLE001 — startup must succeed
         log.warning("scheduler bootstrap failed err=%s", exc)
+
+    # Phase 26 D-26 — provision recipe-urls bucket once at startup (idempotent).
+    # RESEARCH §Area 9: chose startup helper over Alembic SQL to avoid
+    # storage.buckets permission ambiguity on non-superuser Supabase connections.
+    from app.services import storage as storage_service
+    try:
+        storage_service.ensure_url_bucket_exists()
+    except Exception as exc:  # noqa: BLE001 — startup must succeed
+        log.warning("recipe-urls bucket bootstrap failed err=%s", exc)
+
     yield
     scheduler.shutdown(wait=False)
 
