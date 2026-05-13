@@ -595,11 +595,14 @@ async def create_url(
         )
 
     # Title placeholder — drafts inbox row shows the URL host as a hint.
+    # WR-01: cap at 200 chars to match RecipeUpdate.title's max_length=200, so
+    # later PUTs to this row (which often re-submit the existing title) don't
+    # 422. Full URL is preserved verbatim in the turn payload (invariant #5).
     recipe = Recipe(
         household_id=member.household_id,
         created_by_member_id=member.id,
         status="draft",
-        title=url,  # better than "(extraction…)" since extraction is deferred
+        title=url[:200],  # better than "(extraction…)" since extraction is deferred
         photo_paths=[],
         mood=[],
         seasonality=["spring", "summer", "autumn", "winter"],
