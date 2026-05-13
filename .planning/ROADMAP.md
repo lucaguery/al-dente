@@ -52,10 +52,10 @@ Plans:
   3. A user posting a URL turn triggers a BackgroundTask that fetches the URL, extracts recipe-shaped HTML, stores the extracted path on the turn payload, and Gemini receives the extracted content alongside the rest of the thread — the long-standing `TODO(productize)` at `recipes.py:481-490` is closed and `capture-url` stops being ⚠ Mixed.
   4. A user dismissing an advisory bubble emits a `proposal_dismissed` turn that is a pure no-op state change (no LLM run, no field mutation) and references the originating `advisory` turn ID.
 **Invariants touched**: #4 (realtime — new `turn.created` event added to `services/realtime.broadcast_to_household` callsites)
-**Plans:** 4 plans
+**Plans:** 2/4 plans executed
 Plans:
-- [ ] 26-01-PLAN.md — Schema graduation (AnswerTurnPayload + AdvisoryTurnPayload + UrlTurnPayload typed) + services/thread.py (per-recipe asyncio Lock + SSRF helper) (TURN-01, TURN-02, TURN-04)
-- [ ] 26-02-PLAN.md — services/llm BackgroundTasks (process_thread_turn stub + extract_and_process_url_turn body) + storage helpers (recipe-urls bucket + upload_recipe_url_extract) + canned_url_extract fixture (TURN-01, TURN-04)
+- [x] 26-01-PLAN.md — Schema graduation (AnswerTurnPayload + AdvisoryTurnPayload + UrlTurnPayload typed) + services/thread.py (per-recipe asyncio Lock + SSRF helper) (TURN-01, TURN-02, TURN-04)
+- [x] 26-02-PLAN.md — services/llm BackgroundTasks (process_thread_turn stub + extract_and_process_url_turn body) + storage helpers (recipe-urls bucket + upload_recipe_url_extract) + canned_url_extract fixture (TURN-01, TURN-04)
 - [ ] 26-03-PLAN.md — Router endpoints (POST /turns JSON + POST /turns/photo multipart + GET /turns) + atomic answer/proposal handlers + D-22 dispatch + turn.created broadcast + CLAUDE.md invariant #4 update (TURN-01, TURN-02, TURN-03, TURN-04)
 - [ ] 26-04-PLAN.md — pytest suite covering all 4 ROADMAP success criteria + cross-cutting validation (TURN-01, TURN-02, TURN-03, TURN-04)
 
@@ -106,7 +106,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 25. Backend foundation | v0.6 | 3/3 | Complete    | 2026-05-13 |
-| 26. Thread API & realtime | v0.6 | 0/4   | Not started | - |
+| 26. Thread API & realtime | v0.6 | 2/4 | In Progress|  |
 | 27. Conversational capture screen | v0.6 | 0/TBD | Not started | - |
 | 28. Recipe-detail thread | v0.6 | 0/TBD | Not started | - |
 | 29. LLM prompt rework + completeness wire-up | v0.6 | 0/TBD | Not started | - |
