@@ -73,7 +73,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 |-------|----------------|--------|-----------|
 | 22. Quick wins | 3/3 | Complete    | 2026-05-12 |
 | 23. Deck polish | 1/1 | Complete    | 2026-05-12 |
-| 24. Recipe identity | 5/5 | Complete   | 2026-05-13 |
+| 24. Recipe identity | 5/5 | Complete    | 2026-05-13 |
 
 ---
 *Last updated: 2026-05-12 — v0.5 Mixed Sweep roadmap created. 3 phases (22–24), 12 requirements mapped (QW × 3 / DECK × 4 / RID × 5). 100% coverage. Phase 24 serial order load-bearing: RID-01 → RID-02 → RID-03 → RID-04 → RID-05. Invariant #1 shift ships inside Phase 24 plan for RID-04.*
