@@ -629,10 +629,14 @@ async def create_url(
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
 ) -> RecipeResponse:
-    """CAPTURE-03 — URL paste. NO Gemini call in Phase 25; URL extraction is
-    Phase 26 TURN-04. The URL is stored in the turn payload (invariant #5).
+    """CAPTURE-03 — URL paste. NO Gemini call here; URL extraction is now
+    handled by extract_and_process_url_turn (Phase 26 D-28), scheduled as a
+    BackgroundTask from POST /recipes/{id}/turns (kind='url'). The URL is
+    stored in the turn payload (invariant #5).
 
-    # TODO(productize): URL fetch + Gemini extraction (CAPTURE-03 deferred — Phase 26).
+    Phase 26 closes the long-standing TODO(productize) — the legacy /recipes/url
+    endpoint stays put until Phase 27 retires the five-surface UI, but the
+    extraction path runs through the unified thread API.
     """
     # Best-effort URL syntax check — catches obvious typos. Heavy validation
     # is the frontend's job (see plan 04-03 url tab).
