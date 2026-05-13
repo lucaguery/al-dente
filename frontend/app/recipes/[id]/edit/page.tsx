@@ -151,7 +151,7 @@ function EditInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus, initial]);
 
-  async function onSubmit(body: RecipeBody) {
+  async function onSubmit(body: RecipeBody, _photoPaths: string[]) {
     if (!id) return;
     try {
       const promote =
