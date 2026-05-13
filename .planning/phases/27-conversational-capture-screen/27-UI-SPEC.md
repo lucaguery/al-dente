@@ -296,7 +296,7 @@ Ghost CTA:   background: transparent; color: var(--muted-foreground); border: 1p
 ```
 
 **Question bubble internals:**
-- Answer chips: `display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px` — each chip:
+- Answer chips: `display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px` — each chip:
 
 ```
 background: var(--background)
@@ -481,7 +481,7 @@ Header: `SheetTitle` — « Dicter une note » — `font-display text-base font-
 Contains the D-Voice helper card pattern from `VoiceCaptureTab`:
 
 ```
-Card className="paper-grain shadow-card border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-1.5"
+Card className="paper-grain shadow-card border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-2"
   <span className="font-display italic text-base text-foreground">
     {t("recipes.thread.voice_helper")}
   </span>
