@@ -22,6 +22,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeFr } from "@/lib/datetime";
 import { getSignedPhotoUrl } from "@/lib/recipes";
@@ -89,7 +90,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="paper-grain flex flex-col bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150 overflow-hidden"
+      className="relative paper-grain flex flex-col bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150 overflow-hidden"
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill
@@ -124,6 +125,23 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           <RecipeIllustration recipe={recipe} size={64} />
         </div>
       )}
+      {/* Phase 27 D-10 — « Échec » destructive pill for status='failed' rows.
+          Uses color-mix() per UI-SPEC §"RecipeCard « Échec » pill (D-10)".
+          Positioned absolute top-right over the photo thumbnail; the <Link>
+          has `relative` to establish the stacking context. */}
+      {recipe.status === "failed" ? (
+        <span
+          className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold tracking-[0.03em]"
+          style={{
+            background: "color-mix(in oklch, var(--destructive) 15%, transparent)",
+            color: "var(--destructive)",
+            border: "1px solid color-mix(in oklch, var(--destructive) 40%, transparent)",
+          }}
+        >
+          <AlertCircle size={10} aria-hidden />
+          {t("promotion.failed_badge")}
+        </span>
+      ) : null}
       <div className="flex flex-col gap-1 px-2.5 pt-2 pb-2.5 min-w-0">
         <h3 className="font-display text-base font-medium leading-tight tracking-tight line-clamp-2">
           {recipe.title}

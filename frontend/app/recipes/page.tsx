@@ -9,6 +9,19 @@
 // Search runs in two phases: empty query refetches the full list (default
 // 50, server-side pagination not yet exercised in v0.1); non-empty query
 // hits ?q=... which runs ILIKE on title + ingredients per D-03.
+//
+// Phase 27 D-10: /inbox is gone; failed recipes surface on this list with
+// an « Échec » destructive pill rendered on the RecipeCard. draft rows
+// also surface transiently here during the brief promotion window between
+// « Enregistrer » and `recipe.promoted`. The `?status=draft` filter is
+// preserved server-side (admin/seed use) but no longer rendered as a
+// filter chip — Phase 27 ships the minimum-viable failed-pill surface;
+// a richer status filter UI is post-MVP.
+//
+// The existing `recipe.updated` handler already handles draft→structured and
+// draft→failed transitions (full row replace via prev.map) so no additional
+// `recipe.promoted` subscription is needed — promote_draft broadcasts
+// `recipe.updated` which covers the status flip.
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
