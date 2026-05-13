@@ -456,8 +456,24 @@ def _broadcast_promoted(recipe: Recipe) -> None:
     `broadcast_to_household` is async; the BackgroundTask runs sync, so we
     spin up a one-shot event loop with `asyncio.run`. The realtime helper
     swallows per-socket failures internally so we never raise from here.
+
+    WR-02 — SYNC-CONTEXT ONLY. asyncio.run() forbids reentrant calls;
+    invoking this from an async def (e.g. a future hand calls
+    _record_rewrite_failure from inside extract_and_process_url_turn,
+    which is async) would raise RuntimeError. The defensive guard below
+    fails loudly with an actionable message in that scenario — callers
+    in async contexts must `await broadcast_to_household(...)` directly.
     """
 
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        pass  # No loop — safe to asyncio.run()
+    else:
+        raise RuntimeError(
+            "_broadcast_promoted called from within a running event loop; "
+            "await broadcast_to_household() directly instead."
+        )
     payload = RecipeResponse.model_validate(recipe).model_dump(mode="json")
     asyncio.run(broadcast_to_household(recipe.household_id, "recipe.promoted", payload))
 
