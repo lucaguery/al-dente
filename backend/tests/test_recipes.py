@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 
 from app.models.member import Member
 from app.models.recipe import Recipe
+from app.models.recipe_turn import RecipeTurn
 from app.services import llm as llm_service
 
 # Mirrors backend/tests/test_cooking_logs.py SEED_TOKEN — the seeded
@@ -58,8 +59,8 @@ def test_promotion_failure_sets_failed_state(
     draft row to status='failed' with the truncated error in promotion_error.
 
     Unit-level assertion on `_record_failure` directly: the function is the
-    sole writer of the failed-state transition (called by both
-    promote_voice_draft and promote_photo_draft in their except blocks).
+    sole writer of the failed-state transition (called by promote_draft
+    in its except blocks for voice and photo branches).
     Driving this from the HTTP layer would require monkeypatching
     `app.services.llm.SessionLocal` so the BackgroundTask sees the
     rolled-back transaction's data, which is incompatible with the Phase 15
@@ -80,13 +81,21 @@ def test_promotion_failure_sets_failed_state(
         created_by_member_id=member.id,
         status="draft",
         title="(extraction en cours…)",
-        source_capture={"type": "voice", "payload": {"transcript": "test"}},
         photo_paths=[],
         mood=[],
         seasonality=["spring", "summer", "autumn", "winter"],
         tags=[],
     )
     db_session.add(draft)
+    db_session.flush()  # need draft.id for turn FK
+    db_session.add(RecipeTurn(
+        id=uuid.uuid4(),
+        recipe_id=draft.id,
+        position=0,
+        sender="user",
+        kind="voice",
+        payload={"transcript": "test"},
+    ))
     db_session.commit()
     db_session.refresh(draft)
 
@@ -135,15 +144,13 @@ def test_retry_promotion_resets_failed_to_draft(
     """
     member = _seeded_member(db_session)
 
-    # Seed a failed-state recipe directly. source_capture mirrors the voice
-    # capture shape so the retry BackgroundTask's source_capture.type=='voice'
-    # branch (services/llm.py::retry_promotion) has a transcript to re-feed.
+    # Seed a failed-state recipe directly. A voice turn is inserted so
+    # retry_promotion (→ promote_draft) has a transcript to re-feed.
     failed = Recipe(
         household_id=member.household_id,
         created_by_member_id=member.id,
         status="failed",
         title="(extraction en cours…)",
-        source_capture={"type": "voice", "payload": {"transcript": "test"}},
         photo_paths=[],
         mood=[],
         seasonality=["spring", "summer", "autumn", "winter"],
@@ -152,6 +159,15 @@ def test_retry_promotion_resets_failed_to_draft(
         promotion_attempts=1,
     )
     db_session.add(failed)
+    db_session.flush()  # need failed.id for turn FK
+    db_session.add(RecipeTurn(
+        id=uuid.uuid4(),
+        recipe_id=failed.id,
+        position=0,
+        sender="user",
+        kind="voice",
+        payload={"transcript": "test"},
+    ))
     db_session.commit()
     db_session.refresh(failed)
 

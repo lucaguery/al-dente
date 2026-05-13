@@ -43,6 +43,7 @@ from app.models.enums import Cuisine, Difficulty, Mood, Protein, Season  # NO du
 from app.models.household import Household
 from app.models.member import Member
 from app.models.recipe import Recipe
+from app.models.recipe_turn import RecipeTurn
 from app.models.vote import Vote
 
 NAMESPACE = uuid.NAMESPACE_DNS
@@ -472,10 +473,6 @@ def run_test_seed() -> None:
                 created_by_member_id=member_luca.id,
                 status="structured",
                 title=spec["title"],
-                source_capture={
-                    "type": "manual",
-                    "payload": {"title": spec["title"]},
-                },
                 photo_paths=recipe_photo_paths,
                 ingredients=spec["ingredients"],
                 steps=spec["steps"],
@@ -503,6 +500,34 @@ def run_test_seed() -> None:
 
         # Flush so recipe IDs are visible to the cooking-log denorm queries below.
         db.flush()
+
+        # ---- 3b. Recipe turns (Phase 25 MIGRATION-02) ----
+        # One initial user turn + one representative summary system turn per recipe.
+        # Idempotent via ON CONFLICT (recipe_id, position) DO UPDATE — the
+        # migration already inserted turns via gen_random_uuid() so the PK may
+        # differ from our uuid5 IDs; we upsert on the UNIQUE (recipe_id, position)
+        # constraint instead of the PK so re-runs converge correctly.
+        for spec in _recipe_specs():
+            recipe_id = _id("recipe", spec["slug"])
+            for position, sender, kind, payload in [
+                (0, "user", "text", {"text": spec["title"]}),
+                (1, "system", "summary", {"text": f"Recette : {spec['title']}"}),
+            ]:
+                db.execute(
+                    pg_insert(RecipeTurn)
+                    .values(
+                        id=_id("recipe", spec["slug"], f"turn{position}"),
+                        recipe_id=recipe_id,
+                        position=position,
+                        sender=sender,
+                        kind=kind,
+                        payload=payload,
+                    )
+                    .on_conflict_do_update(
+                        index_elements=["recipe_id", "position"],
+                        set_={"kind": kind, "payload": payload, "sender": sender},
+                    )
+                )
 
         # ---- 4. Cooking logs (3, one per rating) + same-tx denorm ----
         # Architecture invariant #3: update last_cooked_at + cook_count in same commit.
@@ -800,10 +825,6 @@ def run_prod_synthetic_seed() -> None:
                 created_by_member_id=member_luca.id,
                 status="structured",
                 title=spec["title"],
-                source_capture={
-                    "type": "manual",
-                    "payload": {"title": spec["title"]},
-                },
                 photo_paths=[photo_path],  # CRITICAL — Pitfall 2
                 ingredients=spec["ingredients"],
                 steps=spec["steps"],
@@ -831,6 +852,33 @@ def run_prod_synthetic_seed() -> None:
 
         # Flush so recipe IDs are visible to the cooking-log denorm queries.
         db.flush()
+
+        # ---- 3b. Recipe turns (Phase 25 MIGRATION-02) ----
+        # One initial user turn + one representative summary system turn per recipe.
+        # Idempotent via ON CONFLICT (recipe_id, position) DO UPDATE — the
+        # migration may have already inserted turns via gen_random_uuid() so the PK
+        # could differ from our uuid5 IDs. Upsert on the UNIQUE constraint instead.
+        for spec in _recipe_specs():
+            recipe_id = _id_synth("recipe", spec["slug"])
+            for position, sender, kind, payload in [
+                (0, "user", "text", {"text": spec["title"]}),
+                (1, "system", "summary", {"text": f"Recette : {spec['title']}"}),
+            ]:
+                db.execute(
+                    pg_insert(RecipeTurn)
+                    .values(
+                        id=_id_synth("recipe", spec["slug"], f"turn{position}"),
+                        recipe_id=recipe_id,
+                        position=position,
+                        sender=sender,
+                        kind=kind,
+                        payload=payload,
+                    )
+                    .on_conflict_do_update(
+                        index_elements=["recipe_id", "position"],
+                        set_={"kind": kind, "payload": payload, "sender": sender},
+                    )
+                )
 
         # ---- 4. Cooking logs — D-10 SLIDING DATES ----
         # _id key is "cooking_log", slug only — NO date in the key.

@@ -223,7 +223,7 @@ def extract_from_transcript(transcript: str) -> GeminiExtractedRecipe:
     """Voice transcript -> structured recipe. Raises on Gemini error.
 
     Caller is responsible for try/except around this — typically only
-    `promote_voice_draft` calls it directly so the error gets recorded
+    `promote_draft` calls it (voice branch) so the error gets recorded
     on the recipe row.
     """
 
@@ -329,8 +329,8 @@ def rewrite_title(original_title: str, recipe_context: dict[str, Any]) -> str:
 
     Returns a stripped, length-capped (≤60 char) plain-text string.
     Raises ValueError on empty Gemini output; raises whatever google-genai
-    raises on API errors. Callers (promote_quick_draft / promote_full_draft)
-    wrap this in try/except and route failures through _record_rewrite_failure.
+    raises on API errors. Caller (promote_draft text/voice branches) wraps
+    this in try/except and routes failures through _record_rewrite_failure.
 
     recipe_context is reserved for future enrichment (e.g., passing
     cuisine/main_protein so Gemini can tailor the rewrite). v1: not used

@@ -101,10 +101,11 @@ class RecipeQuickCreate(BaseModel):
 class RecipeUpdate(BaseModel):
     """RECIPE-05 — patch-style update.
 
-    ``source_capture`` is INTENTIONALLY absent — CLAUDE.md invariant 5: raw
-    inputs are kept forever and never overwritten via PUT. ``photo_paths``,
-    ``cook_count`` and ``last_cooked_at`` are also absent: the photo route
-    (01-09) and the cooking-log handler (W3) own those columns respectively.
+    ``manually_edited_fields`` is INTENTIONALLY absent — write path is Phase 28
+    DETAIL-05. ``photo_paths``, ``cook_count`` and ``last_cooked_at`` are also
+    absent: the photo route (01-09) and the cooking-log handler (W3) own those
+    columns respectively. Raw capture inputs are kept forever in ``recipe_turns``
+    (Phase 25 invariant #5 via turn payload, not a column on this schema).
 
     Setting ``status`` here IS allowed in W1 because the user's "I finished
     filling the draft" gesture is the only promotion path until W2's
@@ -146,9 +147,10 @@ class RecipeResponse(BaseModel):
     created_by_member_id: UUID
     status: str
     # Phase 25 — kind of the first user turn (text/voice/photo/url),
-    # synthesized server-side from recipe_turns. Replaces source_capture.type
-    # for RecipeDraftCard variant logic. None for the rare case of a recipe
-    # with no first user turn (should not happen post-migration).
+    # synthesized server-side from recipe_turns. Used by RecipeDraftCard
+    # variant logic in place of the legacy capture-type field.
+    # None for the rare case of a recipe with no first user turn
+    # (should not happen post-migration).
     initial_turn_kind: Optional[str] = None
     title: str
     photo_paths: List[str]
@@ -199,8 +201,8 @@ class VoiceCaptureRequest(BaseModel):
 
 
 class UrlCaptureRequest(BaseModel):
-    """POST /recipes/url body. URL stored in source_capture verbatim;
-    no Gemini extraction in v0.1 (CAPTURE-03 explicit).
+    """POST /recipes/url body. URL stored in the recipe_turns payload (D-11);
+    no Gemini extraction in Phase 25 (CAPTURE-03 explicit — Phase 26 TURN-04).
 
     # TODO(productize): URL fetch + Gemini extraction (CAPTURE-03 deferred).
     """

@@ -32,6 +32,7 @@ from app.models.cooking_log import CookingLog, LogRating
 from app.models.household import Household
 from app.models.member import Member
 from app.models.recipe import Recipe
+from app.models.recipe_turn import RecipeTurn
 
 SEED_TOKEN = os.environ.get("SEED_AUTH_TOKEN", "test-token-luca")
 AUTH_HEADERS = {"Authorization": f"Bearer {SEED_TOKEN}"}
@@ -172,8 +173,8 @@ def test_list_cross_household_isolated(
     db_session.add(other_m)
     db_session.flush()
     # Recipe NOT NULL fields: household_id, created_by_member_id, status,
-    # title, source_capture. Copy structure from a seeded recipe to satisfy
-    # CHECK constraints on cuisine/main_protein (NULL is allowed).
+    # Copy structure from a seeded recipe to satisfy CHECK constraints on
+    # cuisine/main_protein (NULL is allowed).
     seeded = db_session.scalar(select(Recipe).limit(1))
     assert seeded is not None
     other_recipe = Recipe(
@@ -182,13 +183,21 @@ def test_list_cross_household_isolated(
         created_by_member_id=other_m.id,
         title="Other recipe",
         status=seeded.status,
-        source_capture={"type": "manual", "payload": {"title": "Other recipe"}},
         photo_paths=[],
         mood=[],
         seasonality=["spring", "summer", "autumn", "winter"],
         tags=[],
     )
     db_session.add(other_recipe)
+    db_session.flush()  # need other_recipe.id for turn FK
+    db_session.add(RecipeTurn(
+        id=uuid.uuid4(),
+        recipe_id=other_recipe.id,
+        position=0,
+        sender="user",
+        kind="text",
+        payload={"text": "Other recipe"},
+    ))
     db_session.flush()
     other_log = CookingLog(
         id=uuid.uuid4(),
