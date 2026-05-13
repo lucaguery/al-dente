@@ -582,7 +582,18 @@ def promote_draft(recipe_id: UUID) -> None:
                 # Falls back to recipe.title if the turn payload has no text
                 # (e.g. legacy backfill text turns — D-01).
                 original_title = payload.get("text") or recipe.title
-                new_title = rewrite_title(original_title, {})
+                try:
+                    new_title = rewrite_title(original_title, {})
+                except Exception as rewrite_exc:  # noqa: BLE001 — RID-04 D-26
+                    # Title rewrite failed but content is complete (the user
+                    # already typed a title). Promote anyway with status=structured
+                    # and surface the error via promotion_error. _record_rewrite_failure
+                    # commits and broadcasts recipe.promoted — never re-raises.
+                    recipe.illustration_svg = _generate_and_sanitize_illustration(
+                        recipe.title
+                    )
+                    _record_rewrite_failure(db, recipe, rewrite_exc)
+                    return
                 recipe.title = new_title
                 # Phase 24 RID-05 D-36 — illustration after title rewrite.
                 # Failure NEVER affects recipe.status (BrandIcon fallback for NULL svg).
