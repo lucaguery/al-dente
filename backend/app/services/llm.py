@@ -50,14 +50,20 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import httpx  # Phase 26 D-24 (already in pyproject.toml per pre-research)
+import trafilatura  # Phase 26 D-23 (already in pyproject.toml per pre-research)
+
 from app.config import settings
 from app.db import SessionLocal
 from app.models.recipe import Recipe
 from app.models.recipe_turn import RecipeTurn
 from app.schemas.recipe import RecipeResponse
+from app.schemas.recipe_turn import TurnResponse  # Phase 26 D-29 — turn.updated payload shape
 from app.services import storage as storage_service
 from app.services.realtime import broadcast_to_household
 from app.services.svg_sanitizer import sanitize_recipe_svg
+from app.services.thread import _is_safe_url  # Phase 26 SSRF defense
+from sqlalchemy.orm.attributes import flag_modified  # Phase 26 D-28 — JSONB sub-key mutation
 
 log = logging.getLogger(__name__)
 
@@ -688,3 +694,164 @@ def retry_promotion(recipe_id: UUID) -> None:
     stays in place; only the service body changed.
     """
     promote_draft(recipe_id)
+
+
+def process_thread_turn(recipe_id: UUID, turn_id: UUID) -> None:
+    """Phase 26 D-21 — no-op stub. Phase 29 fills the body with the full-thread Gemini call.
+
+    Sync `def` (NOT async) — mirrors `promote_draft` pattern (RESEARCH §Area 8).
+    BackgroundTask invokes via FastAPI's threadpool when callable is sync.
+    Phase 29 may convert to `async def` if the new body uses async libraries;
+    the dispatch in routers/recipes.py uses `background_tasks.add_task(fn, ...)`
+    which accepts both sync and async — no callsite change needed.
+
+    Scheduled from routers/recipes.py POST /turns for kind in {text, voice, photo}
+    (per D-22 dispatch matrix). The url kind dispatches to
+    extract_and_process_url_turn instead — that BackgroundTask calls THIS
+    stub at the end of its body so the eventual Phase 29 Gemini run sees
+    the extracted content.
+
+    NEVER raises — failures (none possible in the stub, but established
+    contract for promote_draft) are swallowed.
+    """
+    db = SessionLocal()
+    try:
+        log.info(
+            "thread-turn LLM processing deferred to Phase 29 (recipe=%s turn=%s)",
+            recipe_id, turn_id,
+        )
+    finally:
+        db.close()
+
+
+async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
+    """Phase 26 D-28 / TURN-04 — close the URL-extraction TODO(productize).
+
+    Fetches the URL stored in the url-turn payload, extracts recipe-shaped
+    markdown via trafilatura (include_tables=True is REQUIRED — French
+    recipe sites like Marmiton put ingredient quantities in <table> elements,
+    which trafilatura silently drops without that flag — RESEARCH §Area 1 / R-2).
+    Uploads markdown to Supabase Storage `recipe-urls` bucket. Updates the
+    turn payload's extracted_html_path. Broadcasts turn.updated (NOT
+    turn.created — the turn was already broadcast at POST time, per D-29).
+    Finally invokes process_thread_turn so the (Phase 29) LLM run sees the
+    extracted content.
+
+    Async def (NOT sync) — uses httpx.AsyncClient which is cooperative;
+    fits the FastAPI BackgroundTask async-callable contract. RESEARCH §Area 8.
+
+    NEVER raises out — failures are recorded via _record_failure (status='failed',
+    truncated promotion_error, no broadcast). The user can retry via
+    POST /recipes/{id}/retry-promotion (existing endpoint; collapses through
+    promote_draft → dispatches on first user turn kind, which for url-captured
+    recipes routes back here).
+
+    Failure modes (all → _record_failure):
+      * SSRF rejection (_is_safe_url returned False)
+      * Non-html Content-Type
+      * Body > 5 MB (D-24)
+      * httpx error (timeout, DNS, connection refused, etc.)
+      * trafilatura returned None or empty (R-2 — JS-rendered shells, blocked pages)
+      * Supabase upload failure
+    """
+    db = SessionLocal()
+    recipe: Optional[Recipe] = None
+    try:
+        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
+        if recipe is None:
+            log.warning("extract_and_process_url_turn: recipe %s vanished", recipe_id)
+            return
+        turn = db.scalar(select(RecipeTurn).where(RecipeTurn.id == turn_id))
+        if turn is None:
+            log.warning("extract_and_process_url_turn: turn %s vanished", turn_id)
+            return
+
+        # D-30 — test-mode bypass uses canned markdown; skip httpx + trafilatura.
+        if settings.environment == "test":
+            from app.services.llm_fixtures import canned_url_extract
+            extracted_markdown = canned_url_extract(turn.payload.get("url", ""))
+        else:
+            url = turn.payload.get("url", "")
+            if not url:
+                raise ValueError("url turn has no url in payload")
+
+            # SSRF gate (T-26-02). _is_safe_url blocks RFC1918 / loopback /
+            # link-local / 169.254.169.254 / metadata.google.internal.
+            if not _is_safe_url(url):
+                raise ValueError(f"SSRF: blocked URL {url!r}")
+
+            # D-24 — conservative fetch policy.
+            async with httpx.AsyncClient(
+                timeout=10.0,
+                follow_redirects=True,
+                max_redirects=5,
+                headers={
+                    "User-Agent": "al-dente/0.6 (+https://al-dente-pink.vercel.app)",
+                },
+            ) as client:
+                response = await client.get(url)
+
+            # D-24 — content-type allowlist + size cap.
+            content_type = (response.headers.get("content-type") or "").lower()
+            if not any(t in content_type for t in ("text/html", "application/xhtml")):
+                raise ValueError(f"unsupported content-type: {content_type!r}")
+            if len(response.content) > 5 * 1024 * 1024:
+                raise ValueError("response body exceeds 5 MB limit")
+
+            # D-23 — trafilatura.extract with include_tables=True (REQUIRED
+            # for French recipe sites — R-2). Returns None on JS-rendered
+            # shells / blocked pages / empty content → failure path per D-27.
+            extracted_markdown = trafilatura.extract(
+                response.text,
+                output_format="markdown",
+                include_tables=True,
+                include_comments=False,
+                no_fallback=False,
+            )
+            if not extracted_markdown:
+                raise ValueError("trafilatura returned no extractable content")
+
+        # D-26 — upload to recipe-urls bucket (Phase 26 storage helper).
+        path = storage_service.upload_recipe_url_extract(
+            household_id=recipe.household_id,
+            recipe_id=recipe_id,
+            turn_id=turn_id,
+            content=extracted_markdown.encode("utf-8"),
+        )
+
+        # D-28 step 5 — update turn payload via dict spread (new dict =
+        # SQLAlchemy change detection fires). flag_modified is belt-and-
+        # suspenders for JSONB sub-key updates (R-1 footgun documented in
+        # RESEARCH §Area 4).
+        turn.payload = {**(turn.payload or {}), "extracted_html_path": path}
+        flag_modified(turn, "payload")
+        db.commit()
+        db.refresh(turn)
+
+        # D-29 — broadcast turn.updated (NOT turn.created — the turn was
+        # already broadcast at POST time by routers/recipes.py). FE will
+        # re-render the url bubble with the "Lien extrait" indicator.
+        # Inside an `async def`, we can await broadcast directly.
+        await broadcast_to_household(
+            recipe.household_id,
+            "turn.updated",
+            TurnResponse.model_validate(turn).model_dump(mode="json"),
+        )
+
+        # D-28 step 6 — schedule Phase 29 LLM follow-up. In Phase 26 this is
+        # a no-op log; once Phase 29 fills the body, the LLM will see the
+        # extracted content in turn.payload.extracted_html_path and read
+        # the markdown from Storage. Direct call (not BackgroundTasks.add_task)
+        # because we are already inside a BackgroundTask — see RESEARCH
+        # §Open Questions Q2.
+        process_thread_turn(recipe_id, turn_id)
+
+    except Exception as exc:  # noqa: BLE001 — never raise out (R-7 / R-8)
+        if recipe is not None:
+            # Rollback any partial DB state before recording the failure.
+            db.rollback()
+            _record_failure(db, recipe, exc)
+        else:
+            log.exception("extract_and_process_url_turn: pre-recipe failure recipe=%s turn=%s", recipe_id, turn_id)
+    finally:
+        db.close()
