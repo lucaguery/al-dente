@@ -63,7 +63,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 - [x] 24-01-brand-icon-PLAN.md — BrandIcon component extracted from app/icon.tsx + EmptyState type widen + mount on welcome + 3 empty states (RID-01 / gh#11)
 - [x] 24-02-data-model-PLAN.md — Alembic 0007 + 3 new optional fields + Difficulty enum on both sides + Pydantic / Gemini schema / RecipeForm / detail page (RID-02 / gh#22 Part A)
 - [x] 24-03-completeness-PLAN.md — computeCompleteness() pure helper + CompletenessCard + ?focus= ref-focus on edit page (Suspense-wrapped) (RID-03 / gh#22 Part B)
-- [ ] 24-04-title-rewrite-PLAN.md — rewrite_title() + promote_quick_draft / promote_full_draft BackgroundTasks + voice/photo prompt extension + CLAUDE.md invariant #1 shift (RID-04 / gh#10)
+- [x] 24-04-title-rewrite-PLAN.md — rewrite_title() + promote_quick_draft / promote_full_draft BackgroundTasks + voice/photo prompt extension + CLAUDE.md invariant #1 shift (RID-04 / gh#10)
 - [ ] 24-05-illustration-PLAN.md — Alembic 0008 + svg_sanitizer with allowlist + unit tests + generate_recipe_illustration + 4 BackgroundTask extensions + RecipeIllustration component (RID-05 / gh#12)
 **UI hint**: yes
 
@@ -73,7 +73,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 |-------|----------------|--------|-----------|
 | 22. Quick wins | 3/3 | Complete    | 2026-05-12 |
 | 23. Deck polish | 1/1 | Complete    | 2026-05-12 |
-| 24. Recipe identity | 3/5 | In Progress|  |
+| 24. Recipe identity | 4/5 | In Progress|  |
 
 ---
 *Last updated: 2026-05-12 — v0.5 Mixed Sweep roadmap created. 3 phases (22–24), 12 requirements mapped (QW × 3 / DECK × 4 / RID × 5). 100% coverage. Phase 24 serial order load-bearing: RID-01 → RID-02 → RID-03 → RID-04 → RID-05. Invariant #1 shift ships inside Phase 24 plan for RID-04.*
