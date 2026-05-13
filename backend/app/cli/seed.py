@@ -39,7 +39,7 @@ from app.config import settings
 from app.db import SessionLocal
 from app.models.cooking_log import CookingLog
 from app.models.daily_shortlist import DailyShortlist
-from app.models.enums import Cuisine, Mood, Protein, Season  # NO duplicates!
+from app.models.enums import Cuisine, Difficulty, Mood, Protein, Season  # NO duplicates!
 from app.models.household import Household
 from app.models.member import Member
 from app.models.recipe import Recipe
@@ -51,6 +51,16 @@ NAMESPACE = uuid.NAMESPACE_DNS
 # Path resolution mirrors `Path(__file__).parent / "synthetic_photos"`, so the
 # seed reads from the same directory regardless of where `uv run seed` is invoked.
 SYNTHETIC_PHOTOS_DIR = Path(__file__).parent / "synthetic_photos"
+
+# Phase 24 RID-05 — seed canned illustration. Brand-coherent pasta-strand
+# path; passes the sanitizer cleanly. Seed-only — production illustrations
+# come from generate_recipe_illustration.
+_SEED_ILLUSTRATION_SVG = (
+    '<svg viewBox="0 0 160 160" fill="none" stroke="currentColor" '
+    'xmlns="http://www.w3.org/2000/svg">'
+    '<path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z"/>'
+    '</svg>'
+)
 
 
 def _id(*parts: str) -> uuid.UUID:
@@ -185,10 +195,14 @@ def _recipe_specs() -> list[dict]:
         {"slug": "poulet-citron", "title": "Poulet au citron", "cuisine": Cuisine.italian.value,
          "mood": [Mood.quick.value], "main_protein": Protein.poultry.value,
          "seasonality": [Season.spring.value, Season.summer.value],
-         "prep_time_minutes": 25, "servings": 4,
+         "prep_time_minutes": 25, "cook_time_minutes": 20,
+         "difficulty": Difficulty.easy.value,
+         "description": "Un classique estival parfumé au citron et aux herbes.",
+         "servings": 4,
          "ingredients": [{"name": "poulet", "quantity": 600, "unit": "g"},
                          {"name": "citron", "quantity": 2, "unit": None}],
-         "steps": ["Mariner le poulet.", "Cuire a la poele."]},
+         "steps": ["Mariner le poulet.", "Cuire a la poele."],
+         "illustration_svg": _SEED_ILLUSTRATION_SVG},
         # 2. Italian / red_meat / comfort / autumn-winter
         {"slug": "ragu-bolognese", "title": "Ragu bolognese",
          "cuisine": Cuisine.italian.value, "mood": [Mood.comfort.value],
@@ -202,9 +216,13 @@ def _recipe_specs() -> list[dict]:
          "cuisine": Cuisine.italian.value, "mood": [Mood.comfort.value],
          "main_protein": Protein.none.value,
          "seasonality": [Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 35, "servings": 2,
+         "prep_time_minutes": 35, "cook_time_minutes": 25,
+         "difficulty": Difficulty.medium.value,
+         "description": "Un risotto crémeux aux champignons des bois, parfait pour l'automne.",
+         "servings": 2,
          "ingredients": [{"name": "riz arborio", "quantity": 300, "unit": "g"}],
-         "steps": ["Nacrer le riz.", "Mouiller au bouillon."]},
+         "steps": ["Nacrer le riz.", "Mouiller au bouillon."],
+         "illustration_svg": _SEED_ILLUSTRATION_SVG},
         # 4. French / poultry / celebratory / autumn
         {"slug": "coq-au-vin", "title": "Coq au vin", "cuisine": Cuisine.french.value,
          "mood": [Mood.celebratory.value, Mood.comfort.value],
@@ -222,9 +240,13 @@ def _recipe_specs() -> list[dict]:
         {"slug": "tarte-tatin", "title": "Tarte Tatin", "cuisine": Cuisine.french.value,
          "mood": [Mood.celebratory.value, Mood.comfort.value],
          "main_protein": Protein.none.value, "seasonality": [Season.autumn.value],
-         "prep_time_minutes": 60, "servings": 6,
+         "prep_time_minutes": 60, "cook_time_minutes": 30,
+         "difficulty": Difficulty.hard.value,
+         "description": "La tarte tatin classique aux pommes caramélisées, renversée à la sortie du four.",
+         "servings": 6,
          "ingredients": [{"name": "pommes", "quantity": 6, "unit": None}],
-         "steps": ["Carameliser.", "Cuire 30 min."]},
+         "steps": ["Carameliser.", "Cuire 30 min."],
+         "illustration_svg": _SEED_ILLUSTRATION_SVG},
         # 7. Asian / poultry / quick / all-seasons
         {"slug": "poulet-teriyaki", "title": "Poulet teriyaki",
          "cuisine": Cuisine.asian.value, "mood": [Mood.quick.value],
@@ -458,6 +480,13 @@ def run_test_seed() -> None:
                 ingredients=spec["ingredients"],
                 steps=spec["steps"],
                 prep_time_minutes=spec["prep_time_minutes"],
+                # Phase 24 RID-02 — three new optional recipe-identity fields.
+                cook_time_minutes=spec.get("cook_time_minutes"),
+                difficulty=spec.get("difficulty"),
+                description=spec.get("description"),
+                # Phase 24 RID-05 — canned illustration for 3 seed recipes;
+                # others stay NULL → BrandIcon fallback in dev/test.
+                illustration_svg=spec.get("illustration_svg"),
                 servings=spec["servings"],
                 cuisine=spec["cuisine"],
                 mood=spec["mood"],
