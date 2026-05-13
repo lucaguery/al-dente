@@ -814,14 +814,23 @@ async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
         # D-30 — test-mode bypass uses canned markdown; skip httpx + trafilatura.
         if settings.environment == "test":
             from app.services.llm_fixtures import canned_url_extract
-            extracted_markdown = canned_url_extract(turn.payload.get("url", ""))
+            extracted_markdown = canned_url_extract(turn.payload.get("url") or "")
         else:
-            url = turn.payload.get("url", "")
+            # IN-04 — `.get("url") or ""` makes the None-vs-empty conflation
+            # explicit: backfilled or malformed payloads that stored {"url": null}
+            # coerce to "" rather than None, so the `if not url` gate fires
+            # cleanly and the downstream `_is_safe_url` never sees None.
+            url = turn.payload.get("url") or ""
             if not url:
                 raise ValueError("url turn has no url in payload")
 
             # SSRF gate (T-26-02). _is_safe_url blocks RFC1918 / loopback /
             # link-local / 169.254.169.254 / metadata.google.internal.
+            # IN-01 — IPv6 coverage: _is_safe_url covers IPv4 (RFC1918 + 127/8
+            # + 169.254/16 + 0.0.0.0) and IPv6 ULA (fc00::/7) + loopback (::1)
+            # + IPv4-mapped IPv6 (::ffff:10.x). 6to4 (2002::/16) and deprecated
+            # site-local (fec0::/10) are not blocked; classified as global per
+            # Python's `ipaddress`. Couple-scale risk accepted.
             if not _is_safe_url(url):
                 raise ValueError(f"SSRF: blocked URL {url!r}")
 
