@@ -709,8 +709,8 @@ def retry_promotion(recipe_id: UUID) -> None:
                     db, recipe, ValueError("retry: transcript missing")
                 )
                 return
-            # Drop the request session — promote_voice_draft opens its own.
-            db.close()
+            # promote_voice_draft opens its own SessionLocal; db remains open
+            # until the finally block handles the single close.
             promote_voice_draft(recipe_id, transcript)
             return
         if sc_type == "photo":
@@ -730,10 +730,8 @@ def retry_promotion(recipe_id: UUID) -> None:
             # surfaces land here (source_capture.type == "manual" for both
             # quick and full per recipes.py). Dispatch to promote_full_draft
             # which generalizes; structurally identical to promote_quick_draft
-            # at v0.5 (Task 3). db.close() is REQUIRED before calling the
-            # BackgroundTask body — it opens its own SessionLocal (RESEARCH
-            # §Pitfall 3; mirrors the voice branch's db.close() pattern).
-            db.close()
+            # at v0.5 (Task 3). promote_full_draft opens its own SessionLocal;
+            # db is closed once by the finally block below.
             promote_full_draft(recipe_id)
             return
         # url / unknown — should never reach retry path
