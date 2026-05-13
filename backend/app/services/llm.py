@@ -756,6 +756,10 @@ async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
     """
     db = SessionLocal()
     recipe: Optional[Recipe] = None
+    # WR-01 — defensive init so the except block can safely reference `turn`
+    # (CR-01 fix uses it). Any failure between `recipe` lookup and `turn`
+    # assignment would otherwise NameError on the except path.
+    turn: Optional[RecipeTurn] = None
     try:
         recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
         if recipe is None:
