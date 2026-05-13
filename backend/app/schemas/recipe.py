@@ -153,6 +153,11 @@ class RecipeResponse(BaseModel):
     cook_time_minutes: Optional[int] = None
     difficulty: Optional[str] = None
     description: Optional[str] = None
+    # Phase 24 RID-05 D-39 — sanitized SVG illustration. NULL when not
+    # yet generated or rejected by the sanitizer. Frontend renders via
+    # dangerouslySetInnerHTML with the trust boundary documented at the
+    # call site (per D-38).
+    illustration_svg: Optional[str] = None
     servings: Optional[int] = None
     cuisine: Optional[str] = None
     main_protein: Optional[str] = None

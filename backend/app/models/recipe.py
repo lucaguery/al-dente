@@ -82,6 +82,11 @@ class Recipe(Base):
     cook_time_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     difficulty: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Phase 24 RID-05 (migration 0008) — per-recipe LLM-generated SVG
+    # illustration. Server-side sanitized via services/svg_sanitizer.py
+    # before storage; NULL means "not yet generated" OR "rejected by
+    # sanitizer". Frontend falls back to BrandIcon (RID-01) for either case.
+    illustration_svg: Mapped[str | None] = mapped_column(Text, nullable=True)
     servings: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cuisine: Mapped[str | None] = mapped_column(Text, nullable=True)
     mood: Mapped[list[str]] = mapped_column(
