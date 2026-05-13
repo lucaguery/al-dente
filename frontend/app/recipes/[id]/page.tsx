@@ -8,8 +8,25 @@
 // 404 branch is full-page (UI-SPEC §"Toast vs inline rules": permanent
 // state lives inline, NOT a toast). 401 redirects to /onboarding/welcome
 // (handled by lib/api.ts).
+//
+// Phase 27 CAPTURE-04 — RecipeThread in detail mode mounted below the form.
+// The existing form (hero, CompletenessCard, metadata, ingredients, steps,
+// VoiceModifySheet) is untouched per D-15. The chat thread sits below it;
+// the manual-link inside the thread scrolls back up to the form.
+//
+// Note on layout: the thread-meta strip rendered by RecipeThread appears
+// ABOVE the chat body (i.e., BELOW the form section), which deviates from
+// the mockup's ordering (strip between appheader and form). UI-SPEC §"Layout
+// > /recipes/[id]" resolves this as the accepted "chat below the recipe form"
+// layout — the thread-meta strip acts as a visual header for the chat section.
+//
+// Note on title style: the existing hero title strip renders recipe.title in
+// upright Cormorant Garamond regardless of status. The thread-meta strip
+// (rendered by RecipeThread) shows the italic draft placeholder when
+// status='draft'. Both are intentional: the hero is the "this is the recipe"
+// header; the thread-meta is the "what state is this in?" indicator.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, FileQuestion, Mic, Pencil, Trash2 } from "lucide-react";
@@ -26,12 +43,20 @@ import { formatRelativeFr } from "@/lib/datetime";
 import { useEnumLabels } from "@/lib/enum-labels";
 import { deleteRecipe, getSignedPhotoUrl } from "@/lib/recipes";
 import { useRealtime } from "@/components/RealtimeProvider";
+import RecipeThread from "@/components/RecipeThread";
+import type { PersistedTurn, RecipeStatus } from "@/components/RecipeThread/types";
 import type { Recipe } from "@/lib/recipes";
+
+// API_BASE needed for the multipart photo turn POST (Phase 26 D-01 — FormData
+// bypasses the api() helper which would set Content-Type: application/json).
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
 export default function RecipeDetailPage() {
   const t = useTranslations("recipes");
   const tVoiceModify = useTranslations("recipes.voice_modify");
   const tErr = useTranslations("onboarding.errors");
+  // Phase 27 CAPTURE-04 — tThread for turn-POST error toast (recipes.thread.turn_failed)
+  const tThread = useTranslations("recipes.thread");
   const labels = useEnumLabels();
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -43,6 +68,12 @@ export default function RecipeDetailPage() {
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [voiceModifyOpen, setVoiceModifyOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Phase 27 CAPTURE-04 — thread state
+  const [turns, setTurns] = useState<PersistedTurn[]>([]);
+  const [postingTurn, setPostingTurn] = useState(false);
+  // formRef: target for the manual-edit link's scrollIntoView (D-15).
+  const formRef = useRef<HTMLDivElement | null>(null);
 
   async function handleDelete() {
     if (!recipe) return;
@@ -105,6 +136,25 @@ export default function RecipeDetailPage() {
     };
   }, [id, refreshPhotoUrls]);
 
+  // Phase 27 CAPTURE-04 — initial fetch of the persisted thread.
+  // One-shot on mount; realtime updates land via the WS subscription below.
+  useEffect(() => {
+    if (!id) return;
+    let alive = true;
+    api<PersistedTurn[]>(`/api/recipes/${id}/turns`)
+      .then((rows) => {
+        if (alive) setTurns(rows);
+      })
+      .catch(() => {
+        // Non-fatal: empty thread is recoverable when the user posts the
+        // next turn; the WS subscription will populate on the next event.
+        if (alive) setTurns([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [id]);
+
   // Realtime: replace the local recipe state when the partner edits or
   // uploads a photo to THIS recipe. Photo URL refresh is also re-driven.
   useEffect(() => {
@@ -124,6 +174,111 @@ export default function RecipeDetailPage() {
       offDeleted();
     };
   }, [realtime, id, refreshPhotoUrls, router]);
+
+  // Phase 27 CAPTURE-04 — realtime turn appends.
+  // Phase 26 D-03 / D-06: `turn.created` fires for every persisted user OR
+  // system turn (broadcast happens AFTER the DB commit, no phantom-turn race).
+  // Phase 26 D-29: `turn.updated` fires when extract_and_process_url_turn
+  // lands the extracted_html_path on a url turn — replace in place by turn.id.
+  useEffect(() => {
+    if (!realtime || !id) return;
+    const offCreated = realtime.onEvent<PersistedTurn>("turn.created", (payload) => {
+      if (payload.recipe_id !== id) return;
+      setTurns((prev) => {
+        // Dedup by id (defensive — the WS frame may arrive before or after
+        // the POST /turns response resolves on the same tab; whichever wins,
+        // the row appears exactly once).
+        if (prev.some((t) => t.id === payload.id)) return prev;
+        return [...prev, payload].sort((a, b) => a.position - b.position);
+      });
+    });
+    const offUpdated = realtime.onEvent<PersistedTurn>("turn.updated", (payload) => {
+      if (payload.recipe_id !== id) return;
+      setTurns((prev) => prev.map((t) => (t.id === payload.id ? payload : t)));
+    });
+    return () => {
+      offCreated();
+      offUpdated();
+    };
+  }, [realtime, id]);
+
+  // Phase 27 CAPTURE-04 — per-turn POST handlers.
+  // Each handler is guarded by `postingTurn` (T-27-05-02 spam mitigation).
+  // Text / voice / url use api() (HttpOnly cookie via Next.js rewrite,
+  // invariant #8). Photo uses raw fetch with FormData + credentials: include
+  // (Phase 26 D-01 multipart endpoint — api() would inject Content-Type:
+  // application/json which would corrupt the FormData boundary).
+
+  const handlePostTextTurn = useCallback(async (text: string) => {
+    if (!id || postingTurn) return;
+    setPostingTurn(true);
+    try {
+      await api(`/api/recipes/${id}/turns`, {
+        method: "POST",
+        body: JSON.stringify({ kind: "text", text }),
+      });
+    } catch {
+      toast.error(tThread("turn_failed"));
+    } finally {
+      setPostingTurn(false);
+    }
+  }, [id, postingTurn, tThread]);
+
+  const handlePostVoiceTurn = useCallback(async (transcript: string) => {
+    if (!id || postingTurn) return;
+    setPostingTurn(true);
+    try {
+      await api(`/api/recipes/${id}/turns`, {
+        method: "POST",
+        body: JSON.stringify({ kind: "voice", transcript }),
+      });
+    } catch {
+      toast.error(tThread("turn_failed"));
+    } finally {
+      setPostingTurn(false);
+    }
+  }, [id, postingTurn, tThread]);
+
+  const handlePostUrlTurn = useCallback(async (url: string) => {
+    if (!id || postingTurn) return;
+    setPostingTurn(true);
+    try {
+      await api(`/api/recipes/${id}/turns`, {
+        method: "POST",
+        body: JSON.stringify({ kind: "url", url }),
+      });
+    } catch {
+      toast.error(tThread("turn_failed"));
+    } finally {
+      setPostingTurn(false);
+    }
+  }, [id, postingTurn, tThread]);
+
+  const handlePostPhotoTurn = useCallback(async (file: File) => {
+    if (!id || postingTurn) return;
+    setPostingTurn(true);
+    try {
+      const fd = new FormData();
+      fd.append("files", file);
+      const res = await fetch(`${API_BASE}/api/recipes/${id}/turns/photo`, {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`photo turn ${res.status}`);
+    } catch {
+      toast.error(tThread("turn_failed"));
+    } finally {
+      setPostingTurn(false);
+    }
+  }, [id, postingTurn, tThread]);
+
+  // Phase 27 CAPTURE-04 — manual-edit link scrolls up to the recipe form.
+  // formRef is attached to a <div className="contents"> wrapper around the
+  // hero + form chunk so scrollIntoView targets the top of the form section.
+  const handleManualEditLinkClick = useCallback(() => {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   if (notFound) {
     return (
@@ -233,107 +388,137 @@ export default function RecipeDetailPage() {
           </div>
         </header>
 
-        {/* Hero — full-bleed photo + paper-grain overlay strip OR no-photo Card fallback */}
-        {photoUrls.length > 0 ? (
-          <div className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-            <img
-              src={photoUrls[0]}
-              alt=""
-              className="aspect-[4/3] w-full rounded-b-2xl object-cover"
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-card/85 backdrop-blur-sm paper-grain px-6 py-4 rounded-b-2xl">
+        {/*
+          Phase 27 CAPTURE-04 — form ref wrapper.
+          `className="contents"` makes this div transparent to flex layout so
+          the children render as direct children of the outer <section>. The
+          ref is the scroll target for the manual-edit link (D-15 + UI-SPEC
+          §"Manual-edit link").
+        */}
+        <div ref={formRef} className="contents">
+          {/* Hero — full-bleed photo + paper-grain overlay strip OR no-photo Card fallback */}
+          {photoUrls.length > 0 ? (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
+              <img
+                src={photoUrls[0]}
+                alt=""
+                className="aspect-[4/3] w-full rounded-b-2xl object-cover"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-card/85 backdrop-blur-sm paper-grain px-6 py-4 rounded-b-2xl">
+                <h1 className="text-display text-foreground">{recipe.title}</h1>
+              </div>
+            </div>
+          ) : (
+            <Card className="paper-grain shadow-card mx-6 my-4 px-6 py-6">
               <h1 className="text-display text-foreground">{recipe.title}</h1>
-            </div>
-          </div>
-        ) : (
-          <Card className="paper-grain shadow-card mx-6 my-4 px-6 py-6">
-            <h1 className="text-display text-foreground">{recipe.title}</h1>
-          </Card>
-        )}
-
-        <div className="px-(--spacing-page-x) flex flex-col gap-(--spacing-section-y) pb-(--spacing-bottom-safe) mt-6">
-          {/* RID-03 — CompletenessCard above body content when percent < 100 (D-20) */}
-          <CompletenessCard recipe={recipe} />
-
-          {/* Metadata pill row — cuisine, moods, protein, prep/servings */}
-          <div className="flex flex-wrap gap-2 items-center">
-            {recipe.cuisine ? (
-              <Badge variant="secondary">{labels.cuisine(recipe.cuisine)}</Badge>
-            ) : null}
-            {recipe.mood.map((m) => (
-              <Badge key={m} variant="secondary">
-                {labels.mood(m)}
-              </Badge>
-            ))}
-            {recipe.main_protein ? (
-              <Badge variant="secondary">{labels.protein(recipe.main_protein)}</Badge>
-            ) : null}
-            {metaSpan ? (
-              <span className="text-sm text-foreground-muted">{metaSpan}</span>
-            ) : null}
-          </div>
-
-          {/* Multi-photo carousel — renders photos 2..N when multi-photo (hero already shows photo 1) */}
-          {photoUrls.length > 1 && (
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 -mx-6 px-6 py-4 scrollbar-none">
-              {photoUrls.slice(1).map((url, i) => (
-                // eslint-disable-next-line @next/next/no-img-element -- signed URL
-                <img
-                  key={i}
-                  src={url}
-                  alt=""
-                  className="h-64 w-64 rounded-lg object-cover snap-start flex-shrink-0"
-                />
-              ))}
-            </div>
+            </Card>
           )}
 
-          {recipe.ingredients && recipe.ingredients.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              <h2 className="text-title">{t("section_ingredients")}</h2>
-              <ul className="border-l-2 border-primary/30 pl-4 flex flex-col gap-2 py-1">
-                {recipe.ingredients.map((ing, i) => {
-                  const qty = ing.quantity != null ? `${ing.quantity}` : "";
-                  const unit = ing.unit ? ` ${ing.unit}` : "";
-                  const lead = `${qty}${unit}`.trim();
-                  return (
-                    <li key={i} className="text-base leading-relaxed">
-                      {lead ? `${lead} ` : ""}
-                      {ing.name}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : null}
+          <div className="px-(--spacing-page-x) flex flex-col gap-(--spacing-section-y) pb-(--spacing-bottom-safe) mt-6">
+            {/* RID-03 — CompletenessCard above body content when percent < 100 (D-20) */}
+            <CompletenessCard recipe={recipe} />
 
-          {recipe.steps && recipe.steps.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              <h2 className="text-title">{t("section_steps")}</h2>
-              <ol className="flex flex-col gap-3 py-1">
-                {recipe.steps.map((s, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="font-display italic text-primary/80 text-base shrink-0">
-                      {i + 1}.
-                    </span>
-                    <span className="text-base leading-relaxed">{s}</span>
-                  </li>
+            {/* Metadata pill row — cuisine, moods, protein, prep/servings */}
+            <div className="flex flex-wrap gap-2 items-center">
+              {recipe.cuisine ? (
+                <Badge variant="secondary">{labels.cuisine(recipe.cuisine)}</Badge>
+              ) : null}
+              {recipe.mood.map((m) => (
+                <Badge key={m} variant="secondary">
+                  {labels.mood(m)}
+                </Badge>
+              ))}
+              {recipe.main_protein ? (
+                <Badge variant="secondary">{labels.protein(recipe.main_protein)}</Badge>
+              ) : null}
+              {metaSpan ? (
+                <span className="text-sm text-foreground-muted">{metaSpan}</span>
+              ) : null}
+            </div>
+
+            {/* Multi-photo carousel — renders photos 2..N when multi-photo (hero already shows photo 1) */}
+            {photoUrls.length > 1 && (
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 -mx-6 px-6 py-4 scrollbar-none">
+                {photoUrls.slice(1).map((url, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- signed URL
+                  <img
+                    key={i}
+                    src={url}
+                    alt=""
+                    className="h-64 w-64 rounded-lg object-cover snap-start flex-shrink-0"
+                  />
                 ))}
-              </ol>
-            </div>
-          ) : null}
+              </div>
+            )}
 
-          <p className="text-sm text-foreground-muted">
-            {t("footer_last_cooked", {
-              when: recipe.last_cooked_at
-                ? formatRelativeFr(recipe.last_cooked_at)
-                : t("never_cooked"),
-            })}{" "}
-            ·{" "}
-            {t("footer_cook_count", { count: recipe.cook_count })}
-          </p>
+            {recipe.ingredients && recipe.ingredients.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <h2 className="text-title">{t("section_ingredients")}</h2>
+                <ul className="border-l-2 border-primary/30 pl-4 flex flex-col gap-2 py-1">
+                  {recipe.ingredients.map((ing, i) => {
+                    const qty = ing.quantity != null ? `${ing.quantity}` : "";
+                    const unit = ing.unit ? ` ${ing.unit}` : "";
+                    const lead = `${qty}${unit}`.trim();
+                    return (
+                      <li key={i} className="text-base leading-relaxed">
+                        {lead ? `${lead} ` : ""}
+                        {ing.name}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
+
+            {recipe.steps && recipe.steps.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <h2 className="text-title">{t("section_steps")}</h2>
+                <ol className="flex flex-col gap-3 py-1">
+                  {recipe.steps.map((s, i) => (
+                    <li key={i} className="flex gap-3">
+                      <span className="font-display italic text-primary/80 text-base shrink-0">
+                        {i + 1}.
+                      </span>
+                      <span className="text-base leading-relaxed">{s}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+
+            <p className="text-sm text-foreground-muted">
+              {t("footer_last_cooked", {
+                when: recipe.last_cooked_at
+                  ? formatRelativeFr(recipe.last_cooked_at)
+                  : t("never_cooked"),
+              })}{" "}
+              ·{" "}
+              {t("footer_cook_count", { count: recipe.cook_count })}
+            </p>
+          </div>
         </div>
+
+        {/*
+          Phase 27 CAPTURE-04 — RecipeThread in detail mode, mounted BELOW the
+          existing form per D-15 + UI-SPEC §"Layout > /recipes/[id]".
+          The thread-meta strip (rendered inside RecipeThread when mode=detail)
+          sits above the chat body, acting as a visual "this section is the
+          thread" header. The manual-link inside the thread calls
+          handleManualEditLinkClick which scrolls up to formRef.
+        */}
+        <RecipeThread
+          mode="detail"
+          recipeId={recipe.id}
+          title={recipe.title}
+          turns={turns}
+          recipeStatus={recipe.status as RecipeStatus}
+          onPostTextTurn={handlePostTextTurn}
+          onPostVoiceTurn={handlePostVoiceTurn}
+          onPostUrlTurn={handlePostUrlTurn}
+          onPostPhotoTurn={handlePostPhotoTurn}
+          onManualEditLinkClick={handleManualEditLinkClick}
+        />
       </section>
       <VoiceModifySheet
         recipeId={recipe.id}
