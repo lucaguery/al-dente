@@ -49,7 +49,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from sqlalchemy import Text, cast, delete as sa_delete, or_, select
+from sqlalchemy import Text, cast, delete as sa_delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.auth import current_member
@@ -70,11 +70,22 @@ from app.schemas.recipe import (
     VoiceModifyRequest,
 )
 from app.services import storage as storage_service
+from app.schemas.recipe_turn import (
+    TurnPayload,
+    TurnResponse,
+    AnswerTurnPayload,
+    ProposalAcceptedPayload,
+    ProposalDismissedPayload,
+    AdvisoryTurnPayload,
+)
 from app.services.llm import (
     apply_voice_modification,
+    extract_and_process_url_turn,  # Phase 26 D-22 url dispatch
+    process_thread_turn,            # Phase 26 D-21/D-22 text/voice/photo dispatch
     promote_draft,
     retry_promotion,
 )
+from app.services.thread import acquire_position_lock
 from app.services.realtime import broadcast_to_household
 from app.services.storage import MAX_BYTES, upload_recipe_photo
 
@@ -799,3 +810,384 @@ async def delete_recipe(
     await broadcast_to_household(
         member.household_id, "recipe.deleted", {"id": str(recipe_id)}
     )
+
+
+# ===========================================================================
+# Phase 26 — Thread API (TURN-01 / TURN-02 / TURN-03 / TURN-04)
+# ===========================================================================
+
+
+# ---------------------------------------------------------------------------
+# Phase 26 — thread-turn handlers (D-10, D-12, D-15, D-16)
+# ---------------------------------------------------------------------------
+
+
+def _apply_answer_turn(
+    db: Session, recipe: Recipe, payload: AnswerTurnPayload
+) -> None:
+    """Phase 26 D-10/D-12 — atomic field-apply + pin.
+
+    Validates that in_reply_to_turn_id points to a `question` turn in the
+    same recipe (D-12). Applies payload.value to recipes.<payload.field>
+    and adds payload.field to recipes.manually_edited_fields (set semantics,
+    sorted for deterministic test assertions per RESEARCH §Area 4). No commit
+    here — caller wraps the insert + this call in one transaction.
+
+    Raises HTTPException(422) on invalid in_reply_to_turn_id.
+    """
+    referenced = db.scalar(
+        select(RecipeTurn).where(
+            RecipeTurn.id == payload.in_reply_to_turn_id,
+            RecipeTurn.recipe_id == recipe.id,
+        )
+    )
+    if referenced is None or referenced.kind != "question":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="in_reply_to_turn_id must reference a question turn in this recipe",
+        )
+    # D-10 atomic apply.
+    setattr(recipe, payload.field, payload.value)
+    # Full reassignment is the safe JSONB idiom (RESEARCH §Area 4 — in-place
+    # list.append on a JSONB column silently fails without flag_modified).
+    current: set[str] = set(recipe.manually_edited_fields or [])
+    current.add(payload.field)
+    recipe.manually_edited_fields = sorted(current)
+
+
+def _apply_proposal_accepted(
+    db: Session, recipe: Recipe, payload: ProposalAcceptedPayload
+) -> None:
+    """Phase 26 D-16 — apply advisory's proposed_value + REMOVE the field pin.
+
+    Reads the referenced advisory turn (must be in same recipe), validates
+    its payload against AdvisoryTurnPayload (Phase 26 D-17 read-side
+    contract), applies proposed_value to recipe.<field>, and discards
+    field from manually_edited_fields (set semantics, sorted).
+
+    Raises HTTPException(422) on invalid in_reply_to_turn_id or malformed
+    advisory payload.
+    """
+    referenced = db.scalar(
+        select(RecipeTurn).where(
+            RecipeTurn.id == payload.in_reply_to_turn_id,
+            RecipeTurn.recipe_id == recipe.id,
+        )
+    )
+    if referenced is None or referenced.kind != "advisory":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="in_reply_to_turn_id must reference an advisory turn in this recipe",
+        )
+    # D-17 — parse the advisory payload via AdvisoryTurnPayload so the
+    # field + proposed_value are typed and structurally validated.
+    try:
+        advisory_payload = AdvisoryTurnPayload.model_validate(
+            {"kind": "advisory", **(referenced.payload or {})}
+        )
+    except Exception as exc:  # noqa: BLE001 — pydantic ValidationError or KeyError
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"referenced advisory turn has malformed payload: {exc!s}",
+        ) from exc
+
+    # Apply proposed value + REMOVE pin (full reassignment idiom).
+    setattr(recipe, advisory_payload.field, advisory_payload.proposed_value)
+    current: set[str] = set(recipe.manually_edited_fields or [])
+    current.discard(advisory_payload.field)
+    recipe.manually_edited_fields = sorted(current)
+
+
+def _validate_proposal_dismissed_ref(
+    db: Session, recipe: Recipe, payload: ProposalDismissedPayload
+) -> None:
+    """Phase 26 D-15 — pure-validation helper.
+
+    Confirms in_reply_to_turn_id points to an advisory turn in the same
+    recipe. No field mutation, no manually_edited_fields touch — dismissal
+    is a state-change-only event (the turn row itself is the state).
+
+    Raises HTTPException(422) on invalid ref.
+    """
+    referenced = db.scalar(
+        select(RecipeTurn).where(
+            RecipeTurn.id == payload.in_reply_to_turn_id,
+            RecipeTurn.recipe_id == recipe.id,
+        )
+    )
+    if referenced is None or referenced.kind != "advisory":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="in_reply_to_turn_id must reference an advisory turn in this recipe",
+        )
+
+
+@router.post(
+    "/{recipe_id}/turns",
+    response_model=TurnResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_turn(
+    recipe_id: UUID,
+    body: TurnPayload,
+    background_tasks: BackgroundTasks,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> TurnResponse:
+    """Phase 26 TURN-01 — append a user turn to a recipe's thread.
+
+    Accepts 6 kinds via TurnPayload discriminated union:
+      text, voice, url, answer, proposal_accepted, proposal_dismissed.
+
+    Photo turns route to POST /recipes/{id}/turns/photo (D-01 split topology).
+
+    Dispatch matrix (D-22):
+      * text / voice → BackgroundTask: process_thread_turn (Phase 29 fills body)
+      * url          → BackgroundTask: extract_and_process_url_turn (closes TODO(productize))
+      * answer       → atomic field-apply + pin (no LLM)
+      * proposal_*   → validated state change (no LLM)
+
+    Every persisted turn broadcasts `turn.created` via broadcast_to_household
+    (invariant #4). Status code is 201 (D-04) regardless of whether a
+    BackgroundTask was scheduled.
+
+    Cross-household → 404 (matches GET /recipes/{id} — no existence leak).
+    No status guard (D-05) — turns can be appended to a recipe in any status.
+    """
+    # Reject photo kind here — multipart endpoint handles it (D-01).
+    if body.kind == "photo":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="photo turns must POST to /recipes/{id}/turns/photo (multipart)",
+        )
+
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recipe not found",
+        )
+
+    # D-18 — serialize position read + insert under per-recipe asyncio Lock.
+    # DB UNIQUE(recipe_id, position) is the backstop (invariant #7 — single worker).
+    lock = await acquire_position_lock(recipe_id)
+    async with lock:
+        max_pos = db.scalar(
+            select(func.max(RecipeTurn.position)).where(
+                RecipeTurn.recipe_id == recipe_id,
+            )
+        )
+        next_position = 0 if max_pos is None else max_pos + 1
+
+        # Strip the discriminator from the persisted payload — kind lives on
+        # the column, payload should not duplicate it.
+        payload_dict = body.model_dump(mode="json", exclude={"kind"})
+
+        turn = RecipeTurn(
+            recipe_id=recipe_id,
+            position=next_position,
+            sender="user",
+            kind=body.kind,
+            payload=payload_dict,
+        )
+        db.add(turn)
+
+        # Kind-specific side effects (all in the same transaction per D-10 / D-16).
+        if body.kind == "answer":
+            _apply_answer_turn(db, recipe, body)
+        elif body.kind == "proposal_accepted":
+            _apply_proposal_accepted(db, recipe, body)
+        elif body.kind == "proposal_dismissed":
+            _validate_proposal_dismissed_ref(db, recipe, body)
+
+        db.commit()
+        db.refresh(turn)
+
+    # D-03 / D-06 — broadcast turn.created with full TurnResponse payload.
+    # RESEARCH §Area 7: commit BEFORE broadcast to avoid phantom-turn race.
+    await broadcast_to_household(
+        member.household_id,
+        "turn.created",
+        TurnResponse.model_validate(turn).model_dump(mode="json"),
+    )
+
+    # D-22 — schedule BackgroundTask only for LLM-triggering kinds.
+    if body.kind in ("text", "voice"):
+        background_tasks.add_task(process_thread_turn, recipe_id, turn.id)
+    elif body.kind == "url":
+        background_tasks.add_task(extract_and_process_url_turn, recipe_id, turn.id)
+    # answer / proposal_accepted / proposal_dismissed → no BackgroundTask
+    # (D-11, D-15, D-16 — verified by log inspection per ROADMAP SC-2 / SC-4).
+
+    return TurnResponse.model_validate(turn)
+
+
+@router.post(
+    "/{recipe_id}/turns/photo",
+    response_model=TurnResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_turn_photo(
+    recipe_id: UUID,
+    background_tasks: BackgroundTasks,
+    files: list[UploadFile] = File(...),
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> TurnResponse:
+    """Phase 26 TURN-01 — multipart photo turn (D-01 split topology).
+
+    Mirrors POST /recipes/photo (the initial capture endpoint) for FOLLOW-UP
+    photo turns on existing recipes. Photos upload via upload_recipe_photo to
+    the recipe-photos bucket; storage paths land in the turn payload as
+    `photo_paths` (D-10 — same shape as the initial photo capture turn).
+
+    Schedules process_thread_turn (D-22) — Phase 29 fills the LLM body.
+    Cross-household → 404.
+    """
+    if not files:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="at least one photo required",
+        )
+    if len(files) > MAX_PHOTOS_PER_CAPTURE:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="at most 4 photos accepted",
+        )
+
+    # Read bytes up-front (mirrors create_photo at line 514).
+    contents: list[bytes] = []
+    total = 0
+    for f in files:
+        data = await f.read(MAX_BYTES + 1)
+        if len(data) > MAX_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"photo exceeds {MAX_BYTES} bytes",
+            )
+        if not data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="empty photo",
+            )
+        total += len(data)
+        if total > GEMINI_PHOTO_TOTAL_BYTES_CAP:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=(
+                    "combined photo size exceeds Gemini 18 MB cap; "
+                    "use fewer or smaller photos"
+                ),
+            )
+        contents.append(data)
+
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recipe not found",
+        )
+
+    # Upload bytes to Storage — same cleanup contract as create_photo (WR-02).
+    paths: list[str] = []
+    try:
+        for content in contents:
+            path = upload_recipe_photo(
+                household_id=member.household_id,
+                recipe_id=recipe_id,
+                content=content,
+            )
+            paths.append(path)
+    except ValueError as exc:
+        _cleanup_partial_uploads(paths)
+        if str(exc) == "oversize":
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="oversize",
+            ) from exc
+        if str(exc) == "unsupported":
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="unsupported media",
+            ) from exc
+        raise
+    except Exception:
+        _cleanup_partial_uploads(paths)
+        raise
+
+    # D-18 — serialize position + insert under per-recipe lock.
+    lock = await acquire_position_lock(recipe_id)
+    async with lock:
+        max_pos = db.scalar(
+            select(func.max(RecipeTurn.position)).where(
+                RecipeTurn.recipe_id == recipe_id,
+            )
+        )
+        next_position = 0 if max_pos is None else max_pos + 1
+
+        turn = RecipeTurn(
+            recipe_id=recipe_id,
+            position=next_position,
+            sender="user",
+            kind="photo",
+            payload={"photo_paths": paths},
+        )
+        db.add(turn)
+        db.commit()
+        db.refresh(turn)
+
+    await broadcast_to_household(
+        member.household_id,
+        "turn.created",
+        TurnResponse.model_validate(turn).model_dump(mode="json"),
+    )
+
+    # D-22 — photo dispatches to process_thread_turn (Phase 29 fills body).
+    background_tasks.add_task(process_thread_turn, recipe_id, turn.id)
+
+    return TurnResponse.model_validate(turn)
+
+
+@router.get(
+    "/{recipe_id}/turns",
+    response_model=List[TurnResponse],
+)
+def list_turns(
+    recipe_id: UUID,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> List[TurnResponse]:
+    """Phase 26 TURN-01 — flat list ordered by position ASC.
+
+    No pagination — couple-scale corpus is 5-50 turns per recipe (D-02).
+    Cross-household → 404 (matches GET /recipes/{id} no-leak contract).
+    200 + [] when no turns exist (defensive — Phase 25 backfill should
+    have inserted position=0 for every surviving recipe).
+    """
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recipe not found",
+        )
+    rows = db.scalars(
+        select(RecipeTurn)
+        .where(RecipeTurn.recipe_id == recipe_id)
+        .order_by(RecipeTurn.position.asc())
+    ).all()
+    return [TurnResponse.model_validate(r) for r in rows]
