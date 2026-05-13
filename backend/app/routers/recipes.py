@@ -1146,7 +1146,12 @@ async def create_turn_photo(
         _cleanup_partial_uploads(paths)
         raise
 
-    # D-18 — serialize position + insert under per-recipe lock.
+    # D-18 — serialize position + insert under per-recipe lock. WR-04: Storage
+    # uploads above happen OUTSIDE the lock (couple-scale ok; two phones rarely
+    # upload to the same recipe in the same second). Compare with create_turn
+    # (JSON) where the lock encompasses the only DB read+write — here it only
+    # serializes the position counter. The DB UNIQUE(recipe_id, position) is
+    # the backstop if two interleaved photo uploads do race.
     lock = await acquire_position_lock(recipe_id)
     async with lock:
         max_pos = db.scalar(
