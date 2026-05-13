@@ -32,6 +32,10 @@ export type Recipe = {
   cook_time_minutes?: number | null;
   difficulty?: string | null;
   description?: string | null;
+  // Phase 24 RID-05 — server-side-sanitized SVG illustration. NULL means
+  // not yet generated OR rejected by the sanitizer. The frontend treats
+  // both identically (BrandIcon fallback via RecipeIllustration).
+  illustration_svg?: string | null;
   servings?: number | null;
   cuisine?: string | null;
   main_protein?: string | null;
