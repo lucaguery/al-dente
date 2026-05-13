@@ -24,9 +24,9 @@
 ### THREAD — Conversation thread data model
 
 - [ ] **THREAD-01**: A new `recipe_turns` table exists with columns `(id UUID PK, recipe_id UUID FK ON DELETE CASCADE, position INTEGER, sender TEXT, kind TEXT, payload JSONB, created_at TIMESTAMPTZ)`, a `UNIQUE (recipe_id, position)` constraint, and an index on `(recipe_id, position)`. Alembic migration adds the table. (issue #20 §Data model)
-- [ ] **THREAD-02**: The `recipes.source_capture` JSONB column is **dropped** in the same Alembic migration that adds `recipe_turns`, with a deterministic backfill: one initial turn per existing recipe inferred from the legacy payload (`type='manual'` → kind `text`; `type='voice'|'photo'|'url'` → matching kind). Every reader of `source_capture` in `backend/app/` is rewritten to read from `recipe_turns` in the same change. No compat shim, no fallback path. (ADR-0001 §Consequences · CLAUDE.md MVP posture)
+- [x] **THREAD-02**: The `recipes.source_capture` JSONB column is **dropped** in the same Alembic migration that adds `recipe_turns`, with a deterministic backfill: one initial turn per existing recipe inferred from the legacy payload (`type='manual'` → kind `text`; `type='voice'|'photo'|'url'` → matching kind). Every reader of `source_capture` in `backend/app/` is rewritten to read from `recipe_turns` in the same change. No compat shim, no fallback path. (ADR-0001 §Consequences · CLAUDE.md MVP posture)
 - [ ] **THREAD-03**: A new `recipes.manually_edited_fields JSONB NOT NULL DEFAULT '[]'::jsonb` column tracks which fields have been manually pinned. The set is mutated by `PUT /recipes/{id}` (form save) and by `answer` turns (chip / stepper). The LLM prompt receives this set so it can emit `advisory` turns instead of silently overwriting. (issue #20 §Data model · ADR-0001 §Consequences)
-- [ ] **THREAD-04**: The four per-surface promotion functions (`promote_quick_draft`, `promote_full_draft`, `promote_voice_draft`, `promote_photo_draft`) in `backend/app/services/llm.py` collapse into one `promote_draft(recipe_id)` that reads the recipe's initial turns and dispatches on the first user turn's `kind`. Single entry point for the BackgroundTask scheduler. (issue #20 §Decision)
+- [x] **THREAD-04**: The four per-surface promotion functions (`promote_quick_draft`, `promote_full_draft`, `promote_voice_draft`, `promote_photo_draft`) in `backend/app/services/llm.py` collapse into one `promote_draft(recipe_id)` that reads the recipe's initial turns and dispatches on the first user turn's `kind`. Single entry point for the BackgroundTask scheduler. (issue #20 §Decision)
 
 ### TURN — Thread API & realtime
 
@@ -60,7 +60,7 @@
 ### MIGRATION — Cutover & cleanup
 
 - [ ] **MIGRATION-01**: The Alembic migration that adds `recipe_turns` + `manually_edited_fields` and drops `source_capture` runs cleanly on prod-shape data (1 household, 21+ seeded recipes, mixed capture surfaces). Migration is reversible via `alembic downgrade -1` for safety, even though MVP posture authorizes the forward cut. (CLAUDE.md MVP posture · Railway `alembic upgrade head` invariant)
-- [ ] **MIGRATION-02**: The idempotent `uv run seed` CLI is updated to use the new thread model — each seeded recipe gets one initial turn matching its legacy capture surface, plus a representative `summary` system turn. `grep -rn "source_capture" backend/` returns zero matches after the change. (v0.2.1 TEST-01 idempotency contract carried forward)
+- [x] **MIGRATION-02**: The idempotent `uv run seed` CLI is updated to use the new thread model — each seeded recipe gets one initial turn matching its legacy capture surface, plus a representative `summary` system turn. `grep -rn "source_capture" backend/` returns zero matches after the change. (v0.2.1 TEST-01 idempotency contract carried forward)
 
 ---
 
@@ -95,9 +95,9 @@ Filled by `gsd-roadmapper` 2026-05-13 from `.planning/ROADMAP.md`. Coverage: 23/
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | THREAD-01 | Phase 25 — Backend foundation | Pending |
-| THREAD-02 | Phase 25 — Backend foundation | Pending |
+| THREAD-02 | Phase 25 — Backend foundation | Complete |
 | THREAD-03 | Phase 25 — Backend foundation | Pending |
-| THREAD-04 | Phase 25 — Backend foundation | Pending |
+| THREAD-04 | Phase 25 — Backend foundation | Complete |
 | TURN-01 | Phase 26 — Thread API & realtime | Pending |
 | TURN-02 | Phase 26 — Thread API & realtime | Pending |
 | TURN-03 | Phase 26 — Thread API & realtime | Pending |
@@ -116,7 +116,7 @@ Filled by `gsd-roadmapper` 2026-05-13 from `.planning/ROADMAP.md`. Coverage: 23/
 | LLM-03 | Phase 29 — LLM prompt rework + completeness wire-up | Pending |
 | LLM-04 | Phase 29 — LLM prompt rework + completeness wire-up | Pending |
 | MIGRATION-01 | Phase 25 — Backend foundation | Pending |
-| MIGRATION-02 | Phase 25 — Backend foundation | Pending |
+| MIGRATION-02 | Phase 25 — Backend foundation | Complete |
 
 **Coverage validation:**
 - Total v0.6 requirements: 23 (THREAD × 4 + TURN × 4 + CAPTURE × 4 + DETAIL × 5 + LLM × 4 + MIGRATION × 2)

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: Conversation Capture
 status: executing
-stopped_at: Phase 25 context gathered
-last_updated: "2026-05-13T10:22:24.852Z"
-last_activity: 2026-05-13 -- Phase 25 execution started
+stopped_at: Completed 25-02-PLAN.md
+last_updated: "2026-05-13T11:11:06.535Z"
+last_activity: 2026-05-13
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-05-13 — v0.6 Conversation Capture mile
 
 Milestone: v0.6 Conversation Capture
 Phase: 25 (backend-foundation) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 25
-Last activity: 2026-05-13 -- Phase 25 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-05-13
 
 Resume: `/gsd-plan-phase 25` to decompose Phase 25 into plans
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0/5 phases complete in v0.6 · 6/6 pr
 | v0.4 (Phases 15-21) | 7 | ✅ Complete |
 | v0.5 (Phases 22-24) | 3 | ✅ Complete (shipped 2026-05-13) |
 | v0.6 (Phases 25-29) | 5 | 🚧 In progress — Phase 25 ready to plan |
+| Phase 25 P02 | 180 | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ See PROJECT.md Key Decisions table. v0.6 milestone-level decisions are locked in
 - One Gemini call per Enregistrer; full thread re-read every run (natural idempotency).
 - `promote_draft(recipe_id)` consolidation in Phase 25.
 - Invariant #5 satisfied by `recipe_turns` going forward.
+- [Phase 25]: promote_draft dispatches on turn.kind (text/voice/photo/url) — single entry point for all five capture surfaces
+- [Phase 25]: Photo bytes uploaded to Storage in router (D-08), paths stored in turn payload; BackgroundTask uses download_recipe_photo for re-extraction
+- [Phase 25]: ON CONFLICT DO UPDATE on UNIQUE(recipe_id, position) for idempotent seed upserts — migration backfilled with random UUIDs making PK-based merge impossible
 
 ### Open Research
 
@@ -105,6 +109,6 @@ Phase 25 may surface schema-level decisions during plan-phase (e.g. exact backfi
 ## Session Continuity
 
 Last activity: 2026-05-13 — v0.6 ROADMAP.md created (5 phases / 23 reqs / coverage 100%)
-Stopped at: Phase 25 context gathered
-Resume file: .planning/phases/25-backend-foundation/25-CONTEXT.md
+Stopped at: Completed 25-02-PLAN.md
+Resume file: None
 Next: `/gsd-plan-phase 25` (Backend foundation — recipe_turns + drop source_capture + promote_draft consolidation + seed update)
