@@ -40,3 +40,11 @@ class Protein(str, Enum):
     egg = "egg"
     legume = "legume"
     none = "none"
+
+
+# Phase 24 RID-02 — Difficulty locked vocabulary (migration 0007).
+# Mirror of frontend/lib/enums.ts Difficulty const — drift is a bug category.
+class Difficulty(str, Enum):
+    easy = "easy"
+    medium = "medium"
+    hard = "hard"

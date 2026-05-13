@@ -78,6 +78,10 @@ class Recipe(Base):
     ingredients: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     steps: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     prep_time_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Phase 24 RID-02 — three new optional recipe-identity columns (migration 0007).
+    cook_time_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    difficulty: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     servings: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cuisine: Mapped[str | None] = mapped_column(Text, nullable=True)
     mood: Mapped[list[str]] = mapped_column(
@@ -138,6 +142,12 @@ class Recipe(Base):
             "main_protein IS NULL OR main_protein IN ("
             "'poultry','redMeat','fish','seafood','egg','legume','none')",
             name="recipes_main_protein_check",
+        ),
+        # Phase 24 RID-02 — difficulty CHECK mirrors cuisine/main_protein pattern
+        # (TEXT + CHECK, not native ENUM — see 24-CONTEXT.md D-10).
+        CheckConstraint(
+            "difficulty IS NULL OR difficulty IN ('easy','medium','hard')",
+            name="recipes_difficulty_check",
         ),
         Index("idx_recipes_household_status", "household_id", "status"),
         Index(

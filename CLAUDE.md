@@ -25,7 +25,7 @@ v0.1 (49 reqs) and v0.2 (31 reqs) shipped 2026-05-08. On **v0.2.1 — Phase 10 (
 
 Cross-cutting rules that are easy to break by editing one file in isolation:
 
-1. **Five capture surfaces, one shape.** `quick`, full-form, `voice`, `photo`, `url` all `POST /recipes/<surface>`, all return a `draft` immediately, all promotion runs **server-side** in a FastAPI `BackgroundTask`. Never promote drafts client-side. WebSocket broadcasts when status flips to `structured`.
+1. **Five capture surfaces, one shape.** `quick`, full-form, `voice`, `photo`, `url` all `POST /recipes/<surface>`, all return a `draft` immediately, all promotion runs **server-side** in a FastAPI `BackgroundTask` (quick and full-form moved from sync `structured`-on-return to BackgroundTask-based rewrite in v0.5 RID-04 — see `.planning/phases/24-recipe-identity/`). Never promote drafts client-side. WebSocket broadcasts when status flips to `structured`.
 2. **Voting state is computed, not stored.** The 5 states (Validé / Pressenti / Contesté / Rejeté / Sans avis) derive from rows in `votes` for `(shortlist_id, recipe_id)` via `services/voting.compute_vote_state`. Don't add a `state` column. The veto window closes on first `CookingLog` for the day.
 3. **Denormalized fields on `recipes`.** `last_cooked_at` and `cook_count` update in the same DB transaction as the `cooking_logs` insert. Don't compute on read.
 4. **Realtime contract.** All household-affecting mutations broadcast via `services/realtime.broadcast_to_household` (`recipe.created`, `recipe.promoted`, `vote.created`, `cooking_log.*`, …). New mutations that should sync between phones must broadcast too.
@@ -36,7 +36,7 @@ Cross-cutting rules that are easy to break by editing one file in isolation:
 
 ## Locked vocabularies
 
-`Season`, `Cuisine`, `Mood`, `Protein`, recipe `status`, vote `value` — defined in **both** `frontend/lib/enums.ts` and the Python `Enum` classes in `backend/app/models/enums.py`. **Drift between the two is a bug category.** Update both in the same change. The v0.2.1 seed script imports the Python enums directly to avoid duplicating values.
+`Season`, `Cuisine`, `Mood`, `Protein`, `Difficulty` (Phase 24 RID-02), recipe `status`, vote `value` — defined in **both** `frontend/lib/enums.ts` and the Python `Enum` classes in `backend/app/models/enums.py`. **Drift between the two is a bug category.** Update both in the same change. The v0.2.1 seed script imports the Python enums directly to avoid duplicating values.
 
 ## Productize-later TODOs
 

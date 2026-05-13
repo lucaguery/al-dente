@@ -95,6 +95,8 @@ MoodLiteral = Literal[
     "adventurous",
 ]
 SeasonLiteral = Literal["spring", "summer", "autumn", "winter"]
+# Phase 24 RID-02 — DifficultyLiteral mirrors frontend/lib/enums.ts Difficulty.
+DifficultyLiteral = Literal["easy", "medium", "hard"]
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +133,10 @@ class GeminiExtractedRecipe(BaseModel):
     ingredients: Optional[list[GeminiIngredient]] = None
     steps: Optional[list[str]] = None
     prep_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+    # Phase 24 RID-02 — three new optional fields (D-13).
+    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+    difficulty: Optional[DifficultyLiteral] = None
+    description: Optional[str] = None
     servings: Optional[int] = Field(default=None, ge=1, le=99)
     cuisine: Optional[CuisineLiteral] = None
     mood: list[MoodLiteral] = Field(default_factory=list)
@@ -168,17 +174,37 @@ _EXTRACT_PROMPT_VOICE = (
     "Extrais les champs structurés de cette recette dictée en français. "
     "Renvoie null pour les champs absents — n'invente rien. Ne mets que des "
     "valeurs des vocabulaires verrouillés pour cuisine, mood, main_protein, "
-    "seasonality."
+    "seasonality. Extrais aussi cook_time_minutes (en minutes), difficulty "
+    "('easy'/'medium'/'hard'), et description (1-2 phrases résumant la recette). "
+    # Phase 24 RID-04 D-27 — catchy-title clause. No extra Gemini round-trip for
+    # voice/photo: the title instruction lives in the existing extract call so
+    # extracted.title IS the catchy version. Voice/photo failure path stays
+    # status='failed' (the whole extract failed, not just the title rewrite).
+    "Le champ title doit être une formule courte et accrocheuse en français "
+    "(max 60 caractères, sans guillemets, sans liste d'ingrédients)."
 )
 _EXTRACT_PROMPT_PHOTOS = (
     "Voici une recette photographiée (1 à 4 images). Extrais les champs "
     "structurés en français. Renvoie null pour les champs absents — n'invente "
-    "rien."
+    "rien. Extrais aussi cook_time_minutes (en minutes), difficulty "
+    "('easy'/'medium'/'hard'), et description (1-2 phrases résumant la recette). "
+    # Phase 24 RID-04 D-27 — same catchy-title clause as _EXTRACT_PROMPT_VOICE.
+    "Le champ title doit être une formule courte et accrocheuse en français "
+    "(max 60 caractères, sans guillemets, sans liste d'ingrédients)."
 )
 _MODIFY_PROMPT = (
     "Voici une recette existante (JSON) et une instruction de modification "
     "dictée en français. Renvoie la recette MODIFIÉE en respectant le même "
     "schéma. Conserve les champs non concernés tels quels."
+)
+
+# Phase 24 RID-04 D-25 — plain-text title-rewrite prompt. No JSON schema;
+# response.text is the bare-text accessor. Prompt verbatim from gh#10 / D-25.
+_REWRITE_TITLE_PROMPT = (
+    "Réécris ce titre de recette pour qu'il soit court et accrocheur en "
+    "français. Pas plus de 60 caractères. Ne mets pas la liste des ingrédients "
+    "dans le titre. Renvoie UNIQUEMENT le nouveau titre, sans guillemets, "
+    "sans préfixe."
 )
 
 _GEMINI_MODEL = "gemini-2.5-flash"
@@ -290,6 +316,48 @@ def apply_voice_modification(
 
 
 # ---------------------------------------------------------------------------
+# Phase 24 RID-04 — title rewrite (D-25)
+# ---------------------------------------------------------------------------
+
+
+def rewrite_title(original_title: str, recipe_context: dict[str, Any]) -> str:
+    """Phase 24 RID-04 — rewrite a recipe title into a catchy French phrasing.
+
+    Returns a stripped, length-capped (≤60 char) plain-text string.
+    Raises ValueError on empty Gemini output; raises whatever google-genai
+    raises on API errors. Callers (promote_quick_draft / promote_full_draft)
+    wrap this in try/except and route failures through _record_rewrite_failure.
+
+    recipe_context is reserved for future enrichment (e.g., passing
+    cuisine/main_protein so Gemini can tailor the rewrite). v1: not used
+    in the prompt — the title alone suffices.
+
+    Plain-text call — no response_schema, no response_mime_type.
+    response.text is the bare-text accessor (RESEARCH.md §Pattern 2 +
+    google-genai SDK models.py). Do NOT use response.parsed — it is None
+    for plain-text calls (RESEARCH.md §Pitfall 4).
+    """
+
+    # D-25 test-mode shortcut: deterministic output for Playwright fixtures.
+    if settings.environment == "test":
+        from app.services.llm_fixtures import canned_rewritten_title
+        return canned_rewritten_title(original_title)
+
+    response = _gemini().models.generate_content(
+        model=_GEMINI_MODEL,
+        contents=[_REWRITE_TITLE_PROMPT, original_title],
+        # No config needed for plain text — default output is text (D-25).
+    )
+    result = (response.text or "").strip()
+    if not result:
+        raise ValueError("Gemini returned empty title rewrite")
+    # Strip newlines defensively (prompt injection mitigation T-24-04-01).
+    # Length cap matches the prompt instruction (60 chars).
+    result = result.replace("\n", " ").strip()
+    return result[:60]
+
+
+# ---------------------------------------------------------------------------
 # Helpers used by the BackgroundTask bodies
 # ---------------------------------------------------------------------------
 
@@ -312,6 +380,10 @@ def _apply_extracted(recipe: Recipe, extracted: GeminiExtractedRecipe) -> None:
     )
     recipe.steps = extracted.steps
     recipe.prep_time_minutes = extracted.prep_time_minutes
+    # Phase 24 RID-02 — write the three new optional fields (D-13).
+    recipe.cook_time_minutes = extracted.cook_time_minutes
+    recipe.difficulty = extracted.difficulty
+    recipe.description = extracted.description
     recipe.servings = extracted.servings
     recipe.cuisine = extracted.cuisine
     recipe.mood = list(extracted.mood) if extracted.mood else []
@@ -358,6 +430,36 @@ def _record_failure(db: Session, recipe: Recipe, exc: Exception) -> None:
     recipe.promotion_error = str(exc)[:500]
     recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
     db.commit()
+
+
+def _record_rewrite_failure(db: Session, recipe: Recipe, exc: Exception) -> None:
+    """Phase 24 RID-04 / D-26 — record a title-rewrite failure WITHOUT failing the row.
+
+    Unlike _record_failure (which sets status='failed' for voice/photo extract
+    failures where the whole extract failed), this sets status='structured'
+    because quick/full-form captures have all their content — only the LLM
+    title polish step failed. The promotion_error column carries context so
+    the retry endpoint can re-run rewrite if the user wants a fresh attempt
+    (D-28). The recipe IS promoted (usable, structured), so we still broadcast
+    recipe.promoted. The frontend treats status='structured' rows as done;
+    promotion_error context only appears when status='failed'.
+
+    Uses log.warning (NOT log.exception) — rewrite failures are expected
+    occasionally (Gemini API hiccups) and don't need stacktrace noise.
+    _record_failure uses log.exception for voice/photo because those failures
+    are catastrophic (the user loses the recipe entirely without retry).
+    """
+
+    log.warning("rewrite failed recipe=%s: %s", recipe.id, exc)
+    recipe.status = "structured"  # KEY DIFFERENCE from _record_failure (D-26)
+    recipe.promotion_error = str(exc)[:500]
+    recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
+    db.commit()
+    # Still broadcast recipe.promoted — the recipe IS promoted, just without
+    # a catchy title. _broadcast_promoted must come after db.commit + refresh
+    # so the payload reflects the just-committed state.
+    db.refresh(recipe)
+    _broadcast_promoted(recipe)
 
 
 # ---------------------------------------------------------------------------
@@ -418,6 +520,80 @@ def promote_photo_draft(recipe_id: UUID, photo_bytes_list: list[bytes]) -> None:
         db.close()
 
 
+def promote_quick_draft(recipe_id: UUID) -> None:
+    """Phase 24 RID-04 — BackgroundTask body for POST /recipes/quick.
+
+    Opens its own SessionLocal() (RESEARCH §Pitfall 3 — the request session
+    is closed by the time this runs). NEVER raises — exceptions route through
+    _record_rewrite_failure which preserves status='structured' (D-26).
+
+    D-31: recipe.created was ALREADY broadcast by the router synchronously
+    before this task ran; we broadcast recipe.promoted on success (and on
+    the rewrite-only-failure path via _record_rewrite_failure).
+    D-29: race policy — if the user edits the title between draft response
+    and this task's commit, the BackgroundTask wins (silent overwrite).
+    Invariant #5: source_capture.payload.title preserves the user's original
+    title forever; only recipe.title is overwritten here.
+    """
+
+    db = SessionLocal()
+    try:
+        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
+        if recipe is None:
+            log.warning("promote_quick: recipe %s vanished", recipe_id)
+            return
+        try:
+            # rewrite_title takes original title + future recipe context.
+            # source_capture.payload.title preserves the user's input forever
+            # (invariant #5); we only overwrite recipe.title here.
+            new_title = rewrite_title(recipe.title, {})
+            recipe.title = new_title  # rewrite_title already caps at 60 chars.
+            recipe.status = "structured"
+            recipe.promotion_error = None
+            recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
+            db.commit()
+            db.refresh(recipe)
+            _broadcast_promoted(recipe)
+        except Exception as exc:  # noqa: BLE001 — must never raise out of task
+            # D-26: rewrite-only failure keeps status='structured' (the user
+            # has a usable recipe; only the polish step failed). The retry
+            # endpoint can re-run rewrite via the promotion_error flag.
+            _record_rewrite_failure(db, recipe, exc)
+    finally:
+        db.close()
+
+
+def promote_full_draft(recipe_id: UUID) -> None:
+    """Phase 24 RID-04 — BackgroundTask body for POST /recipes (full-form).
+
+    Structurally identical to promote_quick_draft. Separated by name so
+    retry_promotion can dispatch based on source_capture.type and route the
+    retry into the appropriate BackgroundTask. In v0.5 RID-04 the two bodies
+    do the same work; future phases may differentiate (e.g., a full-form
+    recipe with ingredients/steps could feed richer context to rewrite_title).
+    """
+
+    db = SessionLocal()
+    try:
+        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
+        if recipe is None:
+            log.warning("promote_full: recipe %s vanished", recipe_id)
+            return
+        try:
+            new_title = rewrite_title(recipe.title, {})
+            recipe.title = new_title
+            recipe.status = "structured"
+            recipe.promotion_error = None
+            recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
+            db.commit()
+            db.refresh(recipe)
+            _broadcast_promoted(recipe)
+        except Exception as exc:  # noqa: BLE001
+            _record_rewrite_failure(db, recipe, exc)
+    finally:
+        db.close()
+
+
 def retry_promotion(recipe_id: UUID) -> None:
     """BackgroundTask body for `POST /recipes/{id}/retry-promotion` (Plan 02).
 
@@ -465,7 +641,18 @@ def retry_promotion(recipe_id: UUID) -> None:
                 ),
             )
             return
-        # url / manual / unknown — should never reach retry path
+        if sc_type == "manual":
+            # Phase 24 RID-04 / D-28 — quick and full-form retry. Both
+            # surfaces land here (source_capture.type == "manual" for both
+            # quick and full per recipes.py). Dispatch to promote_full_draft
+            # which generalizes; structurally identical to promote_quick_draft
+            # at v0.5 (Task 3). db.close() is REQUIRED before calling the
+            # BackgroundTask body — it opens its own SessionLocal (RESEARCH
+            # §Pitfall 3; mirrors the voice branch's db.close() pattern).
+            db.close()
+            promote_full_draft(recipe_id)
+            return
+        # url / unknown — should never reach retry path
         _record_failure(
             db,
             recipe,

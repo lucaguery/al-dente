@@ -90,6 +90,26 @@ def canned_photo_recipe(photo_count: int) -> GeminiExtractedRecipe:
     )
 
 
+def canned_rewritten_title(original_title: str) -> str:
+    """Phase 24 RID-04 D-25 — deterministic catchy-title rewrite for test mode.
+
+    Returned by services/llm.rewrite_title when settings.environment == "test".
+    Returns a fixed catchy phrasing suffixed '(test)' so Playwright assertions
+    can target the rewritten value explicitly (and so a missed test-mode switch
+    is visible in logs).
+
+    The __TEST_FORCE_FAIL__ prefix forces a RuntimeError to test the
+    _record_rewrite_failure path (D-26) deterministically in Playwright specs.
+    Mirrors the force-fail behavior at canned_voice_recipe (D-16-13).
+    """
+    if original_title.startswith(_FORCE_FAIL_PREFIX):
+        raise RuntimeError(
+            "Rewrite forcée à échouer pour les tests (RID-04 D-26). "
+            "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
+        )
+    return "Délices maison (test)"
+
+
 def canned_modified_recipe(
     recipe_json: dict[str, Any], transcript: str
 ) -> GeminiExtractedRecipe:

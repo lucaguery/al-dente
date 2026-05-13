@@ -73,7 +73,9 @@ from app.schemas.recipe import (
 )
 from app.services.llm import (
     apply_voice_modification,
+    promote_full_draft,
     promote_photo_draft,
+    promote_quick_draft,
     promote_voice_draft,
     retry_promotion,
 )
@@ -129,22 +131,38 @@ def _coerce_enum_value(value):
 )
 async def create_full(
     body: RecipeFullCreate,
+    background_tasks: BackgroundTasks,
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
 ) -> RecipeResponse:
-    """RECIPE-01 — full-form create. Server stamps ``status='structured'``."""
+    """RECIPE-01 — full-form create.
+
+    Phase 24 RID-04 D-24: shifted from sync status='structured'-on-return to
+    async BackgroundTask. Now stamps status='draft', queues promote_full_draft
+    which calls rewrite_title and flips to 'structured' with a catchy title.
+    recipe.created still broadcasts sync at the router (D-31); the BackgroundTask
+    emits recipe.promoted on success or rewrite-failure (per _record_rewrite_failure).
+    CLAUDE.md invariant #1 updates in the same atomic commit as this change.
+    Invariant #5: source_capture.payload.title preserves the user's original
+    title forever; recipe.title is overwritten by the BackgroundTask's rewrite.
+    """
 
     recipe = Recipe(
         household_id=member.household_id,
         created_by_member_id=member.id,
-        status="structured",
+        status="draft",  # Phase 24 RID-04 D-24 — was "structured" pre-Phase-24.
         title=body.title,
-        # Invariant 5: full payload kept verbatim so the W2 LLM-promotion path
-        # has the original input forever.
+        # Invariant 5: full payload kept verbatim — source_capture.payload.title
+        # preserves the user's original title forever; recipe.title is overwritten
+        # by the BackgroundTask's rewrite, but source_capture is never touched.
         source_capture={"type": "manual", "payload": body.model_dump(mode="json")},
         ingredients=[i.model_dump() for i in body.ingredients] or None,
         steps=body.steps or None,
         prep_time_minutes=body.prep_time_minutes,
+        # Phase 24 RID-02 — three new optional recipe-identity fields.
+        cook_time_minutes=body.cook_time_minutes,
+        difficulty=body.difficulty,
+        description=body.description,
         servings=body.servings,
         cuisine=body.cuisine.value if body.cuisine else None,
         mood=[m.value for m in body.mood] or [],
@@ -159,8 +177,14 @@ async def create_full(
     db.refresh(recipe)
 
     payload = _to_response_payload(recipe)
-    # REALTIME-02: every household-syncing mutation broadcasts.
+    # REALTIME-02 / D-31: recipe.created broadcasts sync at the router;
+    # recipe.promoted broadcasts from the BackgroundTask on success.
     await broadcast_to_household(member.household_id, "recipe.created", payload)
+
+    # Phase 24 RID-04 D-24 — queue rewrite. The task opens its own
+    # SessionLocal (RESEARCH §Pitfall 3) and runs AFTER the response is sent.
+    background_tasks.add_task(promote_full_draft, recipe.id)
+
     return RecipeResponse.model_validate(recipe)
 
 
@@ -171,13 +195,18 @@ async def create_full(
 )
 async def create_quick(
     body: RecipeQuickCreate,
+    background_tasks: BackgroundTasks,
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
 ) -> RecipeResponse:
     """RECIPE-02 — title-only quick add. Server stamps ``status='draft'``.
 
-    Photo upload is a separate ``POST /recipes/{id}/photos`` call in plan 01-09;
-    the FE chains the two when a photo was attached at quick-add time.
+    Phase 24 RID-04 D-24: rewrite_title runs in a BackgroundTask alongside the
+    existing draft creation. The user's quick-typed title is preserved in
+    source_capture.payload.title forever (invariant #5); recipe.title is
+    overwritten by the catchy rewrite on success (D-29 — BackgroundTask wins).
+
+    Photo upload remains a separate ``POST /recipes/{id}/photos`` call.
     """
 
     recipe = Recipe(
@@ -196,7 +225,13 @@ async def create_quick(
     db.refresh(recipe)
 
     payload = _to_response_payload(recipe)
+    # D-31: recipe.created broadcasts sync at the router; recipe.promoted
+    # broadcasts from the BackgroundTask on success.
     await broadcast_to_household(member.household_id, "recipe.created", payload)
+
+    # Phase 24 RID-04 D-24 — queue rewrite (and downstream illustration in RID-05).
+    background_tasks.add_task(promote_quick_draft, recipe.id)
+
     return RecipeResponse.model_validate(recipe)
 
 

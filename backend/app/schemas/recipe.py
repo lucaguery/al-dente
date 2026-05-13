@@ -26,7 +26,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.models.enums import Cuisine, Mood, Protein, Season
+from app.models.enums import Cuisine, Difficulty, Mood, Protein, Season
+
+# Phase 24 RID-02 — DifficultyLiteral matches the Difficulty enum wire values.
+# Mirrors the CuisineLiteral / ProteinLiteral pattern in services/llm.py for
+# Pydantic validation of the difficulty TEXT column (D-12).
+DifficultyLiteral = Literal["easy", "medium", "hard"]
 
 
 # --- Sub-shapes -------------------------------------------------------------
@@ -60,6 +65,10 @@ class RecipeFullCreate(BaseModel):
     ingredients: List[IngredientItem] = Field(default_factory=list)
     steps: List[str] = Field(default_factory=list)
     prep_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+    # Phase 24 RID-02 — three optional recipe-identity fields (D-12).
+    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+    difficulty: Optional[DifficultyLiteral] = None
+    description: Optional[str] = None
     servings: Optional[int] = Field(default=None, ge=1, le=99)
     cuisine: Optional[Cuisine] = None
     mood: List[Mood] = Field(default_factory=list)
@@ -105,6 +114,10 @@ class RecipeUpdate(BaseModel):
     ingredients: Optional[List[IngredientItem]] = None
     steps: Optional[List[str]] = None
     prep_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+    # Phase 24 RID-02 — three optional recipe-identity fields (D-12).
+    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+    difficulty: Optional[DifficultyLiteral] = None
+    description: Optional[str] = None
     servings: Optional[int] = Field(default=None, ge=1, le=99)
     cuisine: Optional[Cuisine] = None
     mood: Optional[List[Mood]] = None
@@ -136,6 +149,10 @@ class RecipeResponse(BaseModel):
     ingredients: Optional[List[IngredientItem]] = None
     steps: Optional[List[str]] = None
     prep_time_minutes: Optional[int] = None
+    # Phase 24 RID-02 — three optional recipe-identity fields (D-12).
+    cook_time_minutes: Optional[int] = None
+    difficulty: Optional[str] = None
+    description: Optional[str] = None
     servings: Optional[int] = None
     cuisine: Optional[str] = None
     main_protein: Optional[str] = None
