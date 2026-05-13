@@ -34,6 +34,7 @@ NOT in scope:
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
@@ -68,6 +69,7 @@ from app.schemas.recipe import (
     VoiceCaptureRequest,
     VoiceModifyRequest,
 )
+from app.services import storage as storage_service
 from app.services.llm import (
     apply_voice_modification,
     promote_draft,
@@ -75,6 +77,8 @@ from app.services.llm import (
 )
 from app.services.realtime import broadcast_to_household
 from app.services.storage import MAX_BYTES, upload_recipe_photo
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
@@ -138,6 +142,26 @@ def _coerce_enum_value(value):
     Pydantic schema deliberately uses the enum types so input validation runs.
     """
     return value.value if hasattr(value, "value") else value
+
+
+def _cleanup_partial_uploads(paths: list[str]) -> None:
+    """WR-02 — best-effort delete of Storage blobs after a partial-upload failure.
+
+    Called from POST /recipes/photo when one of N uploads raises after some
+    have succeeded. The recipe row is rolled back in the same except block,
+    so leftover blobs have no DB referent and would orphan in Supabase. We
+    swallow per-path delete errors so the original upload exception still
+    surfaces to the client.
+    """
+    if not paths:
+        return
+    try:
+        bucket = storage_service._supabase().storage.from_(storage_service.BUCKET)
+        bucket.remove(paths)
+    except Exception:  # noqa: BLE001 — cleanup is best-effort
+        log.warning(
+            "partial-upload cleanup failed for paths=%s", paths, exc_info=True
+        )
 
 
 @router.post(
@@ -524,8 +548,11 @@ async def create_photo(
 
     # D-08: upload bytes to Supabase Storage BEFORE creating the turn.
     # Path is server-generated (T-25-06 path-traversal guard).
+    # WR-02: if a later upload in the loop raises, best-effort delete the
+    # already-uploaded blobs — otherwise they orphan in Supabase Storage
+    # (the recipe row is rolled back, so they have no DB referent).
+    paths: list[str] = []
     try:
-        paths: list[str] = []
         for content in contents:
             path = upload_recipe_photo(
                 household_id=member.household_id,
@@ -534,6 +561,7 @@ async def create_photo(
             )
             paths.append(path)
     except ValueError as exc:
+        _cleanup_partial_uploads(paths)
         db.rollback()
         if str(exc) == "oversize":
             raise HTTPException(
@@ -545,6 +573,11 @@ async def create_photo(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                 detail="unsupported media",
             ) from exc
+        raise
+    except Exception:
+        # Any other exception (Supabase network error, etc.) — same cleanup contract.
+        _cleanup_partial_uploads(paths)
+        db.rollback()
         raise
 
     # Paths go into BOTH recipes.photo_paths AND the photo turn payload (D-10).
