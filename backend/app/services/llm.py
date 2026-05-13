@@ -608,8 +608,16 @@ def promote_draft(recipe_id: UUID) -> None:
                 _broadcast_promoted(recipe)
 
             elif kind == "voice":
-                transcript = payload.get("transcript") or ""
-                if not transcript.strip():
+                # WR-05: migration 0009 may have backfilled `{"transcript": null}`
+                # for legacy voice rows whose source_capture.payload.transcript was
+                # NULL/missing. Re-promotion (e.g. retry on a still-draft row) would
+                # otherwise flip those rows to status='failed' with no recovery path.
+                # Fall back to recipe.title as a last-resort transcript so the
+                # extraction has at least something to work with.
+                transcript = (payload.get("transcript") or "").strip()
+                if not transcript:
+                    transcript = (recipe.title or "").strip()
+                if not transcript:
                     raise ValueError("promote_draft voice: empty transcript")
                 extracted = extract_from_transcript(transcript)
                 _apply_extracted(recipe, extracted)
