@@ -358,6 +358,49 @@ def rewrite_title(original_title: str, recipe_context: dict[str, Any]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Phase 24 RID-05 — per-recipe SVG illustration generation (D-32)
+# ---------------------------------------------------------------------------
+
+# Plain-text prompt — Gemini returns raw XML text. Caller passes through
+# services/svg_sanitizer.sanitize_recipe_svg before persisting.
+_ILLUSTRATION_PROMPT = (
+    "Crée un pictogramme SVG simple représentant cette recette. "
+    "Trait fin, monochrome. Utilise stroke='currentColor', fill='none', "
+    "viewBox='0 0 160 160'. 1 à 3 paths maximum, pas de texte, pas de "
+    "remplissage de couleur. Renvoie UNIQUEMENT le XML SVG, sans Markdown, "
+    "sans préfixe."
+)
+
+
+def generate_recipe_illustration(recipe_title: str, recipe_context: dict[str, Any]) -> str:
+    """Phase 24 RID-05 — generate a monochrome line-art SVG pictogram for a recipe.
+
+    Returns the RAW Gemini output (unstripped, unsanitized). The caller MUST
+    pass the result through services/svg_sanitizer.sanitize_recipe_svg before
+    persisting. Returning the raw string keeps the trust boundary explicit:
+    this function is the LLM call; the sanitizer is the security gate.
+
+    recipe_context reserved for future enrichment (cuisine/main_protein could
+    hint Gemini toward style choices). v1: title alone.
+    """
+
+    # D-04 test-mode shortcut: deterministic canned SVG for Playwright fixtures.
+    if settings.environment == "test":
+        from app.services.llm_fixtures import canned_recipe_illustration
+        return canned_recipe_illustration(recipe_title)
+
+    response = _gemini().models.generate_content(
+        model=_GEMINI_MODEL,
+        contents=[_ILLUSTRATION_PROMPT, recipe_title],
+        # No config needed for plain text — default output is text (D-32).
+    )
+    result = (response.text or "").strip()
+    if not result:
+        raise ValueError("Gemini returned empty illustration")
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Helpers used by the BackgroundTask bodies
 # ---------------------------------------------------------------------------
 

@@ -110,6 +110,30 @@ def canned_rewritten_title(original_title: str) -> str:
     return "Délices maison (test)"
 
 
+# Phase 24 RID-05 D-32 — deterministic SVG for test mode. Passes the
+# sanitizer (uses only <svg> + <path> with allowed attrs). The returned
+# string is intentionally minimal so Playwright assertions on illustration
+# rendering can target a known shape.
+def canned_recipe_illustration(recipe_title: str) -> str:
+    """Deterministic monochrome SVG pictogram for test mode (RID-05).
+
+    Same __TEST_FORCE_FAIL_ILLUSTRATION__ convention as canned_voice_recipe: a title
+    prefixed with the sentinel raises so the BackgroundTask hits the
+    illustration-failure branch (which leaves illustration_svg=NULL per D-36
+    but does NOT affect recipe.status).
+    """
+    if recipe_title.startswith("__TEST_FORCE_FAIL_ILLUSTRATION__"):
+        raise RuntimeError(
+            "Illustration forcée à échouer pour les tests (RID-05 D-36)."
+        )
+    return (
+        '<svg viewBox="0 0 160 160" fill="none" stroke="currentColor" '
+        'xmlns="http://www.w3.org/2000/svg">'
+        '<path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z"/>'
+        '</svg>'
+    )
+
+
 def canned_modified_recipe(
     recipe_json: dict[str, Any], transcript: str
 ) -> GeminiExtractedRecipe:
