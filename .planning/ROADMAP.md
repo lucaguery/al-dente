@@ -69,12 +69,12 @@ Plans:
   3. The « Enregistrer » button is always visible above the composer from the moment the user has either a title or ≥1 pending bubble; tapping it creates the draft and persists each pending bubble as one initial user turn in entry order before scheduling the BackgroundTask once over the full thread.
   4. After save the user lands on `/recipes/[id]`, the conversation continues there, and the post-LLM `summary` turn + any `question` turns append inline within ~2s — the screen does not surface generic pre-save questions.
 **Invariants touched**: #1 (capture pipeline — the five-surface convergence is no longer just behavioral; the UI now reflects the single-shape contract)
-**Plans:** 2/5 plans executed
+**Plans:** 4/5 plans executed
 Plans:
 - [x] 27-01-PLAN.md — Backend cleanup: POST /recipes empty body + POST /recipes/{id}/promote (D-13b) + delete 4 legacy capture endpoints + drop legacy frontend helpers (CAPTURE-03)
 - [x] 27-02-PLAN.md — Build shared RecipeThread component directory (orchestrator + Bubble + SystemBubble + Composer + VoiceSheet + UrlSheet + PhotoMenu + types) + recipes.thread.* i18n namespace (CAPTURE-01, CAPTURE-02, CAPTURE-04)
-- [ ] 27-03-PLAN.md — Demolition (5 tab components + /inbox + RecipeDraftCard + i18n prune) + rewrite /recipes/new/page.tsx mounting RecipeThread with save flow (CAPTURE-01, CAPTURE-02, CAPTURE-03)
-- [ ] 27-04-PLAN.md — BottomNav 4→3 redistribution + RecipeCard « Échec » pill + /recipes list documentation (CAPTURE-02)
+- [x] 27-03-PLAN.md — Demolition (5 tab components + /inbox + RecipeDraftCard + i18n prune) + rewrite /recipes/new/page.tsx mounting RecipeThread with save flow (CAPTURE-01, CAPTURE-02, CAPTURE-03)
+- [x] 27-04-PLAN.md — BottomNav 4→3 redistribution + RecipeCard « Échec » pill + /recipes list documentation (CAPTURE-02)
 - [ ] 27-05-PLAN.md — Mount RecipeThread on /recipes/[id] in detail mode with turns fetch + turn.created/updated WS subscription + manual-link scroll (CAPTURE-04)
 **UI hint**: yes
 
@@ -113,7 +113,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 |-------|-----------|----------------|--------|-----------|
 | 25. Backend foundation | v0.6 | 3/3 | Complete    | 2026-05-13 |
 | 26. Thread API & realtime | v0.6 | 4/4 | Complete    | 2026-05-13 |
-| 27. Conversational capture screen | v0.6 | 2/5 | In Progress|  |
+| 27. Conversational capture screen | v0.6 | 4/5 | In Progress|  |
 | 28. Recipe-detail thread | v0.6 | 0/TBD | Not started | - |
 | 29. LLM prompt rework + completeness wire-up | v0.6 | 0/TBD | Not started | - |
 
