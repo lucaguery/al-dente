@@ -1,34 +1,37 @@
 "use client";
 
-// UI-SPEC §"Surface-by-Surface Pinning" §8 — Rapide vs Complète tabs.
-// Rapide: title + optional photo → POST /api/recipes/quick → optional
-//         POST /api/recipes/{id}/photos → /inbox
-// Complète: full form via RecipeForm → POST /api/recipes → /recipes/[id]
+// Phase 27 CAPTURE-01..03 — conversational capture screen.
 //
-// Auth — Phase 01.1 cookie model: api() wrapper uses credentials:"include"
-// and `/api/*` paths get rewritten by Vercel to Railway. The fetch() call
-// for photo upload (multipart) bypasses the api() helper because it can't
-// JSON-stringify FormData — but it still uses credentials:"include".
+// Mounts <RecipeThread mode="capture" /> from Plan 27-02. Owns the pending-
+// bubbles state, the photo-bytes running total, the saving flag, and the
+// Enregistrer save-flow choreography per CONTEXT.md D-12 + D-13b:
+//
+//   1. createBlankRecipe()                       -> draft row, no promote_draft scheduled yet
+//   2. for each bubble in entry order:
+//        - text/voice/url: POST /api/recipes/{id}/turns (JSON)
+//        - photo:           POST /api/recipes/{id}/turns/photo (multipart, single file)
+//   3. promoteDraft(recipe.id)                   -> schedules the ONE Gemini run
+//   4. router.replace(`/recipes/${recipe.id}`)   -> conversation continues on /recipes/[id]
+//
+// Back-with-pending-bubbles guard: window.confirm(t("discard_confirm")) per
+// UI-SPEC Claude's Discretion resolution. PWA force-quit drops pending state
+// (no localStorage persistence — TODO(productize) inline).
+//
+// The five tabbed capture surfaces from v0.5 are gone (CONTEXT.md D-09 + D-11).
+// This file is now the only entry point for capture.
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Loader2, ChevronLeft } from "lucide-react";
-import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
-import { RecipeForm, type RecipeBody } from "@/components/RecipeForm";
+import { createBlankRecipe, promoteDraft } from "@/lib/recipes";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
-import type { Recipe } from "@/lib/recipes";
-import { VoiceCaptureTab } from "@/components/VoiceCaptureTab";
-import { PhotoCaptureTab } from "@/components/PhotoCaptureTab";
-import { UrlCaptureTab } from "@/components/UrlCaptureTab";
+import RecipeThread from "@/components/RecipeThread";
+import type { PendingBubble } from "@/components/RecipeThread/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
@@ -42,207 +45,189 @@ export default function RecipeNewPage() {
 
 function Inner() {
   const router = useRouter();
-  const t = useTranslations("recipes.new");
+  // recipes.new.tab_title = "Nouvelle recette" — kept in fr.json (only tab_quick/tab_full were pruned)
+  const tNew = useTranslations("recipes.new");
+  const t = useTranslations("recipes.thread");
   const tCommon = useTranslations("common");
-  const tErr = useTranslations("onboarding.errors");
-  const tPhoto = useTranslations("photo_uploader");
-  const tVoice = useTranslations("recipes.voice");
-  const tPhotoTab = useTranslations("recipes.photo");
-  const tUrl = useTranslations("recipes.url");
-  // TODO(productize): support ?tab= URL param to deep-link a tab (UI-SPEC §"5-tab capture surface").
-  const [tab, setTab] = useState<"quick" | "full" | "voice" | "photo" | "url">("quick");
-  const [quickTitle, setQuickTitle] = useState("");
-  const [quickPhoto, setQuickPhoto] = useState<File | null>(null);
-  // Two-stage progress: "title" (POSTing /api/recipes/quick),
-  // "photo" (POSTing /photos), null (idle).
-  const [quickStage, setQuickStage] = useState<null | "title" | "photo">(null);
 
-  // RECIPE-02: Rapide MUST honor "title only and an optional photo". Two-step
-  // flow:
-  //   1. POST /api/recipes/quick { title } → returns the new draft's id
-  //   2. If a photo was attached: POST /api/recipes/{id}/photos (multipart)
-  //   3. Toast + route to /inbox regardless of photo outcome (the draft is
-  //      the durable artifact).
-  //   4. If photo upload fails, the draft is still saved — surface a softer
-  //      toast that says so.
-  async function submitQuick() {
-    setQuickStage("title");
-    let createdId: string | null = null;
-    try {
-      const r = await api<Recipe>("/api/recipes/quick", {
-        method: "POST",
-        body: JSON.stringify({ title: quickTitle.trim() }),
-      });
-      createdId = r.id;
-    } catch {
-      toast.error(tErr("network"));
-      setQuickStage(null);
-      return;
-    }
+  // TODO(productize) — pending bubbles are ephemeral (in React state only).
+  // If the user closes the page or force-quits the PWA, pending state is lost.
+  // Pre-save persistence could be wired via IndexedDB in a future milestone.
+  const [pendingBubbles, setPendingBubbles] = useState<PendingBubble[]>([]);
+  const [saving, setSaving] = useState(false);
 
-    // No photo attached → done.
-    if (!quickPhoto) {
-      toast.success(t("saved_toast"));
-      setQuickStage(null);
-      router.replace(`/inbox`);
-      return;
-    }
+  // Photo cap state (D-03 + UI-SPEC §"Photo-bytes cap surfacing").
+  const photoTotalBytes = pendingBubbles.reduce(
+    (acc, b) => (b.kind === "photo" ? acc + b.sizeBytes : acc),
+    0,
+  );
+  const photoCount = pendingBubbles.filter((b) => b.kind === "photo").length;
 
-    // Photo attached → step 2. Multipart upload via fetch (api() can't carry
-    // FormData because it default-sets Content-Type: application/json).
-    setQuickStage("photo");
-    try {
-      const fd = new FormData();
-      fd.append("file", quickPhoto);
-      const res = await fetch(
-        `${API_BASE}/api/recipes/${createdId}/photos`,
-        {
-          method: "POST",
-          body: fd,
-          credentials: "include",
-        },
-      );
-      if (!res.ok) {
-        // Soft failure: draft was saved; only the photo failed.
-        toast.warning(t("saved_without_photo"));
-      } else {
-        toast.success(t("saved_toast"));
+  // Object-URL cleanup: when a photo bubble is removed or the component
+  // unmounts, revoke the local preview URL to avoid memory leaks
+  // (T-02-04-01 carried forward from PhotoCaptureTab).
+  useEffect(() => {
+    return () => {
+      for (const b of pendingBubbles) {
+        if (b.kind === "photo") {
+          try {
+            URL.revokeObjectURL(b.previewUrl);
+          } catch {
+            /* noop */
+          }
+        }
       }
-    } catch {
-      toast.warning(t("saved_without_photo"));
-    } finally {
-      setQuickStage(null);
-      router.replace(`/inbox`);
-    }
-  }
+    };
+    // Intentionally empty dep array — we only revoke on unmount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  async function submitFull(body: RecipeBody) {
+  const addPendingBubble = useCallback(
+    (b: PendingBubble) => {
+      // Photo cap enforcement (one source of truth — RecipeThread/index.tsx
+      // also checks, but the page owns the canonical state).
+      if (b.kind === "photo") {
+        const TOTAL_CAP = 18 * 1024 * 1024; // 18 MB, matches backend GEMINI_PHOTO_TOTAL_BYTES_CAP
+        const MAX_PHOTOS = 4;
+        if (photoCount >= MAX_PHOTOS) {
+          toast.error(t("photo_cap_exceeded"));
+          try {
+            URL.revokeObjectURL(b.previewUrl);
+          } catch {
+            /* noop */
+          }
+          return;
+        }
+        if (photoTotalBytes + b.sizeBytes > TOTAL_CAP) {
+          toast.error(t("photo_cap_exceeded"));
+          try {
+            URL.revokeObjectURL(b.previewUrl);
+          } catch {
+            /* noop */
+          }
+          return;
+        }
+      }
+      setPendingBubbles((prev) => [...prev, b]);
+    },
+    [photoTotalBytes, photoCount, t],
+  );
+
+  const dismissPendingBubble = useCallback((id: string) => {
+    setPendingBubbles((prev) => {
+      const removed = prev.find((b) => b.id === id);
+      if (removed && removed.kind === "photo") {
+        try {
+          URL.revokeObjectURL(removed.previewUrl);
+        } catch {
+          /* noop */
+        }
+      }
+      return prev.filter((b) => b.id !== id);
+    });
+  }, []);
+
+  const onSave = useCallback(async () => {
+    if (pendingBubbles.length === 0 || saving) return;
+    setSaving(true);
     try {
-      const r = await api<Recipe>("/api/recipes", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-      toast.success(t("saved_toast"));
-      router.replace(`/recipes/${r.id}`);
-    } catch {
-      toast.error(tErr("network"));
+      // Step 1 — create blank draft (no title field, no bubbles yet).
+      const recipe = await createBlankRecipe();
+
+      // Step 2 — POST each pending bubble as a turn, in entry order.
+      // Sequential awaits keep position order deterministic (Phase 26 D-18
+      // serializes positions server-side too, but sequential POSTs make
+      // the order predictable client-side without relying on the lock).
+      for (const b of pendingBubbles) {
+        if (b.kind === "text") {
+          await api(`/api/recipes/${recipe.id}/turns`, {
+            method: "POST",
+            body: JSON.stringify({ kind: "text", text: b.text }),
+          });
+        } else if (b.kind === "voice") {
+          await api(`/api/recipes/${recipe.id}/turns`, {
+            method: "POST",
+            body: JSON.stringify({ kind: "voice", transcript: b.transcript }),
+          });
+        } else if (b.kind === "url") {
+          await api(`/api/recipes/${recipe.id}/turns`, {
+            method: "POST",
+            body: JSON.stringify({ kind: "url", url: b.url }),
+          });
+        } else if (b.kind === "photo") {
+          // Multipart — bypass api() helper because it default-sets
+          // Content-Type: application/json (Phase 26 D-01 precedent).
+          const fd = new FormData();
+          fd.append("files", b.file);
+          const res = await fetch(
+            `${API_BASE}/api/recipes/${recipe.id}/turns/photo`,
+            {
+              method: "POST",
+              body: fd,
+              credentials: "include",
+            },
+          );
+          if (!res.ok) throw new Error(`photo turn ${res.status}`);
+        }
+      }
+
+      // Step 3 — coalesced promote (D-13b).
+      await promoteDraft(recipe.id);
+
+      // Step 4 — land on the detail page where the thread continues.
+      router.replace(`/recipes/${recipe.id}`);
+    } catch (err) {
+      console.error("save flow failed", err);
+      toast.error(t("turn_failed"));
+      setSaving(false);
     }
-  }
+  }, [pendingBubbles, saving, router, t]);
+
+  const onBackArrow = useCallback(() => {
+    if (pendingBubbles.length === 0) {
+      router.back();
+      return;
+    }
+    // UI-SPEC Claude's Discretion: window.confirm for low-frequency destructive action.
+    if (window.confirm(t("discard_confirm"))) {
+      // Revoke object URLs before unmount.
+      for (const b of pendingBubbles) {
+        if (b.kind === "photo") {
+          try {
+            URL.revokeObjectURL(b.previewUrl);
+          } catch {
+            /* noop */
+          }
+        }
+      }
+      router.back();
+    }
+  }, [pendingBubbles, router, t]);
 
   return (
-    <Tabs
-      value={tab}
-      onValueChange={(v) =>
-        setTab(v as "quick" | "full" | "voice" | "photo" | "url")
-      }
-      className="flex flex-col flex-1"
-    >
+    <section className="flex flex-col h-[100dvh]">
       <header className="sticky top-0 z-10 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border">
         <Button
           size="icon"
           variant="ghost"
           aria-label={tCommon("back")}
-          asChild
+          onClick={onBackArrow}
         >
-          <Link href="/recipes">
-            <ChevronLeft className="h-5 w-5" />
-          </Link>
+          <ChevronLeft className="h-5 w-5" />
         </Button>
-        <span className="text-page-header">{t("tab_title")}</span>
+        <span className="text-page-header">{tNew("tab_title")}</span>
         <span className="w-10" aria-hidden />
       </header>
-      <TabsList className="mx-(--spacing-page-x) mt-4 w-auto overflow-x-auto scrollbar-none flex">
-        <TabsTrigger value="quick" className="flex-1 min-w-[64px]">
-          {t("tab_quick")}
-        </TabsTrigger>
-        <TabsTrigger value="full" className="flex-1 min-w-[64px]">
-          {t("tab_full")}
-        </TabsTrigger>
-        <TabsTrigger value="voice" className="flex-1 min-w-[64px]">
-          {tVoice("tab_label")}
-        </TabsTrigger>
-        <TabsTrigger value="photo" className="flex-1 min-w-[64px]">
-          {tPhotoTab("tab_label")}
-        </TabsTrigger>
-        <TabsTrigger value="url" className="flex-1 min-w-[64px]">
-          {tUrl("tab_label")}
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="quick" className="px-(--spacing-page-x) pt-6 pb-32 flex flex-col gap-(--spacing-section-y)">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="quick-title">{t("title_label")}</Label>
-          <Input
-            id="quick-title"
-            value={quickTitle}
-            onChange={(e) => setQuickTitle(e.target.value)}
-            placeholder={t("title_placeholder")}
-            maxLength={200}
-            required
-            autoFocus
-          />
-        </div>
-        {/* RECIPE-02 optional photo. UI-SPEC §10's richer PhotoUploader
-            requires a recipe id (post-save), so the quick-add pre-save
-            stage uses a simpler native file input. The photo is held in
-            component state and uploaded in step 2 of submitQuick.
-            Phase 6 (CAPTURE-08): wrap in paper-grain Card so the row
-            reads as a recipe-card-on-the-counter alongside the form. */}
-        <Card className="paper-grain shadow-card p-4 flex flex-col gap-1.5">
-          <Label htmlFor="quick-photo">{tPhoto("add_label")}</Label>
-          <input
-            id="quick-photo"
-            type="file"
-            accept="image/*"
-            className="block w-full text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium file:text-secondary-foreground"
-            onChange={(e) => setQuickPhoto(e.target.files?.[0] ?? null)}
-          />
-          {quickPhoto != null && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {quickPhoto.name}
-            </p>
-          )}
-        </Card>
-        <div className="fixed bottom-16 inset-x-0 px-(--spacing-page-x) pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 bg-background/80 backdrop-blur-sm border-t border-border z-30">
-          <Button
-            className="h-12 w-full"
-            disabled={!quickTitle.trim() || quickStage !== null}
-            onClick={submitQuick}
-          >
-            {quickStage === "title" ? (
-              <>
-                <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                {tCommon("saving")}
-              </>
-            ) : quickStage === "photo" ? (
-              <>
-                <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                {t("uploading_photo")}
-              </>
-            ) : (
-              t("submit_quick")
-            )}
-          </Button>
-        </div>
-      </TabsContent>
-      <TabsContent value="full" className="-mx-0">
-        <RecipeForm
-          recipeId={null}
-          onSubmit={async (body) => submitFull(body)}
-          submitLabel={t("submit_full")}
-          backHref="/recipes"
-          title={t("tab_title")}
-          withChrome={false}
-        />
-      </TabsContent>
-      <TabsContent value="voice">
-        <VoiceCaptureTab />
-      </TabsContent>
-      <TabsContent value="photo">
-        <PhotoCaptureTab />
-      </TabsContent>
-      <TabsContent value="url">
-        <UrlCaptureTab />
-      </TabsContent>
-    </Tabs>
+      <RecipeThread
+        mode="capture"
+        pendingBubbles={pendingBubbles}
+        onAddPendingBubble={addPendingBubble}
+        onDismissPendingBubble={dismissPendingBubble}
+        photoTotalBytes={photoTotalBytes}
+        saving={saving}
+        onSave={onSave}
+        recipeId={null}
+      />
+    </section>
   );
 }

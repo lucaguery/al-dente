@@ -125,7 +125,7 @@ export function invalidateSignedPhotoUrl(
   }
 }
 
-// --- Phase 2 capture surfaces (W2) ----------------------------------------
+// --- Phase 27 capture helpers (CAPTURE-03) ---------------------------------
 //
 // All helpers use the /api/* rewrite path (Phase 01.1 D-01: Vercel proxies
 // /api/* to Railway). credentials: "include" carries the aldente_auth
@@ -146,47 +146,29 @@ export type GeminiExtractedRecipe = {
   seasonality: string[];
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
-
-/** CAPTURE-01 — POST /api/recipes/voice with the transcript text body. */
-export async function postVoiceCapture(transcript: string): Promise<Recipe> {
-  return api<Recipe>("/api/recipes/voice", {
+/** Phase 27 CAPTURE-03 — POST /api/recipes with empty body. Returns the new
+ *  draft Recipe (status='draft', title='Extraction en cours…',
+ *  initial_turn_kind=null). Used by the conversational capture flow:
+ *  the frontend then POSTs each pending bubble as a /turns request before
+ *  calling promoteDraft to trigger the single LLM run. */
+export async function createBlankRecipe(): Promise<Recipe> {
+  return api<Recipe>("/api/recipes", {
     method: "POST",
-    body: JSON.stringify({ transcript }),
+    body: "{}",
   });
 }
 
-/** CAPTURE-02 — POST /api/recipes/photo with multipart files. The backend
- *  field name is `files` (singular `file` would only accept one). */
-export async function postPhotoCapture(files: File[]): Promise<Recipe> {
-  const fd = new FormData();
-  for (const f of files) {
-    fd.append("files", f);
-  }
-  // FormData can't go through the api() helper because that helper sets
-  // Content-Type: application/json by default. Use raw fetch with the same
-  // credentials policy.
-  const res = await fetch(`${API_BASE}/api/recipes/photo`, {
-    method: "POST",
-    body: fd,
-    credentials: "include",
-  });
-  if (res.status === 413) {
-    // Caller maps to a French error toast via i18n (recipes.photo.error_size_total).
-    throw new Error("413");
-  }
-  if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}`);
-  }
-  return (await res.json()) as Recipe;
-}
-
-/** CAPTURE-03 — POST /api/recipes/url. No Gemini call in v0.1; draft only. */
-export async function postUrlCapture(url: string): Promise<Recipe> {
-  return api<Recipe>("/api/recipes/url", {
-    method: "POST",
-    body: JSON.stringify({ url }),
-  });
+/** Phase 27 CAPTURE-03 / CONTEXT.md D-13b — POST /api/recipes/{id}/promote.
+ *  Schedules promote_draft over the full thread. Frontend calls this ONCE
+ *  after all per-bubble /turns have landed (ADR-0001 "one Gemini call per
+ *  Enregistrer"). */
+export async function promoteDraft(
+  recipeId: string,
+): Promise<{ recipe_id: string; queued: boolean }> {
+  return api<{ recipe_id: string; queued: boolean }>(
+    `/api/recipes/${recipeId}/promote`,
+    { method: "POST" },
+  );
 }
 
 /** CAPTURE-05 — POST /api/recipes/{id}/voice-modify. Returns the modified
