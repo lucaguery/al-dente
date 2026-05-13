@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: Conversation Capture
-status: planning
+status: executing
 stopped_at: Phase 25 context gathered
-last_updated: "2026-05-13T09:56:44.697Z"
-last_activity: 2026-05-13 — Roadmap created (5 phases / 23 requirements mapped / coverage 100%)
+last_updated: "2026-05-13T10:22:24.852Z"
+last_activity: 2026-05-13 -- Phase 25 execution started
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
+  total_plans: 3
   completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-13 — v0.6 Conversation Capture milestone started, closes gh#20 via ADR-0001 design)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** v0.6 Conversation Capture — Phase 25 Backend foundation (recipe_turns + drop source_capture + promote_draft consolidation + seed update).
+**Current focus:** Phase 25 — backend-foundation
 
 ## Current Position
 
 Milestone: v0.6 Conversation Capture
-Phase: 25 of 29 (Backend foundation) — first v0.6 phase
-Plan: — (planning not started)
-Status: Ready to plan
-Last activity: 2026-05-13 — Roadmap created (5 phases / 23 requirements mapped / coverage 100%)
+Phase: 25 (backend-foundation) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 25
+Last activity: 2026-05-13 -- Phase 25 execution started
 
 Resume: `/gsd-plan-phase 25` to decompose Phase 25 into plans
 
