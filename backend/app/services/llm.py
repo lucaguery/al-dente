@@ -54,6 +54,7 @@ from app.db import SessionLocal
 from app.models.recipe import Recipe
 from app.schemas.recipe import RecipeResponse
 from app.services.realtime import broadcast_to_household
+from app.services.svg_sanitizer import sanitize_recipe_svg
 
 log = logging.getLogger(__name__)
 
@@ -510,6 +511,30 @@ def _record_rewrite_failure(db: Session, recipe: Recipe, exc: Exception) -> None
 # ---------------------------------------------------------------------------
 
 
+def _generate_and_sanitize_illustration(recipe_title: str) -> str | None:
+    """Phase 24 RID-05 D-36 — generate + sanitize the per-recipe SVG illustration.
+
+    Returns the sanitized SVG string on success, or None if either Gemini fails
+    OR the sanitizer rejects the output. NEVER raises — the caller's broader
+    try/except catches the catastrophic promotion-failure path; illustration
+    failure is logged and silently downgrades to NULL (frontend BrandIcon fallback).
+    """
+    try:
+        raw_svg = generate_recipe_illustration(recipe_title, {})
+    except Exception as exc:  # noqa: BLE001
+        log.warning("illustration generation failed for %r: %s", recipe_title, exc)
+        return None
+    sanitized = sanitize_recipe_svg(raw_svg)
+    if sanitized is None:
+        log.warning(
+            "illustration rejected by sanitizer for %r (raw=%r)",
+            recipe_title,
+            raw_svg[:200],
+        )
+        return None
+    return sanitized
+
+
 def promote_voice_draft(recipe_id: UUID, transcript: str) -> None:
     """BackgroundTask body for `POST /recipes/voice` (Plan 02).
 
@@ -527,6 +552,11 @@ def promote_voice_draft(recipe_id: UUID, transcript: str) -> None:
         try:
             extracted = extract_from_transcript(transcript)
             _apply_extracted(recipe, extracted)
+            # Phase 24 RID-05 D-36 — illustration generation runs in same
+            # BackgroundTask as the extract. Failure NEVER affects recipe.status;
+            # we leave illustration_svg=NULL and continue with the rest of
+            # promotion. The frontend falls back to BrandIcon for NULL svg.
+            recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
             recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
             db.commit()
             db.refresh(recipe)
@@ -553,6 +583,9 @@ def promote_photo_draft(recipe_id: UUID, photo_bytes_list: list[bytes]) -> None:
         try:
             extracted = extract_from_photos(photo_bytes_list)
             _apply_extracted(recipe, extracted)
+            # Phase 24 RID-05 D-36 — same illustration step as promote_voice_draft.
+            # Failure NEVER affects recipe.status (BrandIcon fallback for NULL svg).
+            recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
             recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
             db.commit()
             db.refresh(recipe)
@@ -591,6 +624,10 @@ def promote_quick_draft(recipe_id: UUID) -> None:
             # (invariant #5); we only overwrite recipe.title here.
             new_title = rewrite_title(recipe.title, {})
             recipe.title = new_title  # rewrite_title already caps at 60 chars.
+            # Phase 24 RID-05 D-36 — illustration after title rewrite so the
+            # illustration prompt uses the catchy title. Failure NEVER affects
+            # recipe.status (BrandIcon fallback for NULL svg).
+            recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
             recipe.status = "structured"
             recipe.promotion_error = None
             recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
@@ -625,6 +662,10 @@ def promote_full_draft(recipe_id: UUID) -> None:
         try:
             new_title = rewrite_title(recipe.title, {})
             recipe.title = new_title
+            # Phase 24 RID-05 D-36 — illustration after title rewrite so the
+            # illustration prompt uses the catchy title. Failure NEVER affects
+            # recipe.status (BrandIcon fallback for NULL svg).
+            recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
             recipe.status = "structured"
             recipe.promotion_error = None
             recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
