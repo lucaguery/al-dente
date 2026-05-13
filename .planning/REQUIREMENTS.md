@@ -19,7 +19,7 @@
 
 ## v0.6 Requirements
 
-22 requirements across 5 categories. Source citations anchor each REQ to issue #20 sections + ADR-0001 sections.
+23 requirements across 6 categories. Source citations anchor each REQ to issue #20 sections + ADR-0001 sections.
 
 ### THREAD — Conversation thread data model
 
@@ -88,10 +88,51 @@ Deferred from v0.6 by explicit decision; revisited in v0.7 or later.
 
 ---
 
-## Traceability (filled by ROADMAP.md)
+## Traceability
 
-_Empty — roadmapper fills the REQ → Phase mapping in the next step._
+Filled by `gsd-roadmapper` 2026-05-13 from `.planning/ROADMAP.md`. Coverage: 23/23 v0.6 requirements mapped to exactly one phase. No orphans, no duplicates.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| THREAD-01 | Phase 25 — Backend foundation | Pending |
+| THREAD-02 | Phase 25 — Backend foundation | Pending |
+| THREAD-03 | Phase 25 — Backend foundation | Pending |
+| THREAD-04 | Phase 25 — Backend foundation | Pending |
+| TURN-01 | Phase 26 — Thread API & realtime | Pending |
+| TURN-02 | Phase 26 — Thread API & realtime | Pending |
+| TURN-03 | Phase 26 — Thread API & realtime | Pending |
+| TURN-04 | Phase 26 — Thread API & realtime | Pending |
+| CAPTURE-01 | Phase 27 — Conversational capture screen | Pending |
+| CAPTURE-02 | Phase 27 — Conversational capture screen | Pending |
+| CAPTURE-03 | Phase 27 — Conversational capture screen | Pending |
+| CAPTURE-04 | Phase 27 — Conversational capture screen | Pending |
+| DETAIL-01 | Phase 28 — Recipe-detail thread | Pending |
+| DETAIL-02 | Phase 28 — Recipe-detail thread | Pending |
+| DETAIL-03 | Phase 28 — Recipe-detail thread | Pending |
+| DETAIL-04 | Phase 28 — Recipe-detail thread | Pending |
+| DETAIL-05 | Phase 28 — Recipe-detail thread | Pending |
+| LLM-01 | Phase 29 — LLM prompt rework + completeness wire-up | Pending |
+| LLM-02 | Phase 29 — LLM prompt rework + completeness wire-up | Pending |
+| LLM-03 | Phase 29 — LLM prompt rework + completeness wire-up | Pending |
+| LLM-04 | Phase 29 — LLM prompt rework + completeness wire-up | Pending |
+| MIGRATION-01 | Phase 25 — Backend foundation | Pending |
+| MIGRATION-02 | Phase 25 — Backend foundation | Pending |
+
+**Coverage validation:**
+- Total v0.6 requirements: 23 (THREAD × 4 + TURN × 4 + CAPTURE × 4 + DETAIL × 5 + LLM × 4 + MIGRATION × 2)
+- Mapped to phases: 23 ✓
+- Orphans: 0
+- Duplicates: 0
+
+**Per-phase requirement counts:**
+- Phase 25 (Backend foundation): 6 reqs — THREAD × 4 + MIGRATION × 2
+- Phase 26 (Thread API & realtime): 4 reqs — TURN × 4
+- Phase 27 (Conversational capture screen): 4 reqs — CAPTURE × 4
+- Phase 28 (Recipe-detail thread): 5 reqs — DETAIL × 5
+- Phase 29 (LLM prompt rework + completeness wire-up): 4 reqs — LLM × 4
+
+**Note on count discrepancy:** The header originally read "22 requirements across 5 categories"; the actual count is 23 across 6 categories (MIGRATION is its own category, distinct from THREAD/TURN/CAPTURE/DETAIL/LLM). Header corrected in this update.
 
 ---
 
-*Defined 2026-05-13. 22 requirements across 5 categories. Design locked via ADR-0001; phase mapping derived by `gsd-roadmapper` continues from v0.5 → starts at Phase 25.*
+*Defined 2026-05-13. 23 requirements across 6 categories. Design locked via ADR-0001; phase mapping derived by `gsd-roadmapper` continues from v0.5 → starts at Phase 25.*
