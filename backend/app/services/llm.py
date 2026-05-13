@@ -515,6 +515,31 @@ def _record_rewrite_failure(db: Session, recipe: Recipe, exc: Exception) -> None
     _broadcast_promoted(recipe)
 
 
+def _record_turn_enrichment_failure(
+    db: Session, recipe: Recipe, turn: RecipeTurn, exc: Exception
+) -> None:
+    """Phase 26 CR-01 — record a turn-side enrichment failure WITHOUT mutating recipe.status.
+
+    Used by extract_and_process_url_turn when the recipe is already past
+    initial promotion (e.g. follow-up url turn on a structured recipe). The
+    recipe is unchanged; the failure surfaces on the turn payload so the FE
+    can render a 'Lien non extrait — réessayer' chip on the url bubble.
+
+    Symmetric to _record_rewrite_failure (which preserves status='structured'
+    when only the title polish step fails). Trafilatura-returns-None hits a
+    10-20% rate per RESEARCH §Area 1 / R-2 on JS-rendered pages; demoting the
+    whole recipe to 'failed' for a follow-up url turn would destroy the
+    library row and force the user through retry-promotion, which would then
+    re-run promote_draft against the position=0 turn and ignore the new url
+    turn entirely.
+    """
+
+    log.warning("turn enrichment failed recipe=%s turn=%s: %s", recipe.id, turn.id, exc)
+    turn.payload = {**(turn.payload or {}), "extraction_error": str(exc)[:500]}
+    flag_modified(turn, "payload")
+    db.commit()
+
+
 # ---------------------------------------------------------------------------
 # BackgroundTask bodies — queued by Plan 02 routers
 # ---------------------------------------------------------------------------
@@ -851,9 +876,23 @@ async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
         process_thread_turn(recipe_id, turn_id)
 
     except Exception as exc:  # noqa: BLE001 — never raise out (R-7 / R-8)
-        if recipe is not None:
-            # Rollback any partial DB state before recording the failure.
-            db.rollback()
+        # Rollback any partial DB state before recording the failure.
+        db.rollback()
+        if recipe is not None and turn is not None:
+            # CR-01 — only demote the recipe to status='failed' when this is an
+            # INITIAL url capture (recipe.status == 'draft'). Follow-up url turns
+            # on already-structured recipes record the failure on the turn payload
+            # so the FE can render 'Lien non extrait — réessayer' without losing
+            # the recipe's library row. Trafilatura-returns-None hits a 10-20%
+            # rate (RESEARCH §Area 1 / R-2); demoting structured recipes on
+            # every JS-rendered URL would be a data-integrity bug.
+            if recipe.status == "draft":
+                _record_failure(db, recipe, exc)
+            else:
+                _record_turn_enrichment_failure(db, recipe, turn, exc)
+        elif recipe is not None:
+            # Pre-turn-lookup failure: no turn row to annotate, fall back to
+            # legacy recipe-level failure marker (preserves prior behavior).
             _record_failure(db, recipe, exc)
         else:
             log.exception("extract_and_process_url_turn: pre-recipe failure recipe=%s turn=%s", recipe_id, turn_id)
