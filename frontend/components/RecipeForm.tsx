@@ -97,7 +97,24 @@ export type RecipeFormValues = {
 // The edit page constructs this map and passes it down so RecipeForm
 // stays ignorant of the routing layer. focusRefs is optional so the
 // new-recipe full tab can render RecipeForm without any focus wiring.
-export type RecipeFormRefs = Partial<Record<FieldKey, RefObject<HTMLElement>>>;
+//
+// Each field is typed with the actual DOM element it attaches to —
+// `RefObject<T>` is invariant in T under React 19's mutable `current`,
+// so a generic `RefObject<HTMLElement>` cannot accept the per-element
+// refs the edit page produces via `useRef<HTMLInputElement>(null)`.
+export type RecipeFormRefs = {
+  title?: RefObject<HTMLInputElement | null>;
+  description?: RefObject<HTMLTextAreaElement | null>;
+  ingredients?: RefObject<HTMLTextAreaElement | null>;
+  steps?: RefObject<HTMLTextAreaElement | null>;
+  prep_time_minutes?: RefObject<HTMLInputElement | null>;
+  cook_time_minutes?: RefObject<HTMLInputElement | null>;
+  servings?: RefObject<HTMLInputElement | null>;
+  difficulty?: RefObject<HTMLButtonElement | null>;
+  cuisine?: RefObject<HTMLButtonElement | null>;
+  mood?: RefObject<HTMLDivElement | null>;
+  main_protein?: RefObject<HTMLButtonElement | null>;
+};
 
 
 export type RecipeBody = {
@@ -292,7 +309,7 @@ export function RecipeForm({
         <Label htmlFor="rf-title">{t("title_label")}</Label>
         <Input
           id="rf-title"
-          ref={focusRefs?.title as RefObject<HTMLInputElement> | undefined}
+          ref={focusRefs?.title}
           value={v.title}
           onChange={(e) => setV({ ...v, title: e.target.value })}
           placeholder={t("title_placeholder")}
@@ -306,7 +323,7 @@ export function RecipeForm({
         <Label htmlFor="rf-description">{t("description_label")}</Label>
         <Textarea
           id="rf-description"
-          ref={focusRefs?.description as RefObject<HTMLTextAreaElement> | undefined}
+          ref={focusRefs?.description}
           rows={3}
           value={v.description}
           onChange={(e) => setV({ ...v, description: e.target.value })}
@@ -317,7 +334,7 @@ export function RecipeForm({
         <Label htmlFor="rf-ingredients">{t("ingredients_label")}</Label>
         <Textarea
           id="rf-ingredients"
-          ref={focusRefs?.ingredients as RefObject<HTMLTextAreaElement> | undefined}
+          ref={focusRefs?.ingredients}
           rows={6}
           value={v.ingredients_text}
           onChange={(e) => setV({ ...v, ingredients_text: e.target.value })}
@@ -328,7 +345,7 @@ export function RecipeForm({
         <Label htmlFor="rf-steps">{t("steps_label")}</Label>
         <Textarea
           id="rf-steps"
-          ref={focusRefs?.steps as RefObject<HTMLTextAreaElement> | undefined}
+          ref={focusRefs?.steps}
           rows={6}
           value={v.steps_text}
           onChange={(e) => setV({ ...v, steps_text: e.target.value })}
@@ -339,7 +356,7 @@ export function RecipeForm({
           <Label htmlFor="rf-prep">{t("prep_time_label")}</Label>
           <Input
             id="rf-prep"
-            ref={focusRefs?.prep_time_minutes as RefObject<HTMLInputElement> | undefined}
+            ref={focusRefs?.prep_time_minutes}
             type="number"
             inputMode="numeric"
             min={0}
@@ -355,7 +372,7 @@ export function RecipeForm({
           <Label htmlFor="rf-cook">{t("cook_time_minutes_label")}</Label>
           <Input
             id="rf-cook"
-            ref={focusRefs?.cook_time_minutes as RefObject<HTMLInputElement> | undefined}
+            ref={focusRefs?.cook_time_minutes}
             type="number"
             inputMode="numeric"
             min={0}
@@ -379,7 +396,7 @@ export function RecipeForm({
           >
             <SelectTrigger
               className="w-full"
-              ref={focusRefs?.difficulty as RefObject<HTMLButtonElement> | undefined}
+              ref={focusRefs?.difficulty}
             >
               <SelectValue placeholder={t("difficulty_placeholder")} />
             </SelectTrigger>
@@ -397,7 +414,7 @@ export function RecipeForm({
           <Label htmlFor="rf-servings">{t("servings_label")}</Label>
           <Input
             id="rf-servings"
-            ref={focusRefs?.servings as RefObject<HTMLInputElement> | undefined}
+            ref={focusRefs?.servings}
             type="number"
             inputMode="numeric"
             min={1}
@@ -417,7 +434,7 @@ export function RecipeForm({
         >
           <SelectTrigger
             className="w-full"
-            ref={focusRefs?.cuisine as RefObject<HTMLButtonElement> | undefined}
+            ref={focusRefs?.cuisine}
           >
             <SelectValue placeholder={t("cuisine_none")} />
           </SelectTrigger>
@@ -435,7 +452,7 @@ export function RecipeForm({
         <Label>{t("mood_label")}</Label>
         <div
           className="flex flex-wrap gap-2"
-          ref={focusRefs?.mood as RefObject<HTMLDivElement> | undefined}
+          ref={focusRefs?.mood}
           tabIndex={focusRefs?.mood ? -1 : undefined}
         >
           {Object.values(Mood).map((m) => {
@@ -471,7 +488,7 @@ export function RecipeForm({
         >
           <SelectTrigger
             className="w-full"
-            ref={focusRefs?.main_protein as RefObject<HTMLButtonElement> | undefined}
+            ref={focusRefs?.main_protein}
           >
             <SelectValue placeholder={t("cuisine_none")} />
           </SelectTrigger>
