@@ -18,6 +18,7 @@
 //   3. advisory "Mettre à jour" / "Ignorer" CTAs -> Phase 28 DETAIL-03
 //   4. summary "Oui, compléter" / "Plus tard"     -> Phase 28 (chip-driven completion)
 
+import type React from "react";
 import { useTranslations } from "next-intl";
 import { Sparkles, ArrowRight } from "lucide-react";
 
@@ -34,7 +35,7 @@ const PRIMARY_CTA_CLASS =
 const GHOST_CTA_CLASS =
   "flex-1 h-9 rounded-[10px] bg-transparent text-muted-foreground border border-border font-semibold text-[13px] cursor-pointer";
 
-export function SystemBubble({ turn }: { turn: PersistedTurn }): JSX.Element | null {
+export function SystemBubble({ turn }: { turn: PersistedTurn }): React.JSX.Element | null {
   const t = useTranslations("recipes.thread");
 
   const kind = turn.kind;
