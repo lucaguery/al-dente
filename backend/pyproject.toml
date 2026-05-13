@@ -18,6 +18,9 @@ dependencies = [
     "apscheduler>=3.11",
     "pywebpush>=2.3",
     "py-vapid>=1.9",
+    "trafilatura>=2.0.0",
+    "lxml>=6.1.0",
+    "httpx>=0.28.1",
 ]
 
 [project.scripts]
