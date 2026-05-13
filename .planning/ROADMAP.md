@@ -36,11 +36,11 @@
   4. `uv run seed` runs idempotently against a clean test DB and produces 21+ seeded recipes each carrying its initial turn + a representative `summary` system turn, with `source_capture` referenced nowhere in the seed code.
   5. `alembic downgrade -1` followed by `alembic upgrade head` runs cleanly on prod-shape data (1 household, 21+ recipes, mixed capture surfaces) — reversibility verified even though MVP posture authorizes the forward cut.
 **Invariants touched**: #1 (capture pipeline shape — all five surfaces now read their initial turn from `recipe_turns`, no `source_capture` reads remain) · #5 (raw inputs preserved — satisfied by `recipe_turns` going forward, `source_capture` retired)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 25-01-PLAN.md — Foundation: Alembic 0009 (table + column + DELETE failed + backfill + drop) + RecipeTurn ORM + Pydantic schemas + locked TurnSender/TurnKind vocabularies in both enum files (THREAD-01, THREAD-03, MIGRATION-01)
 - [x] 25-02-PLAN.md — Backend cutover: collapse promote_*_draft → promote_draft(recipe_id) + 5 router rewrites with photo Storage upload (D-08) + RecipeResponse.initial_turn_kind + seed.py rewrite + backend test fixes (THREAD-02, THREAD-04, MIGRATION-02)
-- [ ] 25-03-PLAN.md — Frontend cutover: Recipe type swap (source_capture → initial_turn_kind), RecipeDraftCard rewrite (manual → text), e2e specs + comment cleanup (THREAD-02 frontend half)
+- [x] 25-03-PLAN.md — Frontend cutover: Recipe type swap (source_capture → initial_turn_kind), RecipeDraftCard rewrite (manual → text), e2e specs + comment cleanup (THREAD-02 frontend half)
 
 #### Phase 26: Thread API & realtime
 **Goal**: Every turn — user-emitted (text / voice / photo / url / answer / proposal_accepted / proposal_dismissed) and system-emitted (summary / question / advisory) — is persisted via one append-only endpoint, broadcast over WebSocket, and (where it triggers the LLM) processed via BackgroundTask. URL extraction stops being a stub.
@@ -100,7 +100,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 25. Backend foundation | v0.6 | 2/3 | In Progress|  |
+| 25. Backend foundation | v0.6 | 3/3 | Complete    | 2026-05-13 |
 | 26. Thread API & realtime | v0.6 | 0/TBD | Not started | - |
 | 27. Conversational capture screen | v0.6 | 0/TBD | Not started | - |
 | 28. Recipe-detail thread | v0.6 | 0/TBD | Not started | - |
