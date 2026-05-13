@@ -619,10 +619,15 @@ def promote_quick_draft(recipe_id: UUID) -> None:
             log.warning("promote_quick: recipe %s vanished", recipe_id)
             return
         try:
-            # rewrite_title takes original title + future recipe context.
-            # source_capture.payload.title preserves the user's input forever
-            # (invariant #5); we only overwrite recipe.title here.
-            new_title = rewrite_title(recipe.title, {})
+            # Read the stable original title from source_capture (invariant #5)
+            # rather than recipe.title, which a concurrent PUT may have already
+            # updated. Falls back to recipe.title for quick captures that have
+            # only minimal source_capture data.
+            original_title = (
+                (recipe.source_capture or {}).get("payload", {}).get("title")
+                or recipe.title
+            )
+            new_title = rewrite_title(original_title, {})
             recipe.title = new_title  # rewrite_title already caps at 60 chars.
             # Phase 24 RID-05 D-36 — illustration after title rewrite so the
             # illustration prompt uses the catchy title. Failure NEVER affects
@@ -660,7 +665,14 @@ def promote_full_draft(recipe_id: UUID) -> None:
             log.warning("promote_full: recipe %s vanished", recipe_id)
             return
         try:
-            new_title = rewrite_title(recipe.title, {})
+            # Read the stable original title from source_capture (invariant #5)
+            # rather than recipe.title, which a concurrent PUT may have already
+            # updated. Falls back to recipe.title if source_capture is absent.
+            original_title = (
+                (recipe.source_capture or {}).get("payload", {}).get("title")
+                or recipe.title
+            )
+            new_title = rewrite_title(original_title, {})
             recipe.title = new_title
             # Phase 24 RID-05 D-36 — illustration after title rewrite so the
             # illustration prompt uses the catchy title. Failure NEVER affects
