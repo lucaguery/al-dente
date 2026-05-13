@@ -881,14 +881,35 @@ def _apply_proposal_accepted(
         )
     # D-17 — parse the advisory payload via AdvisoryTurnPayload so the
     # field + proposed_value are typed and structurally validated.
+    # IN-03 — spread persisted payload FIRST, then pin kind='advisory' so the
+    # discriminator can't be shadowed by a stray payload key.
     try:
         advisory_payload = AdvisoryTurnPayload.model_validate(
-            {"kind": "advisory", **(referenced.payload or {})}
+            {**(referenced.payload or {}), "kind": "advisory"}
         )
     except Exception as exc:  # noqa: BLE001 — pydantic ValidationError or KeyError
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"referenced advisory turn has malformed payload: {exc!s}",
+        ) from exc
+
+    # WR-03 — AdvisoryTurnPayload only enforces shape (field + proposed_value),
+    # NOT per-field value type/range. An LLM-emitted advisory (Phase 29) could
+    # ship `{field: "difficulty", proposed_value: ["evil", "list"]}` and the
+    # naked setattr below would write a list to a text column. Route the
+    # proposed_value through AnswerTurnPayload's per-field validator (mirror
+    # of the answer-turn write path) so trust-boundary discipline is uniform.
+    try:
+        AnswerTurnPayload(
+            kind="answer",
+            in_reply_to_turn_id=payload.in_reply_to_turn_id,
+            field=advisory_payload.field,
+            value=advisory_payload.proposed_value,
+        )
+    except Exception as exc:  # noqa: BLE001 — pydantic ValidationError
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"advisory proposed_value fails per-field validation: {exc!s}",
         ) from exc
 
     # Apply proposed value + REMOVE pin (full reassignment idiom).
