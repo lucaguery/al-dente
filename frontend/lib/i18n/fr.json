@@ -10,7 +10,6 @@
   "nav": {
     "home": "Accueil",
     "recipes": "Recettes",
-    "drafts": "À compléter",
     "settings": "Réglages"
   },
   "home": {
@@ -176,8 +175,6 @@
     "delete_aria": "Supprimer",
     "new": {
       "tab_title": "Nouvelle recette",
-      "tab_quick": "Rapide",
-      "tab_full": "Complète",
       "title_label": "Titre",
       "title_placeholder": "Carbonara express",
       "ingredients_label": "Ingrédients (un par ligne)",
@@ -210,33 +207,12 @@
       "saved_toast": "Recette modifiée"
     },
     "voice": {
-      "tab_label": "Voix",
-      "idle_helper": "Dicte ta recette en français. On la met en forme automatiquement.",
-      "idle_label": "Appuie pour parler",
-      "recording_label": "Appuie pour arrêter",
-      "send": "Envoyer",
-      "restart": "Recommencer",
       "transcript_placeholder": "Dictez via le clavier 🎤 ou tapez votre recette…",
-      "transcript_aria": "Transcription de la recette",
-      "submitted_toast": "Recette en cours d'analyse…",
-      "empty_transcript": "Aucune parole détectée. Réessaie."
+      "transcript_aria": "Transcription de la recette"
     },
     "photo": {
-      "tab_label": "Photo",
-      "empty_heading": "Photographie la recette",
-      "empty_body": "Ajoute jusqu'à 4 photos. Gemini extrait le titre, les ingrédients et les étapes.",
-      "capture": "Capturer la recette",
-      "submitted_toast": "Photos envoyées. Extraction en cours…",
-      "error_size_total": "Photos trop volumineuses. Limite Gemini : 18 Mo cumulés."
     },
     "url": {
-      "tab_label": "URL",
-      "field_label": "URL de la recette",
-      "field_placeholder": "https://…",
-      "helper": "L'extraction automatique arrive bientôt — tu pourras compléter les détails dans la boîte de réception.",
-      "submit": "Ajouter à la boîte de réception",
-      "submitted_toast": "URL ajoutée à la boîte de réception.",
-      "invalid": "URL invalide. Vérifie le format (https://…)."
     },
     "promotion": {
       "in_flight": "Extraction en cours…",
@@ -317,11 +293,6 @@
     "error_size": "Photo non envoyée. Vérifie la taille et réessaie.",
     "error_type": "Format de photo non supporté.",
     "error_network": "Photo non envoyée. Vérifie ta connexion et réessaie."
-  },
-  "inbox": {
-    "tab_title": "À compléter",
-    "empty_heading": "Tout est à jour",
-    "empty_body": "Pas de brouillon à compléter. Les recettes ajoutées rapidement atterriront ici."
   },
   "settings": {
     "title": "Paramètres",
