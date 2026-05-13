@@ -1,5 +1,23 @@
 # Milestones
 
+## v0.5 Mixed Sweep (Shipped: 2026-05-13)
+
+**Phases completed:** 3 phases (22-24), 9 plans, 12 requirements (QW × 3 / DECK × 4 / RID × 5)
+
+**Stats:** Timeline 2026-05-12 → 2026-05-13 (~2 calendar days / ~10 hours wall-clock). 84 commits. 75 files changed, +13,491 / −142 lines. Closed 12 GitHub issues (#10, #11, #12, #13, #14, #15, #16, #17, #18, #21, #22 Part A + Part B).
+
+**Key accomplishments:**
+
+- **Invariant #1 has shifted** — quick + full-form captures moved from sync `structured`-on-return to async `draft → BackgroundTask → structured` shape. `CLAUDE.md` invariant #1 updated in the same atomic commit (`5e6a2ff`) that shipped `rewrite_title()` (RID-04, gh#10). All 5 capture surfaces now share the same async pipeline.
+- **Recipe identity layer** — every recipe acquires an LLM-rewritten "catchy" French title across all capture surfaces (silent overwrite; user title preserved in `source_capture`; `status='structured'` even on rewrite failure per D-26), plus 3 new optional fields (`cook_time_minutes`, `difficulty` with CHECK constraint locked on both sides of the vocabulary boundary, `description`) via Alembic 0007, plus a per-recipe LLM-generated SVG illustration sanitized via stdlib `xml.etree.ElementTree` allowlist (28 unit tests, reject-and-fallback only) and rendered through `dangerouslySetInnerHTML` with `BrandIcon` fallback.
+- **Brand identity surfaces** — new `frontend/components/BrandIcon.tsx` extracted from `app/icon.tsx` pasta-strand SVG with `currentColor` stroke + `ComponentType` structural prop typing, mounted on onboarding welcome (size=72) + drafts inbox + recipes library + both shortlist empty states. PWA Edge-runtime twin (`app/icon.tsx`) preserved.
+- **Recipe completeness nudge** — pure `computeCompleteness()` helper (11 fields, equal weight, strict non-empty rule, 23 Node 24 `--experimental-strip-types` unit tests) + `CompletenessCard.tsx` mounted above body on `/recipes/[id]` when `<100%` with paper-grain shell + chip-links carrying `?focus=<fieldKey>` to the edit page (Suspense-wrapped `useSearchParams()` per Next.js 16 production-build requirement).
+- **Swipe deck polish (one atomic commit per D-23)** — OUI/NON text overlays replaced by `ring-2 ring-inset` color-tinted strokes (Tailwind `overflow-hidden` clipping plain `ring-*` forced the design deviation; REQUIREMENTS.md updated in-commit per D-01); thresholds retuned (`SWIPE_THRESHOLD_PX` 100→140, `SWIPE_VELOCITY_PX_S` 500→750, `SWIPE_FLYOFF_DURATION_S` 0.2s→0.28s; legacy `SWIPE_SPRING` constant deleted); thumbs-up/down icons replaced with filled/outline Hearts (emerald filled, neutral outline); tap-to-detail via `useRouter` + `panRef = useRef(false)` discrimination (`setTimeout(0)` clear path per W-02 iOS Safari research). All four behaviors gated by `prefers-reduced-motion`.
+- **Quick-wins polish** — Geist Mono font dependency dropped entirely (import, `--font-mono` variable, both render call sites swapped to `tabular-nums`); per-device build-stamp `VersionFooter` (`v{version} · {sha} · {env}` from build-time env re-export in `next.config.ts`); `useEnumLabels()` wired into `ShortlistCard` + recipe detail page for cuisine/mood/protein.
+- **Code review at standard depth** — 0 critical / 3 warnings / 3 info findings across Phase 22 / 23 / 24. All 3 Phase 24 warnings (WR-01 idempotent `db.close()` in `retry_promotion`, WR-02 prod-synthetic seed misses Phase 24 fields on 18 of 21 recipes per intended nudge D-16, WR-03 BackgroundTask reads `recipe.title` not `source_capture.payload.title`) acknowledged at couple-scale; all 3 Info fixes (IN-01/02/03) applied via `/gsd-code-review-fix` iteration 2.
+
+---
+
 ## v0.4 Audit Remediation & Identity Polish (Shipped: 2026-05-11)
 
 **Phases completed:** 7 phases, 26 plans, 41 tasks

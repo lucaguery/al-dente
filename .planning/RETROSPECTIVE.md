@@ -51,6 +51,56 @@
 - **Sessions:** 1 long auto-chain session spanning 2 days (interrupted once by usage limit at Plan 14-02 spawn).
 - **Notable:** The two-pass plan-checker (~95K tokens for iteration 1+2 combined) caught a runtime-bug-class issue at planning time. The cost-benefit math favored verification heavily.
 
+## Milestone: v0.5 — Mixed Sweep
+
+**Shipped:** 2026-05-13
+**Phases:** 3 (22–24) | **Plans:** 9 | **Timeline:** 2026-05-12 → 2026-05-13 (~10 hours wall-clock, 2 calendar days)
+
+### What Was Built
+
+- **Quick wins (Phase 22, 3 plans in parallel via worktree-isolated executors):** Geist Mono font dependency dropped entirely (one fewer font request per page load); per-device build-stamp `VersionFooter` (`v{version} · {sha} · {env}`) on /settings via build-time env re-export in `next.config.ts`; `useEnumLabels()` wired into `ShortlistCard` + recipe detail page for cuisine/mood/protein French labels.
+- **Deck polish (Phase 23, 4 requirements in one atomic commit per D-23):** `ring-2 ring-inset` color-tinted strokes replace OUI/NON drag overlays (REQUIREMENTS.md DECK-01 wording rewritten in-commit per D-01 — Tailwind's plain `ring-*` is clipped by `overflow-hidden`); swipe thresholds + spring retuned; thumb buttons swap to filled (emerald) / outline (neutral) Heart icons; tap-to-detail via `useRouter` + `panRef = useRef(false)` discrimination (`setTimeout(0)` clear per W-02 iOS Safari research).
+- **Recipe identity (Phase 24, 5 plans across 2 waves):** new `BrandIcon` extracted from `app/icon.tsx` pasta-strand SVG with `currentColor` stroke + `ComponentType` structural typing, mounted on welcome + 3 empty states (PWA Edge twin preserved per D-09); Alembic 0007 adds 3 new optional recipe fields (`cook_time_minutes`, `difficulty TEXT+CHECK`, `description`) with `Difficulty` enum locked on both Python and TypeScript sides; pure `computeCompleteness()` helper (11 fields equal weight, 23 Node 24 `--experimental-strip-types` unit tests) + `CompletenessCard.tsx` with Suspense-wrapped `?focus=` edit-page navigation; **invariant #1 formally shifted** — `rewrite_title()` BackgroundTask moves quick + full-form from sync `structured`-on-return to async `draft → BackgroundTask → structured`, with `CLAUDE.md` invariant #1 updated in the same atomic commit (`5e6a2ff`); Alembic 0008 + stdlib `xml.etree.ElementTree` allowlist sanitizer (28 unit tests passing, reject-and-fallback per D-33, 4 KB pre-parse cap) + `RecipeIllustration` component using `dangerouslySetInnerHTML` (trust boundary justified by server-side validation) with `BrandIcon` fallback.
+- **Closed 12 GitHub issues** (#10, #11, #12, #13, #14, #15, #16, #17, #18, #21, #22 Part A + Part B) across three coherent themes.
+
+### What Worked
+
+- **Single-atomic-commit-per-phase as an explicit option (Phase 23 D-23).** When 4 requirements share files (`ShortlistCard.tsx` + `swipe-tokens.ts`), shipping them as one commit beats artificially fragmenting them into 4 plans. Tradeoff acknowledged: the commit is larger, but cross-req coherence and merge-churn avoidance dominate at couple-scale.
+- **Wave 1 parallel / Wave 2 serial pattern (Phase 24).** Pure-frontend (RID-01) and pure-backend (RID-02) ran in parallel via worktree-isolated executors (zero shared files); the 3 wave-2 plans all touched `services/llm.py` / `_apply_extracted` and ran serially to avoid merge churn. The dependency analysis is mechanical (shared-file detection) and ships in CONTEXT.md.
+- **Invariant-shift-in-same-commit discipline (RID-04 D-30).** `rewrite_title()` and the `CLAUDE.md` invariant #1 update shipped in commit `5e6a2ff` together. Future readers can't be confused about when the shift happened — git blame is authoritative.
+- **Mid-phase REQ rewrites for discovered constraints (DECK-01 D-01, RID-01 D-08).** When research surfaced that the literal requirement wording was infeasible (`overflow-hidden` clipping plain `ring-*`) or unnecessarily narrow (`EmptyState.icon: LucideIcon` blocking BrandIcon), the requirement text was rewritten in the same commit as the code. Traceability stays clean.
+- **Stdlib over dependency for the SVG sanitizer (RID-05 D-33).** `xml.etree.ElementTree` (Python 3.12 ET is XXE-safe by default) over lxml (absent from `pyproject.toml`) or defusedxml (redundant). Smaller surface area, no new dep, 28 unit tests pin the allowlist.
+- **`/gsd-code-review-fix` two-iteration loop.** Iteration 1 surfaced 3 warnings + 3 info findings. Iteration 2 applied all 3 Info fixes atomically (IN-01 onSubmit signature alignment, IN-02 defensive viewBox strip, IN-03 canned-fixture field completion). Warnings consciously deferred at couple-scale rather than auto-applied.
+
+### What Was Inefficient
+
+- **Plan 24-04 worktree collateral damage.** During the Wave 1 merge, the RID-02 backend files (SQLAlchemy columns, Pydantic schemas, enums, migration 0007) were dropped from the worktree base after their merge into the trunk. Plan 24-04 had to restore them inline as a Rule-3 blocker before its primary work — visible as commit `e758abe` "restore Alembic migration 0007." Cost: ~1 extra commit + executor diagnostic time. Mitigation: Wave 2 setup should verify worktree base contains Wave 1 outputs before spawning.
+- **Plan 24-04 transient Gemini-API failure on first executor pass.** A retry was required; root cause was a network-layer hiccup, not a plan bug. Mitigation: BackgroundTask retry semantics could absorb this at runtime, but the planner doesn't.
+- **DECK-01 design deviation surfaced mid-execution, not in research.** Phase 23's RESEARCH.md correctly identified the SWIPE_OVERLAY_INPUT_PX retune (SE-1), but the "full-card background tint won't work" was discovered in-code when the first attempt clipped under `overflow-hidden`. A pre-research grep for `overflow-hidden` against the target tree could have surfaced this earlier.
+- **MILESTONES.md auto-extraction still noisy.** Same issue surfaced in v0.3 retro — the SUMMARY.md frontmatter doesn't expose a clean `one_liner` field that `gsd-tools frontmatter` can pluck, so the auto-extract grabs "One-liner:" labels as bullet text. v0.5 milestone closure did a manual rewrite pass for the accomplishments block.
+- **REQUIREMENTS.md DECK-01 wording out of sync with success criteria for one commit.** The DECK-01 success criterion in the milestone roadmap still says "full-card color tint" in one place — caught and reconciled during milestone archive, but the roadmap-vs-REQUIREMENTS asymmetry is a recurring cleanup tax.
+
+### Patterns Established
+
+- **Shared-file dependency analysis as the gating heuristic for wave-vs-serial.** "These plans touch `services/llm.py` → serialize them" is a mechanical, file-grep-driven decision. Pattern generalizes: any time multiple plans converge on a single module, serialize unless the changes are truly orthogonal (e.g., adding a new helper vs editing an existing one).
+- **PWA Edge-runtime twin preservation (D-09).** When a component lives in two runtimes (here: `BrandIcon` for React + `app/icon.tsx` for Next.js Edge ImageResponse), the canonical move is to extract the path data once and duplicate the wrapper — not to refactor one into the other. Edge ImageResponse can't import React component files.
+- **Locked-vocabulary expansion ritual.** Adding `Difficulty` enum required updates to 4 spots: `backend/app/models/enums.py` (str Enum), `frontend/lib/enums.ts` (TS literal union), `Postgres CHECK constraint` (via Alembic), `frontend/lib/enum-labels.ts` (translation). The CLAUDE.md "drift between the two is a bug category" invariant is now load-bearing — future enum adds should reference this 4-spot checklist.
+- **Async-pipeline-shape parity across capture surfaces.** All 5 capture surfaces (`quick`, full-form, `voice`, `photo`, `url`) now share the same `draft → BackgroundTask → structured` shape after v0.5. Invariant #1 in `CLAUDE.md` describes a single pipeline contract, not 5 special cases. Future capture surfaces inherit the contract automatically.
+- **Trust-boundary code comment for `dangerouslySetInnerHTML` (RID-05 D-38).** Component prose explains *why* the inner HTML is safe (server-side allowlist sanitizer, 28 unit tests, reject-and-fallback only) instead of just suppressing the lint warning. Future React contributors can audit the trust assumption without reading the entire commit history.
+
+### Key Lessons
+
+- **Invariant shifts are commit-scope decisions, not documentation tasks.** Writing the CLAUDE.md invariant #1 update in the same atomic commit as `rewrite_title()` shipped is the canonical way to ensure documentation and code stay synchronized at the point of change. Splitting the doc update into a follow-up commit invites drift.
+- **Couple-scale review judgment scales differently than enterprise.** WR-01 (idempotent `db.close()`), WR-02 (seed gaps on 18/21 recipes), WR-03 (BackgroundTask edit-race) are all real warnings. At enterprise scale, all three would be Critical. At couple-scale, all three are acknowledged-and-deferred with documented reasoning. The `code_review_depth: "standard"` mode + post-review judgment call is the right shape here.
+- **REQUIREMENTS.md should be edited in the same commit as code that contradicts it.** Two examples in v0.5: DECK-01 ring-vs-tint (commit `98a0112`), RID-05 detail-vs-list placement (deferred to future ticket). The commit is the natural integration point — anything later is drift.
+- **`dangerouslySetInnerHTML` is acceptable when the trust boundary is structurally enforced.** Static analysis can't see the sanitizer; humans can read the comment. The RID-05 sanitizer + 28-test allowlist + reject-and-fallback shape make the boundary auditable.
+
+### Cost Observations
+
+- **Model mix:** Opus-heavy throughout (init JSON: discuss/research/plan/executor all on Opus; verifier + plan-checker on Sonnet — but `workflow.verifier: false` for v0.5).
+- **Sessions:** Multiple sessions over 2 days; one long auto-chain session for Phase 22, one for Phase 23, one for Phase 24 across waves 1 and 2.
+- **Notable:** Plan 24-04 worktree collateral cost ~10 minutes of executor diagnostic time + 1 extra commit. The transient Gemini-API failure on Plan 24-04's first pass added a retry round-trip. Both were absorbed inline by the executor without escalation.
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | Plans | LOC delta | Code-prod drift | Tests added | UI audit |
@@ -58,9 +108,14 @@
 | v0.1 | 5 | 31 | +70,950 | 283 files | 0 | 22.4/24 (v0.2 baseline) |
 | v0.2 | 5 | 26 | (subset of v0.1) | 26 plans | 0 | 22.4/24 mean (best 23/24) |
 | v0.2.1 | 1 | 7 | +9,431 | 56 files | 14 specs | n/a |
-| **v0.3** | **4** | **16** | **+19,075** | **0 (audit-only)** | **0** | **20.21/24 mean (5✅/9⚠/0❌)** |
+| v0.3 | 4 | 16 | +19,075 | 0 (audit-only) | 0 | 20.21/24 mean (5✅/9⚠/0❌) |
+| v0.4 | 7 | 27 | ~+27K | ~140 commits | pytest scaffold + 4 new e2e | 21.71/24 mean (11✅/3⚠/0❌, +1.50) |
+| **v0.5** | **3** | **9** | **+13,491 / −142** | **75 files / 84 commits** | **28 SVG sanitizer unit + 23 completeness unit** | **n/a (no re-score this milestone)** |
 
 **Trends observed:**
-- Milestone scope is shrinking (5 → 5 → 1 → 4 phases), reflecting the shift from build to validate to extend to audit.
-- v0.3 is the FIRST milestone with zero product-code drift. This is by design (audit milestone) but establishes that "milestone = ship code" is not load-bearing.
-- The UI audit baseline of 22.4/24 (v0.2 polish) vs v0.3 mean of 20.21/24 across 14 surfaces is a per-surface vs per-phase calibration difference; not a regression. Pillar 6 (Experience Design) is the load-bearing gap for any future quality push.
+
+- Milestone scope continues to oscillate (5 → 5 → 1 → 4 → 7 → 3 phases). v0.5's 3-phase tightness is the most concentrated post-v0.2.1 — matches the "tight sweep" framing from `/gsd-explore`.
+- v0.5 is the FIRST milestone where Python unit tests (SVG sanitizer, 28 cases) landed as load-bearing for security verification. Combined with the 23 TypeScript completeness unit tests under Node 24 `--experimental-strip-types`, this is also the first milestone running unit tests in TWO languages without adopting a test runner framework (vitest/jest absent).
+- **Architecture invariant #1 has formally shifted** at v0.5 RID-04. This is the first invariant shift across the project — all prior milestones preserved the original 8 invariants verbatim. Future invariant shifts should follow the same pattern: code + `CLAUDE.md` in the same atomic commit.
+- The `code_review_depth: "standard"` default + post-review judgment-call workflow has produced consistent "0 critical / few warnings / few info" rhythms across phases. Couple-scale calibration is settling.
+- Worktree-isolated executor pattern is now standard for parallel wave execution (Phase 22's 3 plans, Phase 24's wave 1). Wave-1-to-wave-2 base-sync remains the recurring failure mode (Plan 24-04 needed RID-02 backend restoration).

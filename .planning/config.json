@@ -1,5 +1,5 @@
 {
-  "model_profile": "quality",
+  "model_profile": "balanced",
   "commit_docs": true,
   "parallelization": true,
   "search_gitignored": false,
@@ -14,8 +14,8 @@
   },
   "workflow": {
     "research": true,
-    "plan_check": true,
-    "verifier": true,
+    "plan_check": false,
+    "verifier": false,
     "nyquist_validation": false,
     "auto_advance": true,
     "node_repair": true,
