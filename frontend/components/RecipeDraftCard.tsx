@@ -8,9 +8,9 @@
 //   3. Failed        → `Échec` badge + Réessayer button kicks retry-promotion
 //
 // Variant selection looks at `recipe.status`, `recipe.promotion_error`, and
-// `recipe.source_capture.type` together because URL drafts (CAPTURE-03) are
+// `recipe.initial_turn_kind` together because URL drafts (CAPTURE-03) are
 // user-completed, not Gemini-promoted — they render the manual variant even
-// though their `source_capture.type !== 'manual'`.
+// though their `initial_turn_kind !== 'text'`. Phase 25 replaces source_capture.type.
 
 import { useState } from "react";
 import Link from "next/link";
@@ -62,7 +62,7 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
     }
   }
 
-  const captureType = recipe.source_capture?.type;
+  const captureType = recipe.initial_turn_kind;
   // Phase 16 CAP-01 / D-16-04: status='failed' is the canonical terminal
   // state. The legacy `promotion_error != null` workaround used pre-Plan-16-03
   // is removed — Plan 16-03's _record_failure now writes status alongside
@@ -71,7 +71,7 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
   const isProcessing =
     recipe.status === "draft" &&
     recipe.promotion_error == null &&
-    captureType !== "manual" &&
+    captureType !== "text" && // was "manual" pre-Phase 25; D-01 maps manual → text
     captureType !== "url"; // URL drafts are user-completed (CAPTURE-03 deferral)
   const isFailed = recipe.status === "failed";
   const isManual = !isProcessing && !isFailed;

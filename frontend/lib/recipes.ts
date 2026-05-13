@@ -9,6 +9,7 @@
 // `t('enums.cuisine.italian')` once that namespace exists in fr.json.
 
 import { api } from "@/lib/api";
+import type { TurnKind } from "@/lib/enums";
 
 export type IngredientItem = {
   name: string;
@@ -22,7 +23,13 @@ export type Recipe = {
   created_by_member_id: string;
   status: "draft" | "structured" | "verified" | "failed";
   title: string;
-  source_capture: { type: string; payload?: unknown };
+  /**
+   * Phase 25 — kind of the first user turn (text/voice/photo/url),
+   * synthesized server-side from recipe_turns for RecipeDraftCard variant
+   * logic. `null` when no first user turn exists (should not happen
+   * post-migration).
+   */
+  initial_turn_kind: TurnKind | null;
   photo_paths: string[];
   ingredients?: IngredientItem[] | null;
   steps?: string[] | null;
