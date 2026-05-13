@@ -808,6 +808,13 @@ def run_prod_synthetic_seed() -> None:
                 ingredients=spec["ingredients"],
                 steps=spec["steps"],
                 prep_time_minutes=spec["prep_time_minutes"],
+                # Phase 24 RID-02 — three new optional recipe-identity fields.
+                cook_time_minutes=spec.get("cook_time_minutes"),
+                difficulty=spec.get("difficulty"),
+                description=spec.get("description"),
+                # Phase 24 RID-05 — canned illustration for 3 seed recipes;
+                # others stay NULL → BrandIcon fallback for DEMO01 household.
+                illustration_svg=spec.get("illustration_svg"),
                 servings=spec["servings"],
                 cuisine=spec["cuisine"],
                 mood=spec["mood"],
