@@ -27,6 +27,7 @@ import { formatRelativeFr } from "@/lib/datetime";
 import { getSignedPhotoUrl } from "@/lib/recipes";
 import { getCookingLogSignedPhotoUrl } from "@/lib/cooking";
 import type { Recipe } from "@/lib/recipes";
+import { RecipeIllustration } from "@/components/RecipeIllustration";
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const t = useTranslations("recipes");
@@ -118,8 +119,10 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
       ) : (
         <div
           aria-hidden
-          className="w-full aspect-[4/3] bg-surface-muted"
-        />
+          className="w-full aspect-[4/3] bg-surface-muted flex items-center justify-center text-foreground-muted"
+        >
+          <RecipeIllustration recipe={recipe} size={64} />
+        </div>
       )}
       <div className="flex flex-col gap-1 px-2.5 pt-2 pb-2.5 min-w-0">
         <h3 className="font-display text-base font-medium leading-tight tracking-tight line-clamp-2">

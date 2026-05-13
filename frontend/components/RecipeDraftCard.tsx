@@ -34,6 +34,7 @@ import {
 import { variants } from "@/lib/motion";
 import { deleteRecipe, postRetryPromotion } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
+import { RecipeIllustration } from "@/components/RecipeIllustration";
 
 export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
   const t = useTranslations("recipes");
@@ -101,10 +102,9 @@ export function RecipeDraftCard({ recipe }: { recipe: Recipe }) {
 
   const inner = (
     <>
-      <div
-        aria-hidden
-        className="h-16 w-16 rounded-lg bg-surface-muted flex-shrink-0"
-      />
+      <div className="h-16 w-16 rounded-lg bg-surface-muted flex-shrink-0 flex items-center justify-center text-foreground-muted">
+        <RecipeIllustration recipe={recipe} size={48} />
+      </div>
       <div className="flex flex-col gap-1.5 flex-1 min-w-0">
         <h3 className="text-base font-semibold leading-6 line-clamp-1">
           {recipe.title}
