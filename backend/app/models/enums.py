@@ -48,3 +48,23 @@ class Difficulty(str, Enum):
     easy = "easy"
     medium = "medium"
     hard = "hard"
+
+
+# Phase 25 THREAD-01 — recipe_turns vocabulary (migration 0009).
+# Mirror of frontend/lib/enums.ts TurnSender + TurnKind const — drift is a bug category.
+class TurnSender(str, Enum):
+    user = "user"
+    system = "system"
+
+
+class TurnKind(str, Enum):
+    text = "text"
+    voice = "voice"
+    photo = "photo"
+    url = "url"
+    answer = "answer"
+    proposal_accepted = "proposal_accepted"
+    proposal_dismissed = "proposal_dismissed"
+    summary = "summary"
+    question = "question"
+    advisory = "advisory"

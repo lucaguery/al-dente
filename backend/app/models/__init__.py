@@ -10,6 +10,7 @@ from app.models.household import Household
 from app.models.member import Member
 from app.models.push_subscription import PushSubscription
 from app.models.recipe import Recipe, RecipeStatus
+from app.models.recipe_turn import RecipeTurn
 from app.models.vote import Vote, VoteValue
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "PushSubscription",
     "Recipe",
     "RecipeStatus",
+    "RecipeTurn",
     "Vote",
     "VoteValue",
 ]

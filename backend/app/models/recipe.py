@@ -1,9 +1,9 @@
 """Recipe model — the canonical entity.
 
-SPEC.md §"Data model" recipes table verbatim, including:
+SPEC.md §"Data model" recipes table (Phase 25 migration 0009 updates):
 - recipe_status enum ('draft', 'structured', 'verified', 'failed')
 - TEXT[] columns for mood, seasonality, tags, photo_paths
-- JSONB columns for source_capture, ingredients, steps
+- JSONB columns for ingredients, steps, manually_edited_fields
 - CHECK constraints on cuisine + main_protein matching the locked vocabularies
 - Denormalized last_cooked_at + cook_count (architecture invariant #3)
 - idx_recipes_household_status, idx_recipes_last_cooked
@@ -67,8 +67,6 @@ class Recipe(Base):
         server_default=text("'draft'::recipe_status"),
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
-    # { type: 'voice'|'photo'|'url'|'manual', payload: ... } — never discarded.
-    source_capture: Mapped[dict] = mapped_column(JSONB, nullable=False)
     photo_paths: Mapped[list[str]] = mapped_column(
         ARRAY(Text),
         nullable=False,
@@ -77,6 +75,11 @@ class Recipe(Base):
     )
     ingredients: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     steps: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    # Phase 25 THREAD-03 (migration 0009) — JSON array of field names edited by the user.
+    # Write path owned by Phase 28 DETAIL-05; default [] means no manual overrides.
+    manually_edited_fields: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb"), default=list
+    )
     prep_time_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Phase 24 RID-02 — three new optional recipe-identity columns (migration 0007).
     cook_time_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)

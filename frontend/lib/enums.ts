@@ -53,3 +53,25 @@ export const Difficulty = {
   hard: "hard",
 } as const;
 export type Difficulty = (typeof Difficulty)[keyof typeof Difficulty];
+
+// Phase 25 THREAD-01 — recipe_turns vocabulary (migration 0009).
+// Mirror of backend/app/models/enums.py classes TurnSender + TurnKind — drift is a bug category.
+export const TurnSender = {
+  user: "user",
+  system: "system",
+} as const;
+export type TurnSender = (typeof TurnSender)[keyof typeof TurnSender];
+
+export const TurnKind = {
+  text: "text",
+  voice: "voice",
+  photo: "photo",
+  url: "url",
+  answer: "answer",
+  proposal_accepted: "proposal_accepted",
+  proposal_dismissed: "proposal_dismissed",
+  summary: "summary",
+  question: "question",
+  advisory: "advisory",
+} as const;
+export type TurnKind = (typeof TurnKind)[keyof typeof TurnKind];
