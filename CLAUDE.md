@@ -8,6 +8,7 @@ Guidance for Claude Code working in this repo. Keep this file short — it's loa
 - **`.planning/STATE.md`** — live position: current milestone, phase, plan, progress.
 - **`SPEC.md`** — locked data model, capture pipeline, scoring algorithm, voting state machine, auth scheme, original 4-wave build plan. Read before designing new features. Note: the auth scheme there has been superseded — see invariant 8 below.
 - **`frontend/AGENTS.md`** — Next.js 16 has breaking changes that may not be in your training data. Consult `frontend/node_modules/next/dist/docs/` before writing frontend code.
+- **`docs/design-system.html`** — living design system reference (Sober Kitchen). Locked tokens (terracotta sober + Cormorant + Caveat), patine cards, table-à-manger voting, marginalia register, brand-mark loader, plus locked screens for Accueil / Bibliothèque / Recette with porting checklist. Open in browser before designing new UI; do not duplicate its decisions in ad-hoc CSS.
 
 ## Repo layout
 

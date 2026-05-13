@@ -1,0 +1,2027 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Al Dente — Living Design System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600&family=Caveat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <style>
+      /* ─────────────────────────────────────────────────────────────
+         LOCKED — sober + authentic
+         Verdict B/A/A/A/A from /design-system-3.html applied.
+         Three departures kept (patine, table-à-manger, marginalia)
+         plus the logo-drawing loader. Ambient mode dropped.
+         ──────────────────────────────────────────────────────────── */
+      :root {
+        --background: oklch(0.975 0.006 75);
+        --foreground: oklch(0.21 0.014 55);
+        --card: oklch(0.99 0.005 75);
+        --card-foreground: oklch(0.21 0.014 55);
+        --popover: oklch(0.99 0.005 75);
+        --popover-foreground: oklch(0.21 0.014 55);
+        --primary: oklch(0.50 0.10 32);
+        --primary-foreground: oklch(0.985 0.006 75);
+        --secondary: oklch(0.93 0.010 60);
+        --secondary-foreground: oklch(0.27 0.014 55);
+        --muted: oklch(0.93 0.010 60);
+        --muted-foreground: oklch(0.50 0.012 55);
+        --accent: oklch(0.93 0.010 60);
+        --accent-foreground: oklch(0.27 0.014 55);
+        --foreground-muted: oklch(0.50 0.012 55);
+        --surface-muted: oklch(0.93 0.010 60);
+        --surface-rose-50: oklch(0.96 0.018 35);
+        --surface-rose-100: oklch(0.93 0.035 35);
+        --border: oklch(0.86 0.010 55);
+        --input: oklch(0.86 0.010 55);
+        --ring: oklch(0.50 0.10 32);
+        --destructive: oklch(0.50 0.15 25);
+
+        --valide-tint: oklch(0.93 0.06 145);
+        --color-valide-foreground: #10b981;
+        --color-valide-emphasis: #047857;
+        --color-valide-border: #10b98180;
+        --color-valide-border-faint: #10b9814d;
+        --color-cooking-foreground: #047857;
+
+        /* Desaturated member colors — match the sober chroma move. */
+        --color-member-rose-bg: #c0364a;
+        --color-member-rose-foreground: #ffffff;
+        --color-member-amber-bg: #c98512;
+        --color-member-amber-foreground: #1f1311;
+        --color-member-emerald-bg: #0d8a64;
+        --color-member-emerald-foreground: #ffffff;
+        --color-member-sky-bg: #0879ad;
+        --color-member-sky-foreground: #ffffff;
+        --color-member-violet-bg: #6e46c1;
+        --color-member-violet-foreground: #ffffff;
+
+        --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+        --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+        --font-marginalia: "Caveat", cursive;
+
+        --radius: 0.625rem;
+        --radius-sm: calc(var(--radius) * 0.6);
+        --radius-md: calc(var(--radius) * 0.8);
+        --radius-lg: var(--radius);
+        --radius-xl: calc(var(--radius) * 1.4);
+        --radius-2xl: calc(var(--radius) * 1.8);
+
+        --spacing-page-x: 1.5rem;
+        --spacing-section-y: 1.5rem;
+        --spacing-stack-y: 0.75rem;
+        --spacing-bottom-safe: 6rem;
+
+        --shadow-card: 0 1px 2px 0 rgba(74, 56, 40, 0.05),
+          0 1px 3px 0 rgba(74, 56, 40, 0.03);
+        --shadow-card-hover: 0 1px 2px 0 rgba(74, 56, 40, 0.07),
+          0 4px 8px 0 rgba(74, 56, 40, 0.05);
+        --shadow-nav: 0 -1px 0 0 rgba(74, 56, 40, 0.08);
+
+        --ease-craft: cubic-bezier(0.32, 0.72, 0, 1);
+        --duration-fast: 150ms;
+        --duration-normal: 280ms;
+        --duration-slow: 3200ms;
+
+        --patina: 0;
+      }
+
+      .dark {
+        --background: oklch(0.16 0.012 55);
+        --foreground: oklch(0.93 0.006 70);
+        --card: oklch(0.21 0.012 55);
+        --card-foreground: oklch(0.93 0.006 70);
+        --primary: oklch(0.65 0.10 32);
+        --primary-foreground: oklch(0.16 0.012 55);
+        --secondary: oklch(0.26 0.012 55);
+        --muted: oklch(0.26 0.012 55);
+        --muted-foreground: oklch(0.65 0.010 60);
+        --foreground-muted: oklch(0.65 0.010 60);
+        --surface-muted: oklch(0.24 0.012 55);
+        --border: oklch(1 0 0 / 12%);
+        --input: oklch(1 0 0 / 16%);
+        --ring: oklch(0.65 0.10 32);
+        --surface-rose-100: oklch(0.27 0.04 35);
+        --valide-tint: oklch(0.30 0.05 145);
+        --color-valide-foreground: #6ee7b7;
+        --color-valide-emphasis: #a7f3d0;
+        --color-cooking-foreground: #a7f3d0;
+        --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.30),
+          0 2px 4px 0 rgba(0, 0, 0, 0.22);
+        --shadow-card-hover: 0 1px 2px 0 rgba(0, 0, 0, 0.36),
+          0 4px 8px 0 rgba(0, 0, 0, 0.28);
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+      html {
+        font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      body {
+        margin: 0;
+        background: oklch(0.95 0.005 75);
+        color: var(--foreground);
+        font-family: var(--font-body);
+        line-height: 1.55;
+        min-height: 100dvh;
+      }
+      .dark body { background: oklch(0.12 0.012 55); }
+
+      /* TYPOGRAPHY ──────────────────────────────────────────────── */
+      .text-display {
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 5.5vw, 2.5rem);
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        font-weight: 500;
+      }
+      .text-title {
+        font-family: var(--font-display);
+        font-size: 1.4rem;
+        line-height: 1.2;
+        letter-spacing: -0.012em;
+        font-weight: 500;
+      }
+      .text-page-header {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+        font-weight: 500;
+      }
+      .text-body {
+        font-family: var(--font-body);
+        font-size: 0.975rem;
+        line-height: 1.55;
+        font-weight: 400;
+      }
+      .text-caption {
+        font-family: var(--font-body);
+        font-size: 0.8125rem;
+        line-height: 1.45;
+        font-weight: 400;
+        color: var(--foreground-muted);
+      }
+      .marginalia {
+        font-family: var(--font-marginalia);
+        font-weight: 500;
+        line-height: 1.25;
+        color: var(--primary);
+      }
+      .marginalia-lg { font-size: 1.5rem; }
+      .marginalia-md { font-size: 1.2rem; }
+      .marginalia-sm { font-size: 1rem; }
+      .marginalia.slant { transform: rotate(-1.2deg); display: inline-block; }
+      .marginalia em {
+        font-style: italic;
+        color: color-mix(in oklch, var(--primary) 70%, var(--foreground));
+      }
+
+      /* PATINE ──────────────────────────────────────────────────── */
+      .ledger-card {
+        position: relative;
+        background: color-mix(in oklch,
+          var(--card) calc(100% - var(--patina) * 6%),
+          oklch(0.91 0.032 50));
+        border: 1px solid color-mix(in oklch,
+          var(--border) calc(100% - var(--patina) * 12%),
+          oklch(0.72 0.035 35));
+        border-radius: calc(12px - var(--patina) * 1px);
+        box-shadow: var(--shadow-card);
+        padding: 14px;
+        overflow: hidden;
+        transition: background var(--duration-normal) var(--ease-craft);
+      }
+      .ledger-card::before {
+        content: ""; position: absolute; inset: 0;
+        background-image:
+          radial-gradient(circle at 22% 28%,
+            color-mix(in oklch, oklch(0.62 0.10 50) calc(var(--patina) * 5%), transparent) 0,
+            transparent 32%),
+          radial-gradient(circle at 82% 72%,
+            color-mix(in oklch, oklch(0.55 0.08 30) calc(var(--patina) * 4%), transparent) 0,
+            transparent 30%);
+        background-repeat: no-repeat;
+        mix-blend-mode: multiply;
+        opacity: calc(0.3 + var(--patina) * 0.10);
+        border-radius: inherit; pointer-events: none; z-index: 0;
+      }
+      .ledger-card::after {
+        content: ""; position: absolute; inset: 0;
+        background-image:
+          radial-gradient(rgba(74, 56, 40, 0.12) 1px, transparent 1px),
+          radial-gradient(rgba(74, 56, 40, 0.08) 1px, transparent 1px);
+        background-size: 3px 3px, 7px 7px;
+        background-position: 0 0, 1px 2px;
+        opacity: calc(0.08 + var(--patina) * 0.03);
+        mix-blend-mode: multiply;
+        border-radius: inherit; pointer-events: none; z-index: 0;
+      }
+      .ledger-card > * { position: relative; z-index: 1; }
+      .dogear {
+        position: absolute; top: 0; right: 0;
+        width: 26px; height: 26px; pointer-events: none; z-index: 2;
+      }
+      .patina-stamp {
+        position: absolute; top: 10px; left: 12px; z-index: 3;
+        font-family: var(--font-marginalia); font-size: 14px;
+        color: color-mix(in oklch, var(--primary) 70%, oklch(0.30 0 0));
+        opacity: 0.65; transform: rotate(-5deg);
+      }
+
+      /* TABLE-À-MANGER VOTING ───────────────────────────────────── */
+      .table-scene {
+        position: relative; width: 90px; height: 90px; flex-shrink: 0;
+      }
+      .table-plate {
+        position: absolute; inset: 16px;
+        background: radial-gradient(circle at 50% 45%,
+          var(--card),
+          color-mix(in oklch, var(--card) 92%, var(--foreground)) 80%);
+        border-radius: 50%; border: 1px solid var(--border);
+        box-shadow: inset 0 0 0 4px color-mix(in oklch, var(--card) 92%, var(--foreground)),
+          inset 0 0 0 5px color-mix(in oklch, var(--border) 60%, transparent);
+      }
+      .table-seat {
+        position: absolute; width: 22px; height: 22px;
+        border-radius: 50%;
+        font-family: var(--font-body); font-weight: 600; font-size: 11px;
+        display: flex; align-items: center; justify-content: center;
+        border: 1.5px solid var(--card);
+        box-shadow: 0 0 0 1px var(--border);
+        transition: transform var(--duration-normal) var(--ease-craft),
+          opacity var(--duration-normal) var(--ease-craft),
+          box-shadow var(--duration-normal) var(--ease-craft);
+      }
+      .seat-north { top: -2px; left: 50%; transform: translateX(-50%); }
+      .seat-south { bottom: -2px; left: 50%; transform: translateX(-50%); }
+      .seat-east  { right: -2px; top: 50%; transform: translateY(-50%); }
+      .seat-west  { left: -2px;  top: 50%; transform: translateY(-50%); }
+
+      .seat-state-valide {
+        box-shadow:
+          0 0 0 1.5px var(--color-valide-border),
+          0 0 0 2.5px color-mix(in oklch, var(--color-valide-foreground) 25%, transparent);
+      }
+      .seat-state-pressenti {
+        box-shadow:
+          0 0 0 1.5px color-mix(in oklch, var(--primary) 50%, transparent),
+          inset 0 0 0 2px color-mix(in oklch, var(--card) 70%, transparent);
+      }
+      .seat-state-neutral { opacity: 0.32; filter: grayscale(0.7); }
+      .seat-state-rejected {
+        opacity: 0.45; filter: grayscale(0.85);
+      }
+      .seat-north.seat-state-rejected { transform: translateX(-50%) translateY(-6px); }
+      .seat-south.seat-state-rejected { transform: translateX(-50%) translateY(6px); }
+      .seat-east.seat-state-rejected  { transform: translateY(-50%) translateX(6px); }
+      .seat-west.seat-state-rejected  { transform: translateY(-50%) translateX(-6px); }
+
+      /* CONTESTÉ — locked: trait barré (foreground-muted strike) */
+      .seat-state-contested { position: relative; }
+      .seat-state-contested::after {
+        content: ""; position: absolute;
+        left: -6px; right: -6px; top: 50%;
+        height: 1.5px;
+        background: var(--foreground);
+        opacity: 0.55;
+        transform: translateY(-50%);
+        z-index: 3;
+        border-radius: 1px;
+      }
+
+      /* LOADER — locked: brand mark drawing in */
+      .loader-brand {
+        width: 96px; height: 96px;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .loader-brand svg path {
+        stroke-dasharray: 220;
+        stroke-dashoffset: 220;
+        animation: drawLoop var(--duration-slow) var(--ease-craft) infinite;
+      }
+      .loader-brand svg path:nth-child(2) {
+        animation-delay: 280ms;
+      }
+      @keyframes drawLoop {
+        0%   { stroke-dashoffset: 220; opacity: 0.25; }
+        38%  { stroke-dashoffset: 0;   opacity: 1; }
+        62%  { stroke-dashoffset: 0;   opacity: 1; }
+        100% { stroke-dashoffset: -220; opacity: 0.25; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .loader-brand svg path { animation: none; stroke-dashoffset: 0; opacity: 1; }
+      }
+
+      /* PAGE CHROME ─────────────────────────────────────────────── */
+      .topbar {
+        position: sticky; top: 0; z-index: 40;
+        backdrop-filter: blur(12px);
+        background: color-mix(in oklch, var(--background) 80%, transparent);
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar-inner {
+        max-width: 1400px; margin: 0 auto; padding: 14px 24px;
+        display: flex; align-items: center; gap: 16px;
+      }
+      .topbar h1 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 500;
+        font-size: 22px;
+      }
+      .topbar h1 .accent { color: var(--primary); }
+      .topbar .meta {
+        margin-left: auto; display: flex; gap: 14px; align-items: center;
+        font-size: 13px; color: var(--foreground-muted);
+      }
+      .topbar .pill {
+        font-family: var(--font-marginalia);
+        font-size: 18px;
+        color: var(--primary);
+        background: var(--surface-rose-100);
+        padding: 2px 10px;
+        border-radius: 999px;
+      }
+      .toggle {
+        appearance: none; background: var(--card); color: var(--foreground);
+        border: 1px solid var(--border); border-radius: 999px;
+        padding: 7px 14px; font: inherit; font-size: 13px; cursor: pointer;
+      }
+      .switch-link {
+        font-family: var(--font-body); font-size: 13px;
+        color: var(--foreground-muted); text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      main { max-width: 1400px; margin: 0 auto; padding: 32px 24px 96px; }
+      section { margin: 0 0 56px; }
+      section > header { margin-bottom: 18px; }
+      section > header h2 {
+        font-family: var(--font-display);
+        font-size: 28px; font-weight: 500;
+        letter-spacing: -0.015em; margin: 0 0 6px;
+      }
+      section > header h2 .tag {
+        font-family: var(--font-marginalia);
+        font-size: 16px; color: var(--primary);
+        margin-left: 10px; opacity: 0.85;
+      }
+      section > header p {
+        margin: 0; max-width: 64ch;
+        color: var(--foreground-muted); font-size: 14px;
+      }
+      h3.subhead {
+        font-family: var(--font-display);
+        font-weight: 500; font-size: 18px;
+        margin: 24px 0 12px;
+      }
+
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+      .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+      @media (max-width: 960px) {
+        .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      }
+
+      .frame {
+        background: var(--background); color: var(--foreground);
+        border: 1px solid var(--border); border-radius: 14px;
+        padding: 22px; position: relative;
+      }
+      .frame-tag {
+        position: absolute; top: 12px; right: 12px;
+        font-size: 11px; font-weight: 500;
+        letter-spacing: 0.05em; text-transform: uppercase;
+        color: var(--foreground-muted);
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 999px; padding: 3px 8px;
+      }
+
+      /* SWATCHES ────────────────────────────────────────────────── */
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+      }
+      .swatch {
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        background: var(--card);
+        box-shadow: var(--shadow-card);
+      }
+      .swatch-fill { height: 88px; position: relative; }
+      .swatch-fill .name {
+        position: absolute; bottom: 8px; left: 10px;
+        font-size: 11px; font-weight: 500;
+        background: rgba(0, 0, 0, 0.35); color: #fff;
+        padding: 2px 6px; border-radius: 6px;
+        letter-spacing: 0.02em;
+      }
+      .swatch-meta {
+        padding: 10px 12px;
+        font-size: 12px;
+        color: var(--foreground-muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .swatch-meta b {
+        color: var(--foreground); font-weight: 500; display: block;
+      }
+
+      /* BUTTONS ─────────────────────────────────────────────────── */
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        gap: 8px; height: 40px; padding: 0 16px;
+        border-radius: var(--radius);
+        font: inherit; font-weight: 500; font-size: 14px;
+        cursor: pointer; border: 1px solid transparent;
+        white-space: nowrap;
+        transition: background var(--duration-fast) var(--ease-craft),
+          box-shadow var(--duration-fast) var(--ease-craft);
+      }
+      .btn:active { transform: translateY(0.5px); }
+      .btn-primary { background: var(--primary); color: var(--primary-foreground); }
+      .btn-primary:hover { filter: brightness(1.05); }
+      .btn-secondary { background: var(--secondary); color: var(--secondary-foreground); }
+      .btn-outline { background: transparent; color: var(--foreground); border-color: var(--border); }
+      .btn-outline:hover { background: var(--secondary); }
+      .btn-ghost { background: transparent; color: var(--foreground); }
+      .btn-ghost:hover { background: var(--secondary); }
+      .btn-destructive { background: var(--destructive); color: white; }
+      .btn-sm { height: 32px; font-size: 13px; padding: 0 12px; }
+      .btn-lg { height: 48px; font-size: 16px; padding: 0 22px; }
+      .btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+      /* INPUTS ──────────────────────────────────────────────────── */
+      .input, .textarea, .select {
+        background: var(--card); color: var(--foreground);
+        border: 1px solid var(--input); border-radius: var(--radius);
+        padding: 10px 12px; font: inherit; font-size: 15px;
+        transition: border-color var(--duration-fast) var(--ease-craft),
+          box-shadow var(--duration-fast) var(--ease-craft);
+      }
+      .textarea { min-height: 96px; resize: vertical; }
+      .input:focus, .textarea:focus, .select:focus {
+        outline: none;
+        border-color: var(--ring);
+        box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 25%, transparent);
+      }
+      .field { display: flex; flex-direction: column; gap: 6px; }
+      .field label { font-size: 13px; font-weight: 500; }
+      .field .hint { font-size: 12px; color: var(--foreground-muted); }
+
+      /* BADGES ──────────────────────────────────────────────────── */
+      .badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        height: 22px; padding: 0 8px;
+        border-radius: 999px;
+        font-size: 12px; font-weight: 500;
+        background: var(--secondary); color: var(--secondary-foreground);
+        border: 1px solid transparent;
+      }
+      .badge-outline {
+        background: transparent;
+        border-color: var(--border);
+        color: var(--foreground);
+      }
+      .badge-primary {
+        background: color-mix(in oklch, var(--primary) 15%, transparent);
+        color: var(--primary);
+        border-color: color-mix(in oklch, var(--primary) 40%, transparent);
+      }
+
+      /* SHORTLIST + RECIPE CARD ─────────────────────────────────── */
+      .shortlist-row {
+        display: flex; gap: 14px; padding: 12px 14px;
+        border-radius: 12px;
+        background: var(--card); border: 1px solid var(--border);
+        box-shadow: var(--shadow-card);
+        align-items: center;
+      }
+      .shortlist-row.is-valide {
+        background: color-mix(in oklch, var(--valide-tint) 75%, var(--card));
+        border-color: var(--color-valide-border-faint);
+      }
+      .shortlist-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+      .shortlist-info h4 {
+        font-family: var(--font-display);
+        font-size: 17px; font-weight: 500;
+        letter-spacing: -0.005em; margin: 0;
+      }
+      .shortlist-info .meta { font-size: 12px; color: var(--foreground-muted); }
+
+      .recipe-photo {
+        aspect-ratio: 4 / 3;
+        background:
+          linear-gradient(135deg,
+            color-mix(in oklch, var(--primary) 30%, var(--surface-rose-100)),
+            color-mix(in oklch, var(--primary) 8%, var(--surface-muted)));
+        position: relative;
+        border-radius: 10px;
+      }
+      .recipe-photo .glyph {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--card); opacity: 0.55;
+      }
+
+      /* COOKING LOG FEED ─────────────────────────────────────────── */
+      .log-feed {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: var(--shadow-card);
+      }
+      .log-feed h4 {
+        font-family: var(--font-display);
+        font-size: 18px; font-weight: 500;
+        margin: 0 0 10px;
+      }
+      .log-entry { padding: 10px 0; border-top: 1px dashed var(--border); }
+      .log-entry:first-of-type { border-top: 0; }
+      .log-entry-meta { font-size: 12px; color: var(--foreground-muted); margin-bottom: 4px; }
+
+      /* BOTTOM NAV + PHONE FRAME ────────────────────────────────── */
+      .bottom-nav {
+        display: flex;
+        background: color-mix(in oklch, var(--card) 85%, transparent);
+        border-top: 1px solid var(--border); height: 60px;
+      }
+      .bottom-nav-tab {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 4px; font-size: 11px;
+        color: var(--foreground-muted); position: relative; cursor: pointer;
+      }
+      .bottom-nav-tab.active { color: var(--primary); }
+      .bottom-nav-tab.active::before {
+        content: ""; position: absolute; top: 8px;
+        width: 36px; height: 36px; border-radius: 999px;
+        background: color-mix(in oklch, var(--primary) 8%, transparent);
+      }
+      .bottom-nav-tab svg, .bottom-nav-tab span { position: relative; z-index: 1; }
+
+      .phone-frame {
+        max-width: 380px; margin: 0 auto;
+        border-radius: 36px; border: 1px solid var(--border);
+        overflow: hidden; background: var(--background);
+        box-shadow: var(--shadow-card-hover);
+      }
+      .phone-content {
+        padding: 22px; min-height: 500px;
+        display: flex; flex-direction: column; gap: 14px;
+      }
+
+      /* TYPE SAMPLE ─────────────────────────────────────────────── */
+      .type-row {
+        display: grid; grid-template-columns: 140px 1fr;
+        gap: 16px; align-items: baseline;
+        padding: 12px 0; border-bottom: 1px dashed var(--border);
+      }
+      .type-row:last-child { border-bottom: 0; }
+      .type-label {
+        font-size: 11px; text-transform: uppercase;
+        letter-spacing: 0.06em; color: var(--foreground-muted);
+      }
+      .type-label small {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        text-transform: none; letter-spacing: 0;
+        font-size: 11px; margin-top: 2px;
+      }
+
+      /* SPEC TABLE ──────────────────────────────────────────────── */
+      .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .spec-table th, .spec-table td {
+        text-align: left; padding: 8px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .spec-table th {
+        font-weight: 500; color: var(--foreground-muted);
+        font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+      }
+      .spec-table code {
+        font-size: 12px; color: var(--foreground);
+        background: var(--surface-muted);
+        padding: 1px 6px; border-radius: 4px;
+      }
+
+      /* PORTING SECTION ─────────────────────────────────────────── */
+      .port-block {
+        background: oklch(0.20 0.014 55);
+        color: oklch(0.94 0.008 70);
+        border-radius: 12px;
+        padding: 18px 20px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12.5px;
+        line-height: 1.6;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .port-block .add { color: #86efac; }
+      .port-block .rm { color: #fca5a5; text-decoration: line-through; }
+      .port-block .cmt { color: oklch(0.6 0.01 70); }
+      .checklist {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .checklist li {
+        padding: 8px 0;
+        border-top: 1px dashed var(--border);
+        display: flex; gap: 10px; align-items: flex-start;
+      }
+      .checklist li:first-child { border-top: 0; }
+      .check-mark {
+        flex-shrink: 0;
+        width: 18px; height: 18px;
+        border-radius: 4px;
+        border: 1.5px solid var(--border);
+        margin-top: 1px;
+      }
+      .checklist code {
+        font-size: 12px; color: var(--primary);
+        background: var(--surface-muted);
+        padding: 1px 6px; border-radius: 4px;
+      }
+
+      .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+      .stack { display: flex; flex-direction: column; gap: 12px; }
+      .ruler { height: 1px; background: var(--border); margin: 24px 0; }
+      .legend {
+        font-size: 12px; color: var(--foreground-muted);
+        margin-top: 10px; max-width: 70ch;
+      }
+
+      :target { scroll-margin-top: 80px; }
+
+      .layout { display: grid; grid-template-columns: 220px 1fr; gap: 40px; }
+      .toc { position: sticky; top: 88px; align-self: start; font-size: 13px; }
+      .toc ol { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--border); }
+      .toc li { margin: 4px 0; }
+      .toc a { color: var(--foreground-muted); text-decoration: none; }
+      .toc a:hover { color: var(--primary); }
+      .toc .group-label {
+        font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em;
+        color: var(--foreground-muted); margin-top: 14px; padding-left: 12px;
+      }
+      @media (max-width: 1024px) {
+        .layout { grid-template-columns: 1fr; }
+        .toc { position: static; }
+      }
+
+      /* SCREENS — locked phone mockups with side-by-side breakdown ── */
+      .screen-layout { display: grid; grid-template-columns: 380px 1fr; gap: 48px; align-items: start; }
+      @media (max-width: 1000px) {
+        .screen-layout { grid-template-columns: 1fr; }
+        .screen-layout .phone-frame { margin: 0 auto; }
+      }
+      .breakdown { display: flex; flex-direction: column; gap: 14px; }
+      .breakdown h3 { font-family: var(--font-display); font-size: 22px; font-weight: 500; margin: 0; letter-spacing: -0.015em; }
+      .breakdown h4 { font-family: var(--font-display); font-size: 16px; font-weight: 500; margin: 14px 0 6px; }
+      .breakdown p { font-size: 14px; line-height: 1.6; margin: 0; color: var(--foreground); }
+      .breakdown ul { padding-left: 18px; margin: 4px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--foreground); }
+      .breakdown li { margin: 3px 0; }
+      .breakdown code { font-size: 12.5px; color: var(--primary); background: var(--surface-muted); padding: 1px 6px; border-radius: 4px; }
+
+      /* Table-scene size helpers — used inside phone mockups */
+      .ts-56 { width: 56px; height: 56px; }
+      .ts-56 .table-plate { inset: 10px; }
+      .ts-56 .table-seat { width: 16px; height: 16px; font-size: 9px; }
+      .ts-56 .seat-north { top: -2px; left: 50%; transform: translateX(-50%); }
+      .ts-56 .seat-south { bottom: -2px; left: 50%; transform: translateX(-50%); }
+      .ts-72 { width: 72px; height: 72px; }
+      .ts-72 .table-plate { inset: 14px; }
+      .ts-72 .table-seat { width: 20px; height: 20px; font-size: 11px; }
+      .ts-72 .seat-north { top: -2px; left: 50%; transform: translateX(-50%); }
+      .ts-72 .seat-south { bottom: -2px; left: 50%; transform: translateX(-50%); }
+
+      /* Library view-switcher (inline segmented control) */
+      .view-switch { display: inline-flex; gap: 2px; padding: 3px; background: var(--surface-muted); border-radius: 999px; }
+      .view-switch button { padding: 5px 9px; border-radius: 999px; background: transparent; border: 0; color: var(--foreground-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: 12px; font-weight: 500; transition: background var(--duration-fast) var(--ease-craft), color var(--duration-fast) var(--ease-craft); }
+      .view-switch button:hover { color: var(--foreground); }
+      .view-switch button.active { background: var(--card); color: var(--primary); box-shadow: var(--shadow-card); }
+      .view-switch button svg { width: 13px; height: 13px; }
+      .view-panel { display: none; }
+      .view-panel.active { display: block; }
+
+      /* Section dividers used in the Bibliothèque patine view */
+      .section-divider { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+      .section-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+      .section-header { font-family: var(--font-display); font-size: 16px; font-weight: 500; margin: 0; display: flex; align-items: baseline; gap: 6px; }
+      .section-header .count { font-family: var(--font-marginalia); font-size: 15px; color: var(--primary); font-weight: 500; }
+
+      /* Recipe-detail building blocks (ingredients, steps) */
+      .ingredients { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+      .ingredient { display: flex; gap: 10px; align-items: baseline; }
+      .ingredient .qty { font-family: var(--font-display); font-weight: 500; color: var(--primary); white-space: nowrap; flex-shrink: 0; }
+      .ingredient .name { color: var(--foreground); }
+      .step { padding: 8px 0; border-top: 1px dashed var(--border); font-size: 13.5px; line-height: 1.55; }
+      .step:first-child { border-top: 0; }
+      .step .step-num { font-family: var(--font-display); font-weight: 500; color: var(--primary); margin-right: 8px; }
+
+      /* Decisions summary table (screens picks) */
+      .decisions { padding: 0; border-collapse: collapse; width: 100%; font-size: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+      .decisions tr { border-bottom: 1px solid var(--border); }
+      .decisions tr:last-child { border-bottom: 0; }
+      .decisions td { padding: 14px 16px; vertical-align: middle; }
+      .decisions td:first-child { font-family: var(--font-display); font-weight: 500; font-size: 16px; width: 200px; }
+      .decisions td.pick { font-family: var(--font-marginalia); font-size: 18px; color: var(--color-valide-emphasis); }
+      .decisions td.pick.deferred { color: var(--foreground-muted); }
+      .decisions td.note { color: var(--foreground-muted); font-size: 13px; }
+
+      /* Deferred-screens callout */
+      .deferred-block { padding: 18px 20px; background: color-mix(in oklch, var(--surface-muted) 80%, transparent); border: 1px dashed var(--border); border-radius: 12px; }
+      .deferred-block h4 { font-family: var(--font-display); font-size: 17px; font-weight: 500; margin: 0 0 6px; }
+      .deferred-block p { margin: 0; font-size: 13.5px; color: var(--foreground-muted); line-height: 1.6; }
+
+      .port-block .key { color: #93c5fd; }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <svg width="32" height="32" viewBox="0 0 160 160" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" style="color: var(--primary);">
+          <path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" />
+          <path d="M 60 80 C 60 65, 80 55, 95 65" />
+        </svg>
+        <h1>Al Dente <span class="accent">·</span> Living Design System</h1>
+        <span class="pill">référence verrouillée</span>
+        <div class="meta">
+          <button class="toggle" id="themeToggle" type="button">🌙 Dark</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="layout">
+        <aside class="toc">
+          <ol>
+            <li><a href="#brand">1. Brand</a></li>
+            <li><a href="#color">2. Color</a></li>
+            <li><a href="#typography">3. Typography</a></li>
+            <li><a href="#spacing">4. Spacing</a></li>
+            <li><a href="#radius">5. Radii &amp; Shadows</a></li>
+            <li><a href="#motion">6. Motion</a></li>
+            <li><a href="#icons">7. Icons</a></li>
+            <li><a href="#buttons">8. Buttons</a></li>
+            <li><a href="#inputs">9. Inputs</a></li>
+            <li><a href="#vote">10. Table-à-manger</a></li>
+            <li><a href="#patine">11. Patine</a></li>
+            <li><a href="#marginalia">12. Marginalia</a></li>
+            <li><a href="#loading">13. Loading</a></li>
+            <li><a href="#cards">14. Cards</a></li>
+            <li class="group-label">Écrans verrouillés</li>
+            <li><a href="#accueil">Accueil</a></li>
+            <li><a href="#bibliotheque">Bibliothèque</a></li>
+            <li><a href="#recette">Recette</a></li>
+            <li class="group-label">Mise en code</li>
+            <li><a href="#porting">→ checklist</a></li>
+          </ol>
+        </aside>
+
+        <div>
+          <section>
+            <div class="text-display" style="font-size: clamp(2rem, 5vw, 2.6rem); margin-bottom: 10px;">
+              On mange quoi ce soir&nbsp;?
+            </div>
+            <p class="text-body" style="max-width: 64ch; color: var(--foreground-muted); margin: 0;">
+              Système verrouillé après itération B/A/A/A/A. Trois départs préservés (patine,
+              table-à-manger, marginalia) plus le loader brand-mark qui se dessine. Mode cuisine
+              plein écran retiré. Aucune nouvelle famille de couleur, une seule nouvelle police
+              (Caveat). Tout le reste évolue par rebaisse de chroma et retrait d'italique.
+            </p>
+          </section>
+
+          <!-- 1 · BRAND ──────────────────────────────────────────── -->
+          <section id="brand">
+            <header>
+              <h2>1 · Brand</h2>
+              <p>
+                Pictogramme conservé. Logogramme désormais <em>upright</em> par défaut — l'italique
+                est gardée pour la signature manuscrite et un usage occasionnel sur les titres de
+                section.
+              </p>
+            </header>
+
+            <div class="grid-2">
+              <div class="frame">
+                <span class="frame-tag">Wordmark</span>
+                <div style="display:flex; flex-direction:column; gap: 14px; align-items:flex-start;">
+                  <div style="font-family: var(--font-display); font-weight: 500; font-size: 64px; line-height: 1; letter-spacing: -0.02em;">Al Dente</div>
+                  <div class="marginalia marginalia-md slant">— on mange quoi ce soir ?</div>
+                </div>
+                <p class="legend">
+                  Cormorant Garamond, poids 500, upright. La marginalia Caveat porte la voix
+                  humaine sous le wordmark.
+                </p>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Pictogramme · tailles</span>
+                <div style="display:flex; gap:24px; align-items:flex-end; justify-content:center; padding: 24px 0;">
+                  <svg width="24" height="24" viewBox="0 0 160 160" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" style="color: var(--primary);"><path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" /><path d="M 60 80 C 60 65, 80 55, 95 65" /></svg>
+                  <svg width="40" height="40" viewBox="0 0 160 160" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" style="color: var(--primary);"><path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" /><path d="M 60 80 C 60 65, 80 55, 95 65" /></svg>
+                  <svg width="64" height="64" viewBox="0 0 160 160" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" style="color: var(--primary);"><path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" /><path d="M 60 80 C 60 65, 80 55, 95 65" /></svg>
+                  <svg width="96" height="96" viewBox="0 0 160 160" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" style="color: var(--primary);"><path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" /><path d="M 60 80 C 60 65, 80 55, 95 65" /></svg>
+                </div>
+              </div>
+            </div>
+
+            <h3 class="subhead">Taglines — deux registres</h3>
+            <div class="grid-2">
+              <div class="frame">
+                <span class="frame-tag">Home H1</span>
+                <div class="text-display" style="font-size: 30px;">On mange quoi ce soir ?</div>
+                <p class="legend">Voix quotidienne, posée à 19h. Locked.</p>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Manifest / install</span>
+                <div class="text-title">Décide ce qu'on mange ensemble.</div>
+                <p class="legend">
+                  Voix identitaire, copie de store/install. Existante dans
+                  <code>frontend/app/layout.tsx</code> — conservée telle quelle.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2 · COLOR ──────────────────────────────────────────── -->
+          <section id="color">
+            <header>
+              <h2>2 · Color <span class="tag">sienne sobre</span></h2>
+              <p>Chroma rabaissée de <code>0.135</code> à <code>0.10</code> sur la primaire. Le fond
+                glisse de l'axe pêche (h=60) vers parchemin (h=75). Tous les jetons existants gardent
+                leur nom — seuls les valeurs changent.</p>
+            </header>
+
+            <h3 class="subhead">2.1 Surface</h3>
+            <div class="swatches">
+              <div class="swatch"><div class="swatch-fill" style="background: var(--background);"><span class="name">background</span></div><div class="swatch-meta"><b>--background</b>oklch(0.975 0.006 75)</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--card); border-bottom: 1px solid var(--border);"><span class="name">card</span></div><div class="swatch-meta"><b>--card</b>oklch(0.99 0.005 75)</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--secondary);"><span class="name">secondary</span></div><div class="swatch-meta"><b>--secondary</b>oklch(0.93 0.010 60)</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--surface-rose-100);"><span class="name">surface-rose-100</span></div><div class="swatch-meta"><b>--surface-rose-100</b>oklch(0.93 0.035 35)</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--border);"><span class="name">border</span></div><div class="swatch-meta"><b>--border</b>oklch(0.86 0.010 55)</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--foreground);"><span class="name">foreground</span></div><div class="swatch-meta"><b>--foreground</b>oklch(0.21 0.014 55)</div></div>
+            </div>
+
+            <h3 class="subhead">2.2 Accent &amp; semantic</h3>
+            <div class="swatches">
+              <div class="swatch"><div class="swatch-fill" style="background: var(--primary);"><span class="name">primary</span></div><div class="swatch-meta"><b>--primary</b>oklch(0.50 0.10 32)</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--destructive);"><span class="name">destructive</span></div><div class="swatch-meta"><b>--destructive</b>oklch(0.50 0.15 25)</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--valide-tint);"><span class="name">valide-tint</span></div><div class="swatch-meta"><b>--valide-tint</b>oklch(0.93 0.06 145)</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--color-valide-foreground);"><span class="name">valide-fg</span></div><div class="swatch-meta"><b>--color-valide-foreground</b>#10B981</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--color-valide-emphasis);"><span class="name">valide-emphasis</span></div><div class="swatch-meta"><b>--color-valide-emphasis</b>#047857</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--foreground-muted);"><span class="name">fg-muted</span></div><div class="swatch-meta"><b>--foreground-muted</b>oklch(0.50 0.012 55)</div></div>
+            </div>
+
+            <h3 class="subhead">2.3 Member colors — desaturés</h3>
+            <p class="legend" style="margin-bottom: 12px;">
+              Hexes recalibrés pour rester dans la même famille chromatique que la primaire sobre.
+              L'ambre garde son <em>foreground</em> sombre pour AA contrast.
+            </p>
+            <div class="swatches" style="grid-template-columns: repeat(5, 1fr); max-width: 720px;">
+              <div class="swatch"><div class="swatch-fill" style="background: var(--color-member-rose-bg); display:flex; align-items:center; justify-content:center; color: var(--color-member-rose-foreground); font-family: var(--font-body); font-weight: 600;">Aa</div><div class="swatch-meta"><b>rose</b>#C0364A</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--color-member-amber-bg); display:flex; align-items:center; justify-content:center; color: var(--color-member-amber-foreground); font-family: var(--font-body); font-weight: 600;">Aa</div><div class="swatch-meta"><b>amber</b>#C98512</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--color-member-emerald-bg); display:flex; align-items:center; justify-content:center; color: var(--color-member-emerald-foreground); font-family: var(--font-body); font-weight: 600;">Aa</div><div class="swatch-meta"><b>emerald</b>#0D8A64</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--color-member-sky-bg); display:flex; align-items:center; justify-content:center; color: var(--color-member-sky-foreground); font-family: var(--font-body); font-weight: 600;">Aa</div><div class="swatch-meta"><b>sky</b>#0879AD</div></div>
+              <div class="swatch"><div class="swatch-fill" style="background: var(--color-member-violet-bg); display:flex; align-items:center; justify-content:center; color: var(--color-member-violet-foreground); font-family: var(--font-body); font-weight: 600;">Aa</div><div class="swatch-meta"><b>violet</b>#6E46C1</div></div>
+            </div>
+          </section>
+
+          <!-- 3 · TYPOGRAPHY ─────────────────────────────────────── -->
+          <section id="typography">
+            <header>
+              <h2>3 · Typography <span class="tag">trois familles</span></h2>
+              <p>Cormorant Garamond <em>upright</em> pour le display. IBM Plex Sans pour le corps.
+                Caveat pour les annotations humaines uniquement.</p>
+            </header>
+
+            <div class="frame">
+              <div class="type-row">
+                <div class="type-label">.text-display<small>Cormorant · upright 500 · 32–40 px</small></div>
+                <div class="text-display">Bien manger ne devrait pas être un débat.</div>
+              </div>
+              <div class="type-row">
+                <div class="type-label">.text-title<small>Cormorant · upright 500 · 22 px</small></div>
+                <div class="text-title">Tagliatelles aux champignons</div>
+              </div>
+              <div class="type-row">
+                <div class="type-label">.text-page-header<small>Cormorant · upright 500 · 20 px</small></div>
+                <div class="text-page-header">Bibliothèque</div>
+              </div>
+              <div class="type-row">
+                <div class="type-label">.text-body<small>IBM Plex Sans · 400 · 15.6/1.55</small></div>
+                <div class="text-body">Une carbonara <em>vraiment</em> italienne : guanciale, pecorino, jaunes d'œufs. Aucune crème.</div>
+              </div>
+              <div class="type-row">
+                <div class="type-label">.marginalia-md<small>Caveat · 500 · 19 px · primary</small></div>
+                <div class="marginalia marginalia-md slant">on a doublé l'ail, jamais regretté</div>
+              </div>
+              <div class="type-row">
+                <div class="type-label">.text-caption<small>IBM Plex Sans · 400 · 13/1.45</small></div>
+                <div class="text-caption">Italien · cuisiné il y a 4 jours</div>
+              </div>
+            </div>
+
+            <h3 class="subhead">Table de référence</h3>
+            <table class="spec-table">
+              <thead><tr><th>Classe</th><th>Famille</th><th>Style</th><th>Taille</th><th>Usage</th></tr></thead>
+              <tbody>
+                <tr><td><code>.text-display</code></td><td>Cormorant Garamond</td><td>upright 500</td><td>clamp(32, 5.5vw, 40px)</td><td>Hero, wordmark</td></tr>
+                <tr><td><code>.text-title</code></td><td>Cormorant Garamond</td><td>upright 500</td><td>22 px</td><td>Recipe titles, card titles</td></tr>
+                <tr><td><code>.text-page-header</code></td><td>Cormorant Garamond</td><td>upright 500</td><td>20 px</td><td>Sticky page headers</td></tr>
+                <tr><td><code>.text-body</code></td><td>IBM Plex Sans</td><td>400</td><td>15.6/1.55</td><td>Running text, steps</td></tr>
+                <tr><td><code>.marginalia-{sm,md,lg}</code></td><td>Caveat</td><td>500</td><td>16 / 19 / 24 px</td><td><strong>Annotations humaines uniquement</strong></td></tr>
+                <tr><td><code>.text-caption</code></td><td>IBM Plex Sans</td><td>400</td><td>13/1.45 muted</td><td>Metadata, hints</td></tr>
+              </tbody>
+            </table>
+
+            <p class="legend"><strong>Règle marginalia :</strong> jamais sur des chaînes générées par le système
+              (titres LLM, métadonnées). Uniquement sur des chaînes <em>écrites par un humain</em> du foyer —
+              notes de <code>cooking_logs</code>, modifications libres via <code>RegenerateSheet</code>.</p>
+          </section>
+
+          <!-- 4 · SPACING ────────────────────────────────────────── -->
+          <section id="spacing">
+            <header>
+              <h2>4 · Spacing</h2>
+              <p>Quatre jetons de rythme — inchangés vs. baseline.</p>
+            </header>
+            <div class="frame">
+              <table class="spec-table">
+                <thead><tr><th>Token</th><th>Valeur</th><th>Usage</th></tr></thead>
+                <tbody>
+                  <tr><td><code>--spacing-page-x</code></td><td>1.5rem (24px)</td><td>Gutter horizontal de page</td></tr>
+                  <tr><td><code>--spacing-section-y</code></td><td>1.5rem (24px)</td><td>Gap entre cartes/sections</td></tr>
+                  <tr><td><code>--spacing-stack-y</code></td><td>0.75rem (12px)</td><td>Densité intra-section (listes)</td></tr>
+                  <tr><td><code>--spacing-bottom-safe</code></td><td>6rem (96px)</td><td>Clearance au-dessus BottomNav</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- 5 · RADII & SHADOWS ────────────────────────────────── -->
+          <section id="radius">
+            <header>
+              <h2>5 · Radii &amp; Shadows</h2>
+              <p>Base radius descendue : <code>0.75rem → 0.625rem</code> (10px). Ombres allégées
+                de moitié pour un rendu plus aéré.</p>
+            </header>
+
+            <div class="grid-2">
+              <div class="frame">
+                <span class="frame-tag">Radii</span>
+                <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:60px;height:60px;background:var(--primary);border-radius:var(--radius-sm);"></div><small class="text-caption">sm</small></div>
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:60px;height:60px;background:var(--primary);border-radius:var(--radius-md);"></div><small class="text-caption">md</small></div>
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:60px;height:60px;background:var(--primary);border-radius:var(--radius-lg);"></div><small class="text-caption">lg · 10px</small></div>
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:60px;height:60px;background:var(--primary);border-radius:var(--radius-xl);"></div><small class="text-caption">xl</small></div>
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="width:60px;height:60px;background:var(--primary);border-radius:var(--radius-2xl);"></div><small class="text-caption">2xl</small></div>
+                </div>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Shadows</span>
+                <div class="stack">
+                  <div style="height: 56px; background: var(--card); border-radius: 10px; box-shadow: var(--shadow-card); padding: 0 16px; display:flex; align-items:center; font-size: 13px;">shadow-card · papier sur table</div>
+                  <div style="height: 56px; background: var(--card); border-radius: 10px; box-shadow: var(--shadow-card-hover); padding: 0 16px; display:flex; align-items:center; font-size: 13px;">shadow-card-hover</div>
+                  <div style="height: 56px; background: var(--card); border-radius: 10px; box-shadow: var(--shadow-nav); padding: 0 16px; display:flex; align-items:center; font-size: 13px;">shadow-nav · hairline</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 6 · MOTION ─────────────────────────────────────────── -->
+          <section id="motion">
+            <header>
+              <h2>6 · Motion</h2>
+              <p>Une courbe — <code>ease-craft</code> — trois durées.</p>
+            </header>
+            <div class="frame">
+              <table class="spec-table">
+                <thead><tr><th>Token</th><th>Valeur</th><th>Usage</th></tr></thead>
+                <tbody>
+                  <tr><td><code>--ease-craft</code></td><td>cubic-bezier(0.32, 0.72, 0, 1)</td><td>Toutes les transitions UI</td></tr>
+                  <tr><td><code>--duration-fast</code></td><td>150 ms</td><td>Hover, focus, press feedback</td></tr>
+                  <tr><td><code>--duration-normal</code></td><td>280 ms</td><td>Sheet, dialog, card hover-lift, realtime appear</td></tr>
+                  <tr><td><code>--duration-slow</code></td><td>3 200 ms</td><td>Loader brand-mark (draw in → hold → draw out)</td></tr>
+                </tbody>
+              </table>
+              <p class="legend"><code>prefers-reduced-motion: reduce</code> coupe toutes les animations
+                — le loader brand-mark passe à un état final fixe (logo complet, opacité 1).</p>
+            </div>
+          </section>
+
+          <!-- 7 · ICONS ──────────────────────────────────────────── -->
+          <section id="icons">
+            <header>
+              <h2>7 · Icons</h2>
+              <p>Lucide, stroke-width 1.6 par défaut. Trait fin, géométrique — contraste avec la sérif chaude.</p>
+            </header>
+            <div class="frame">
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 4px;">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="home"></i><span>home</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="book-open"></i><span>book-open</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="inbox"></i><span>inbox</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="settings"></i><span>settings</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="utensils"></i><span>utensils</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="chef-hat"></i><span>chef-hat</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="flame"></i><span>flame</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="timer"></i><span>timer</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="mic"></i><span>mic</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="camera"></i><span>camera</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="link-2"></i><span>link-2</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="pencil-line"></i><span>pencil-line</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="search"></i><span>search</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="plus"></i><span>plus</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="check"></i><span>check</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="heart"></i><span>heart</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="users"></i><span>users</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="clock"></i><span>clock</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="leaf"></i><span>leaf</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:10px;font-size:11px;color:var(--foreground-muted);font-family:ui-monospace,Menlo,monospace;"><i data-lucide="wheat"></i><span>wheat</span></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 8 · BUTTONS ────────────────────────────────────────── -->
+          <section id="buttons">
+            <header>
+              <h2>8 · Buttons</h2>
+              <p>Cinq variantes × trois tailles. Primary porte la CTA d'écran.</p>
+            </header>
+            <div class="frame">
+              <div class="row">
+                <button class="btn btn-primary">Décider ce soir</button>
+                <button class="btn btn-secondary">Plus tard</button>
+                <button class="btn btn-outline">Modifier</button>
+                <button class="btn btn-ghost">Annuler</button>
+                <button class="btn btn-destructive">Rejeter</button>
+              </div>
+              <div class="ruler"></div>
+              <div class="row">
+                <button class="btn btn-primary btn-sm">Petit</button>
+                <button class="btn btn-primary">Normal</button>
+                <button class="btn btn-primary btn-lg">Grand</button>
+              </div>
+              <div class="ruler"></div>
+              <div class="row">
+                <button class="btn btn-primary"><i data-lucide="flame" style="width:16px;height:16px;"></i>Cuisiner</button>
+                <button class="btn btn-secondary"><i data-lucide="mic" style="width:16px;height:16px;"></i>Dicter</button>
+                <button class="btn btn-outline"><i data-lucide="camera" style="width:16px;height:16px;"></i>Photographier</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 9 · INPUTS ─────────────────────────────────────────── -->
+          <section id="inputs">
+            <header>
+              <h2>9 · Inputs</h2>
+              <p>Focus ring de 3px à 25% du <code>--ring</code>.</p>
+            </header>
+            <div class="grid-2">
+              <div class="frame">
+                <div class="stack">
+                  <div class="field">
+                    <label>Titre de la recette</label>
+                    <input class="input" type="text" placeholder="Ex. Risotto champignons &amp; parmesan" />
+                  </div>
+                  <div class="field">
+                    <label>Notes</label>
+                    <textarea class="textarea" placeholder="Bien faire suer les échalotes…"></textarea>
+                    <div class="hint">Optionnel — sauvegardé automatiquement.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="frame">
+                <div class="stack">
+                  <div class="field">
+                    <label>Rechercher</label>
+                    <div style="position: relative;">
+                      <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--foreground-muted);"></i>
+                      <input class="input" type="search" placeholder="Tagliatelles, agneau, citron…" style="padding-left: 36px; width: 100%;" />
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label>Cuisine</label>
+                    <select class="select"><option>Italienne</option><option>Française</option><option>Japonaise</option></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 10 · TABLE-À-MANGER VOTING ──────────────────────────── -->
+          <section id="vote">
+            <header>
+              <h2>10 · Table-à-manger <span class="tag">5 états, une scène</span></h2>
+              <p>Les 5 états restent calculés. Le rendu : assiette au centre, points-membres comme
+                convives autour. <strong>Contesté</strong> = trait barré sur le point. Aucun rouge.</p>
+            </header>
+
+            <div class="grid-3">
+              <div class="frame">
+                <span class="frame-tag">Validé</span>
+                <div style="display:flex; justify-content:center; padding: 18px 0;">
+                  <div class="table-scene">
+                    <div class="table-plate"></div>
+                    <div class="table-seat seat-north seat-state-valide" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                    <div class="table-seat seat-south seat-state-valide" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                  </div>
+                </div>
+                <p class="text-caption" style="text-align:center; margin: 0;">Halo émeraude, deux convives présents.</p>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Pressenti</span>
+                <div style="display:flex; justify-content:center; padding: 18px 0;">
+                  <div class="table-scene">
+                    <div class="table-plate"></div>
+                    <div class="table-seat seat-north seat-state-pressenti" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                    <div class="table-seat seat-south seat-state-neutral" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                  </div>
+                </div>
+                <p class="text-caption" style="text-align:center; margin: 0;">Une voix favorable, l'autre silencieuse.</p>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Sans avis</span>
+                <div style="display:flex; justify-content:center; padding: 18px 0;">
+                  <div class="table-scene">
+                    <div class="table-plate"></div>
+                    <div class="table-seat seat-north seat-state-neutral" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                    <div class="table-seat seat-south seat-state-neutral" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                  </div>
+                </div>
+                <p class="text-caption" style="text-align:center; margin: 0;">Sièges vides, l'assiette attend.</p>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Contesté</span>
+                <div style="display:flex; justify-content:center; padding: 18px 0;">
+                  <div class="table-scene">
+                    <div class="table-plate"></div>
+                    <div class="table-seat seat-north seat-state-valide" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                    <div class="table-seat seat-south seat-state-contested" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                  </div>
+                </div>
+                <p class="text-caption" style="text-align:center; margin: 0;">Trait barré — nom rayé sur la liste.</p>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Rejeté</span>
+                <div style="display:flex; justify-content:center; padding: 18px 0;">
+                  <div class="table-scene">
+                    <div class="table-plate"></div>
+                    <div class="table-seat seat-north seat-state-rejected" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                    <div class="table-seat seat-south seat-state-rejected" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                  </div>
+                </div>
+                <p class="text-caption" style="text-align:center; margin: 0;">Chaises poussées, désaturé.</p>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Foyer 4</span>
+                <div style="display:flex; justify-content:center; padding: 18px 0;">
+                  <div class="table-scene">
+                    <div class="table-plate"></div>
+                    <div class="table-seat seat-north seat-state-valide" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                    <div class="table-seat seat-south seat-state-pressenti" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                    <div class="table-seat seat-east seat-state-contested" style="background: var(--color-member-sky-bg); color: var(--color-member-sky-foreground);">J</div>
+                    <div class="table-seat seat-west seat-state-neutral" style="background: var(--color-member-amber-bg); color: var(--color-member-amber-foreground);">A</div>
+                  </div>
+                </div>
+                <p class="text-caption" style="text-align:center; margin: 0;">L · M · J contesté · A silencieux.</p>
+              </div>
+            </div>
+
+            <h3 class="subhead">Sur une ligne de shortlist</h3>
+            <div class="stack">
+              <div class="shortlist-row is-valide">
+                <div class="table-scene" style="width:60px;height:60px;">
+                  <div class="table-plate" style="inset: 12px;"></div>
+                  <div class="table-seat seat-north seat-state-valide" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground); width:18px;height:18px;font-size:10px;">L</div>
+                  <div class="table-seat seat-south seat-state-valide" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground); width:18px;height:18px;font-size:10px;">M</div>
+                </div>
+                <div class="shortlist-info">
+                  <h4>Risotto au safran</h4>
+                  <div class="meta marginalia marginalia-sm" style="color: var(--color-valide-emphasis);">validé · à cuisiner</div>
+                </div>
+                <button class="btn btn-primary btn-sm"><i data-lucide="flame" style="width:14px;height:14px;"></i>Cuisiner</button>
+              </div>
+              <div class="shortlist-row">
+                <div class="table-scene" style="width:60px;height:60px;">
+                  <div class="table-plate" style="inset: 12px;"></div>
+                  <div class="table-seat seat-north seat-state-valide" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground); width:18px;height:18px;font-size:10px;">L</div>
+                  <div class="table-seat seat-south seat-state-contested" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground); width:18px;height:18px;font-size:10px;">M</div>
+                </div>
+                <div class="shortlist-info">
+                  <h4>Bœuf bourguignon</h4>
+                  <div class="meta">L favorable · M passe son tour</div>
+                </div>
+                <button class="btn btn-outline btn-sm">En parler</button>
+              </div>
+              <div class="shortlist-row">
+                <div class="table-scene" style="width:60px;height:60px;">
+                  <div class="table-plate" style="inset: 12px;"></div>
+                  <div class="table-seat seat-north seat-state-pressenti" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground); width:18px;height:18px;font-size:10px;">L</div>
+                  <div class="table-seat seat-south seat-state-neutral" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground); width:18px;height:18px;font-size:10px;">M</div>
+                </div>
+                <div class="shortlist-info">
+                  <h4>Tagliatelles aux champignons</h4>
+                  <div class="meta">Pressenti par L</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 11 · PATINE ────────────────────────────────────────── -->
+          <section id="patine">
+            <header>
+              <h2>11 · Patine <span class="tag">livre vivant</span></h2>
+              <p>Carte vieillit avec <code>cook_count</code>. <code>--patina: 0–3</code> dérivé côté client.
+                Aucune nouvelle colonne DB.</p>
+            </header>
+
+            <div class="grid-4">
+              <div class="ledger-card" style="--patina: 0;">
+                <div class="text-caption" style="margin-bottom: 4px;">patine · 0</div>
+                <h4 style="font-family: var(--font-display); font-size: 16px; margin: 0;">Soupe miso aux palourdes</h4>
+                <p class="text-caption" style="margin: 4px 0 0;">jamais</p>
+              </div>
+              <div class="ledger-card" style="--patina: 1;">
+                <div class="text-caption" style="margin-bottom: 4px;">patine · 1</div>
+                <h4 style="font-family: var(--font-display); font-size: 16px; margin: 0;">Quinoa courges rôties</h4>
+                <p class="text-caption" style="margin: 4px 0 0;">2 fois</p>
+              </div>
+              <div class="ledger-card" style="--patina: 2;">
+                <div class="text-caption" style="margin-bottom: 4px;">patine · 2</div>
+                <h4 style="font-family: var(--font-display); font-size: 16px; margin: 0;">Tagliatelles champignons</h4>
+                <p class="text-caption" style="margin: 4px 0 0;">7 fois</p>
+              </div>
+              <div class="ledger-card" style="--patina: 3;">
+                <span class="patina-stamp">★ heirloom</span>
+                <span class="dogear">
+                  <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
+                    <path d="M 30 0 L 0 0 L 30 30 Z" fill="color-mix(in oklch, var(--surface-rose-100) 80%, oklch(0.68 0.06 40))" stroke="color-mix(in oklch, var(--border) 60%, var(--foreground))" stroke-width="1"/>
+                    <path d="M 30 0 L 30 30 L 0 0 Z" fill="rgba(74, 56, 40, 0.16)"/>
+                  </svg>
+                </span>
+                <div class="text-caption" style="margin: 14px 0 4px 0;">patine · 3</div>
+                <h4 style="font-family: var(--font-display); font-size: 16px; margin: 0;">Risotto au safran (maman)</h4>
+                <p class="text-caption marginalia" style="margin: 4px 0 0; font-size: 14px;">34 fois</p>
+              </div>
+            </div>
+
+            <h3 class="subhead">Mapping <code>cook_count → patina</code></h3>
+            <table class="spec-table">
+              <thead><tr><th><code>cook_count</code></th><th>patina</th><th>Comportement visuel</th></tr></thead>
+              <tbody>
+                <tr><td>0</td><td>0</td><td>Carte propre, jamais cuisinée</td></tr>
+                <tr><td>1 – 3</td><td>1</td><td>Légère teinte huilée, taches imperceptibles</td></tr>
+                <tr><td>4 – 10</td><td>2</td><td>Teinte plus chaude, deux taches visibles</td></tr>
+                <tr><td>≥ 11</td><td>3</td><td>+ Tampon « heirloom » + coin corné</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <!-- 12 · MARGINALIA ────────────────────────────────────── -->
+          <section id="marginalia">
+            <header>
+              <h2>12 · Marginalia <span class="tag">la voix humaine</span></h2>
+              <p>Caveat — réservée aux annotations <em>écrites par toi</em>. Jamais sur les chaînes système.</p>
+            </header>
+
+            <div class="grid-2">
+              <div class="log-feed">
+                <h4>Tagliatelles aux champignons</h4>
+                <div class="log-entry">
+                  <div class="log-entry-meta">Luca · cuisson terminée · il y a 4 jours</div>
+                  <div class="marginalia marginalia-md slant">cèpes secs au lieu de frais, magique</div>
+                </div>
+                <div class="log-entry">
+                  <div class="log-entry-meta">Marie · cuisson terminée · il y a 2 semaines</div>
+                  <div class="marginalia marginalia-md">double crème, pas de mascarpone cette fois</div>
+                </div>
+                <div class="log-entry">
+                  <div class="log-entry-meta">Luca · première cuisson · il y a 1 mois</div>
+                  <div class="marginalia marginalia-md slant">parmesan vieux 24 mois <em>obligatoire</em></div>
+                </div>
+              </div>
+
+              <div class="log-feed">
+                <h4>Carbonara — pour 2</h4>
+                <ol style="font-family: var(--font-body); font-size: 14.5px; line-height: 1.65; padding-left: 18px; margin: 0;">
+                  <li>Faire revenir 100 g de guanciale.</li>
+                  <li>Cuire 180 g de spaghetti al dente, garder une louche d'eau.
+                    <div class="marginalia marginalia-sm slant" style="display:block; margin: 4px 0 0 8px;">on garde 2 louches, plus de marge</div>
+                  </li>
+                  <li>Hors du feu : 2 jaunes + 50 g pecorino + poivre.
+                    <div class="marginalia marginalia-sm slant" style="display:block; margin: 4px 0 0 8px;">jaunes + 1 œuf entier — plus crémeux</div>
+                  </li>
+                  <li>Verser sur les pâtes hors feu, détendre.</li>
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <!-- 13 · LOADING ───────────────────────────────────────── -->
+          <section id="loading">
+            <header>
+              <h2>13 · Loading <span class="tag">le logo se dessine</span></h2>
+              <p>Un seul loader pour tous les états d'attente — capture vocale, photo, URL.
+                Animation <code>stroke-dasharray</code> sur les deux paths du brand mark.
+                Toujours accompagné d'un texte d'attente en Cormorant + sous-titre Caveat.</p>
+            </header>
+
+            <div class="grid-3">
+              <div class="frame" style="display:flex; flex-direction:column; align-items:center; gap: 16px;">
+                <span class="frame-tag">Capture vocale</span>
+                <div class="loader-brand">
+                  <svg width="68" height="68" viewBox="0 0 160 160" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" style="color: var(--primary);">
+                    <path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" />
+                    <path d="M 60 80 C 60 65, 80 55, 95 65" />
+                  </svg>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-family: var(--font-display); font-weight:500; font-size:17px;">On lit ton enregistrement…</div>
+                  <div class="marginalia marginalia-sm" style="margin-top: 2px;">quelques secondes</div>
+                </div>
+              </div>
+              <div class="frame" style="display:flex; flex-direction:column; align-items:center; gap: 16px;">
+                <span class="frame-tag">Capture photo</span>
+                <div class="loader-brand">
+                  <svg width="68" height="68" viewBox="0 0 160 160" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" style="color: var(--primary);">
+                    <path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" />
+                    <path d="M 60 80 C 60 65, 80 55, 95 65" />
+                  </svg>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-family: var(--font-display); font-weight:500; font-size:17px;">On déchiffre la photo…</div>
+                  <div class="marginalia marginalia-sm" style="margin-top: 2px;">ingrédients, étapes, durée</div>
+                </div>
+              </div>
+              <div class="frame" style="display:flex; flex-direction:column; align-items:center; gap: 16px;">
+                <span class="frame-tag">Capture URL</span>
+                <div class="loader-brand">
+                  <svg width="68" height="68" viewBox="0 0 160 160" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" style="color: var(--primary);">
+                    <path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" />
+                    <path d="M 60 80 C 60 65, 80 55, 95 65" />
+                  </svg>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-family: var(--font-display); font-weight:500; font-size:17px;">On lit l'article…</div>
+                  <div class="marginalia marginalia-sm" style="margin-top: 2px;">10 à 30 secondes</div>
+                </div>
+              </div>
+            </div>
+
+            <p class="legend">
+              Cinétique : 3,2 s par cycle. Path 1 (spirale extérieure) se trace en 0–38 %.
+              Path 2 (whorl intérieur) démarre avec 280 ms de délai. Tient en 38–62 %. Se rétracte
+              en 62–100 %. Sous <code>prefers-reduced-motion</code> l'animation s'éteint et le logo
+              reste affiché complet.
+            </p>
+          </section>
+
+          <!-- 14 · CARDS ─────────────────────────────────────────── -->
+          <section id="cards">
+            <header>
+              <h2>14 · Cards</h2>
+              <p>Toutes les cartes Recipe héritent du système de patine. Compositions clés.</p>
+            </header>
+
+            <div class="grid-2">
+              <div class="frame">
+                <span class="frame-tag">Card · plain</span>
+                <div class="ledger-card" style="--patina: 0;">
+                  <h3 class="text-title" style="margin: 0;">Cette semaine</h3>
+                  <p class="text-body" style="margin: 6px 0 14px; color: var(--foreground-muted);">Quatre repas planifiés. Encore deux dîners à décider.</p>
+                  <div class="row">
+                    <button class="btn btn-primary btn-sm">Décider maintenant</button>
+                    <button class="btn btn-ghost btn-sm">Plus tard</button>
+                  </div>
+                </div>
+              </div>
+              <div class="frame">
+                <span class="frame-tag">Recipe library grid</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 320px;">
+                  <article class="ledger-card" style="--patina: 2; padding: 0;">
+                    <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="utensils" style="width:28px;height:28px;"></i></div></div>
+                    <div style="padding: 8px 10px 10px;">
+                      <h5 style="font-family: var(--font-display); font-size: 14px; margin: 0;">Tagliatelles</h5>
+                      <p class="text-caption" style="margin: 2px 0 0;">il y a 4 j</p>
+                    </div>
+                  </article>
+                  <article class="ledger-card" style="--patina: 3; padding: 0;">
+                    <span class="dogear"><svg width="22" height="22" viewBox="0 0 30 30" fill="none"><path d="M 30 0 L 0 0 L 30 30 Z" fill="color-mix(in oklch, var(--surface-rose-100) 80%, oklch(0.68 0.06 40))" stroke="color-mix(in oklch, var(--border) 60%, var(--foreground))" stroke-width="1"/><path d="M 30 0 L 30 30 L 0 0 Z" fill="rgba(74, 56, 40, 0.16)"/></svg></span>
+                    <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="wheat" style="width:28px;height:28px;"></i></div></div>
+                    <div style="padding: 8px 10px 10px;">
+                      <h5 style="font-family: var(--font-display); font-size: 14px; margin: 0;">Risotto safran</h5>
+                      <p class="marginalia marginalia-sm" style="margin: 2px 0 0; font-size: 13px;">34 fois</p>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 15 · SCREENS LOCKED — Accueil A · Bibliothèque A+switch · Recette A -->
+          <section id="screens-decisions">
+            <header>
+              <h2>15 · Écrans verrouillés <span class="tag">trois figés, deux reportés</span></h2>
+              <p>
+                Accueil et Recette en composition A (la version familière, qui port le mieux contre le code actuel).
+                Bibliothèque part en A par défaut mais propose un <em>view-switcher</em> inline pour basculer vers
+                la liste éditoriale (B) ou le regroupement par patine (C). Capture et Réception attendent leur refactor.
+              </p>
+            </header>
+            <table class="decisions">
+              <tr>
+                <td>Accueil</td>
+                <td class="pick">★ composition A · shortlist au centre</td>
+                <td class="note">phone-mockup et notes ↓</td>
+              </tr>
+              <tr>
+                <td>Bibliothèque</td>
+                <td class="pick">★ A par défaut + switch B/C accessible</td>
+                <td class="note">view-switcher en ligne (segmented control)</td>
+              </tr>
+              <tr>
+                <td>Recette</td>
+                <td class="pick">★ composition A · cookbook page</td>
+                <td class="note">photo hero, ingrédients, étapes, marginalia</td>
+              </tr>
+              <tr>
+                <td>Capture</td>
+                <td class="pick deferred">⏸ reporté</td>
+                <td class="note">refactor en cours côté équipe</td>
+              </tr>
+              <tr>
+                <td>Réception</td>
+                <td class="pick deferred">⏸ reporté</td>
+                <td class="note">refactor en cours côté équipe</td>
+              </tr>
+            </table>
+          </section>
+
+          <!-- ACCUEIL ─────────────────────────────────────────────── -->
+          <section id="accueil">
+            <header>
+              <h2>Accueil <span class="tag">shortlist au centre</span></h2>
+              <p>Le pivot quotidien. Liste compacte des recettes en shortlist, scène de table pour chaque,
+                CTA principal en bas pointant vers la recette validée.</p>
+            </header>
+
+            <div class="screen-layout">
+              <div class="phone-frame">
+                <div class="phone-content">
+                  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                    <span style="font-family: var(--font-display); font-weight:500; font-size: 20px;">Accueil</span>
+                    <small class="text-caption">Mardi · 13 mai</small>
+                  </div>
+                  <div class="text-display" style="font-size: 28px;">On mange quoi ce soir ?</div>
+                  <p class="marginalia marginalia-sm slant" style="margin-top: -4px;">— déjà une idée validée</p>
+
+                  <div class="stack" style="gap: 10px; margin-top: 4px;">
+                    <div class="shortlist-row is-valide">
+                      <div class="table-scene ts-56">
+                        <div class="table-plate"></div>
+                        <div class="table-seat seat-north seat-state-valide" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                        <div class="table-seat seat-south seat-state-valide" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                      </div>
+                      <div class="shortlist-info">
+                        <h4>Risotto au safran</h4>
+                        <div class="meta marginalia marginalia-sm" style="color: var(--color-valide-emphasis);">validé · à cuisiner</div>
+                      </div>
+                    </div>
+                    <div class="shortlist-row">
+                      <div class="table-scene ts-56">
+                        <div class="table-plate"></div>
+                        <div class="table-seat seat-north seat-state-pressenti" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                        <div class="table-seat seat-south seat-state-neutral" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                      </div>
+                      <div class="shortlist-info">
+                        <h4>Tagliatelles aux champignons</h4>
+                        <div class="meta">Italienne · 25 min</div>
+                      </div>
+                    </div>
+                    <div class="shortlist-row">
+                      <div class="table-scene ts-56">
+                        <div class="table-plate"></div>
+                        <div class="table-seat seat-north seat-state-valide" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                        <div class="table-seat seat-south seat-state-contested" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                      </div>
+                      <div class="shortlist-info">
+                        <h4>Bœuf bourguignon</h4>
+                        <div class="meta">L favorable · M passe</div>
+                      </div>
+                    </div>
+                    <div class="shortlist-row">
+                      <div class="table-scene ts-56">
+                        <div class="table-plate"></div>
+                        <div class="table-seat seat-north seat-state-neutral" style="background: var(--color-member-rose-bg); color: var(--color-member-rose-foreground);">L</div>
+                        <div class="table-seat seat-south seat-state-pressenti" style="background: var(--color-member-violet-bg); color: var(--color-member-violet-foreground);">M</div>
+                      </div>
+                      <div class="shortlist-info">
+                        <h4>Pizza margherita</h4>
+                        <div class="meta">Italienne · 35 min</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: auto;">
+                    <button class="btn btn-primary btn-lg" style="width:100%;"><i data-lucide="flame" style="width:18px;height:18px;"></i>Cuisiner Risotto au safran</button>
+                  </div>
+                </div>
+                <div class="bottom-nav">
+                  <div class="bottom-nav-tab active"><i data-lucide="home" style="width:20px;height:20px;"></i><span>Accueil</span></div>
+                  <div class="bottom-nav-tab"><i data-lucide="book-open" style="width:20px;height:20px;"></i><span>Recettes</span></div>
+                  <div class="bottom-nav-tab"><i data-lucide="inbox" style="width:20px;height:20px;"></i><span>Réception</span></div>
+                  <div class="bottom-nav-tab"><i data-lucide="settings" style="width:20px;height:20px;"></i><span>Réglages</span></div>
+                </div>
+              </div>
+
+              <div class="breakdown">
+                <h3>Composition</h3>
+                <p>Mise en page verticale, top → bottom : page-header date, H1 question, sous-titre marginalia,
+                  liste de shortlist rows, CTA primaire fixé en bas.</p>
+
+                <h4>Hiérarchie visuelle</h4>
+                <ul>
+                  <li>H1 « On mange quoi ce soir ? » en Cormorant 28 px upright</li>
+                  <li>Marginalia Caveat slant en sous-titre, contextualise l'état</li>
+                  <li>Rangée <em>Validée</em> mise en valeur par <code>--valide-tint</code> en arrière-plan
+                    + halo émeraude sur les seats</li>
+                  <li>CTA primaire ancré en bas du <code>phone-content</code> via <code>margin-top: auto</code></li>
+                </ul>
+
+                <h4>Composants impliqués</h4>
+                <ul>
+                  <li><code>HomeDecide.tsx</code> — composant existant à mettre à jour</li>
+                  <li><code>&lt;TableVote&gt;</code> (nouveau) — remplace <code>.vote-chip</code> sur chaque ligne</li>
+                  <li><code>&lt;Marginalia&gt;</code> (nouveau) — sous-titre et meta de la rangée Validé</li>
+                  <li><code>BottomNav.tsx</code> — inchangé</li>
+                </ul>
+
+                <h4>Données</h4>
+                <ul>
+                  <li>Source : <code>GET /api/shortlist/today</code></li>
+                  <li>État de vote calculé via <code>services/voting.compute_vote_state</code> (invariant 2)</li>
+                  <li>CTA cible : première recette <code>state === "valide"</code> ; fallback <code>"pressenti"</code></li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- BIBLIOTHÈQUE ──────────────────────────────────────── -->
+          <section id="bibliotheque">
+            <header>
+              <h2>Bibliothèque <span class="tag">A par défaut, B/C accessibles</span></h2>
+              <p>Grille 2-col par défaut (dense, visuelle). Le view-switcher inline permet de basculer en
+                <em>Liste</em> (éditoriale, marginalia visible) ou <em>Patine</em> (sections par âge).
+                La préférence est persistée en <code>localStorage</code>.</p>
+            </header>
+
+            <div class="screen-layout">
+              <div class="phone-frame" id="biblioPhone">
+                <div class="phone-content">
+                  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                    <span style="font-family: var(--font-display); font-weight:500; font-size: 20px;">Bibliothèque</span>
+                    <button class="btn btn-ghost btn-sm"><i data-lucide="plus" style="width:14px;height:14px;"></i></button>
+                  </div>
+                  <div style="position: relative;">
+                    <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--foreground-muted);"></i>
+                    <input class="input" type="search" placeholder="Rechercher…" style="padding-left: 36px; width: 100%;" />
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <small class="text-caption">12 recettes</small>
+                    <div class="view-switch" id="biblioSwitch">
+                      <button class="active" data-view="grid" aria-label="Grille"><i data-lucide="layout-grid"></i></button>
+                      <button data-view="list" aria-label="Liste"><i data-lucide="list"></i></button>
+                      <button data-view="patina" aria-label="Patine"><i data-lucide="layers"></i></button>
+                    </div>
+                  </div>
+
+                  <!-- VIEW · A grille -->
+                  <div class="view-panel active" data-view="grid">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                      <article class="ledger-card" style="--patina: 3; padding: 0;">
+                        <span class="dogear"><svg width="22" height="22" viewBox="0 0 30 30" fill="none"><path d="M 30 0 L 0 0 L 30 30 Z" fill="color-mix(in oklch, var(--surface-rose-100) 80%, oklch(0.68 0.06 40))" stroke="color-mix(in oklch, var(--border) 60%, var(--foreground))" stroke-width="1"/><path d="M 30 0 L 30 30 L 0 0 Z" fill="rgba(74, 56, 40, 0.16)"/></svg></span>
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="utensils" style="width:24px;height:24px;"></i></div></div>
+                        <div style="padding: 8px 10px 10px;">
+                          <h5 style="font-family: var(--font-display); font-size: 13px; margin: 0;">Risotto safran</h5>
+                          <p class="marginalia marginalia-sm" style="margin: 2px 0 0; font-size: 12px;">34 fois</p>
+                        </div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 2; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="wheat" style="width:24px;height:24px;"></i></div></div>
+                        <div style="padding: 8px 10px 10px;">
+                          <h5 style="font-family: var(--font-display); font-size: 13px; margin: 0;">Tagliatelles</h5>
+                          <p class="text-caption" style="margin: 2px 0 0; font-size: 11px;">il y a 4 j</p>
+                        </div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 1; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="leaf" style="width:24px;height:24px;"></i></div></div>
+                        <div style="padding: 8px 10px 10px;">
+                          <h5 style="font-family: var(--font-display); font-size: 13px; margin: 0;">Lentilles tièdes</h5>
+                          <p class="text-caption" style="margin: 2px 0 0; font-size: 11px;">2 sem</p>
+                        </div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 0; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="flame" style="width:24px;height:24px;"></i></div></div>
+                        <div style="padding: 8px 10px 10px;">
+                          <h5 style="font-family: var(--font-display); font-size: 13px; margin: 0;">Bœuf bourguignon</h5>
+                          <p class="text-caption" style="margin: 2px 0 0; font-size: 11px;">jamais</p>
+                        </div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 0; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="cookie" style="width:24px;height:24px;"></i></div></div>
+                        <div style="padding: 8px 10px 10px;">
+                          <h5 style="font-family: var(--font-display); font-size: 13px; margin: 0;">Soupe miso</h5>
+                          <p class="text-caption" style="margin: 2px 0 0; font-size: 11px;">jamais</p>
+                        </div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 2; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="flame" style="width:24px;height:24px;"></i></div></div>
+                        <div style="padding: 8px 10px 10px;">
+                          <h5 style="font-family: var(--font-display); font-size: 13px; margin: 0;">Pizza margherita</h5>
+                          <p class="text-caption" style="margin: 2px 0 0; font-size: 11px;">il y a 9 j</p>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+
+                  <!-- VIEW · B liste éditoriale -->
+                  <div class="view-panel" data-view="list">
+                    <div class="stack" style="gap: 14px;">
+                      <article class="ledger-card" style="--patina: 3; display: flex; gap: 12px; padding: 12px;">
+                        <div style="flex: 1; min-width: 0;">
+                          <h4 style="font-family: var(--font-display); font-size: 18px; font-weight: 500; margin: 0;">Risotto au safran</h4>
+                          <p class="text-caption" style="margin: 2px 0 0;">Italienne · de maman</p>
+                          <p class="marginalia marginalia-sm slant" style="margin: 6px 0 0;">cuisiné 34 fois</p>
+                        </div>
+                        <div style="width: 72px; height: 72px; border-radius: 8px; background: linear-gradient(135deg, color-mix(in oklch, var(--primary) 30%, var(--surface-rose-100)), color-mix(in oklch, var(--primary) 8%, var(--surface-muted))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--card);"><i data-lucide="utensils" style="width:24px;height:24px;"></i></div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 2; display: flex; gap: 12px; padding: 12px;">
+                        <div style="flex: 1; min-width: 0;">
+                          <h4 style="font-family: var(--font-display); font-size: 18px; font-weight: 500; margin: 0;">Tagliatelles aux champignons</h4>
+                          <p class="text-caption" style="margin: 2px 0 0;">Italienne · 25 min</p>
+                          <p class="marginalia marginalia-sm slant" style="margin: 6px 0 0;">cèpes secs, magique</p>
+                        </div>
+                        <div style="width: 72px; height: 72px; border-radius: 8px; background: linear-gradient(135deg, color-mix(in oklch, var(--primary) 30%, var(--surface-rose-100)), color-mix(in oklch, var(--primary) 8%, var(--surface-muted))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--card);"><i data-lucide="wheat" style="width:24px;height:24px;"></i></div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 1; display: flex; gap: 12px; padding: 12px;">
+                        <div style="flex: 1; min-width: 0;">
+                          <h4 style="font-family: var(--font-display); font-size: 18px; font-weight: 500; margin: 0;">Salade de lentilles tièdes</h4>
+                          <p class="text-caption" style="margin: 2px 0 0;">Française · il y a 2 sem</p>
+                        </div>
+                        <div style="width: 72px; height: 72px; border-radius: 8px; background: linear-gradient(135deg, color-mix(in oklch, var(--primary) 30%, var(--surface-rose-100)), color-mix(in oklch, var(--primary) 8%, var(--surface-muted))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--card);"><i data-lucide="leaf" style="width:24px;height:24px;"></i></div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 0; display: flex; gap: 12px; padding: 12px;">
+                        <div style="flex: 1; min-width: 0;">
+                          <h4 style="font-family: var(--font-display); font-size: 18px; font-weight: 500; margin: 0;">Bœuf bourguignon</h4>
+                          <p class="text-caption" style="margin: 2px 0 0;">Française · jamais cuisiné</p>
+                        </div>
+                        <div style="width: 72px; height: 72px; border-radius: 8px; background: linear-gradient(135deg, color-mix(in oklch, var(--primary) 30%, var(--surface-rose-100)), color-mix(in oklch, var(--primary) 8%, var(--surface-muted))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--card);"><i data-lucide="flame" style="width:24px;height:24px;"></i></div>
+                      </article>
+                    </div>
+                  </div>
+
+                  <!-- VIEW · C par patine -->
+                  <div class="view-panel" data-view="patina">
+                    <div class="section-divider"><h6 class="section-header">Héritage <span class="count">1</span></h6></div>
+                    <article class="ledger-card" style="--patina: 3; display: flex; gap: 10px; padding: 10px;">
+                      <span class="dogear"><svg width="22" height="22" viewBox="0 0 30 30" fill="none"><path d="M 30 0 L 0 0 L 30 30 Z" fill="color-mix(in oklch, var(--surface-rose-100) 80%, oklch(0.68 0.06 40))" stroke="color-mix(in oklch, var(--border) 60%, var(--foreground))" stroke-width="1"/><path d="M 30 0 L 30 30 L 0 0 Z" fill="rgba(74, 56, 40, 0.16)"/></svg></span>
+                      <div style="width: 56px; height: 56px; border-radius: 8px; background: linear-gradient(135deg, color-mix(in oklch, var(--primary) 30%, var(--surface-rose-100)), color-mix(in oklch, var(--primary) 8%, var(--surface-muted))); flex-shrink: 0; display:flex; align-items:center; justify-content:center; color:var(--card);"><i data-lucide="utensils" style="width:20px;height:20px;"></i></div>
+                      <div style="flex:1; min-width: 0;">
+                        <h5 style="font-family: var(--font-display); font-size: 15px; font-weight: 500; margin: 0;">Risotto au safran</h5>
+                        <p class="marginalia marginalia-sm" style="margin: 2px 0 0; font-size: 13px;">cuisiné 34 fois</p>
+                      </div>
+                    </article>
+
+                    <div class="section-divider" style="margin-top: 8px;"><h6 class="section-header">Habitudes <span class="count">2</span></h6></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                      <article class="ledger-card" style="--patina: 2; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="wheat" style="width:22px;height:22px;"></i></div></div>
+                        <div style="padding: 6px 8px 8px;"><h5 style="font-family: var(--font-display); font-size: 12px; margin: 0;">Tagliatelles</h5></div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 2; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="flame" style="width:22px;height:22px;"></i></div></div>
+                        <div style="padding: 6px 8px 8px;"><h5 style="font-family: var(--font-display); font-size: 12px; margin: 0;">Pizza margherita</h5></div>
+                      </article>
+                    </div>
+
+                    <div class="section-divider" style="margin-top: 8px;"><h6 class="section-header">À l'essai <span class="count">3</span></h6></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                      <article class="ledger-card" style="--patina: 0; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="leaf" style="width:18px;height:18px;"></i></div></div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 0; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="cookie" style="width:18px;height:18px;"></i></div></div>
+                      </article>
+                      <article class="ledger-card" style="--patina: 1; padding: 0;">
+                        <div class="recipe-photo" style="border-radius: 0;"><div class="glyph"><i data-lucide="flame" style="width:18px;height:18px;"></i></div></div>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+                <div class="bottom-nav">
+                  <div class="bottom-nav-tab"><i data-lucide="home" style="width:20px;height:20px;"></i><span>Accueil</span></div>
+                  <div class="bottom-nav-tab active"><i data-lucide="book-open" style="width:20px;height:20px;"></i><span>Recettes</span></div>
+                  <div class="bottom-nav-tab"><i data-lucide="inbox" style="width:20px;height:20px;"></i><span>Réception</span></div>
+                  <div class="bottom-nav-tab"><i data-lucide="settings" style="width:20px;height:20px;"></i><span>Réglages</span></div>
+                </div>
+              </div>
+
+              <div class="breakdown">
+                <h3>Composition</h3>
+                <p>Header de page + recherche + meta-row (compteur + view-switcher) + panneau actif.
+                  Le switcher est <em>discret</em> : 3 boutons icône-seule dans une pill segmented,
+                  juste à côté du compteur. Pas dans Settings — la vue est un choix de session.</p>
+
+                <h4>Le view-switcher — clique pour tester →</h4>
+                <p>Trois vues : <code>grid</code> (défaut), <code>list</code> (éditoriale), <code>patina</code>
+                  (groupée). Le choix est persisté dans <code>localStorage["aldente.library.view"]</code>
+                  avec <code>grid</code> comme défaut à l'install.</p>
+
+                <h4>Composants impliqués</h4>
+                <ul>
+                  <li><code>frontend/app/recipes/page.tsx</code> — orchestrateur de page, hook <code>useLibraryView()</code></li>
+                  <li><code>&lt;LibraryViewSwitch&gt;</code> (nouveau) — segmented control 3-vues</li>
+                  <li><code>&lt;RecipeCard&gt;</code> existant, wrappé en <code>ledger-card</code> avec <code>--patina</code> calculée depuis <code>cook_count</code></li>
+                  <li><code>&lt;RecipeRow&gt;</code> (nouveau, pour la vue Liste B) — variante horizontale, marginalia inline</li>
+                  <li>Helper <code>cookCountToPatina(n: number): 0|1|2|3</code> dans <code>lib/recipes.ts</code></li>
+                  <li>Grouping pour la vue Patine : <code>groupByPatina(recipes)</code> → <code>{ heritage, habitudes, essai }</code></li>
+                </ul>
+
+                <h4>Persistance</h4>
+                <ul>
+                  <li>Lecture côté client uniquement (pas de pref serveur)</li>
+                  <li>Pré-rendu serveur : assume <code>grid</code>, hydraté côté client si autre vue stockée</li>
+                  <li>Évite le flash de mauvaise vue : transition <code>view-panel</code> avec <code>opacity</code> 0 → 1 sur 150 ms après hydratation</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- RECETTE ───────────────────────────────────────────── -->
+          <section id="recette">
+            <header>
+              <h2>Recette — Détail <span class="tag">cookbook page</span></h2>
+              <p>Photo en hero 16:10, titre Cormorant 26 px, méta-badges, liste d'ingrédients,
+                étapes numérotées, CTA Cuisiner sticky. La marginalia sur les étapes vient de
+                l'historique des <code>cooking_logs</code> du foyer.</p>
+            </header>
+
+            <div class="screen-layout">
+              <div class="phone-frame">
+                <div class="phone-content" style="padding: 0;">
+                  <div style="position: sticky; top: 0; z-index: 5; padding: 14px 18px 8px; backdrop-filter: blur(12px); background: color-mix(in oklch, var(--background) 80%, transparent); display: flex; justify-content: space-between; align-items: center;">
+                    <button class="btn btn-ghost btn-sm" style="background: var(--card); border: 1px solid var(--border);"><i data-lucide="chevron-left" style="width:16px;height:16px;"></i></button>
+                    <button class="btn btn-ghost btn-sm" style="background: var(--card); border: 1px solid var(--border);"><i data-lucide="more-horizontal" style="width:16px;height:16px;"></i></button>
+                  </div>
+                  <div class="recipe-photo" style="aspect-ratio: 16/10; margin-top: -38px; border-radius: 0;">
+                    <div class="glyph"><i data-lucide="utensils" style="width:40px;height:40px;"></i></div>
+                  </div>
+                  <div style="padding: 18px 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                      <h2 style="font-family: var(--font-display); font-size: 26px; font-weight: 500; margin: 0; letter-spacing: -0.015em; line-height: 1.1;">Risotto au safran</h2>
+                      <p class="marginalia marginalia-sm slant" style="margin: 4px 0 0;">— de chez maman, cuisiné 34 fois</p>
+                    </div>
+                    <div class="row" style="gap: 6px;">
+                      <span class="badge"><i data-lucide="timer" style="width:11px;height:11px;"></i>35 min</span>
+                      <span class="badge"><i data-lucide="flame" style="width:11px;height:11px;"></i>Moyen</span>
+                      <span class="badge">Italienne</span>
+                      <span class="badge">Réconfortant</span>
+                    </div>
+                    <div>
+                      <h4 style="font-family: var(--font-display); font-size: 17px; font-weight: 500; margin: 0 0 8px;">Ingrédients <small class="text-caption" style="font-family: var(--font-body); font-weight: 400;">· 2 personnes</small></h4>
+                      <div class="ingredients">
+                        <div class="ingredient"><span class="qty">200 g</span><span class="name">riz arborio</span></div>
+                        <div class="ingredient"><span class="qty">1 g</span><span class="name">safran en pistils</span></div>
+                        <div class="ingredient"><span class="qty">2</span><span class="name">échalotes ciselées</span></div>
+                        <div class="ingredient"><span class="qty">50 g</span><span class="name">parmesan râpé</span></div>
+                        <div class="ingredient"><span class="qty">1 L</span><span class="name">bouillon de volaille</span></div>
+                        <div class="ingredient"><span class="qty">30 g</span><span class="name">beurre</span></div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 style="font-family: var(--font-display); font-size: 17px; font-weight: 500; margin: 0 0 6px;">Étapes</h4>
+                      <div class="stack" style="gap: 0;">
+                        <div class="step"><span class="step-num">1</span>Faire suer les échalotes au beurre, sans coloration.
+                          <div class="marginalia marginalia-sm slant" style="display: block; margin: 4px 0 0 12px; font-size: 14px;">jusqu'à ce que ça chante</div>
+                        </div>
+                        <div class="step"><span class="step-num">2</span>Ajouter le riz, nacrer 1 min en remuant.</div>
+                        <div class="step"><span class="step-num">3</span>Verser le bouillon louche par louche, en remuant constamment.
+                          <div class="marginalia marginalia-sm slant" style="display: block; margin: 4px 0 0 12px; font-size: 14px;">on a doublé le safran — meilleur</div>
+                        </div>
+                        <div class="step"><span class="step-num">4</span>Hors du feu : ajouter le parmesan + une cuillère de beurre, mantecare.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="position: sticky; bottom: 0; padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); background: color-mix(in oklch, var(--background) 92%, transparent); backdrop-filter: blur(12px); border-top: 1px solid var(--border);">
+                    <button class="btn btn-primary btn-lg" style="width:100%;"><i data-lucide="flame" style="width:18px;height:18px;"></i>Cuisiner maintenant</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="breakdown">
+                <h3>Composition</h3>
+                <p>Top : barre flottante (retour, menu) sur la photo. Photo hero 16:10 qui mord dans la barre.
+                  Body : titre + marginalia identitaire, badges méta, ingrédients, étapes.
+                  Bottom : CTA Cuisiner sticky avec blur.</p>
+
+                <h4>Hiérarchie typographique</h4>
+                <ul>
+                  <li>Titre <code>.text-title</code> (Cormorant 26 px upright)</li>
+                  <li>Marginalia identitaire en sous-titre (« de chez maman, cuisiné 34 fois »)</li>
+                  <li>Badges secondaires avec icônes Lucide 11 px</li>
+                  <li>Section heads Cormorant 17 px</li>
+                  <li>Étapes en IBM Plex 13.5 px ; numéros en Cormorant terra cotta</li>
+                  <li>Marginalia inline sous certaines étapes — uniquement pour les notes humaines</li>
+                </ul>
+
+                <h4>Composants impliqués</h4>
+                <ul>
+                  <li><code>frontend/app/recipes/[id]/page.tsx</code> — page detail</li>
+                  <li><code>&lt;Marginalia&gt;</code> sur le sous-titre identitaire et les notes inline
+                    (provenance : <code>cooking_logs[].note</code>)</li>
+                  <li><code>&lt;StickyAction&gt;</code> (potentiellement nouveau) — wrapper sticky-bottom
+                    avec <code>safe-area-inset-bottom</code></li>
+                  <li><code>&lt;IngredientList&gt;</code> + <code>&lt;StepList&gt;</code> — peuvent rester simples
+                    (markup direct), pas besoin de nouvelles primitives</li>
+                </ul>
+
+                <h4>Données</h4>
+                <ul>
+                  <li>Recette structurée : <code>GET /api/recipes/:id</code></li>
+                  <li>Marginalia identitaire : dérivée de <code>cook_count</code> + <code>cooking_logs[0].note</code></li>
+                  <li>Marginalia par étape : <code>cooking_logs[].step_notes[]</code> si le modèle le supporte —
+                    sinon, omettre pour la v1</li>
+                  <li>Le CTA Cuisiner émet <code>POST /api/cooking_logs</code> et déclenche la fermeture
+                    de la fenêtre de veto (invariant 2)</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- 16 · PORTING ──────────────────────────────────────── -->
+          <section id="porting">
+            <header>
+              <h2>Mise en code <span class="tag">checklist de migration</span></h2>
+              <p>Trois étapes parallélisables : tokens globaux d'abord, puis chaque écran de manière indépendante.
+                Capture et Réception attendent leur refactor.</p>
+            </header>
+
+            <h3 class="subhead">A · Deltas de <code>frontend/app/globals.css</code></h3>
+            <div class="port-block"><span class="cmt">/* Light mode :root — ces lignes changent de valeur (le nom des jetons reste) */</span>
+<span class="rm">--background: oklch(0.985 0.008 60);</span>
+<span class="add">--background: oklch(0.975 0.006 75);</span>
+<span class="rm">--foreground: oklch(0.22 0.018 50);</span>
+<span class="add">--foreground: oklch(0.21 0.014 55);</span>
+<span class="rm">--card: oklch(0.992 0.006 60);</span>
+<span class="add">--card: oklch(0.99 0.005 75);</span>
+<span class="rm">--primary: oklch(0.595 0.135 35);</span>
+<span class="add">--primary: oklch(0.50 0.10 32);</span>
+<span class="rm">--secondary: oklch(0.945 0.012 50);</span>
+<span class="add">--secondary: oklch(0.93 0.010 60);</span>
+<span class="rm">--muted-foreground: oklch(0.50 0.014 50);</span>
+<span class="add">--muted-foreground: oklch(0.50 0.012 55);</span>
+<span class="rm">--border: oklch(0.88 0.012 50);</span>
+<span class="add">--border: oklch(0.86 0.010 55);</span>
+<span class="rm">--destructive: oklch(0.55 0.20 25);</span>
+<span class="add">--destructive: oklch(0.50 0.15 25);</span>
+<span class="rm">--radius: 0.75rem;</span>
+<span class="add">--radius: 0.625rem;</span>
+
+<span class="cmt">/* Member hexes — désaturer pour rester dans la famille sober */</span>
+<span class="rm">--color-member-rose-bg: #F43F5E;</span>
+<span class="add">--color-member-rose-bg: #C0364A;</span>
+<span class="rm">--color-member-amber-bg: #F59E0B;</span>
+<span class="add">--color-member-amber-bg: #C98512;</span>
+<span class="rm">--color-member-emerald-bg: #10B981;</span>
+<span class="add">--color-member-emerald-bg: #0D8A64;</span>
+<span class="rm">--color-member-sky-bg: #0EA5E9;</span>
+<span class="add">--color-member-sky-bg: #0879AD;</span>
+<span class="rm">--color-member-violet-bg: #8B5CF6;</span>
+<span class="add">--color-member-violet-bg: #6E46C1;</span>
+
+<span class="cmt">/* Nouveaux tokens */</span>
+<span class="add">--font-marginalia: "Caveat", cursive;</span>
+<span class="add">--duration-slow: 3200ms;</span>
+<span class="add">--patina: 0;  /* défaut, override par carte */</span>
+
+<span class="cmt">/* Shadows allégées de moitié */</span>
+<span class="rm">--shadow-card: 0 1px 2px 0 rgba(74,56,40,.06), 0 2px 4px 0 rgba(74,56,40,.05);</span>
+<span class="add">--shadow-card: 0 1px 2px 0 rgba(74,56,40,.05), 0 1px 3px 0 rgba(74,56,40,.03);</span></div>
+
+            <h3 class="subhead">B · Nouvelles classes utilitaires + chargement Caveat</h3>
+            <div class="port-block"><span class="cmt">/* @layer utilities — à ajouter à globals.css */</span>
+<span class="add">.marginalia { font-family: var(--font-marginalia); font-weight: 500; line-height: 1.25; color: var(--primary); }
+.marginalia-sm { font-size: 1rem; }
+.marginalia-md { font-size: 1.2rem; }
+.marginalia-lg { font-size: 1.5rem; }
+.marginalia.slant { transform: rotate(-1.2deg); display: inline-block; }</span>
+
+<span class="cmt">/* Retirer l'italique du display */</span>
+<span class="rm">.text-display { ... font-style: italic; }</span>
+<span class="add">.text-display { ... /* font-style retiré */ }</span>
+
+<span class="cmt">// frontend/app/layout.tsx — charger Caveat</span>
+<span class="add">import { Cormorant_Garamond, IBM_Plex_Sans, Caveat } from "next/font/google";
+const caveat = Caveat({ variable: "--font-marginalia", subsets: ["latin", "latin-ext"], weight: ["500", "600"], display: "swap" });
+// puis ajouter ${caveat.variable} à la className du &lt;html&gt;</span></div>
+
+            <h3 class="subhead">C · Ordre d'exécution suggéré</h3>
+            <div class="port-block"><span class="cmt"># Une PR par étape, mergeable dans l'ordre :</span>
+
+<span class="key">PR-01</span>  Tokens — globals.css + layout.tsx Caveat
+       <span class="cmt"># Touche tout, ne casse rien (vars renommées identiques)</span>
+
+<span class="key">PR-02</span>  Primitives — TableVote, Marginalia, LedgerCard, BrandLoader
+       <span class="cmt"># Aucun call-site mis à jour ; pure addition</span>
+
+<span class="key">PR-03</span>  Accueil A — HomeDecide.tsx + i18n key
+       <span class="cmt"># Premier écran branché aux nouvelles primitives</span>
+
+<span class="key">PR-04</span>  Bibliothèque A + switch — recipes/page.tsx, useLibraryView, RecipeRow
+       <span class="cmt"># Plus gros chantier ; 3 vues à câbler</span>
+
+<span class="key">PR-05</span>  Recette A — recipes/[id]/page.tsx layout + marginalia identitaire
+       <span class="cmt"># Dernière étape avant le refactor Capture/Réception</span>
+
+<span class="cmt"># Capture &amp; Réception : repris après le refactor parallèle.</span></div>
+
+            <h3 class="subhead">D · Cleanup en parallèle</h3>
+            <ul class="checklist">
+              <li>
+                <span class="check-mark"></span>
+                <div>
+                  <strong>Supprimer <code>frontend/app/styleguide/page.tsx</code></strong><br>
+                  <span class="text-caption">L'ancienne <code>/styleguide</code> v0.2 — déjà marquée
+                    <code>TODO(milestone-close)</code>. Remplacée de facto par ce document.</span>
+                </div>
+              </li>
+              <li>
+                <span class="check-mark"></span>
+                <div>
+                  <strong>Vérifier les invariants</strong><br>
+                  <span class="text-caption">Aucun changement de schéma DB. Aucun nouveau jeton sémantique
+                    (Validé reste émeraude h≈145 — invariant DECIDE-03). Les vocabulaires lockés
+                    (<code>enums.ts</code> + <code>enums.py</code>) ne bougent pas.</span>
+                </div>
+              </li>
+              <li>
+                <span class="check-mark"></span>
+                <div>
+                  <strong>Tester sur iOS Safari PWA</strong><br>
+                  <span class="text-caption">Caveat est une web-font Google — vérifier qu'elle charge bien
+                    en mode standalone. Fallback <code>cursive</code> dans la pile.</span>
+                </div>
+              </li>
+            </ul>
+
+            <h3 class="subhead">E · Écrans reportés</h3>
+            <div class="deferred-block">
+              <h4>⏸ Capture &amp; Réception — refactor en cours</h4>
+              <p>
+                Les écrans Capture (<code>frontend/app/recipes/new/</code>) et Réception (<code>frontend/app/inbox/</code>)
+                font l'objet d'un refactor parallèle. Toucher leur composition maintenant créerait du rework.
+                Quand le refactor atterrit, on reprend les explorations A/B/C précédentes pour choisir
+                leur composition cible.
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": 1.6 } });
+      });
+      const themeToggle = document.getElementById("themeToggle");
+      themeToggle.addEventListener("click", () => {
+        document.documentElement.classList.toggle("dark");
+        themeToggle.textContent = document.documentElement.classList.contains("dark") ? "☀️ Light" : "🌙 Dark";
+      });
+
+      // Bibliothèque view switcher (grid / list / patina)
+      const switchEl = document.getElementById("biblioSwitch");
+      const phoneEl = document.getElementById("biblioPhone");
+      if (switchEl && phoneEl) {
+        switchEl.querySelectorAll("button").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const view = btn.dataset.view;
+            switchEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
+            phoneEl.querySelectorAll(".view-panel").forEach((p) => p.classList.toggle("active", p.dataset.view === view));
+            if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": 1.6 } });
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
