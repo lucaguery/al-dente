@@ -697,9 +697,13 @@ def voice_modify(
     try:
         extracted = apply_voice_modification(recipe_json, body.transcript)
     except Exception as exc:  # noqa: BLE001 — Gemini errors mapped to 502
+        # WR-03: do NOT echo the raw SDK exception to the client — google-genai
+        # error messages can include request URLs containing API keys in the
+        # ?key=AIza… query string. Log the detail server-side, return generic.
+        log.exception("voice_modify failed recipe=%s", recipe_id)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"gemini error: {str(exc)[:200]}",
+            detail="gemini extraction failed",
         ) from exc
 
     # Return the parsed shape verbatim — frontend places into edit form.
