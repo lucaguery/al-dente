@@ -133,6 +133,14 @@ def sanitize_recipe_svg(raw: str) -> Optional[str]:
                 return None
 
     # 5. Normalization on accept (D-34).
+    # Strip any existing viewBox variant before setting the canonical value.
+    # ET may store the attribute as "{http://www.w3.org/2000/svg}viewBox" when
+    # the SVG declares a default namespace — setting the plain "viewBox" key
+    # would leave both entries in the attrib dict and serialize both. Iterate
+    # and drop any key whose namespace-stripped form is "viewbox" first.
+    for k in list(root.attrib.keys()):
+        if _strip_namespace(k).lower() == "viewbox":
+            del root.attrib[k]
     root.attrib["viewBox"] = "0 0 160 160"
     # Re-key to clean attribute names (strip any remaining namespace prefix
     # on the root). For attrs not currently set, supply sane defaults so
