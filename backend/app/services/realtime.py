@@ -11,6 +11,8 @@ v0.1 event types are (CLAUDE.md "Architecture invariants" #4):
     * ``recipe.created``    — routers/recipes.py (W1, plan 01-08)
     * ``recipe.promoted``   — services/llm.py BackgroundTask (W2 plan 02-02)
     * ``recipe.updated``    — routers/recipes.py PUT handler (W1, plan 01-08)
+    * ``turn.created``      — routers/recipes.py thread endpoints (Phase 26 plan 26-03)
+    * ``turn.updated``      — services/llm.py extract_and_process_url_turn (Phase 26 plan 26-02; D-29)
     * ``vote.created``      — routers/votes.py (W3 plan 03-02)
     * ``shortlist.created`` — services/shortlist.py cron + regenerate (W3 plan 03-02)
     * ``cooking.started``   — routers/cooking_logs.py (W3 plan 03-02)
