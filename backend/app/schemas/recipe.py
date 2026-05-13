@@ -1,11 +1,11 @@
-"""Pydantic v2 schemas for the recipe library API (plan 01-08).
+"""Pydantic v2 schemas for the recipe library API.
 
-Wire-format contract for the W1 manual capture surfaces:
+Wire-format contract for the capture + edit surfaces:
 
-* ``RecipeFullCreate``  — POST /recipes (RECIPE-01, status='structured')
-* ``RecipeQuickCreate`` — POST /recipes/quick (RECIPE-02, status='draft')
+* ``RecipeBlankCreate`` — POST /recipes (Phase 27 CAPTURE-03, empty body, status='draft')
 * ``RecipeUpdate``      — PUT /recipes/{id} (manually_edited_fields INTENTIONALLY absent — Phase 28 DETAIL-05)
 * ``RecipeResponse``    — every read shape + the WS broadcast payload
+* ``PromotionRetryResponse`` — POST /recipes/{id}/retry-promotion + POST /recipes/{id}/promote
 
 Locked-vocabulary validation flows through ``app.models.enums`` (Cuisine, Mood,
 Protein, Season). Because those classes inherit ``str, Enum``, Pydantic v2 both
@@ -18,6 +18,13 @@ CLAUDE.md invariant 5 — raw inputs are kept forever — is enforced via
 sender='user') stores the original captured text/transcript/url/photo_paths
 and is never overwritten. ``manually_edited_fields`` is absent from
 ``RecipeUpdate``; the write path is Phase 28 DETAIL-05.
+
+Phase 27 CAPTURE-03 + CONTEXT.md D-12 + D-13b:
+The five legacy create endpoints (POST /recipes full-form, /quick, /voice,
+/photo, /url) and their request schemas (RecipeFullCreate, RecipeQuickCreate,
+VoiceCaptureRequest, UrlCaptureRequest) have been deleted. The conversational
+capture screen uses only: POST /recipes (blank draft), POST /recipes/{id}/turns,
+POST /recipes/{id}/turns/photo, POST /recipes/{id}/promote.
 """
 
 from __future__ import annotations
@@ -55,47 +62,16 @@ class IngredientItem(BaseModel):
 # --- Create requests --------------------------------------------------------
 
 
-class RecipeFullCreate(BaseModel):
-    """RECIPE-01 — full-form create. Server stamps ``status='structured'``.
+class RecipeBlankCreate(BaseModel):
+    """Phase 27 CAPTURE-03 — empty-body create for the conversational capture
+    screen. The server stamps status='draft' and title='Extraction en cours…';
+    all recipe fields are populated by promote_draft after « Enregistrer »
+    triggers POST /recipes/{id}/promote. CONTEXT.md D-12 + D-13b.
 
-    The full-form surface is "the human did the structuring work" path; the
-    LLM-promotion path (W2) lands on the same shape via ``status='structured'``
-    once the BackgroundTask returns.
+    Strict {} per CONTEXT.md Claude's Discretion ("Recommend strict {}").
     """
 
-    title: str = Field(min_length=1, max_length=200)
-    ingredients: List[IngredientItem] = Field(default_factory=list)
-    steps: List[str] = Field(default_factory=list)
-    prep_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
-    # Phase 24 RID-02 — three optional recipe-identity fields (D-12).
-    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
-    difficulty: Optional[DifficultyLiteral] = None
-    description: Optional[str] = None
-    servings: Optional[int] = Field(default=None, ge=1, le=99)
-    cuisine: Optional[Cuisine] = None
-    mood: List[Mood] = Field(default_factory=list)
-    main_protein: Optional[Protein] = None
-    seasonality: List[Season] = Field(
-        default_factory=lambda: [
-            Season.spring,
-            Season.summer,
-            Season.autumn,
-            Season.winter,
-        ]
-    )
-    tags: List[str] = Field(default_factory=list)
-
-
-class RecipeQuickCreate(BaseModel):
-    """RECIPE-02 — title-only quick add. Server stamps ``status='draft'``.
-
-    Photo upload is a SEPARATE call (``POST /recipes/{id}/photos`` lands in
-    plan 01-09); the FE chains the two when a photo was attached at quick-add
-    time so this plan and 01-09 can be executed in parallel without touching
-    the same router file.
-    """
-
-    title: str = Field(min_length=1, max_length=200)
+    pass
 
 
 class RecipeUpdate(BaseModel):
@@ -189,35 +165,14 @@ class RecipeResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# --- Phase 2 capture surfaces (W2) -----------------------------------------
-
-
-class VoiceCaptureRequest(BaseModel):
-    """POST /recipes/voice body. Transcript text only — frontend collects via
-    textarea (iOS keyboard dictation or manual typing). NO Web Speech API on
-    the wire (see Phase 2 critical decision: textarea-only voice UX)."""
-
-    transcript: str = Field(min_length=1, max_length=10_000)
-
-
-class UrlCaptureRequest(BaseModel):
-    """POST /recipes/url body. URL stored in the recipe_turns payload (D-11);
-    no Gemini extraction in Phase 25 (CAPTURE-03 explicit — Phase 26 TURN-04).
-
-    # TODO(productize): URL fetch + Gemini extraction (CAPTURE-03 deferred).
-    """
-
-    url: str = Field(min_length=1, max_length=2_000)
-
-
 class VoiceModifyRequest(BaseModel):
-    """POST /recipes/{id}/voice-modify body. Same shape as VoiceCaptureRequest."""
+    """POST /recipes/{id}/voice-modify body."""
 
     transcript: str = Field(min_length=1, max_length=10_000)
 
 
 class PromotionRetryResponse(BaseModel):
-    """POST /recipes/{id}/retry-promotion response — minimal ack."""
+    """POST /recipes/{id}/retry-promotion + POST /recipes/{id}/promote response — minimal ack."""
 
     recipe_id: UUID
     queued: bool

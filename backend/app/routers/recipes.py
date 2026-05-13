@@ -1,35 +1,42 @@
-"""Recipe library API (plan 01-08). Phase 25 cutover to recipe_turns.
+"""Recipe library API. Phase 27 CAPTURE-03: conversational capture endpoints.
 
 Endpoints:
 
-* ``POST /recipes``         — RECIPE-01 full-form create (status='draft' → promotes)
-* ``POST /recipes/quick``   — RECIPE-02 title-only quick add (status='draft' → promotes)
-* ``GET  /recipes``         — RECIPE-03 / 06 list w/ ILIKE search + status filter
-* ``GET  /recipes/{id}``    — RECIPE-04 detail (404 on cross-household, no leak)
-* ``PUT  /recipes/{id}``    — RECIPE-05 patch
+* ``POST /recipes``                    — Phase 27 CAPTURE-03 blank-draft create ({})
+* ``GET  /recipes``                    — RECIPE-03 / 06 list w/ ILIKE search + status filter
+* ``GET  /recipes/{id}``               — RECIPE-04 detail (404 on cross-household, no leak)
+* ``PUT  /recipes/{id}``               — RECIPE-05 patch
+* ``POST /recipes/{id}/voice-modify``  — CAPTURE-05 voice modification (untouched)
+* ``POST /recipes/{id}/retry-promotion`` — Phase 16 failed-promotion retry
+* ``POST /recipes/{id}/promote``       — Phase 27 D-13b coalescing promote trigger
+* ``DELETE /recipes/{id}``             — hard delete
+* ``POST /recipes/{id}/turns``         — Phase 26 TURN-01 append text/voice/url/answer/proposal turn
+* ``POST /recipes/{id}/turns/photo``   — Phase 26 TURN-01 multipart photo turn
+* ``GET  /recipes/{id}/turns``         — Phase 26 TURN-01 ordered turn list
 
 Architecture invariants enforced here:
 
 * CLAUDE.md #4 — every household-syncing mutation broadcasts via
-  ``broadcast_to_household``. We emit ``recipe.created`` on POST + POST /quick
-  and ``recipe.updated`` on PUT.
-* CLAUDE.md #5 — raw inputs kept forever in ``recipe_turns`` (Phase 25). Each
-  POST handler inserts a position=0 user turn (kind=text/voice/photo/url) before
-  committing. The turn payload preserves the original capture input verbatim.
+  ``broadcast_to_household``. We emit ``recipe.created`` on POST and
+  ``recipe.updated`` on PUT.
+* CLAUDE.md #5 — raw inputs kept forever in ``recipe_turns`` (Phase 25+).
+  The initial user turn (position=0, sender='user') stores the original
+  capture payload verbatim. POST /recipes no longer inserts a turn — the
+  first turn arrives via POST /recipes/{id}/turns (Phase 26 D-20).
 * D-03 — text search is ``WHERE title ILIKE :q OR ingredients::text ILIKE :q``
   with ``:q`` formatted as ``%query%``. No pg_trgm, no FTS.
+
+Phase 27 CAPTURE-03 / CONTEXT.md D-12 + D-13b:
+The five legacy capture endpoints (POST /recipes full-form, /quick, /voice,
+/photo, /url) have been deleted. The conversational capture screen uses:
+  1. POST /recipes → blank draft (this file)
+  2. POST /recipes/{id}/turns → per-bubble user turns (Phase 26)
+  3. POST /recipes/{id}/turns/photo → per-photo bubble (Phase 26)
+  4. POST /recipes/{id}/promote → coalescing promote_draft trigger (this file)
 
 Cross-household isolation: every read/write filters by ``member.household_id``.
 A member of A cannot read/edit/list recipes of B. Detail endpoint returns 404
 (not 403) on cross-household to avoid leaking existence (T-01-08-04).
-
-NOT in scope:
-
-* DELETE /recipes/{id} — soft/hard delete is productize-later (UI-SPEC marks
-  "Supprimer cette recette" as v0.2 affordance).
-* POST /recipes/{id}/photos — owned by plan 01-09 (separate router file so
-  this plan and 01-09 can land in parallel).
-* cook_count + last_cooked_at — owned by W3 cooking-log handler.
 """
 
 from __future__ import annotations
@@ -61,12 +68,9 @@ from app.models.recipe_turn import RecipeTurn
 from app.models.vote import Vote
 from app.schemas.recipe import (
     PromotionRetryResponse,
-    RecipeFullCreate,
-    RecipeQuickCreate,
+    RecipeBlankCreate,
     RecipeResponse,
     RecipeUpdate,
-    UrlCaptureRequest,
-    VoiceCaptureRequest,
     VoiceModifyRequest,
 )
 from app.services import storage as storage_service
@@ -185,116 +189,55 @@ def _cleanup_partial_uploads(paths: list[str]) -> None:
     response_model=RecipeResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_full(
-    body: RecipeFullCreate,
-    background_tasks: BackgroundTasks,
+async def create_blank(
+    body: RecipeBlankCreate,
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
 ) -> RecipeResponse:
-    """RECIPE-01 — full-form create.
+    """Phase 27 CAPTURE-03 — blank-draft create for the conversational capture screen.
 
-    Phase 25 cutover: inserts a position=0 text turn (D-12) before committing.
-    The BackgroundTask (promote_draft) reads that turn and rewrites the title.
-    CLAUDE.md invariant #5 preserved — original title kept in the turn payload.
+    Per CONTEXT.md D-12 + D-13b: POST /recipes accepts {} and ONLY creates the
+    draft row + broadcasts recipe.created. It does NOT schedule promote_draft —
+    that is the explicit job of POST /recipes/{id}/promote (D-13b), called by
+    the frontend after all per-bubble POST /turns have landed.
+
+    Why no promote_draft here: the user adds N pending bubbles in the chat
+    composer; on Enregistrer the frontend posts each as one /turns call (Phase
+    26 D-20), then calls /promote ONCE so promote_draft runs over the full
+    thread (ADR-0001 "one Gemini call per Enregistrer"). If POST /recipes
+    scheduled promote_draft here, it would race the per-turn BackgroundTasks
+    Phase 26 already schedules per D-22 — both would re-read the thread and
+    produce duplicate-system-turn noise.
+
+    Layering note (Phase 27 → Phase 29): Phase 26's POST /turns schedules
+    process_thread_turn (text/voice/photo) and extract_and_process_url_turn
+    (url) as BackgroundTasks per D-22. Those stubs run alongside the new
+    POST /promote's promote_draft. Today (Phase 27) process_thread_turn is a
+    stub (26-02-PLAN Task 1) that does no real work, so in practice only
+    promote_draft from POST /promote does meaningful extraction. Phase 29 fills
+    process_thread_turn's body; until then the coexistence is harmless.
+
+    Title placeholder is the same literal Phase 26's RealtimeProvider
+    inspects to know when the draft is still extracting.
     """
     recipe = Recipe(
         household_id=member.household_id,
         created_by_member_id=member.id,
         status="draft",
-        title=body.title,
-        ingredients=[i.model_dump() for i in body.ingredients] or None,
-        steps=body.steps or None,
-        prep_time_minutes=body.prep_time_minutes,
-        # Phase 24 RID-02 — three new optional recipe-identity fields.
-        cook_time_minutes=body.cook_time_minutes,
-        difficulty=body.difficulty,
-        description=body.description,
-        servings=body.servings,
-        cuisine=body.cuisine.value if body.cuisine else None,
-        mood=[m.value for m in body.mood] or [],
-        main_protein=body.main_protein.value if body.main_protein else None,
-        seasonality=[s.value for s in body.seasonality]
-        or ["spring", "summer", "autumn", "winter"],
-        tags=body.tags or [],
-        photo_paths=[],
-    )
-    db.add(recipe)
-    db.flush()  # need recipe.id for turn FK
-
-    # Phase 25 D-12 — text turn; payload preserves the user's original title.
-    turn = RecipeTurn(
-        recipe_id=recipe.id,
-        position=0,
-        sender="user",
-        kind="text",
-        payload={"text": body.title},
-    )
-    db.add(turn)
-    db.commit()
-    db.refresh(recipe)
-
-    payload = _to_response_payload(recipe, initial_turn_kind="text")
-    # REALTIME-02: recipe.created broadcasts sync; recipe.promoted from task.
-    await broadcast_to_household(member.household_id, "recipe.created", payload)
-
-    # Queue promote_draft — opens its own SessionLocal (RESEARCH §Pitfall 3).
-    background_tasks.add_task(promote_draft, recipe.id)
-
-    return _to_response(recipe, initial_turn_kind="text")
-
-
-@router.post(
-    "/quick",
-    response_model=RecipeResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_quick(
-    body: RecipeQuickCreate,
-    background_tasks: BackgroundTasks,
-    member: Member = Depends(current_member),
-    db: Session = Depends(get_db),
-) -> RecipeResponse:
-    """RECIPE-02 — title-only quick add. Server stamps ``status='draft'``.
-
-    Phase 25 cutover: inserts a position=0 text turn (D-12) before committing.
-    The original title is preserved in the turn payload (invariant #5); recipe.title
-    is overwritten by the catchy rewrite on promote_draft success.
-
-    Photo upload remains a separate ``POST /recipes/{id}/photos`` call.
-    """
-    recipe = Recipe(
-        household_id=member.household_id,
-        created_by_member_id=member.id,
-        status="draft",
-        title=body.title,
+        title="Extraction en cours…",
         photo_paths=[],
         mood=[],
         seasonality=["spring", "summer", "autumn", "winter"],
         tags=[],
     )
     db.add(recipe)
-    db.flush()  # need recipe.id for turn FK
-
-    # Phase 25 D-12 — text turn; payload preserves the user's original title.
-    turn = RecipeTurn(
-        recipe_id=recipe.id,
-        position=0,
-        sender="user",
-        kind="text",
-        payload={"text": body.title},
-    )
-    db.add(turn)
     db.commit()
     db.refresh(recipe)
 
-    payload = _to_response_payload(recipe, initial_turn_kind="text")
-    # recipe.created broadcasts sync; recipe.promoted from the BackgroundTask.
+    payload = _to_response_payload(recipe, initial_turn_kind=None)
     await broadcast_to_household(member.household_id, "recipe.created", payload)
 
-    # Queue promote_draft — opens its own SessionLocal (RESEARCH §Pitfall 3).
-    background_tasks.add_task(promote_draft, recipe.id)
-
-    return _to_response(recipe, initial_turn_kind="text")
+    return _to_response(recipe, initial_turn_kind=None)
 
 
 @router.get("", response_model=List[RecipeResponse])
@@ -436,252 +379,6 @@ async def update_recipe(
     return _to_response(r, initial_turn_kind=kind)
 
 
-# --- Phase 2 capture surfaces (W2, plan 02-02) -----------------------------
-
-
-@router.post(
-    "/voice",
-    response_model=RecipeResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_voice(
-    body: VoiceCaptureRequest,
-    background_tasks: BackgroundTasks,
-    member: Member = Depends(current_member),
-    db: Session = Depends(get_db),
-) -> RecipeResponse:
-    """CAPTURE-01 — voice capture. Creates a draft synchronously, queues
-    Gemini promotion via BackgroundTask. The promotion task broadcasts
-    ``recipe.promoted`` on success or writes ``promotion_error`` on failure.
-
-    Phase 25 cutover: inserts a position=0 voice turn (D-12) with the transcript
-    in the payload before committing. promote_draft reads the turn to extract.
-
-    Note: per Phase 2 critical decision, the transcript arrives as plain text
-    (frontend uses a textarea + iOS keyboard dictation). NO Web Speech API.
-    """
-    recipe = Recipe(
-        household_id=member.household_id,
-        created_by_member_id=member.id,
-        status="draft",
-        title="(extraction en cours…)",  # placeholder until BackgroundTask promotes
-        photo_paths=[],
-        mood=[],
-        seasonality=["spring", "summer", "autumn", "winter"],
-        tags=[],
-    )
-    db.add(recipe)
-    db.flush()  # need recipe.id for turn FK
-
-    # Phase 25 D-12 — voice turn; transcript preserved in payload (invariant #5).
-    turn = RecipeTurn(
-        recipe_id=recipe.id,
-        position=0,
-        sender="user",
-        kind="voice",
-        payload={"transcript": body.transcript},
-    )
-    db.add(turn)
-    db.commit()
-    db.refresh(recipe)
-
-    # Broadcast so partner phones see the placeholder card with spinner state.
-    payload = _to_response_payload(recipe, initial_turn_kind="voice")
-    await broadcast_to_household(member.household_id, "recipe.created", payload)
-
-    # Queue promote_draft — opens its own SessionLocal (RESEARCH §Pitfall 3).
-    background_tasks.add_task(promote_draft, recipe.id)
-    return _to_response(recipe, initial_turn_kind="voice")
-
-
-@router.post(
-    "/photo",
-    response_model=RecipeResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_photo(
-    background_tasks: BackgroundTasks,
-    files: list[UploadFile] = File(...),
-    member: Member = Depends(current_member),
-    db: Session = Depends(get_db),
-) -> RecipeResponse:
-    """CAPTURE-02 — photo capture. 1-4 images, each <=8 MB, total <=18 MB.
-
-    Phase 25 D-08: uploads photos to Supabase Storage IN THE ROUTER before
-    creating the turn. Storage paths land in BOTH recipes.photo_paths AND the
-    photo turn payload. promote_draft downloads bytes via download_recipe_photo.
-    """
-    if not files or len(files) < 1:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="at least one photo required",
-        )
-    if len(files) > MAX_PHOTOS_PER_CAPTURE:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="at most 4 photos accepted",
-        )
-
-    # Read all bytes up-front; enforce per-file + total caps.
-    contents: list[bytes] = []
-    total = 0
-    for f in files:
-        data = await f.read(MAX_BYTES + 1)
-        if len(data) > MAX_BYTES:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"photo exceeds {MAX_BYTES} bytes",
-            )
-        if not data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="empty photo",
-            )
-        total += len(data)
-        if total > GEMINI_PHOTO_TOTAL_BYTES_CAP:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=(
-                    "combined photo size exceeds Gemini 18 MB cap; "
-                    "use fewer or smaller photos"
-                ),
-            )
-        contents.append(data)
-
-    # Create the draft record.
-    recipe = Recipe(
-        household_id=member.household_id,
-        created_by_member_id=member.id,
-        status="draft",
-        title="(extraction en cours…)",
-        photo_paths=[],
-        mood=[],
-        seasonality=["spring", "summer", "autumn", "winter"],
-        tags=[],
-    )
-    db.add(recipe)
-    db.flush()  # need recipe.id for Storage path + turn FK
-
-    # D-08: upload bytes to Supabase Storage BEFORE creating the turn.
-    # Path is server-generated (T-25-06 path-traversal guard).
-    # WR-02: if a later upload in the loop raises, best-effort delete the
-    # already-uploaded blobs — otherwise they orphan in Supabase Storage
-    # (the recipe row is rolled back, so they have no DB referent).
-    paths: list[str] = []
-    try:
-        for content in contents:
-            path = upload_recipe_photo(
-                household_id=member.household_id,
-                recipe_id=recipe.id,
-                content=content,
-            )
-            paths.append(path)
-    except ValueError as exc:
-        _cleanup_partial_uploads(paths)
-        db.rollback()
-        if str(exc) == "oversize":
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail="oversize",
-            ) from exc
-        if str(exc) == "unsupported":
-            raise HTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail="unsupported media",
-            ) from exc
-        raise
-    except Exception:
-        # Any other exception (Supabase network error, etc.) — same cleanup contract.
-        _cleanup_partial_uploads(paths)
-        db.rollback()
-        raise
-
-    # Paths go into BOTH recipes.photo_paths AND the photo turn payload (D-10).
-    recipe.photo_paths = paths
-
-    # Phase 25 D-10 — photo turn with photo_paths in payload (same paths as above).
-    turn = RecipeTurn(
-        recipe_id=recipe.id,
-        position=0,
-        sender="user",
-        kind="photo",
-        payload={"photo_paths": paths},
-    )
-    db.add(turn)
-    db.commit()
-    db.refresh(recipe)
-
-    payload = _to_response_payload(recipe, initial_turn_kind="photo")
-    await broadcast_to_household(member.household_id, "recipe.created", payload)
-
-    # promote_draft downloads bytes from Storage via download_recipe_photo (D-08).
-    background_tasks.add_task(promote_draft, recipe.id)
-    return _to_response(recipe, initial_turn_kind="photo")
-
-
-@router.post(
-    "/url",
-    response_model=RecipeResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_url(
-    body: UrlCaptureRequest,
-    member: Member = Depends(current_member),
-    db: Session = Depends(get_db),
-) -> RecipeResponse:
-    """CAPTURE-03 — URL paste. NO Gemini call here; URL extraction is now
-    handled by extract_and_process_url_turn (Phase 26 D-28), scheduled as a
-    BackgroundTask from POST /recipes/{id}/turns (kind='url'). The URL is
-    stored in the turn payload (invariant #5).
-
-    Phase 26 closes the long-standing TODO(productize) — the legacy /recipes/url
-    endpoint stays put until Phase 27 retires the five-surface UI, but the
-    extraction path runs through the unified thread API.
-    """
-    # Best-effort URL syntax check — catches obvious typos. Heavy validation
-    # is the frontend's job (see plan 04-03 url tab).
-    url = body.url.strip()
-    if not url.startswith(("http://", "https://")):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="url must start with http:// or https://",
-        )
-
-    # Title placeholder — drafts inbox row shows the URL host as a hint.
-    # WR-01: cap at 200 chars to match RecipeUpdate.title's max_length=200, so
-    # later PUTs to this row (which often re-submit the existing title) don't
-    # 422. Full URL is preserved verbatim in the turn payload (invariant #5).
-    recipe = Recipe(
-        household_id=member.household_id,
-        created_by_member_id=member.id,
-        status="draft",
-        title=url[:200],  # better than "(extraction…)" since extraction is deferred
-        photo_paths=[],
-        mood=[],
-        seasonality=["spring", "summer", "autumn", "winter"],
-        tags=[],
-    )
-    db.add(recipe)
-    db.flush()  # need recipe.id for turn FK
-
-    # Phase 25 D-11 — url turn; URL preserved in payload (invariant #5).
-    # No BackgroundTask queued — URL extraction is Phase 26 TURN-04.
-    turn = RecipeTurn(
-        recipe_id=recipe.id,
-        position=0,
-        sender="user",
-        kind="url",
-        payload={"url": url},
-    )
-    db.add(turn)
-    db.commit()
-    db.refresh(recipe)
-
-    payload = _to_response_payload(recipe, initial_turn_kind="url")
-    await broadcast_to_household(member.household_id, "recipe.created", payload)
-    return _to_response(recipe, initial_turn_kind="url")
-
-
 @router.post(
     "/{recipe_id}/voice-modify",
     # Returns the GeminiExtractedRecipe shape; no Recipe row mutation.
@@ -781,6 +478,61 @@ async def retry_promote(
 
     background_tasks.add_task(retry_promotion, recipe.id)
     return PromotionRetryResponse(recipe_id=recipe.id, queued=True)
+
+
+@router.post(
+    "/{recipe_id}/promote",
+    response_model=PromotionRetryResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def promote_recipe(
+    recipe_id: UUID,
+    background_tasks: BackgroundTasks,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> PromotionRetryResponse:
+    """Phase 27 CAPTURE-03 / CONTEXT.md D-13b — coalescing promote trigger.
+
+    Called once by the frontend after all per-bubble POST /turns have landed
+    (the chat composer save flow). Schedules promote_draft over the full
+    thread — matching ADR-0001 "one Gemini call per Enregistrer".
+
+    No-op idempotency: if the user double-taps Enregistrer, two promote_draft
+    runs happen back-to-back. Each one re-reads the full thread (Phase 26 D-22)
+    and the second run sees the result of the first; the LLM idempotency comes
+    from "full re-read" (ADR-0001), not from request-level deduplication.
+
+    422 when the recipe has no position=0 user turn — promote_draft would
+    raise inside the BackgroundTask, which has no caller to report to. Fail
+    fast at HTTP time instead. Cross-household → 404.
+    """
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="recipe not found",
+        )
+
+    has_user_turn = db.scalar(
+        select(func.count(RecipeTurn.id)).where(
+            RecipeTurn.recipe_id == recipe_id,
+            RecipeTurn.sender == "user",
+            RecipeTurn.position == 0,
+        )
+    )
+    if not has_user_turn:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="recipe has no initial user turn; post a /turns request first",
+        )
+
+    background_tasks.add_task(promote_draft, recipe_id)
+    return PromotionRetryResponse(recipe_id=recipe_id, queued=True)
 
 
 @router.delete("/{recipe_id}", status_code=204)
