@@ -6,7 +6,7 @@ shadcn_initialized: true
 preset: radix-nova
 created: 2026-05-13
 revised: 2026-05-13
-revision_reason: "BLOCK-1 typography (4 weights → 2) + BLOCK-2 spacing (14px/10px → 16px/8px); non-blocking flags addressed"
+revision_reason: "BLOCK-1 typography (8 sizes → 4: 11px→10px, 12px→13px, 13.5px→13px, 15px→14px) + BLOCK-2 spacing (all non-multiples-of-4 snapped)"
 ---
 
 # Phase 27 — UI Design Contract
@@ -38,9 +38,9 @@ Declared values (all multiples of 4). Token names map to the `--spacing-*` CSS c
 
 | Token | Value | Usage in Phase 27 |
 |-------|-------|-------------------|
-| xs | 4px | Icon gaps inside bubbles; bubble waveform bar gap |
-| sm | 8px | Bubble internal vertical padding (voice/text); save-bar top padding; thread-meta padding; chat-body inter-bubble gap |
-| md | 16px | Default element spacing; composer horizontal padding; sheet item gap; chat-body horizontal padding; thread-meta horizontal padding |
+| xs | 4px | Icon gaps inside bubbles; bubble waveform bar gap; state pill gap; summary chip gap; photo bubble outer padding |
+| sm | 8px | Bubble internal vertical padding (voice/text); save-bar top padding; thread-meta padding; chat-body inter-bubble gap; composer gap; answer-chip row gap; user-answer-bubble gap; sys-head gap |
+| md | 16px | Default element spacing; composer horizontal padding; sheet item gap; chat-body horizontal padding; thread-meta horizontal padding; answer chip horizontal padding |
 | lg | 24px | Section padding `--spacing-page-x` (1.5rem = 24px); sheet content vertical padding |
 | xl | 32px | Layout gaps — not primary in this phase |
 | 2xl | 48px | Not used in this phase |
@@ -75,6 +75,12 @@ Source: `docs/design-system.html` `.text-body` (0.975rem / line-height 1.55) and
 **Revision note — weight consolidation (BLOCK-1 fix):**
 - Former weight 700 (`label-small` for sys-head, state pills, bubble count badge) → **600**. `text-transform: uppercase` + letter-spacing provides sufficient differentiation without a heavier weight.
 - Former weight 500 (answer chips, url-bubble domain) → **600** (emphasised) for url-bubble domain (domain IS the emphasis vs. the truncated path); answer chip value text → **600** (matches stepper `.val` register).
+
+**Revision note — size consolidation (BLOCK-1 second-pass fix):**
+- Former `11px` (duration label, count badge, failed pill, manual-link) → **10px** (label-small role).
+- Former `12px` (url-bubble description, advisory reason_excerpt) → **13px** (caption role).
+- Former `13.5px` (system bubble font-size) → **13px** (caption role).
+- Former `15px` (stepper `.val` display) → **14px** (body role; weight 600 + tabular-nums differentiates it).
 
 ---
 
@@ -136,8 +142,8 @@ Contains:
 2. **title-meta** (right, flex-1) — Cormorant Garamond 13px weight 600, `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`. Pre-promotion value is the italic string « Extraction en cours… » (see §Copywriting Contract).
 
 **State pill anatomy:**
-- `display: inline-flex; align-items: center; gap: 5px`
-- `border-radius: 999px; padding: 3px 8px`
+- `display: inline-flex; align-items: center; gap: 4px`
+- `border-radius: 999px; padding: 4px 8px`
 - `font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase`
 - Contains a 9×9px SVG icon + label string
 
@@ -158,7 +164,7 @@ align-self: center
 color: var(--muted-foreground)
 font-size: 13px
 font-style: italic
-padding: 6px 12px
+padding: 8px 12px
 text-align: center
 ```
 Copy: `recipes.thread.empty_capture_hint` = « Ajoute une note, dicte une idée, ou joins une photo pour commencer. » This prevents the chat body from appearing empty or broken when the composer is open but no content exists yet.
@@ -171,7 +177,7 @@ max-width: 78%
 background: var(--primary)
 color: var(--primary-foreground)
 border-radius: 18px 18px 4px 18px    ← bottom-right corner cut = sender = user
-padding: 9px 13px
+padding: 8px 12px
 font-size: 14px; line-height: 1.45
 box-shadow: var(--shadow-card)
 ```
@@ -183,23 +189,23 @@ align-self: flex-end
 background: var(--primary)
 color: var(--primary-foreground)
 border-radius: 18px 18px 4px 18px
-padding: 7px 11px
-display: flex; align-items: center; gap: 9px
+padding: 8px 12px
+display: flex; align-items: center; gap: 8px
 min-width: 180px; max-width: 78%
 box-shadow: var(--shadow-card)
 ```
 
 Sub-elements:
-- **Play button**: `width/height: 26px; border-radius: 50%; background: rgba(255,255,255,0.25); color: white` — contains 10×10px play SVG.
-- **Waveform**: `flex: 1; display: flex; gap: 2px; align-items: center; height: 20px` — bars `width: 2px; background: rgba(255,255,255,0.85); border-radius: 1px` at varying heights (static decorative waveform, not interactive).
-- **Duration label**: `font-size: 11px; opacity: 0.85; font-variant-numeric: tabular-nums`.
+- **Play button**: `width/height: 24px; border-radius: 50%; background: rgba(255,255,255,0.25); color: white` — contains 10×10px play SVG.
+- **Waveform**: `flex: 1; display: flex; gap: 4px; align-items: center; height: 20px` — bars `width: 2px; background: rgba(255,255,255,0.85); border-radius: 1px` at varying heights (static decorative waveform, not interactive). The 2px bar width is a visual stroke dimension, not a spacing value.
+- **Duration label**: `font-size: 10px; opacity: 0.85; font-variant-numeric: tabular-nums`.
 
 Note: The voice bubble shows the transcript text (from `payload.transcript`), not an audio player — D-01 produces text via the iOS keyboard mic. The waveform is a visual affordance indicating voice origin. The play button is decorative/non-functional in Phase 27.
 
 ### User bubble — photo kind
 
 ```
-padding: 3px
+padding: 4px
 background: var(--card)
 border: 1px solid var(--border)
 border-radius: 18px 18px 4px 18px    ← same corner-cut convention for user sender
@@ -215,7 +221,7 @@ Inner image: `width: 100%; aspect-ratio: 4/3; border-radius: 15px; object-fit: c
 
 Same shell as text bubble (same `var(--primary)` fill, same border-radius) but body contains:
 - URL domain in `font-weight: 600; font-size: 13px`.
-- Optional description in `font-size: 12px; opacity: 0.85` below domain.
+- Optional description in `font-size: 13px; opacity: 0.85` below domain.
 - A link icon (Lucide `Link2`, 12×12px, `opacity: 0.75`) inline-start.
 
 ### User answer bubble (chip reply after question)
@@ -227,9 +233,9 @@ align-self: flex-end
 background: var(--primary)
 color: var(--primary-foreground)
 border-radius: 14px
-padding: 5px 11px
+padding: 4px 12px
 font-size: 13px; font-weight: 600
-display: inline-flex; align-items: center; gap: 6px
+display: inline-flex; align-items: center; gap: 8px
 ```
 
 Contains a 12×12px checkmark SVG + the answer label. Phase 27: renders visually only (non-interactive stub for the `answer` turn kind).
@@ -237,7 +243,7 @@ Contains a 12×12px checkmark SVG + the answer label. Phase 27: renders visually
 ### Pre-save pending bubble (capture mode only)
 
 Visual treatment identical to the post-save persisted bubble for the same kind. The only differences are:
-1. A **dismiss button** (X) at top-right of each pending bubble — `position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--foreground); color: var(--background); opacity: 0.7` — allows removal before save. Phase 27 ships this affordance per Claude's Discretion recommendation (D-DISC: pre-save bubble mutability = yes, delete affordance).
+1. A **dismiss button** (X) at top-right of each pending bubble — `position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; background: var(--foreground); color: var(--background); opacity: 0.7` — allows removal before save. Phase 27 ships this affordance per Claude's Discretion recommendation (D-DISC: pre-save bubble mutability = yes, delete affordance).
 2. No timestamp metadata.
 
 ### System bubble (`SystemBubble.tsx`)
@@ -252,15 +258,15 @@ color: var(--foreground)
 border-radius: 18px 18px 18px 4px    ← bottom-left corner cut = sender = system
 border: 1px solid var(--border)
 box-shadow: var(--shadow-card)
-padding: 11px 13px
-font-size: 13.5px; line-height: 1.5
-display: flex; flex-direction: column; gap: 9px
+padding: 12px 12px
+font-size: 13px; line-height: 1.5
+display: flex; flex-direction: column; gap: 8px
 ```
 
 **System bubble header (`sys-head`)**:
 
 ```
-display: inline-flex; align-items: center; gap: 6px
+display: inline-flex; align-items: center; gap: 8px
 font-size: 10px; font-weight: 600
 letter-spacing: 0.06em; text-transform: uppercase
 color: var(--primary)
@@ -275,8 +281,8 @@ Contains: 11×11px sparkle icon (Lucide `Sparkles`) + label string per kind.
 | `advisory` | « Information : champ modifié manuellement » |
 
 **Summary bubble internals:**
-- Summary chips: `display: flex; flex-wrap: wrap; gap: 5px` — each chip `background: oklch(0.96 0.012 50); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; color: var(--foreground)`.
-- Body text if present: 13.5px body below chips.
+- Summary chips: `display: flex; flex-wrap: wrap; gap: 4px` — each chip `background: oklch(0.96 0.012 50); border: 1px solid var(--border); border-radius: 999px; padding: 4px 8px; font-size: 13px; font-weight: 600; color: var(--foreground)`.
+- Body text if present: 13px body below chips.
 - Two CTAs (Phase 27: rendered as stubs, non-interactive — Phase 28 wires them):
 
 ```
@@ -290,25 +296,25 @@ Ghost CTA:   background: transparent; color: var(--muted-foreground); border: 1p
 ```
 
 **Question bubble internals:**
-- Answer chips: `display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px` — each chip:
+- Answer chips: `display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px` — each chip:
 
 ```
 background: var(--background)
 border: 1.5px solid var(--border)
 border-radius: 999px
-padding: 7px 14px
+padding: 8px 16px
 font-size: 13px; font-weight: 600
 color: var(--foreground)
 ```
 
 Selected state (Phase 27: static stub): `background: var(--primary); color: var(--primary-foreground); border-color: var(--primary)`.
 
-- Stepper (for numeric `input_type`): `display: inline-flex; align-items: stretch; border: 1.5px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--background); align-self: flex-start`. Buttons `36×36px`. Value display: `min-width: 44px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums`. (Phase 27: static stub — no `+` / `−` tap handler)
+- Stepper (for numeric `input_type`): `display: inline-flex; align-items: stretch; border: 1.5px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--background); align-self: flex-start`. Buttons `36×36px`. Value display: `min-width: 44px; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums`. (Phase 27: static stub — no `+` / `−` tap handler)
 
 **Advisory bubble internals:**
 - Shows `current_value` (pinned) and `proposed_value` side by side with arrow icon.
-- `reason_excerpt` in `font-size: 12px; color: var(--muted-foreground)` below the value row.
-- Two CTAs (Phase 27: stub — same `.sys-ctas` pattern, non-functional): « Mettre à jour » (primary) / « Ignorer » (ghost).
+- `reason_excerpt` in `font-size: 13px; color: var(--muted-foreground)` below the value row.
+- Two CTAs (Phase 27: stub — same `.sys-ctas` pattern, non-functional): « Mettre à jour » (primary) / « Ignorer la suggestion » (ghost).
 
 ### Extraction-in-progress row
 
@@ -319,7 +325,7 @@ align-self: center
 color: var(--muted-foreground)
 font-size: 13px
 font-style: italic
-padding: 6px 12px
+padding: 8px 12px
 ```
 
 Copy: « Extraction en cours… » (from `recipes.thread.extracting` i18n key).
@@ -334,7 +340,7 @@ background: var(--secondary)
 color: var(--muted-foreground)
 font-size: 10px; font-weight: 600
 letter-spacing: 0.05em; text-transform: uppercase
-padding: 3px 10px
+padding: 4px 8px
 border-radius: 999px
 border: 1px solid var(--border)
 ```
@@ -358,7 +364,7 @@ width: 100%; height: 44px
 background: var(--primary); color: var(--primary-foreground)
 border: 0; border-radius: 12px
 font-weight: 600; font-size: 14px
-display: inline-flex; align-items: center; justify-content: center; gap: 6px
+display: inline-flex; align-items: center; justify-content: center; gap: 8px
 box-shadow: 0 2px 6px oklch(0.595 0.135 35 / 0.25)
 ```
 
@@ -369,7 +375,7 @@ Enabled transition: `opacity` transitions at `var(--duration-fast)` (150ms) `var
 Save button contains:
 1. 16×16px check SVG (Lucide `Check`, stroke-width 2.4).
 2. Label: « Enregistrer ».
-3. Optional **count badge**: `background: rgba(255,255,255,0.18); padding: 1px 7px; border-radius: 999px; font-size: 11px; opacity: 0.75` — shows the pending bubble count.
+3. Optional **count badge**: `background: rgba(255,255,255,0.18); padding: 4px 8px; border-radius: 999px; font-size: 10px; opacity: 0.75` — shows the pending bubble count.
 
 ### Manual-edit link (detail mode only)
 
@@ -379,7 +385,7 @@ padding: 8px 16px 0
 text-align: center
 ```
 
-Link: `color: var(--muted-foreground); font-size: 11px; text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 3px`.
+Link: `color: var(--muted-foreground); font-size: 10px; text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 3px`.
 
 Copy: « Ou modifier les champs directement… » (i18n key `recipes.thread.manual_edit_link`). Scrolls to or reveals the recipe form area below. Implementation detail deferred to Phase 28 DETAIL-04.
 
@@ -389,7 +395,7 @@ Copy: « Ou modifier les champs directement… » (i18n key `recipes.thread.manu
 flex-shrink: 0
 background: var(--background)
 padding: 8px 12px calc(env(safe-area-inset-bottom) + 8px)
-display: flex; align-items: flex-end; gap: 6px
+display: flex; align-items: flex-end; gap: 8px
 border-top: 1px solid var(--border)
 ```
 
@@ -509,7 +515,7 @@ height: 20px; padding: 0 8px; border-radius: 999px
 background: color-mix(in oklch, var(--destructive) 15%, transparent)
 color: var(--destructive)
 border: 1px solid color-mix(in oklch, var(--destructive) 40%, transparent)
-font-size: 11px; font-weight: 600
+font-size: 10px; font-weight: 600
 letter-spacing: 0.03em
 ```
 
@@ -627,7 +633,7 @@ All strings under the new `recipes.thread.*` namespace in `fr.json`. Keys marked
 | sys-head: summary | `recipes.thread.sys_summary_head` | « Voilà ce que j'ai compris » |
 | sys-head: advisory | `recipes.thread.sys_advisory_head` | « Information : champ modifié manuellement » |
 | Advisory accept CTA (stub) | `recipes.thread.advisory_accept` | « Mettre à jour » |
-| Advisory dismiss CTA (stub) | `recipes.thread.advisory_dismiss` | « Ignorer » |
+| Advisory dismiss CTA (stub) | `recipes.thread.advisory_dismiss` | « Ignorer la suggestion » |
 | Summary "complete N fields" CTA (stub) | `recipes.thread.summary_complete` | « Oui, compléter » |
 | Summary "later" CTA (stub) | `recipes.thread.summary_later` | « Plus tard » |
 | Progress chip: capture | `recipes.thread.progress_capture` | `Capture · {count, plural, one {# élément} other {# éléments}}` |
@@ -661,7 +667,7 @@ All strings under the new `recipes.thread.*` namespace in `fr.json`. Keys marked
 These items were flagged as undecided in `27-CONTEXT.md §Claude's Discretion`. They are resolved here as part of the visual/interaction contract.
 
 ### Pre-save bubble mutability
-**Decision:** Yes — each pending bubble has a dismiss (X) tap target. No reorder. No edit-in-place (type a new bubble instead). The X button is a 20px circle at `position: absolute; top: -6px; right: -6px` relative to the bubble wrapper. The bubble wrapper has `position: relative; overflow: visible`.
+**Decision:** Yes — each pending bubble has a dismiss (X) tap target. No reorder. No edit-in-place (type a new bubble instead). The X button is a 20px circle at `position: absolute; top: -8px; right: -8px` relative to the bubble wrapper. The bubble wrapper has `position: relative; overflow: visible`.
 
 ### Pre-save persistence
 **Decision:** No — pending state is ephemeral in Phase 27. A `// TODO(productize)` comment is added inline in the Composer state initialization. If a user closes the page they re-capture from scratch.
