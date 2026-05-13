@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
 milestone: v0.6
-milestone_name: "Conversation Capture"
-status: ready_to_plan
-stopped_at: ""
-last_updated: "2026-05-13T12:00:00.000Z"
-last_activity: 2026-05-13
+milestone_name: Conversation Capture
+status: planning
+stopped_at: Phase 25 context gathered
+last_updated: "2026-05-13T09:56:44.697Z"
+last_activity: 2026-05-13 — Roadmap created (5 phases / 23 requirements mapped / coverage 100%)
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 0
 ---
 
 # Project State
@@ -105,6 +104,6 @@ Phase 25 may surface schema-level decisions during plan-phase (e.g. exact backfi
 ## Session Continuity
 
 Last activity: 2026-05-13 — v0.6 ROADMAP.md created (5 phases / 23 reqs / coverage 100%)
-Stopped at: Roadmap complete, ready to plan Phase 25
-Resume file: —
+Stopped at: Phase 25 context gathered
+Resume file: .planning/phases/25-backend-foundation/25-CONTEXT.md
 Next: `/gsd-plan-phase 25` (Backend foundation — recipe_turns + drop source_capture + promote_draft consolidation + seed update)
