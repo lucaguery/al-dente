@@ -18,7 +18,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 
 - [x] **Phase 22: Quick wins** — Drop Geist Mono, add version footer, fix French tag labels on deck/detail/inbox (completed 2026-05-12)
 - [x] **Phase 23: Deck polish** — Replace OUI/NON overlays with tint, tune swipe thresholds, swap thumb buttons to Heart icons, add tap-to-detail (completed 2026-05-12)
-- [ ] **Phase 24: Recipe identity** — BrandIcon component, completeness scorecard + 3 new fields, LLM title rewrite (shifts invariant #1), per-recipe SVG illustration
+- [x] **Phase 24: Recipe identity** — BrandIcon component, completeness scorecard + 3 new fields, LLM title rewrite (shifts invariant #1), per-recipe SVG illustration (completed 2026-05-13)
 
 ## Phase Details
 
@@ -64,7 +64,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 - [x] 24-02-data-model-PLAN.md — Alembic 0007 + 3 new optional fields + Difficulty enum on both sides + Pydantic / Gemini schema / RecipeForm / detail page (RID-02 / gh#22 Part A)
 - [x] 24-03-completeness-PLAN.md — computeCompleteness() pure helper + CompletenessCard + ?focus= ref-focus on edit page (Suspense-wrapped) (RID-03 / gh#22 Part B)
 - [x] 24-04-title-rewrite-PLAN.md — rewrite_title() + promote_quick_draft / promote_full_draft BackgroundTasks + voice/photo prompt extension + CLAUDE.md invariant #1 shift (RID-04 / gh#10)
-- [ ] 24-05-illustration-PLAN.md — Alembic 0008 + svg_sanitizer with allowlist + unit tests + generate_recipe_illustration + 4 BackgroundTask extensions + RecipeIllustration component (RID-05 / gh#12)
+- [x] 24-05-illustration-PLAN.md — Alembic 0008 + svg_sanitizer with allowlist + unit tests + generate_recipe_illustration + 4 BackgroundTask extensions + RecipeIllustration component (RID-05 / gh#12)
 **UI hint**: yes
 
 ## Progress Table
@@ -73,7 +73,7 @@ Close ~10 open GitHub issues across three coherent themes — quick wins, swipe-
 |-------|----------------|--------|-----------|
 | 22. Quick wins | 3/3 | Complete    | 2026-05-12 |
 | 23. Deck polish | 1/1 | Complete    | 2026-05-12 |
-| 24. Recipe identity | 4/5 | In Progress|  |
+| 24. Recipe identity | 5/5 | Complete   | 2026-05-13 |
 
 ---
 *Last updated: 2026-05-12 — v0.5 Mixed Sweep roadmap created. 3 phases (22–24), 12 requirements mapped (QW × 3 / DECK × 4 / RID × 5). 100% coverage. Phase 24 serial order load-bearing: RID-01 → RID-02 → RID-03 → RID-04 → RID-05. Invariant #1 shift ships inside Phase 24 plan for RID-04.*
