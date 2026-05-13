@@ -8,6 +8,24 @@ A shared recipe + decision app for couples, built as an installable PWA with a P
 
 Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable on both iPhones with no App Store, no $99/year, no native build.
 
+## Current Milestone: v0.6 Conversation Capture
+
+**Goal:** Replace the five tabbed capture surfaces with a single durable conversation thread that doubles as the recipe's ongoing semantic edit log, per the design locked in ADR-0001 (gh#20).
+
+**Target features:**
+
+- **Backend foundation** — `recipe_turns` table (Alembic migration), drop `source_capture` column, add `recipes.manually_edited_fields` JSONB, collapse the four `promote_*_draft` functions into one `promote_draft(id)` dispatching on initial turn `kind`.
+- **Thread API & realtime** — `POST /recipes/{id}/turns`; system emission of `summary` / `question` / `advisory` turns from a BackgroundTask; new `turn.created` WebSocket event (invariant #4 wire-up).
+- **Conversational capture screen** — replace `/recipes/new` tabbed UI with the chat composer from `.scratch/capture-mockups/2-conversation.html` Frame A. Always-visible « Enregistrer » button above the composer; minimum capture = 2 taps (title + 1 bubble).
+- **Recipe-detail thread** — reuse the chat component on `/recipes/[id]` as the recipe's durable artifact. Advisory bubble + chip/stepper answer UI. Manual-edit pinning signal next to each form field.
+- **LLM prompt rework + completeness wire-up** — full-thread context shape; emit `advisory` instead of silently overwriting pinned fields; question generation driven by `frontend/lib/recipe-completeness.ts` (the surface that shipped in v0.5 RID-03).
+
+**Key locked decisions (from ADR-0001):** MVP posture authorizes a clean `source_capture` drop with no compat shim. Conflict UX = informational advisory bubble (manual edit wins by default). LLM runs on user `text` / `voice` / `photo` / `url` turns only; `answer` turns from chips / steppers are authoritative manual edits and pin the field. One LLM run per Enregistrer; full thread re-read every run for natural idempotency. Thread is append-only — no edit/delete of past turns in v0.6.
+
+**Out of scope:** gh#23 (photo cache bug — independent fix on `main`); push notifications for post-promotion advisories (realtime WebSocket only in v0.6, `TODO(productize)`); editing/deletion of past turns. URL extraction (`recipes.py:491` long-standing `TODO(productize)`) is implemented as part of the URL-turn LLM path in this milestone — exits the productize backlog.
+
+**Phase numbering:** continues from v0.5 → Phase 25+.
+
 ## Current State
 
 **v0.1 shipped** — 2026-05-08.
@@ -84,7 +102,7 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 ### Active
 
-_No active milestone. v0.5 Mixed Sweep shipped 2026-05-13. Next milestone TBD — use `/gsd-new-milestone` to scope v0.6 (likely candidates: gh#20 unified-capture-surface exploration; v0.4 HUMAN-UAT cleanup; URL-01 productize extraction)._
+**Milestone v0.6: Conversation Capture** — started 2026-05-13. Closes gh#20 by replacing the five tabbed capture surfaces with a single durable conversation thread (design locked in ADR-0001). REQ-IDs land at the next step (`/gsd-new-milestone` requirements gate).
 
 ### Surfaced for follow-up (deferred to v2 or future milestone)
 
@@ -219,4 +237,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-13 after v0.5 Mixed Sweep milestone completion. Six shipped milestones to date: v0.1 / v0.2 / v0.2.1 / v0.3 / v0.4 / v0.5. Cumulative: 32 phases, ~125 plans, 136 requirements validated. Architecture invariants 1–8 holding; **invariant #1 formally shifted in v0.5** — quick + full-form captures are now async `BackgroundTask` like voice/photo/url. Next milestone TBD via `/gsd-new-milestone` — likely candidates: gh#20 unified capture surface (deferred from v0.5; needs `/gsd-explore`), v0.4 HUMAN-UAT cleanup (15 items orthogonal), URL-01 productize extraction (`recipes.py:481-490` stub).*
+*Last updated: 2026-05-13 — v0.6 Conversation Capture milestone started (closes gh#20 via the durable conversation-thread model locked in ADR-0001). Six shipped milestones to date: v0.1 / v0.2 / v0.2.1 / v0.3 / v0.4 / v0.5. Cumulative: 32 phases, ~125 plans, 136 requirements validated. Architecture invariants 1–8 holding; v0.6 will touch invariants #1 (capture pipeline), #4 (realtime — new `turn.created` event), #5 (raw inputs preserved — now via `recipe_turns`, `source_capture` column dropped). Phase numbering continues at 25+.*

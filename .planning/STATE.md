@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: none
-milestone_name: ""
-status: idle
-stopped_at: v0.5 milestone shipped 2026-05-13
-last_updated: "2026-05-13T08:30:00.000Z"
+milestone: v0.6
+milestone_name: "Conversation Capture"
+status: defining_requirements
+stopped_at: ""
+last_updated: "2026-05-13T09:00:00.000Z"
 last_activity: 2026-05-13
 progress:
   total_phases: 0
@@ -18,22 +18,22 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-13 after v0.5 Mixed Sweep milestone completion)
+See: .planning/PROJECT.md (updated 2026-05-13 — v0.6 Conversation Capture milestone started, closes gh#20 via ADR-0001 design)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Planning next milestone — no phase in flight.
+**Current focus:** v0.6 Conversation Capture — defining requirements before roadmapping the unified-capture build (gh#20 / ADR-0001).
 
 ## Current Position
 
-Milestone: none active
-Phase: —
+Milestone: v0.6 Conversation Capture
+Phase: Not started (defining requirements)
 Plan: —
-Status: Idle (between milestones)
-Last activity: 2026-05-13 — v0.5 Mixed Sweep completion (`/gsd-complete-milestone`)
+Status: Defining requirements
+Last activity: 2026-05-13 — Milestone v0.6 started
 
-Resume: `/gsd-new-milestone` to scope v0.6 (or `/gsd-explore` to think through candidates first)
+Resume: continue the `/gsd-new-milestone` flow (research gate → REQUIREMENTS.md → ROADMAP.md)
 
-Progress: [██████████] 6/6 milestones shipped to date — v0.1 / v0.2 / v0.2.1 / v0.3 / v0.4 / v0.5
+Progress: [██████████] 6/6 milestones shipped to date — v0.1 / v0.2 / v0.2.1 / v0.3 / v0.4 / v0.5 · v0.6 underway
 
 ## Performance Metrics
 
