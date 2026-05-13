@@ -1,8 +1,8 @@
-"""Phase 2 — Gemini 2.5 Flash service.
+"""Phase 2 — Gemini 2.5 Flash service. Phase 25 cutover to recipe_turns.
 
 Owns the structured-output schema (`GeminiExtractedRecipe`), the three
 Gemini call functions (`extract_from_transcript` / `extract_from_photos` /
-`apply_voice_modification`), and the BackgroundTask bodies that wire those
+`apply_voice_modification`), and the BackgroundTask body that wires those
 into a fresh `SessionLocal` + `broadcast_to_household`.
 
 Per `.planning/phases/02-llm-capture-w2/02-RESEARCH.md` §SDK Decision: this
@@ -11,16 +11,17 @@ single-API package that was deprecated on 2025-08-31.
 
 Architecture invariants honoured (CLAUDE.md):
 
-* #1 (server-side promotion) — `promote_voice_draft` / `promote_photo_draft`
-  are queued via `BackgroundTasks.add_task` from the routers (Plan 02). They
-  open their OWN `SessionLocal()` because the request session is closed by
-  the time the task runs. They NEVER raise out — failures are swallowed and
-  recorded on the recipe row.
+* #1 (server-side promotion) — `promote_draft` is queued via
+  `BackgroundTasks.add_task` from the routers (Phase 25). It opens its OWN
+  `SessionLocal()` because the request session is closed by the time the
+  task runs. It NEVER raises out — failures are swallowed and recorded on
+  the recipe row. Reads from `recipe_turns` (position=0, sender='user')
+  and dispatches on `turn.kind`.
 * #4 (realtime contract) — successful promotion broadcasts `recipe.promoted`
   via `broadcast_to_household`; failure does not broadcast (the FE polls
   via `recipe.updated` from the existing list flow + the error badge).
-* #5 (raw inputs preserved) — `retry_promotion` rereads `source_capture` to
-  reconstruct the input rather than asking the caller to re-supply it.
+* #5 (raw inputs preserved) — raw inputs now kept in `recipe_turns` table
+  (Phase 25 D-08: initial turn payload holds text/transcript/photo_paths/url).
 
 Threat-model mitigations (T-02-01-01 .. T-02-01-07 from the plan):
 
@@ -52,7 +53,9 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import SessionLocal
 from app.models.recipe import Recipe
+from app.models.recipe_turn import RecipeTurn
 from app.schemas.recipe import RecipeResponse
+from app.services import storage as storage_service
 from app.services.realtime import broadcast_to_household
 from app.services.svg_sanitizer import sanitize_recipe_svg
 
@@ -535,222 +538,134 @@ def _generate_and_sanitize_illustration(recipe_title: str) -> str | None:
     return sanitized
 
 
-def promote_voice_draft(recipe_id: UUID, transcript: str) -> None:
-    """BackgroundTask body for `POST /recipes/voice` (Plan 02).
+def promote_draft(recipe_id: UUID) -> None:
+    """Single promote entry point — reads first user turn, dispatches on kind.
 
-    Opens its own `SessionLocal()` because the request session is closed
-    by the time this runs (FastAPI BackgroundTasks run AFTER the response
-    has been sent). NEVER raises — exceptions are recorded on the row.
+    Phase 25 THREAD-04 (D-06). Replaces the four per-surface
+    promote_*_draft functions. Opens its own SessionLocal
+    (BackgroundTask pattern — established in 02-RESEARCH §Pitfall 3).
+
+    Phase 25 does NOT emit summary/question/advisory system turns
+    (D-07) — that is Phase 29's job. This function applies extracted
+    fields to recipes.* and broadcasts recipe.promoted, exactly as
+    the legacy promote_*_draft functions did.
+
+    NEVER raises — exceptions are recorded on the recipe row via _record_failure.
     """
-
     db = SessionLocal()
     try:
         recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
         if recipe is None:
-            log.warning("promote_voice: recipe %s vanished", recipe_id)
+            log.warning("promote_draft: recipe %s vanished", recipe_id)
             return
-        try:
-            extracted = extract_from_transcript(transcript)
-            _apply_extracted(recipe, extracted)
-            # Phase 24 RID-05 D-36 — illustration generation runs in same
-            # BackgroundTask as the extract. Failure NEVER affects recipe.status;
-            # we leave illustration_svg=NULL and continue with the rest of
-            # promotion. The frontend falls back to BrandIcon for NULL svg.
-            recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
-            recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
-            db.commit()
-            db.refresh(recipe)
-            _broadcast_promoted(recipe)
-        except Exception as exc:  # noqa: BLE001 — must never raise out of task
-            _record_failure(db, recipe, exc)
-    finally:
-        db.close()
 
-
-def promote_photo_draft(recipe_id: UUID, photo_bytes_list: list[bytes]) -> None:
-    """BackgroundTask body for `POST /recipes/photo` (Plan 02).
-
-    Same contract as `promote_voice_draft`: own session, swallowed errors,
-    success-path broadcast.
-    """
-
-    db = SessionLocal()
-    try:
-        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
-        if recipe is None:
-            log.warning("promote_photo: recipe %s vanished", recipe_id)
+        first_turn = db.scalar(
+            select(RecipeTurn).where(
+                RecipeTurn.recipe_id == recipe_id,
+                RecipeTurn.sender == "user",
+                RecipeTurn.position == 0,
+            )
+        )
+        if first_turn is None:
+            log.warning(
+                "promote_draft: no first user turn for recipe %s",
+                recipe_id,
+            )
             return
+
         try:
-            extracted = extract_from_photos(photo_bytes_list)
-            _apply_extracted(recipe, extracted)
-            # Phase 24 RID-05 D-36 — same illustration step as promote_voice_draft.
-            # Failure NEVER affects recipe.status (BrandIcon fallback for NULL svg).
-            recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
-            recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
-            db.commit()
-            db.refresh(recipe)
-            _broadcast_promoted(recipe)
+            kind = first_turn.kind
+            payload = first_turn.payload or {}
+
+            if kind == "text":
+                # Quick + full-form path — rewrite title from turn payload.
+                # Falls back to recipe.title if the turn payload has no text
+                # (e.g. legacy backfill text turns — D-01).
+                original_title = payload.get("text") or recipe.title
+                new_title = rewrite_title(original_title, {})
+                recipe.title = new_title
+                # Phase 24 RID-05 D-36 — illustration after title rewrite.
+                # Failure NEVER affects recipe.status (BrandIcon fallback for NULL svg).
+                recipe.illustration_svg = _generate_and_sanitize_illustration(
+                    recipe.title
+                )
+                recipe.status = "structured"
+                recipe.promotion_error = None
+                recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
+                db.commit()
+                db.refresh(recipe)
+                _broadcast_promoted(recipe)
+
+            elif kind == "voice":
+                transcript = payload.get("transcript") or ""
+                if not transcript.strip():
+                    raise ValueError("promote_draft voice: empty transcript")
+                extracted = extract_from_transcript(transcript)
+                _apply_extracted(recipe, extracted)
+                # Phase 24 RID-05 D-36 — illustration generation.
+                # Failure NEVER affects recipe.status (BrandIcon fallback for NULL svg).
+                recipe.illustration_svg = _generate_and_sanitize_illustration(
+                    recipe.title
+                )
+                recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
+                db.commit()
+                db.refresh(recipe)
+                _broadcast_promoted(recipe)
+
+            elif kind == "photo":
+                photo_paths = payload.get("photo_paths") or []
+                if not photo_paths:
+                    # Legacy backfill turns (D-02) have empty payload —
+                    # fall back to recipe.photo_paths (Pitfall 4).
+                    photo_paths = list(recipe.photo_paths or [])
+                if not photo_paths:
+                    raise ValueError("promote_draft photo: no photo paths")
+                # D-08: download bytes from Supabase Storage. Closes the
+                # v0.1 TODO(productize) that noted photo retry wasn't supported
+                # because bytes weren't stored (now kept in recipe_turns payload).
+                photo_bytes_list = [
+                    storage_service.download_recipe_photo(p)
+                    for p in photo_paths
+                ]
+                extracted = extract_from_photos(photo_bytes_list)
+                _apply_extracted(recipe, extracted)
+                # Phase 24 RID-05 D-36 — illustration generation.
+                recipe.illustration_svg = _generate_and_sanitize_illustration(
+                    recipe.title
+                )
+                recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
+                db.commit()
+                db.refresh(recipe)
+                _broadcast_promoted(recipe)
+
+            elif kind == "url":
+                # URL extraction is Phase 26 TURN-04. Phase 25 just stamps
+                # the draft as structured so the card leaves the inbox —
+                # matches v0.5 url-capture behavior (no Gemini call).
+                recipe.status = "structured"
+                recipe.promotion_error = None
+                recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
+                db.commit()
+                db.refresh(recipe)
+                _broadcast_promoted(recipe)
+
+            else:
+                raise ValueError(
+                    f"promote_draft: unknown turn kind {kind!r}"
+                )
+
         except Exception as exc:  # noqa: BLE001
             _record_failure(db, recipe, exc)
-    finally:
-        db.close()
-
-
-def promote_quick_draft(recipe_id: UUID) -> None:
-    """Phase 24 RID-04 — BackgroundTask body for POST /recipes/quick.
-
-    Opens its own SessionLocal() (RESEARCH §Pitfall 3 — the request session
-    is closed by the time this runs). NEVER raises — exceptions route through
-    _record_rewrite_failure which preserves status='structured' (D-26).
-
-    D-31: recipe.created was ALREADY broadcast by the router synchronously
-    before this task ran; we broadcast recipe.promoted on success (and on
-    the rewrite-only-failure path via _record_rewrite_failure).
-    D-29: race policy — if the user edits the title between draft response
-    and this task's commit, the BackgroundTask wins (silent overwrite).
-    Invariant #5: source_capture.payload.title preserves the user's original
-    title forever; only recipe.title is overwritten here.
-    """
-
-    db = SessionLocal()
-    try:
-        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
-        if recipe is None:
-            log.warning("promote_quick: recipe %s vanished", recipe_id)
-            return
-        try:
-            # Read the stable original title from source_capture (invariant #5)
-            # rather than recipe.title, which a concurrent PUT may have already
-            # updated. Falls back to recipe.title for quick captures that have
-            # only minimal source_capture data.
-            original_title = (
-                (recipe.source_capture or {}).get("payload", {}).get("title")
-                or recipe.title
-            )
-            new_title = rewrite_title(original_title, {})
-            recipe.title = new_title  # rewrite_title already caps at 60 chars.
-            # Phase 24 RID-05 D-36 — illustration after title rewrite so the
-            # illustration prompt uses the catchy title. Failure NEVER affects
-            # recipe.status (BrandIcon fallback for NULL svg).
-            recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
-            recipe.status = "structured"
-            recipe.promotion_error = None
-            recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
-            db.commit()
-            db.refresh(recipe)
-            _broadcast_promoted(recipe)
-        except Exception as exc:  # noqa: BLE001 — must never raise out of task
-            # D-26: rewrite-only failure keeps status='structured' (the user
-            # has a usable recipe; only the polish step failed). The retry
-            # endpoint can re-run rewrite via the promotion_error flag.
-            _record_rewrite_failure(db, recipe, exc)
-    finally:
-        db.close()
-
-
-def promote_full_draft(recipe_id: UUID) -> None:
-    """Phase 24 RID-04 — BackgroundTask body for POST /recipes (full-form).
-
-    Structurally identical to promote_quick_draft. Separated by name so
-    retry_promotion can dispatch based on source_capture.type and route the
-    retry into the appropriate BackgroundTask. In v0.5 RID-04 the two bodies
-    do the same work; future phases may differentiate (e.g., a full-form
-    recipe with ingredients/steps could feed richer context to rewrite_title).
-    """
-
-    db = SessionLocal()
-    try:
-        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
-        if recipe is None:
-            log.warning("promote_full: recipe %s vanished", recipe_id)
-            return
-        try:
-            # Read the stable original title from source_capture (invariant #5)
-            # rather than recipe.title, which a concurrent PUT may have already
-            # updated. Falls back to recipe.title if source_capture is absent.
-            original_title = (
-                (recipe.source_capture or {}).get("payload", {}).get("title")
-                or recipe.title
-            )
-            new_title = rewrite_title(original_title, {})
-            recipe.title = new_title
-            # Phase 24 RID-05 D-36 — illustration after title rewrite so the
-            # illustration prompt uses the catchy title. Failure NEVER affects
-            # recipe.status (BrandIcon fallback for NULL svg).
-            recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
-            recipe.status = "structured"
-            recipe.promotion_error = None
-            recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
-            db.commit()
-            db.refresh(recipe)
-            _broadcast_promoted(recipe)
-        except Exception as exc:  # noqa: BLE001
-            _record_rewrite_failure(db, recipe, exc)
     finally:
         db.close()
 
 
 def retry_promotion(recipe_id: UUID) -> None:
-    """BackgroundTask body for `POST /recipes/{id}/retry-promotion` (Plan 02).
+    """Thin wrapper — Phase 25 D-09.
 
-    Re-reads `source_capture` (CLAUDE.md invariant #5: raw inputs are kept
-    forever) to reconstruct the original transcript / photo paths, clears
-    `promotion_error`, then dispatches to the appropriate `promote_*`.
-
-    # TODO(productize): photo retries currently surface a clear error
-    because v0.1 doesn't re-download photo bytes from Supabase Storage. The
-    transcript path works because the transcript is stored verbatim in
-    `source_capture.payload`.
+    Dispatch logic lives in promote_draft. Retry semantics fall out
+    naturally (the first user turn is the same; promotion_attempts
+    increments). The POST /recipes/{id}/retry-promotion router endpoint
+    stays in place; only the service body changed.
     """
-
-    db = SessionLocal()
-    try:
-        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
-        if recipe is None:
-            return
-        sc = recipe.source_capture or {}
-        sc_type = sc.get("type")
-        payload = sc.get("payload") or {}
-        recipe.promotion_error = None
-        db.commit()
-
-        if sc_type == "voice":
-            transcript = payload.get("transcript") or ""
-            if not transcript.strip():
-                _record_failure(
-                    db, recipe, ValueError("retry: transcript missing")
-                )
-                return
-            # promote_voice_draft opens its own SessionLocal; db remains open
-            # until the finally block handles the single close.
-            promote_voice_draft(recipe_id, transcript)
-            return
-        if sc_type == "photo":
-            # photo bytes aren't stored in source_capture (only paths); v0.1
-            # photo retries surface a clear error rather than re-downloading
-            # from Supabase Storage. # TODO(productize)
-            _record_failure(
-                db,
-                recipe,
-                ValueError(
-                    "photo retry not supported in v0.1 — # TODO(productize)"
-                ),
-            )
-            return
-        if sc_type == "manual":
-            # Phase 24 RID-04 / D-28 — quick and full-form retry. Both
-            # surfaces land here (source_capture.type == "manual" for both
-            # quick and full per recipes.py). Dispatch to promote_full_draft
-            # which generalizes; structurally identical to promote_quick_draft
-            # at v0.5 (Task 3). promote_full_draft opens its own SessionLocal;
-            # db is closed once by the finally block below.
-            promote_full_draft(recipe_id)
-            return
-        # url / unknown — should never reach retry path
-        _record_failure(
-            db,
-            recipe,
-            ValueError(f"retry not applicable for type={sc_type!r}"),
-        )
-    finally:
-        db.close()
+    promote_draft(recipe_id)

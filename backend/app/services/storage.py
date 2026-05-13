@@ -310,6 +310,24 @@ def list_synthetic_storage_count() -> int:
     return len(listed or [])
 
 
+def download_recipe_photo(path: str) -> bytes:
+    """Download bytes from Supabase Storage by bucket-relative path.
+
+    Phase 25 D-08 — used by promote_draft's photo branch. Closes the
+    v0.1 TODO(productize) at services/llm.py that noted photo retry was
+    not supported because bytes weren't stored (only paths were).
+
+    Returns raw bytes. Raises on Supabase error; caller wraps via
+    _record_failure.
+    """
+    if settings.environment == "test":
+        # Test mode: return minimal valid JPEG bytes (FFD8FF header).
+        return b"\xff\xd8\xff\xe0" + b"\x00" * 100
+
+    client = _supabase()
+    return client.storage.from_(BUCKET).download(path)
+
+
 def teardown_synthetic_storage() -> int:
     """D-16 + D-08 — scope-guarded prefix delete. Lists every object under
     `synthetic/`, asserts each path is in scope (belt-and-suspenders), then
