@@ -120,10 +120,15 @@ def _first_turn_kind(db: Session, recipe_id: UUID) -> str | None:
 
 
 def _to_response(r: Recipe, initial_turn_kind: str | None = None) -> RecipeResponse:
-    """Build a RecipeResponse, injecting the synthesized initial_turn_kind field."""
+    """Build a RecipeResponse, injecting the synthesized initial_turn_kind field.
+
+    WR-04: use ``model_copy`` rather than mutating the validated instance —
+    makes it explicit that ``initial_turn_kind`` is synthesized server-side
+    (it has no source attribute on the SQLAlchemy ORM object) and avoids
+    bypassing field validation via ``__setattr__``.
+    """
     resp = RecipeResponse.model_validate(r)
-    resp.initial_turn_kind = initial_turn_kind
-    return resp
+    return resp.model_copy(update={"initial_turn_kind": initial_turn_kind})
 
 
 def _to_response_payload(r: Recipe, initial_turn_kind: str | None = None) -> dict:
