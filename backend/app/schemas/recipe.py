@@ -4,7 +4,7 @@ Wire-format contract for the W1 manual capture surfaces:
 
 * ``RecipeFullCreate``  — POST /recipes (RECIPE-01, status='structured')
 * ``RecipeQuickCreate`` — POST /recipes/quick (RECIPE-02, status='draft')
-* ``RecipeUpdate``      — PUT /recipes/{id} (RECIPE-05, source_capture INTENTIONALLY absent)
+* ``RecipeUpdate``      — PUT /recipes/{id} (manually_edited_fields INTENTIONALLY absent — Phase 28 DETAIL-05)
 * ``RecipeResponse``    — every read shape + the WS broadcast payload
 
 Locked-vocabulary validation flows through ``app.models.enums`` (Cuisine, Mood,
@@ -13,15 +13,17 @@ accepts the wire-format string at input *and* serializes back to that string
 through ``model_dump(mode='json')`` — keeping the frontend ↔ backend vocab
 drift surface to a single file pair (CLAUDE.md "Shared Vocabulary").
 
-CLAUDE.md invariant 5 — raw inputs are kept forever — is enforced here by the
-deliberate ABSENCE of ``source_capture`` from ``RecipeUpdate``: the only path
-to write that JSONB column is the create handlers.
+CLAUDE.md invariant 5 — raw inputs are kept forever — is enforced via
+``recipe_turns`` (Phase 25 cutover). The initial user turn (position=0,
+sender='user') stores the original captured text/transcript/url/photo_paths
+and is never overwritten. ``manually_edited_fields`` is absent from
+``RecipeUpdate``; the write path is Phase 28 DETAIL-05.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, List, Literal, Optional
+from typing import List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -143,8 +145,12 @@ class RecipeResponse(BaseModel):
     household_id: UUID
     created_by_member_id: UUID
     status: str
+    # Phase 25 — kind of the first user turn (text/voice/photo/url),
+    # synthesized server-side from recipe_turns. Replaces source_capture.type
+    # for RecipeDraftCard variant logic. None for the rare case of a recipe
+    # with no first user turn (should not happen post-migration).
+    initial_turn_kind: Optional[str] = None
     title: str
-    source_capture: dict[str, Any]
     photo_paths: List[str]
     ingredients: Optional[List[IngredientItem]] = None
     steps: Optional[List[str]] = None
