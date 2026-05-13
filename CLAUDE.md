@@ -20,7 +20,11 @@ Monorepo, two independently deployable apps, shared Supabase Postgres:
 
 ## Current state
 
-v0.1 (49 reqs) and v0.2 (31 reqs) shipped 2026-05-08. On **v0.2.1 — Phase 10 (E2E test infrastructure)**. See `.planning/PROJECT.md` for goals and `.planning/STATE.md` for live position. Treat any "not yet wired" / "intended" / "stub" language in older planning notes as historical.
+v0.5 (Mixed Sweep) shipped 2026-05-13. **No active milestone** — see `.planning/PROJECT.md` for next-milestone scoping and `.planning/STATE.md` for live position. Treat any "not yet wired" / "intended" / "stub" language in older planning notes as historical.
+
+## MVP phase posture
+
+The project is in MVP. **No backward-compatibility shims for breaking schema or API changes.** Do clean rewrites: drop old column / endpoint / type, add new shape, rewrite callers in the same change. Don't propose "stub" or "both-paths-live" variants. Single Alembic migration + single commit is fine. This rule expires when the project leaves MVP (look for an explicit decision in `.planning/PROJECT.md`).
 
 ## Architecture invariants
 
