@@ -459,3 +459,225 @@ def test_proposal_accepted_removes_pin_and_applies_proposed_value(
     assert refreshed.difficulty == "hard"  # proposed_value applied
     # 'difficulty' removed from pins; 'title' still pinned (set semantics + sorted).
     assert refreshed.manually_edited_fields == ["title"]
+
+
+# ---------------------------------------------------------------------------
+# WR-05 — negative-path coverage added in code-review fix iteration 1.
+# ---------------------------------------------------------------------------
+
+
+def test_is_safe_url_blocks_metadata_endpoint() -> None:
+    """T-26-02 / WR-05.1 (unit): the SSRF gate rejects RFC1918 / link-local /
+    cloud-metadata endpoints. The 11-case grid is in RESEARCH §Area 5; this
+    test asserts the load-bearing ones at the route's trust boundary.
+
+    Integration coverage of the failure-path through extract_and_process_url_turn
+    is out of reach for the connection-scoped test transaction (the failure
+    path calls db.rollback() which deassociates the outer test transaction);
+    the BackgroundTask's recipe.status preservation for non-draft recipes
+    (CR-01) is exercised by the new test_url_turn_extraction_failure_preserves_*
+    test below, which calls the helper directly to bypass the session conflict.
+    """
+    from app.services.thread import _is_safe_url
+
+    # RFC1918
+    assert _is_safe_url("http://10.0.0.1/") is False
+    assert _is_safe_url("http://192.168.1.1/") is False
+    # Link-local + cloud metadata
+    assert _is_safe_url("http://169.254.169.254/latest/meta-data") is False
+    assert _is_safe_url("http://metadata.google.internal/") is False
+    # Loopback
+    assert _is_safe_url("http://127.0.0.1/") is False
+    assert _is_safe_url("http://localhost/") is False
+    # IPv6 loopback + ULA
+    assert _is_safe_url("http://[::1]/") is False
+    # Bad schemes
+    assert _is_safe_url("file:///etc/passwd") is False
+    assert _is_safe_url("") is False
+    assert _is_safe_url(None) is False
+    # Public URLs still pass
+    assert _is_safe_url("https://example.com/recette") is True
+
+
+def test_record_turn_enrichment_failure_preserves_recipe_status(
+    db_session: Session,
+) -> None:
+    """CR-01 / WR-05.1 (unit): _record_turn_enrichment_failure annotates the
+    turn payload with extraction_error WITHOUT mutating recipe.status. This
+    is the inverse of _record_failure (which sets status='failed') and the
+    load-bearing assertion for the CR-01 fix — a follow-up url turn failing
+    must NEVER demote a structured recipe.
+
+    Calls the helper directly with the test session (not through the
+    BackgroundTask) so the connection-scoped test transaction stays intact.
+    """
+    from app.services import llm as llm_service
+
+    member = _seeded_member(db_session)
+    recipe = _make_recipe(db_session, member.household_id, member.id)
+    turn = _make_turn(
+        db_session, recipe.id, 0, "url",
+        payload={"url": "http://10.0.0.1/internal"},
+    )
+    db_session.flush()
+    original_status = recipe.status
+    original_promotion_error = recipe.promotion_error
+
+    llm_service._record_turn_enrichment_failure(
+        db_session, recipe, turn, ValueError("SSRF: blocked URL"),
+    )
+
+    db_session.refresh(recipe)
+    db_session.refresh(turn)
+    # CR-01 — recipe MUST remain 'structured', NOT demoted to 'failed'.
+    assert recipe.status == original_status == "structured"
+    # promotion_error MUST NOT be set (the failure is on the turn, not the recipe).
+    assert recipe.promotion_error == original_promotion_error
+    # Failure recorded on the turn payload.
+    assert "SSRF" in (turn.payload.get("extraction_error") or "")
+
+
+def test_answer_turn_rejects_out_of_range_value(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    """WR-05.2 / D-09: AnswerTurnPayload._validate_value_for_field rejects
+    servings outside [1, 99]. Closes the regression gap RESEARCH §Area 6
+    flagged: 13 fields verified manually with no integration tests.
+    """
+    member = _seeded_member(db_session)
+    recipe = _make_recipe(db_session, member.household_id, member.id)
+    question = _make_turn(
+        db_session, recipe.id, 0, "question", sender="system",
+        payload={"field": "servings", "input_type": "stepper"},
+    )
+    db_session.commit()
+
+    response = client.post(
+        f"/recipes/{recipe.id}/turns",
+        headers=AUTH_HEADERS,
+        json={
+            "kind": "answer",
+            "in_reply_to_turn_id": str(question.id),
+            "field": "servings",
+            "value": 100,  # out of [1, 99]
+        },
+    )
+    assert response.status_code == 422, response.text
+
+
+def test_answer_turn_rejects_invalid_difficulty_value(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    """WR-05.2 / D-09: AnswerTurnPayload._validate_value_for_field rejects
+    a difficulty value not in {easy, medium, hard}.
+    """
+    member = _seeded_member(db_session)
+    recipe = _make_recipe(db_session, member.household_id, member.id)
+    question = _make_turn(
+        db_session, recipe.id, 0, "question", sender="system",
+        payload={"field": "difficulty", "input_type": "chip"},
+    )
+    db_session.commit()
+
+    response = client.post(
+        f"/recipes/{recipe.id}/turns",
+        headers=AUTH_HEADERS,
+        json={
+            "kind": "answer",
+            "in_reply_to_turn_id": str(question.id),
+            "field": "difficulty",
+            "value": "extreme",  # not in {easy, medium, hard}
+        },
+    )
+    assert response.status_code == 422, response.text
+
+
+def test_answer_cross_recipe_question_ref_returns_422(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    """T-26-12 / WR-05.4: an answer turn in recipe A must not reference a
+    question turn in recipe B. _apply_answer_turn scopes the lookup to the
+    same recipe so the cross-recipe ref returns None → 422.
+    """
+    member = _seeded_member(db_session)
+    recipe_a = _make_recipe(db_session, member.household_id, member.id)
+    recipe_b = _make_recipe(db_session, member.household_id, member.id)
+    q_in_b = _make_turn(
+        db_session, recipe_b.id, 0, "question", sender="system",
+        payload={"field": "difficulty", "input_type": "chip"},
+    )
+    db_session.commit()
+
+    response = client.post(
+        f"/recipes/{recipe_a.id}/turns",
+        headers=AUTH_HEADERS,
+        json={
+            "kind": "answer",
+            "in_reply_to_turn_id": str(q_in_b.id),
+            "field": "difficulty",
+            "value": "easy",
+        },
+    )
+    assert response.status_code == 422, response.text
+
+
+def test_answer_turn_malformed_uuid_returns_422(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    """WR-05.6: a malformed in_reply_to_turn_id (not a UUID) is rejected by
+    Pydantic at the schema boundary with 422 — locks the contract so a
+    downstream DB lookup never sees garbage.
+    """
+    member = _seeded_member(db_session)
+    recipe = _make_recipe(db_session, member.household_id, member.id)
+    db_session.commit()
+
+    response = client.post(
+        f"/recipes/{recipe.id}/turns",
+        headers=AUTH_HEADERS,
+        json={
+            "kind": "answer",
+            "in_reply_to_turn_id": "not-a-uuid",
+            "field": "difficulty",
+            "value": "easy",
+        },
+    )
+    assert response.status_code == 422, response.text
+
+
+def test_proposal_accepted_rejects_malformed_advisory_proposed_value(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    """WR-03 / WR-05.3: an advisory turn carrying a proposed_value that fails
+    the per-field validator (e.g. tags must be list-of-str, got int) is
+    rejected at proposal_accepted time — the unsanitized setattr path is
+    closed by the WR-03 fix.
+    """
+    member = _seeded_member(db_session)
+    recipe = _make_recipe(db_session, member.household_id, member.id)
+    advisory = _make_turn(
+        db_session, recipe.id, 0, "advisory", sender="system",
+        payload={
+            "field": "tags",
+            "current_value": [],
+            "proposed_value": 12345,  # tags must be list-of-str
+            "reason_excerpt": "buggy emitter",
+        },
+    )
+    db_session.commit()
+
+    response = client.post(
+        f"/recipes/{recipe.id}/turns",
+        headers=AUTH_HEADERS,
+        json={
+            "kind": "proposal_accepted",
+            "in_reply_to_turn_id": str(advisory.id),
+        },
+    )
+    assert response.status_code == 422, response.text
+    assert "proposed_value" in response.text.lower() or "tags" in response.text.lower()
