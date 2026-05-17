@@ -89,12 +89,12 @@ Plans:
   4. A user editing any form field via the existing recipe form and saving (`PUT /recipes/{id}`) sees the pinned-field signal appear next to that field immediately — no separate write, no realtime round-trip required.
   5. A user can tell at a glance which fields are pinned vs LLM-managed by scanning the form — the signal is present on every field listed in `recipes.manually_edited_fields`.
 **Invariants touched**: #4 (realtime — the detail thread consumes `turn.created` via the existing DOM CustomEvent bridge)
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 28-01-PLAN.md — Backend foundation: add `manually_edited_fields` to `RecipeResponse` + `_apply_put_pinning` helper on PUT /recipes/{id} + 10 pytest cases (DETAIL-05)
 - [x] 28-02-PLAN.md — Frontend vocabulary: `Recipe` type + `ANSWER_FIELDS`/`AnswerField` mirror + `useEnumLabels.field()` + 10 i18n keys + `pin-sections.ts` + `<PinLabel>` component (DETAIL-04)
 - [x] 28-03-PLAN.md — Interactive layer: extend `RecipeThreadProps` + `advisoryResolutions` memo + wire SystemBubble question/advisory handlers with « Valider » + optimistic state handlers in `page.tsx` (DETAIL-01, DETAIL-02, DETAIL-03)
-- [ ] 28-04-PLAN.md — Mount marginalia: section-level gutter PinLabels on `/recipes/[id]/page.tsx` with « conflit » scroll + per-input inline PinLabels on `RecipeForm.tsx` + Playwright e2e specs (DETAIL-04, DETAIL-05)
+- [x] 28-04-PLAN.md — Mount marginalia: section-level gutter PinLabels on `/recipes/[id]/page.tsx` with « conflit » scroll + per-input inline PinLabels on `RecipeForm.tsx` + Playwright e2e specs (DETAIL-04, DETAIL-05)
 **UI hint**: yes
 
 #### Phase 29: LLM prompt rework + completeness wire-up
@@ -119,7 +119,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 25. Backend foundation | v0.6 | 3/3 | Complete    | 2026-05-13 |
 | 26. Thread API & realtime | v0.6 | 4/4 | Complete    | 2026-05-13 |
 | 27. Conversational capture screen | v0.6 | 5/5 | Complete    | 2026-05-17 |
-| 28. Recipe-detail thread | v0.6 | 3/4 | In Progress|  |
+| 28. Recipe-detail thread | v0.6 | 4/4 | Complete   | 2026-05-17 |
 | 29. LLM prompt rework + completeness wire-up | v0.6 | 0/TBD | Not started | - |
 
 ---
