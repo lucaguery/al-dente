@@ -38,8 +38,19 @@ strip the namespace prefix before allowlist comparison (RESEARCH §Pitfall 2).
 from __future__ import annotations
 
 import logging
+import re
 import xml.etree.ElementTree as ET
 from typing import Optional
+
+# Phase 30 BUG-02 D-07 — bind the empty prefix to the SVG namespace at module
+# import time so ET.tostring emits <svg xmlns="…"> instead of inventing an
+# <ns0:svg xmlns:ns0="…"> wrapper. register_namespace is GLOBAL state; safe
+# here because no other backend caller registers a different prefix for this
+# URI (grep -rn "register_namespace" backend/app/ confirmed clean 2026-05-18).
+# Without this, the serialized SVG is valid XML but unparseable by browsers
+# as inline SVG (the renderer needs xmlns as the root's default namespace).
+_SVG_NAMESPACE_URI = "http://www.w3.org/2000/svg"
+ET.register_namespace("", _SVG_NAMESPACE_URI)
 
 log = logging.getLogger(__name__)
 
@@ -157,6 +168,19 @@ def sanitize_recipe_svg(raw: str) -> Optional[str]:
     # added back during the round-trip — the frontend doesn't need it for
     # inline SVG rendering.
     serialized = ET.tostring(root, encoding="unicode")
+
+    # Phase 30 BUG-02 D-06 — belt-and-suspenders. layer 1 (register_namespace)
+    # is the principled fix; this regex strip survives any future ET API drift
+    # that re-introduces prefixes. Pattern: \bns\d+: matches "ns0:", "ns1:",
+    # "ns23:", etc. anchored on a word boundary so we never match path-data
+    # coordinate text like "L 1 1" (\b requires a non-word char before "ns").
+    # Defense-in-depth: the allowlist walk above already validated the parsed
+    # tree; this regex runs on the already-safe serialization output.
+    serialized = re.sub(r"\bns\d+:", "", serialized)
+    # Strip residual `xmlns:nsN="…"` namespace declarations left behind after
+    # the prefix removal — these refer to prefixes that no longer exist in
+    # the tree.
+    serialized = re.sub(r'\s+xmlns:ns\d+="[^"]*"', "", serialized)
 
     # 7. Final size sanity check on the SERIALIZED form (in case normalization
     # somehow inflated past the cap).
