@@ -8,7 +8,21 @@
 // turns; do not delete the `?: never` markers — they keep the discriminator
 // tight.
 
-import type { TurnKind, TurnSender } from "@/lib/enums";
+import type { TurnKind, TurnSender, AnswerField } from "@/lib/enums";
+
+/**
+ * Phase 28 DETAIL-02 — answer-turn payload shape, mirrors backend
+ * AnswerTurnPayload in backend/app/schemas/recipe_turn.py.
+ * The `value` field is typed as `unknown` here — per-field type
+ * discrimination is enforced server-side via the Pydantic value
+ * validator (Phase 26 D-09). Frontend trusts the chip/stepper/text
+ * UI to emit the right shape per the question turn's payload.field.
+ */
+export type AnswerTurnSubmission = {
+  in_reply_to_turn_id: string;
+  field: AnswerField;
+  value: unknown;
+};
 
 /**
  * A bubble buffered in component state on /recipes/new before the user
@@ -63,6 +77,10 @@ export type RecipeThreadProps =
       onPostUrlTurn?: never;
       onPostPhotoTurn?: never;
       onManualEditLinkClick?: never;
+      manuallyEditedFields?: never;
+      onPostAnswerTurn?: never;
+      onPostProposalAccepted?: never;
+      onPostProposalDismissed?: never;
     }
   | {
       mode: "detail";
@@ -77,6 +95,14 @@ export type RecipeThreadProps =
       onPostPhotoTurn: (file: File) => Promise<void>;
       /** Tap on « Ou modifier les champs directement… » — Plan 27-05 scrolls to form. */
       onManualEditLinkClick: () => void;
+      /** Phase 28 DETAIL-04 — pin set, drives marginalia on form/sections (read-only). */
+      manuallyEditedFields: string[];
+      /** Phase 28 DETAIL-02 — parent POSTs the answer turn with optimistic state update. */
+      onPostAnswerTurn: (submission: AnswerTurnSubmission) => Promise<void>;
+      /** Phase 28 DETAIL-03 — parent POSTs proposal_accepted + applies proposed_value optimistically. */
+      onPostProposalAccepted: (advisoryTurnId: string) => Promise<void>;
+      /** Phase 28 DETAIL-03 — parent POSTs proposal_dismissed (no local state change). */
+      onPostProposalDismissed: (advisoryTurnId: string) => Promise<void>;
       // capture-mode-only fields are unused here:
       pendingBubbles?: never;
       onAddPendingBubble?: never;

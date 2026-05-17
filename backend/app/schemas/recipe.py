@@ -148,6 +148,11 @@ class RecipeResponse(BaseModel):
     mood: List[str]
     seasonality: List[str]
     tags: List[str]
+    # Phase 28 DETAIL-05 — carries the pin set so the `recipe.updated` WS broadcast
+    # and every HTTP read surface deliver pin state to the frontend. Mutated by
+    # `_apply_answer_turn`, `_apply_proposal_accepted`, and `_apply_put_pinning`.
+    # Sorted on the write side for deterministic test assertions.
+    manually_edited_fields: List[str] = Field(default_factory=list)
     last_cooked_at: Optional[datetime] = None
     cook_count: int
     # Phase 4 (D-05): path of the most recent cooking-log photo. Set in same

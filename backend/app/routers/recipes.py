@@ -43,7 +43,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, get_args
 from uuid import UUID
 
 from fastapi import (
@@ -75,6 +75,7 @@ from app.schemas.recipe import (
 )
 from app.services import storage as storage_service
 from app.schemas.recipe_turn import (
+    AnswerField,
     TurnPayload,
     TurnResponse,
     AnswerTurnPayload,
@@ -112,6 +113,33 @@ _UPDATE_FORBIDDEN_FIELDS = frozenset({
     "id",
     "created_at",
 })
+
+# Phase 28 DETAIL-05 — the 13 AnswerField keys eligible for auto-pin/unpin on
+# PUT /recipes/{id}. Single source: backend/app/schemas/recipe_turn.py AnswerField.
+# Mirrors frontend/lib/enums.ts ANSWER_FIELDS per locked-vocabulary discipline.
+_ANSWER_FIELD_SET: frozenset[str] = frozenset(get_args(AnswerField))
+
+# Blank-predicate groupings mirroring frontend/lib/recipe-completeness.ts::isFieldFilled.
+# Drift between TS and Python = bug category (CLAUDE.md).
+_STRING_ANSWER_FIELDS = frozenset({"title", "description", "difficulty", "cuisine", "main_protein"})
+_INT_ANSWER_FIELDS = frozenset({"prep_time_minutes", "cook_time_minutes", "servings"})
+_LIST_ANSWER_FIELDS = frozenset({"ingredients", "steps", "mood", "seasonality", "tags"})
+
+
+def _is_blank_for_field(field_name: str, value) -> bool:
+    """Mirror of frontend/lib/recipe-completeness.ts::isFieldFilled inverse.
+
+    String: None or whitespace-only. Integer: None only (0 is valid per D-09).
+    List: None or empty. Phase 28 DETAIL-05.
+    """
+    if field_name in _STRING_ANSWER_FIELDS:
+        return value is None or (isinstance(value, str) and value.strip() == "")
+    if field_name in _INT_ANSWER_FIELDS:
+        return value is None  # 0 is a valid value, not blank
+    if field_name in _LIST_ANSWER_FIELDS:
+        return value is None or len(value) == 0
+    return value is None  # safety default for any future AnswerField additions
+
 
 # Gemini inline-image cap is 20 MB per request; budget 18 MB for the photos
 # alone (2 MB headroom for prompt text). Phase 2 02-CONTEXT photo upload guard.
@@ -354,6 +382,14 @@ async def update_recipe(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
         )
+
+    # Phase 28 DETAIL-05 — snapshot AnswerField values BEFORE setattr mutates them.
+    # _apply_put_pinning diffs the body against this snapshot to detect pins/unpins.
+    # Must come BEFORE the setattr loop (28-RESEARCH.md §2 enum-coercion ordering
+    # gotcha: after setattr, getattr(r, field) already holds the new value and
+    # the diff would always be empty).
+    pre_update_snapshot = {field: getattr(r, field, None) for field in _ANSWER_FIELD_SET}
+    _apply_put_pinning(db, r, body, pre_update_snapshot)
 
     data = body.model_dump(exclude_unset=True)
     for key, value in data.items():
@@ -673,6 +709,78 @@ def _apply_proposal_accepted(
     current: set[str] = set(recipe.manually_edited_fields or [])
     current.discard(advisory_payload.field)
     recipe.manually_edited_fields = sorted(current)
+
+
+def _apply_put_pinning(
+    db: Session,
+    recipe: Recipe,
+    body: RecipeUpdate,
+    pre_update_snapshot: dict,
+) -> None:
+    """Phase 28 DETAIL-05 — diff-based auto-pin on PUT /recipes/{id}.
+
+    Compares the PUT body's AnswerField keys against `pre_update_snapshot`
+    (taken BEFORE the setattr loop so old values are still on the ORM object).
+    Differing values pin the field; values that arrive blank (per
+    `_is_blank_for_field`) UNPIN the field. Same-value re-saves are a no-op
+    (D-08).
+
+    Must be called BEFORE the setattr loop — calling after would make
+    `getattr(recipe, field)` already hold the new value and the diff would
+    always be empty (28-RESEARCH.md §2 enum-coercion ordering gotcha).
+
+    Mirrors the same set-semantics + sorted reassignment idiom as
+    `_apply_answer_turn` and `_apply_proposal_accepted`. Same DB transaction
+    as the field writes (invariant #3).
+
+    `db` is accepted for API symmetry with the other pin helpers and for future
+    SELECT FOR UPDATE expansion (T-28-02 productize-later note), but is unused
+    today (single uvicorn worker — invariant #7 serializes concurrent PUT
+    requests at the asyncio event-loop level).
+    """
+    data = body.model_dump(exclude_unset=True)
+    current_pins: set[str] = set(recipe.manually_edited_fields or [])
+
+    for field_name, new_value in data.items():
+        if field_name not in _ANSWER_FIELD_SET:
+            continue  # D-10: only AnswerField keys are pin-eligible
+
+        old_value = pre_update_snapshot.get(field_name)
+
+        # Coerce new_value to a comparable shape that matches how the setattr
+        # loop will write it to the DB. Necessary for:
+        #   - Scalar enum fields (cuisine, main_protein): Pydantic wraps them
+        #     in the Enum subclass; DB stores plain string.
+        #   - List-of-enum fields (mood, seasonality): same wrapping + list.
+        #   - ingredients: Pydantic IngredientItem objects → list[dict].
+        # All other fields (strings, ints, list[str]) need no coercion.
+        # Sort list-of-string fields before compare (D-09/28-RESEARCH §2
+        # list-order gotcha) so ["comfort","light"] == ["light","comfort"].
+        if field_name in ("cuisine", "main_protein") and new_value is not None:
+            coerced_new = _coerce_enum_value(new_value)
+        elif field_name in ("mood", "seasonality") and new_value is not None:
+            coerced_new = sorted([_coerce_enum_value(v) for v in new_value])
+            old_value = sorted(list(old_value or []))
+        elif field_name == "ingredients" and new_value is not None:
+            coerced_new = [
+                (i.model_dump() if hasattr(i, "model_dump") else i)
+                for i in new_value
+            ]
+        else:
+            coerced_new = new_value
+
+        if _is_blank_for_field(field_name, coerced_new):
+            # D-09 — clearing a field UNPINS it (asymmetric to answer-turn pin path)
+            current_pins.discard(field_name)
+            continue
+
+        if coerced_new != old_value:
+            # D-08 — same value is a no-op; genuine change pins the field
+            current_pins.add(field_name)
+
+    # Full reassignment — in-place .append on JSONB silently fails without
+    # flag_modified (RESEARCH §Area 4 / routers/recipes.py:607-608 comment).
+    recipe.manually_edited_fields = sorted(current_pins)
 
 
 def _validate_proposal_dismissed_ref(
