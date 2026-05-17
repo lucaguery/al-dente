@@ -11,8 +11,8 @@
 
 ### Bug sweep
 
-- [ ] **BUG-01** — Recipe photos self-heal when their signed URL expires after a backgrounded PWA resumes (gh#23). Backend `SIGNED_URL_TTL_SECONDS` raised to 1h in `backend/app/services/storage.py`; frontend `PHOTO_URL_CACHE_TTL_MS` raised to 50min in `frontend/lib/recipes.ts`; production `<img onError>` invalidates the frontend signed-URL cache and refetches the URL exactly once before giving up. Applies to `RecipeCard`, `ShortlistCard`, `PhotoUploader`, and `frontend/app/recipes/[id]/page.tsx`. Dev-only 3-stage fallback path stays gated to non-prod. Acceptance: iPhone PWA, load household → lock 10 min → unlock → photos render (or self-recover within one frame).
-- [ ] **BUG-02** — Recipe SVG illustrations render as visible pictograms instead of empty muted squares (gh#24). `sanitize_recipe_svg` output uses unprefixed `<svg>` / `<path>` markup with the SVG namespace as the default on the root only — no synthetic `ns0:` prefix anywhere. Existing `recipes.illustration_svg` rows whose payload starts with `ns0:` are remediated (re-sanitize in place, strip prefixes, or NULL for regeneration — decision during planning). All existing sanitizer guarantees preserved (strict allowlist, event-handler / `style=` / `href` rejection, CDATA / comment / PI / XXE rejection, 4 KB cap, D-34 normalization, reject-and-fallback). New unit test asserts no `ns0:` substring + bare `<svg` root. Acceptance: capture a fresh recipe without a photo → library card + inbox row render a visible pictogram.
+- [x] **BUG-01** — Recipe photos self-heal when their signed URL expires after a backgrounded PWA resumes (gh#23). Backend `SIGNED_URL_TTL_SECONDS` raised to 1h in `backend/app/services/storage.py`; frontend `PHOTO_URL_CACHE_TTL_MS` raised to 50min in `frontend/lib/recipes.ts`; production `<img onError>` invalidates the frontend signed-URL cache and refetches the URL exactly once before giving up. Applies to `RecipeCard`, `ShortlistCard`, `PhotoUploader`, and `frontend/app/recipes/[id]/page.tsx`. Dev-only 3-stage fallback path stays gated to non-prod. Acceptance: iPhone PWA, load household → lock 10 min → unlock → photos render (or self-recover within one frame).
+- [x] **BUG-02** — Recipe SVG illustrations render as visible pictograms instead of empty muted squares (gh#24). `sanitize_recipe_svg` output uses unprefixed `<svg>` / `<path>` markup with the SVG namespace as the default on the root only — no synthetic `ns0:` prefix anywhere. Existing `recipes.illustration_svg` rows whose payload starts with `ns0:` are remediated (re-sanitize in place, strip prefixes, or NULL for regeneration — decision during planning). All existing sanitizer guarantees preserved (strict allowlist, event-handler / `style=` / `href` rejection, CDATA / comment / PI / XXE rejection, 4 KB cap, D-34 normalization, reject-and-fallback). New unit test asserts no `ns0:` substring + bare `<svg` root. Acceptance: capture a fresh recipe without a photo → library card + inbox row render a visible pictogram.
 
 ### Bottom nav
 
@@ -57,8 +57,8 @@ _Filled by the roadmapper 2026-05-17. Each REQ-ID maps to exactly one phase._
 
 | REQ-ID | Phase | Plan(s) |
 |--------|-------|---------|
-| BUG-01 | Phase 30 | TBD (plan-phase) |
-| BUG-02 | Phase 30 | TBD (plan-phase) |
+| BUG-01 | Phase 30 | 30-01 |
+| BUG-02 | Phase 30 | 30-02 |
 | NAV-01 | Phase 31 | TBD (plan-phase) |
 | SOBER-01 | Phase 32 | TBD (plan-phase) |
 | SOBER-02 | Phase 32 | TBD (plan-phase) |
