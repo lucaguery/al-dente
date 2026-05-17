@@ -1,7 +1,7 @@
 # Requirements — v0.7 Sober Kitchen + Polish
 
 **Milestone:** v0.7
-**Status:** Active (defining)
+**Status:** Active (roadmap approved)
 **Source:** 8 open GitHub issues scoped through `/gsd-new-milestone` 2026-05-17. In-scope: gh#23, gh#24, gh#25, gh#27, gh#29. Deferred: gh#26 (« Suggérer » tab → backlog, needs product design); gh#28 (test-coverage expansion → v0.8, after visual contract locks). To close: gh#20 (shipped in v0.6).
 **Goal:** Clear the live-bug backlog, ship the missing capture entry point, port the locked screens to the Sober Kitchen design system per `docs/design-system.html` §15, and split CLAUDE.md so the root file's per-turn context cost shrinks.
 
@@ -53,23 +53,25 @@
 
 ## Traceability
 
-_Filled by the roadmapper in Step 10. Each REQ-ID maps to exactly one phase._
+_Filled by the roadmapper 2026-05-17. Each REQ-ID maps to exactly one phase._
 
 | REQ-ID | Phase | Plan(s) |
 |--------|-------|---------|
-| BUG-01 | TBD | TBD |
-| BUG-02 | TBD | TBD |
-| NAV-01 | TBD | TBD |
-| SOBER-01 | TBD | TBD |
-| SOBER-02 | TBD | TBD |
-| SOBER-03 | TBD | TBD |
-| SOBER-04 | TBD | TBD |
-| SOBER-05 | TBD | TBD |
-| SOBER-06 | TBD | TBD |
-| SOBER-07 | TBD | TBD |
-| SOBER-08 | TBD | TBD |
-| DX-01 | TBD | TBD |
+| BUG-01 | Phase 30 | TBD (plan-phase) |
+| BUG-02 | Phase 30 | TBD (plan-phase) |
+| NAV-01 | Phase 31 | TBD (plan-phase) |
+| SOBER-01 | Phase 32 | TBD (plan-phase) |
+| SOBER-02 | Phase 32 | TBD (plan-phase) |
+| SOBER-03 | Phase 32 | TBD (plan-phase) |
+| SOBER-04 | Phase 32 | TBD (plan-phase) |
+| SOBER-05 | Phase 32 | TBD (plan-phase) |
+| SOBER-06 | Phase 32 | TBD (plan-phase) |
+| SOBER-07 | Phase 32 | TBD (plan-phase) |
+| SOBER-08 | Phase 32 | TBD (plan-phase) |
+| DX-01 | Phase 33 | TBD (plan-phase) |
+
+**Coverage:** 12/12 v0.7 requirements mapped. No orphans.
 
 ---
 
-*Last updated: 2026-05-17 — v0.7 REQUIREMENTS.md drafted via `/gsd-new-milestone` from the 8 open GitHub issues. Roadmap pending.*
+*Last updated: 2026-05-17 — v0.7 REQUIREMENTS.md traceability filled by roadmapper. All 12 REQ-IDs mapped: BUG × 2 → Phase 30, NAV × 1 → Phase 31, SOBER × 8 → Phase 32, DX × 1 → Phase 33. Plans written by `/gsd-plan-phase`.*

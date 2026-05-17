@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
-status: defining_requirements
-stopped_at: REQUIREMENTS.md drafted; roadmap pending
-last_updated: "2026-05-17T19:30:00.000Z"
+status: roadmap_ready
+stopped_at: Roadmap written; Phase 30 next
+last_updated: "2026-05-17T19:45:00.000Z"
 last_activity: 2026-05-17
 progress:
   total_phases: 4
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish mi
 ## Current Position
 
 Milestone: v0.7 Sober Kitchen + Polish
-Phase: Not started (defining requirements)
+Phase: Not started (Phase 30 next — Live-bug sweep)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-17 — Milestone v0.7 started
+Status: Roadmap approved; ready to plan Phase 30
+Last activity: 2026-05-17 — v0.7 roadmap written (4 phases, 12 requirements mapped)
 
-Resume: `/gsd-discuss-phase 30 ${GSD_WS}` (or `/gsd-plan-phase 30 ${GSD_WS}` to skip discussion) after roadmap approval.
+Resume: `/gsd-discuss-phase 30 ${GSD_WS}`
 
 Progress: 0/4 phases complete
 
@@ -56,12 +56,13 @@ Progress: 0/4 phases complete
 | v0.4 (Phases 15-21) | 7 | ✅ Complete (shipped 2026-05-11) |
 | v0.5 (Phases 22-24) | 3 | ✅ Complete (shipped 2026-05-13) |
 | v0.6 (Phases 25-29) | 5 | ✅ Complete (shipped 2026-05-17) |
-| v0.7 (Phases 30-33, planned) | 4 | 🚧 Defining requirements |
+| v0.7 (Phases 30-33) | 4 | 🚧 In Progress |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- v0.7 roadmap written 2026-05-17: 4 phases (30-33), 12 requirements (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Phase shape locked during `/gsd-new-milestone`. Granularity: coarse.
 - v0.7 milestone opened 2026-05-17 from the 8 open GitHub issues. Scope: bug sweep (gh#23, gh#24) → bottom-nav restructure (gh#25) → Sober Kitchen port (gh#29 — `docs/design-system.html` §15 A→E) → CLAUDE.md split (gh#27). Deferred: gh#28 (test coverage → v0.8, after visual contract locks); gh#26 (« Suggérer » tab → backlog, needs product design first). gh#20 to be closed (shipped in v0.6).
 - v0.6 milestone shipped 2026-05-17: 5 phases (25-29), 22 plans, 23 requirements (THREAD × 4 + TURN × 4 + CAPTURE × 4 + DETAIL × 5 + LLM × 4 + MIGRATION × 2). Closes gh#20 per ADR-0001. **Architecture invariant #1 evolved further** — all five capture surfaces now flow through one `promote_draft(recipe_id)` entry point dispatching on first turn's `kind`. **Invariant #5 satisfied by `recipe_turns`** going forward; legacy `source_capture` JSONB retired. **Invariant #4** extended with `turn.created` + `turn.updated` semantics.
 - v0.5 milestone shipped 2026-05-13: 3 phases (22-24), 9 plans, 12 requirements (QW × 3 / DECK × 4 / RID × 5). Closed 12 GitHub issues. **Invariant #1 first shift** — quick + full-form captures moved from sync `structured`-on-return to async `BackgroundTask`.
@@ -77,11 +78,11 @@ See PROJECT.md Key Decisions table for the cumulative log. v0.7 milestone-level 
 
 ### Open Research
 
-None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring `/gsd-new-milestone`'s research phase. The design contract is already locked in `docs/design-system.html` §15.
+None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring research. The design contract is already locked in `docs/design-system.html` §15.
 
 ### Blockers/Concerns
 
-- **None blocking.** v0.7 ready to roadmap.
+- **None blocking.** v0.7 ready to execute Phase 30.
 - **4 v0.6 Phase 29 HUMAN-UAT items** carried forward — Gemini round-trip, advisory round-trip, defer gate, Playwright suite. Tracked via `/gsd-audit-uat`.
 - **2 v0.6 Phase 28 HUMAN-UAT items** carried forward — chip/stepper answer + advisory accept/dismiss (both depend on the Phase 29 LLM emissions landing in live use).
 - **15 v0.4 HUMAN-UAT items** remain orthogonal — tracked via `/gsd-audit-uat`.
@@ -101,7 +102,7 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring `/gs
 
 ## Session Continuity
 
-Last activity: 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`
-Stopped at: REQUIREMENTS.md drafted; roadmap pending
+Last activity: 2026-05-17 — v0.7 roadmap written; 4 phases (30-33), 12 requirements mapped
+Stopped at: Roadmap written; Phase 30 ready to plan
 Resume file: None
-Next: `/gsd-discuss-phase 30 ${GSD_WS}` (or `/gsd-plan-phase 30 ${GSD_WS}` to skip discussion) after roadmap approval
+Next: `/gsd-discuss-phase 30 ${GSD_WS}`
