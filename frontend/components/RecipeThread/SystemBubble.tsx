@@ -42,6 +42,12 @@ interface SystemBubbleProps {
   onPostProposalAccepted?: (advisoryTurnId: string) => Promise<void>;
   /** Phase 28 DETAIL-03 — advisory dismiss handler. */
   onPostProposalDismissed?: (advisoryTurnId: string) => Promise<void>;
+  /** Phase 29 D-22 — when true, summary CTAs render in collapsed/dimmed deferred state. */
+  deferred?: boolean;
+  /** Phase 29 D-22 — POSTs /questions/trigger to emit the next missing-field question. */
+  onSummaryComplete?: (turnId: string) => Promise<void>;
+  /** Phase 29 D-22 — POSTs /questions/defer to silence questions for 24h. */
+  onSummaryLater?: (turnId: string) => Promise<void>;
 }
 
 export function SystemBubble({
@@ -50,6 +56,9 @@ export function SystemBubble({
   onPostAnswerTurn,
   onPostProposalAccepted,
   onPostProposalDismissed,
+  deferred,
+  onSummaryComplete,
+  onSummaryLater,
 }: SystemBubbleProps): React.JSX.Element | null {
   const t = useTranslations("recipes.thread");
   const labels = useEnumLabels();
@@ -66,6 +75,30 @@ export function SystemBubble({
     const chips = Array.isArray(turn.payload.chips)
       ? (turn.payload.chips as string[])
       : [];
+
+    const handleComplete = async () => {
+      if (!onSummaryComplete) return;
+      setCommitting(true);
+      try {
+        await onSummaryComplete(turn.id);
+      } catch {
+        // parent toasts
+      } finally {
+        setCommitting(false);
+      }
+    };
+
+    const handleLater = async () => {
+      if (!onSummaryLater) return;
+      setCommitting(true);
+      try {
+        await onSummaryLater(turn.id);
+      } catch {
+        // parent toasts
+      } finally {
+        setCommitting(false);
+      }
+    };
 
     return (
       <div className={`${SYS_BUBBLE_BASE} ${SYS_BUBBLE_RADIUS} p-3`}>
@@ -92,12 +125,29 @@ export function SystemBubble({
           <p className="text-[13px] leading-[1.5]">{bodyText}</p>
         ) : null}
 
-        {/* CTAs — VISUAL STUBS, no onClick — Phase 29 wires (summary_complete/later deferred) */}
-        <div className="flex gap-2 mt-1">
-          <button type="button" className={PRIMARY_CTA_CLASS}>
-            {t("summary_complete")}
+        {/* Phase 29 D-22 — CTAs wired. deferred=true collapses both into a muted disabled state
+            (parallel to Phase 28 D-19 advisory resolution-collapse pattern). */}
+        <div aria-busy={committing} className="flex gap-2 mt-1">
+          <button
+            type="button"
+            onClick={handleComplete}
+            disabled={committing || deferred === true || !onSummaryComplete}
+            aria-disabled={committing || deferred === true || !onSummaryComplete}
+            className={`${PRIMARY_CTA_CLASS} disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center`}
+          >
+            {committing && !deferred ? (
+              <Loader2 size={14} className="animate-spin" aria-hidden />
+            ) : (
+              t("summary_complete")
+            )}
           </button>
-          <button type="button" className={GHOST_CTA_CLASS}>
+          <button
+            type="button"
+            onClick={handleLater}
+            disabled={committing || deferred === true || !onSummaryLater}
+            aria-disabled={committing || deferred === true || !onSummaryLater}
+            className={`${GHOST_CTA_CLASS} disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
             {t("summary_later")}
           </button>
         </div>

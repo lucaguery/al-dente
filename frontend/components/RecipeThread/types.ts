@@ -81,6 +81,9 @@ export type RecipeThreadProps =
       onPostAnswerTurn?: never;
       onPostProposalAccepted?: never;
       onPostProposalDismissed?: never;
+      deferred?: never;
+      onSummaryComplete?: never;
+      onSummaryLater?: never;
     }
   | {
       mode: "detail";
@@ -103,6 +106,12 @@ export type RecipeThreadProps =
       onPostProposalAccepted: (advisoryTurnId: string) => Promise<void>;
       /** Phase 28 DETAIL-03 — parent POSTs proposal_dismissed (no local state change). */
       onPostProposalDismissed: (advisoryTurnId: string) => Promise<void>;
+      /** Phase 29 D-22 — true when recipe.questions_deferred_until > now(). */
+      deferred: boolean;
+      /** Phase 29 D-22 — POST /api/recipes/{id}/questions/trigger; on 204 parent toasts « Tout est complet. ». */
+      onSummaryComplete: (turnId: string) => Promise<void>;
+      /** Phase 29 D-22 — POST /api/recipes/{id}/questions/defer; on 204 parent updates recipe via WS. */
+      onSummaryLater: (turnId: string) => Promise<void>;
       // capture-mode-only fields are unused here:
       pendingBubbles?: never;
       onAddPendingBubble?: never;
