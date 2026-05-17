@@ -39,8 +39,10 @@ Threat-model mitigations (T-02-01-01 .. T-02-01-07 from the plan):
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json as _json
 import logging
+from datetime import datetime, timezone
 from typing import Any, Literal, Optional
 from uuid import UUID
 
@@ -152,6 +154,11 @@ class GeminiExtractedRecipe(BaseModel):
     mood: list[MoodLiteral] = Field(default_factory=list)
     main_protein: Optional[ProteinLiteral] = None
     seasonality: list[SeasonLiteral] = Field(default_factory=list)
+    # Phase 29 D-05 — Gemini-generated 1-2 sentence French recap of what was
+    # extracted/modified. Optional because apply_voice_modification reuses this
+    # schema and its prompt does NOT request summary_body (Pitfall 2).
+    # _run_thread_llm uses a server fallback when None.
+    summary_body: Optional[str] = Field(default=None, max_length=240)
 
 
 # ---------------------------------------------------------------------------
@@ -208,6 +215,24 @@ _MODIFY_PROMPT = (
     "schéma. Conserve les champs non concernés tels quels."
 )
 
+# Phase 29 D-02 — full-thread prompt. The role-labeled prose is built per-call
+# by _build_thread_prompt; this constant is the locked instructional preamble.
+_EXTRACT_PROMPT_THREAD = (
+    "Voici la conversation complète entre l'utilisateur et le système au sujet "
+    "d'une recette. Extrais les champs structurés en français en tenant compte "
+    "de TOUS les messages — le plus récent est le plus important s'il contredit "
+    "un message antérieur. Renvoie null pour les champs absents — n'invente rien. "
+    "Le champ title doit être une formule courte et accrocheuse en français "
+    "(max 60 caractères, sans guillemets, sans liste d'ingrédients). "
+    "Le champ summary_body doit décrire en français en 1-2 phrases ce qui a été "
+    "extrait ou modifié par rapport au tour précédent. Maximum 240 caractères. "
+    "Pour les CHAMPS ÉPINGLÉS listés en fin de prompt, ne modifie ces valeurs "
+    "que si le fil les contredit explicitement — sinon, conserve la valeur actuelle."
+)
+
+# Phase 29 D-23 — photo token cap across thread (matches extract_from_photos limit).
+_MAX_PHOTO_PARTS = 4
+
 # Phase 24 RID-04 D-25 — plain-text title-rewrite prompt. No JSON schema;
 # response.text is the bare-text accessor. Prompt verbatim from gh#10 / D-25.
 _REWRITE_TITLE_PROMPT = (
@@ -224,69 +249,9 @@ _GEMINI_MODEL = "gemini-2.5-flash"
 # Pure Gemini-call functions (no DB, no broadcast — caller wraps these)
 # ---------------------------------------------------------------------------
 
-
-def extract_from_transcript(transcript: str) -> GeminiExtractedRecipe:
-    """Voice transcript -> structured recipe. Raises on Gemini error.
-
-    Caller is responsible for try/except around this — typically only
-    `promote_draft` calls it (voice branch) so the error gets recorded
-    on the recipe row.
-    """
-
-    # D-04 — deterministic test mode: skip Gemini, return canned data.
-    if settings.environment == "test":
-        from app.services.llm_fixtures import canned_voice_recipe
-        return canned_voice_recipe(transcript)
-
-    response = _gemini().models.generate_content(
-        model=_GEMINI_MODEL,
-        contents=[_EXTRACT_PROMPT_VOICE, transcript],
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=GeminiExtractedRecipe,
-        ),
-    )
-    parsed = response.parsed
-    if not isinstance(parsed, GeminiExtractedRecipe):
-        raise ValueError("Gemini did not return a valid GeminiExtractedRecipe")
-    return parsed
-
-
-def extract_from_photos(photo_bytes_list: list[bytes]) -> GeminiExtractedRecipe:
-    """1-4 photos -> structured recipe via inline bytes path (<20 MB total).
-
-    The router (`POST /recipes/photo`, Plan 02) has already sniffed/validated
-    each photo's MIME via `storage.detect_mime_and_ext`; we pass `image/jpeg`
-    here because Gemini auto-detects from the magic bytes regardless of the
-    declared MIME — we just need a vaguely-image hint in the part metadata.
-    """
-
-    # D-04 — deterministic test mode: skip Gemini, return canned data.
-    if settings.environment == "test":
-        from app.services.llm_fixtures import canned_photo_recipe
-        return canned_photo_recipe(len(photo_bytes_list))
-
-    if not photo_bytes_list:
-        raise ValueError("at least one photo required")
-    if len(photo_bytes_list) > 4:
-        raise ValueError("at most 4 photos accepted")
-
-    parts = [
-        types.Part.from_bytes(data=b, mime_type="image/jpeg")
-        for b in photo_bytes_list
-    ]
-    response = _gemini().models.generate_content(
-        model=_GEMINI_MODEL,
-        contents=[_EXTRACT_PROMPT_PHOTOS, *parts],
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=GeminiExtractedRecipe,
-        ),
-    )
-    parsed = response.parsed
-    if not isinstance(parsed, GeminiExtractedRecipe):
-        raise ValueError("Gemini did not return a valid GeminiExtractedRecipe")
-    return parsed
+# NOTE: extract_from_transcript and extract_from_photos were deleted in Phase 29
+# (MVP no-shim posture). _run_thread_llm subsumes both paths via the full thread prompt.
+# apply_voice_modification is preserved — still called by POST /recipes/{id}/voice-modify.
 
 
 def apply_voice_modification(
@@ -557,6 +522,447 @@ def _record_turn_enrichment_failure(
 
 
 # ---------------------------------------------------------------------------
+# Phase 29 — full-thread LLM helpers (LLM-01, LLM-02, LLM-03)
+# ---------------------------------------------------------------------------
+
+from sqlalchemy import func  # noqa: E402 — placed here to co-locate with phase 29 helpers
+
+from app.services.completeness import (  # noqa: E402
+    FIELD_KEYS,
+    INPUT_TYPE_MAP,
+    OPTIONS_MAP,
+    _FIELD_LABELS_FR,
+    _FIELD_PROMPTS_FR,
+    compute_completeness,
+    is_conflict,
+)
+from app.schemas.recipe_turn import (  # noqa: E402
+    AdvisoryTurnPayload,
+    AnswerField,
+    QuestionTurnPayload,
+    SummaryTurnPayload,
+)
+
+
+def _extraction_hash(extracted: GeminiExtractedRecipe) -> str:
+    """Phase 29 D-03 — canonical SHA256 of the parsed extraction.
+
+    Pitfall 1: Pydantic v2 has NO model_dump_json(sort_keys=True). Use
+    json.dumps(model_dump(), sort_keys=True, ensure_ascii=False) instead.
+    """
+    canonical = _json.dumps(
+        extracted.model_dump(), sort_keys=True, ensure_ascii=False
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _extract_reason_from_thread(
+    turns: list[RecipeTurn], trigger_position: int
+) -> str:
+    """Phase 29 D-17 — quote the most recent user turn ≤ trigger_position.
+
+    Returns the literal user text wrapped in « », newlines stripped, ≤120 chars
+    (≤100 for url). System turns are skipped — the user's own words are quoted.
+    Returns «  » (empty quote) defensively if no user turn exists.
+    """
+    for turn in reversed(turns):
+        if turn.position > trigger_position:
+            continue
+        if turn.sender != "user":
+            continue
+        payload = turn.payload or {}
+        kind = turn.kind
+        if kind == "text":
+            text = (payload.get("text") or "").replace("\n", " ").strip()[:120]
+        elif kind == "voice":
+            text = (payload.get("transcript") or "").replace("\n", " ").strip()[:120]
+        elif kind == "url":
+            url = (payload.get("url") or "")[:100]
+            text = f"extrait de {url}"
+        elif kind == "photo":
+            text = "extrait de la photo"
+        elif kind == "answer":
+            text = f"tu as répondu : « {payload.get('value', '')} »"
+        else:
+            continue
+        return f"« {text} »"
+    return "«  »"
+
+
+def _should_emit_advisory(
+    turns: list[RecipeTurn], field: str, proposed_value: Any
+) -> bool:
+    """Phase 29 D-18 — suppress duplicate advisories.
+
+    Walk turns backward looking for the most recent advisory turn for this field.
+    If unresolved (no later proposal_accepted/proposal_dismissed) → SUPPRESS.
+    If resolved AND prior proposed_value == proposed_value → SUPPRESS.
+    Otherwise (no prior advisory OR resolved-with-different-proposal) → EMIT.
+    """
+    # Find most recent advisory for this field
+    most_recent_advisory: Optional[RecipeTurn] = None
+    for turn in reversed(turns):
+        if turn.kind == "advisory" and (turn.payload or {}).get("field") == field:
+            most_recent_advisory = turn
+            break
+    if most_recent_advisory is None:
+        return True  # no prior advisory — allow emission
+    # Check resolution status
+    resolved = False
+    for turn in turns:
+        if turn.position <= most_recent_advisory.position:
+            continue
+        if turn.kind in ("proposal_accepted", "proposal_dismissed"):
+            if (turn.payload or {}).get("in_reply_to_turn_id") == str(most_recent_advisory.id):
+                resolved = True
+                break
+    if not resolved:
+        return False  # unresolved — don't pile up
+    prior_proposed = (most_recent_advisory.payload or {}).get("proposed_value")
+    if prior_proposed == proposed_value:
+        return False  # already decided on this exact proposal
+    return True  # different proposal → emit
+
+
+def _should_emit_question(
+    turns: list[RecipeTurn], field: str
+) -> bool:
+    """Phase 29 D-12 — suppress when an unanswered question for the field exists.
+
+    Unanswered question = a `question` turn for this field with no later
+    `answer` turn whose payload.in_reply_to_turn_id matches the question's id.
+    """
+    most_recent_question: Optional[RecipeTurn] = None
+    for turn in reversed(turns):
+        if turn.kind == "question" and (turn.payload or {}).get("field") == field:
+            most_recent_question = turn
+            break
+    if most_recent_question is None:
+        return True  # no prior question — allow emission
+    # Resolved if a later answer turn references it
+    for turn in turns:
+        if turn.position <= most_recent_question.position:
+            continue
+        if (
+            turn.kind == "answer"
+            and (turn.payload or {}).get("in_reply_to_turn_id") == str(most_recent_question.id)
+        ):
+            return True  # resolved → re-emission allowed
+    return False  # unanswered → suppress
+
+
+def _build_thread_prompt(
+    thread: list[RecipeTurn],
+    pinned: set[str],
+) -> tuple[str, list[types.Part]]:
+    """Phase 29 D-02 — role-labeled French prose + photo parts (max 4).
+
+    Pitfall 6: download photo bytes from Supabase Storage; cap at 4 across the
+    whole thread (matches the deleted extract_from_photos limit).
+    Pitfall 7: return (prose, parts) tuple; the Gemini call uses
+    contents=[prose, *parts].
+
+    Photo references in the prose are `[voir image n°{i}]` placeholders so
+    Gemini can correlate the prose flow with the binary parts.
+    """
+    lines: list[str] = []
+    photo_parts: list[types.Part] = []
+    photo_count = 0
+    for turn in sorted(thread, key=lambda t: t.position):
+        kind = turn.kind
+        payload = turn.payload or {}
+        if turn.sender == "user":
+            if kind == "text":
+                lines.append(f"USER (text): {payload.get('text', '')}")
+            elif kind == "voice":
+                lines.append(f"USER (voice): {payload.get('transcript', '')}")
+            elif kind == "url":
+                lines.append(f"USER (url): {payload.get('url', '')}")
+            elif kind == "photo":
+                for path in (payload.get("photo_paths") or []):
+                    if photo_count >= _MAX_PHOTO_PARTS:
+                        break
+                    try:
+                        photo_bytes = storage_service.download_recipe_photo(path)
+                        photo_parts.append(
+                            types.Part.from_bytes(data=photo_bytes, mime_type="image/jpeg")
+                        )
+                        photo_count += 1
+                        lines.append(f"USER (photo): [voir image n°{photo_count}]")
+                    except Exception as exc:  # noqa: BLE001
+                        log.warning("photo bytes download failed path=%s: %s", path, exc)
+            elif kind == "answer":
+                lines.append(
+                    f"USER (answer {payload.get('field', '?')}): {payload.get('value', '')}"
+                )
+            # proposal_accepted / proposal_dismissed are state-change only; render as marker
+            elif kind == "proposal_accepted":
+                lines.append("USER (proposal_accepted)")
+            elif kind == "proposal_dismissed":
+                lines.append("USER (proposal_dismissed)")
+        else:  # system
+            if kind == "summary":
+                lines.append(f"SYSTEM (summary): {payload.get('body', '')}")
+            elif kind == "question":
+                lines.append(
+                    f"SYSTEM (question {payload.get('field', '?')}): {payload.get('prompt', '')}"
+                )
+            elif kind == "advisory":
+                lines.append(
+                    f"SYSTEM (advisory {payload.get('field', '?')}): "
+                    f"{payload.get('current_value', '')} → {payload.get('proposed_value', '')}"
+                )
+
+    pinned_clause = ""
+    if pinned:
+        pairs = ", ".join(f"{f}=ÉPINGLÉ" for f in sorted(pinned))
+        pinned_clause = (
+            "\n\nCHAMPS ÉPINGLÉS (ne modifie ces valeurs que si le fil les contredit "
+            f"explicitement — sinon, conserve la valeur actuelle): {pairs}"
+        )
+
+    prose = _EXTRACT_PROMPT_THREAD + "\n\n" + "\n".join(lines) + pinned_clause
+    return prose, photo_parts
+
+
+async def _run_thread_llm(
+    db: Session,
+    recipe: Recipe,
+    trigger_turn_id: UUID,
+) -> None:
+    """Phase 29 LLM-01/02/03 — shared body called from promote_draft + process_thread_turn.
+
+    1. Load the full ordered thread from recipe_turns.
+    2. Build the prompt (D-02 — prose + max-4 photo parts).
+    3. Call Gemini once (test mode → canned_thread_extract).
+    4. Compute extraction_hash (D-03).
+    5. If hash matches most recent summary's hash → return early (idempotent).
+    6. For each field: if pinned AND is_conflict → emit one advisory (D-16/D-18).
+       Otherwise: track changed fields for chips; apply non-conflicting via _apply_extracted (D-01).
+    7. Emit ≤1 question turn for the highest-priority missing eligible field (D-09/D-10/D-11/D-12),
+       gated by recipes.questions_deferred_until (D-08 / Pitfall 9).
+    8. Emit one summary turn with body + chips + extraction_hash (D-05/D-06/D-07).
+    9. Broadcast turn.created for each emitted system turn.
+    Raises on error — caller decides failure recording strategy:
+      - promote_draft: _record_failure (status → 'failed')
+      - process_thread_turn: _record_turn_enrichment_failure (status unchanged)
+    """
+    # Load full thread
+    thread: list[RecipeTurn] = list(
+        db.scalars(
+            select(RecipeTurn)
+            .where(RecipeTurn.recipe_id == recipe.id)
+            .order_by(RecipeTurn.position.asc())
+        ).all()
+    )
+    pinned = set(recipe.manually_edited_fields or [])
+
+    # Build prompt
+    prose, photo_parts = _build_thread_prompt(thread, pinned)
+
+    # Call Gemini (single call per LLM-triggering turn — PROJECT.md invariant)
+    if settings.environment == "test":
+        from app.services.llm_fixtures import canned_thread_extract
+        extracted = canned_thread_extract(thread, pinned)
+    else:
+        contents: list[Any] = [prose, *photo_parts] if photo_parts else [prose]
+        response = _gemini().models.generate_content(
+            model=_GEMINI_MODEL,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=GeminiExtractedRecipe,
+            ),
+        )
+        parsed = response.parsed
+        if not isinstance(parsed, GeminiExtractedRecipe):
+            raise ValueError("Gemini did not return a valid GeminiExtractedRecipe")
+        extracted = parsed
+
+    # D-03 — idempotency check: skip all emission if hash unchanged
+    new_hash = _extraction_hash(extracted)
+    most_recent_summary: Optional[RecipeTurn] = None
+    for turn in reversed(thread):
+        if turn.kind == "summary":
+            most_recent_summary = turn
+            break
+    if (
+        most_recent_summary is not None
+        and (most_recent_summary.payload or {}).get("extraction_hash") == new_hash
+    ):
+        log.info("thread LLM idempotent: hash unchanged (recipe=%s)", recipe.id)
+        return
+
+    # D-16/D-18 — server-side diff for advisories. Iterate over extracted fields.
+    # Build a canonical extracted map (all fields that can have advisories).
+    extracted_map: dict[str, Any] = {
+        "title": extracted.title,
+        "description": extracted.description,
+        "ingredients": (
+            [i.model_dump() for i in extracted.ingredients]
+            if extracted.ingredients
+            else None
+        ),
+        "steps": extracted.steps,
+        "prep_time_minutes": extracted.prep_time_minutes,
+        "cook_time_minutes": extracted.cook_time_minutes,
+        "servings": extracted.servings,
+        "difficulty": extracted.difficulty,
+        "cuisine": extracted.cuisine,
+        "mood": list(extracted.mood) if extracted.mood else [],
+        "main_protein": extracted.main_protein,
+        "seasonality": list(extracted.seasonality) if extracted.seasonality else [],
+        # tags is not on GeminiExtractedRecipe — no advisory path for tags from extraction
+    }
+
+    # Get the trigger turn's position for reason extraction
+    trigger_turn = next((t for t in thread if t.id == trigger_turn_id), None)
+    trigger_position = (
+        trigger_turn.position if trigger_turn
+        else max((t.position for t in thread), default=0)
+    )
+
+    advisory_payloads: list[dict] = []
+    changed_fields: list[str] = []  # for summary chips (non-pinned diffs applied)
+
+    for field, proposed in extracted_map.items():
+        current = getattr(recipe, field, None)
+        if field in pinned:
+            # D-01/D-19 — pinned: check conflict; if conflict emit advisory
+            if not is_conflict(field, current, proposed):
+                continue  # no conflict → skip advisory
+            if not _should_emit_advisory(thread, field, proposed):
+                continue  # D-18 de-dup → suppress
+            advisory_payloads.append({
+                "kind": "advisory",
+                "field": field,
+                "current_value": current,
+                "proposed_value": proposed,
+                "reason_excerpt": _extract_reason_from_thread(thread, trigger_position),
+            })
+        else:
+            # Non-pinned: track fields that changed (for chips)
+            if proposed is not None and is_conflict(field, current, proposed):
+                changed_fields.append(field)
+
+    # Apply non-pinned-conflicting fields via the existing helper.
+    # Build a safe copy of extracted with pinned-conflicting fields reverted to current.
+    safe_extracted = extracted.model_copy(deep=True)
+    for adv in advisory_payloads:
+        f = adv["field"]
+        # Revert to current value so _apply_extracted doesn't overwrite user's pin.
+        if f == "ingredients" and recipe.ingredients is not None:
+            safe_extracted.ingredients = (
+                [GeminiIngredient(**i) for i in (recipe.ingredients or [])] or None
+            )
+        elif hasattr(safe_extracted, f):
+            setattr(safe_extracted, f, getattr(recipe, f, None))
+    # _apply_extracted requires a non-empty title (its precondition).
+    if safe_extracted.title and safe_extracted.title.strip():
+        _apply_extracted(recipe, safe_extracted)
+
+    # Get next available position for system turns (single-worker — invariant #7)
+    base_pos = db.scalar(
+        select(func.max(RecipeTurn.position)).where(RecipeTurn.recipe_id == recipe.id)
+    )
+    next_pos = 0 if base_pos is None else base_pos + 1
+    emitted_turns: list[RecipeTurn] = []
+
+    # Emit advisory turns (one per conflicting pinned field)
+    for adv_payload in advisory_payloads:
+        validated = AdvisoryTurnPayload(**adv_payload).model_dump(
+            mode="json", exclude={"kind"}
+        )
+        adv_turn = RecipeTurn(
+            recipe_id=recipe.id,
+            position=next_pos,
+            sender="system",
+            kind="advisory",
+            payload=validated,
+        )
+        db.add(adv_turn)
+        emitted_turns.append(adv_turn)
+        next_pos += 1
+
+    # D-11/D-12 — emit ≤1 question for the highest-priority missing eligible field.
+    # D-08/Pitfall 9 — gate on questions_deferred_until (tz-aware comparison).
+    questions_deferred = (
+        recipe.questions_deferred_until is not None
+        and recipe.questions_deferred_until > datetime.now(tz=timezone.utc)
+    )
+    if not questions_deferred:
+        # Recompute completeness AFTER _apply_extracted has run
+        _, missing = compute_completeness(recipe)
+        chosen_field: Optional[str] = None
+        for field in missing:
+            if INPUT_TYPE_MAP.get(field) is None:
+                continue  # D-10 SKIP (ingredients/steps)
+            if not _should_emit_question(thread, field):
+                continue  # D-12 — open unanswered question already exists
+            chosen_field = field
+            break
+        if chosen_field is not None:
+            q_payload = QuestionTurnPayload(
+                kind="question",
+                field=chosen_field,
+                prompt=_FIELD_PROMPTS_FR[chosen_field],
+                input_type=INPUT_TYPE_MAP[chosen_field],
+                options=OPTIONS_MAP.get(chosen_field, []),
+                multi=(chosen_field == "mood"),  # D-10 — only mood is chip-multi
+            ).model_dump(mode="json", exclude={"kind"})
+            q_turn = RecipeTurn(
+                recipe_id=recipe.id,
+                position=next_pos,
+                sender="system",
+                kind="question",
+                payload=q_payload,
+            )
+            db.add(q_turn)
+            emitted_turns.append(q_turn)
+            next_pos += 1
+
+    # D-05/D-06/D-07 — emit summary turn (always when hash changed)
+    chips = []
+    for field in changed_fields:
+        label = _FIELD_LABELS_FR.get(field, field)
+        val = extracted_map[field]
+        if isinstance(val, list):
+            val_str = ", ".join(str(v) for v in val)
+        else:
+            val_str = str(val) if val is not None else ""
+        chips.append(f"{label}: {val_str}")
+
+    body = extracted.summary_body or f"J'ai mis à jour {len(changed_fields)} champ(s)."
+    summary_payload = SummaryTurnPayload(
+        kind="summary",
+        body=body,
+        chips=chips,
+        extraction_hash=new_hash,
+    ).model_dump(mode="json", exclude={"kind"})
+    summary_turn = RecipeTurn(
+        recipe_id=recipe.id,
+        position=next_pos,
+        sender="system",
+        kind="summary",
+        payload=summary_payload,
+    )
+    db.add(summary_turn)
+    emitted_turns.append(summary_turn)
+
+    db.commit()
+    for t in emitted_turns:
+        db.refresh(t)
+
+    # Broadcast turn.created for each emitted system turn (invariant #4)
+    for t in emitted_turns:
+        await broadcast_to_household(
+            recipe.household_id,
+            "turn.created",
+            TurnResponse.model_validate(t).model_dump(mode="json"),
+        )
+
+
+# ---------------------------------------------------------------------------
 # BackgroundTask bodies — queued by Plan 02 routers
 # ---------------------------------------------------------------------------
 
@@ -592,10 +998,10 @@ def promote_draft(recipe_id: UUID) -> None:
     promote_*_draft functions. Opens its own SessionLocal
     (BackgroundTask pattern — established in 02-RESEARCH §Pitfall 3).
 
-    Phase 25 does NOT emit summary/question/advisory system turns
-    (D-07) — that is Phase 29's job. This function applies extracted
-    fields to recipes.* and broadcasts recipe.promoted, exactly as
-    the legacy promote_*_draft functions did.
+    Phase 29 extends each branch to call _run_thread_llm after the kind-specific
+    preamble (title rewrite for text; illustrations for voice/photo) so initial
+    captures emit summary/question/advisory system turns alongside the recipe update.
+    The url branch defers to process_thread_turn via extract_and_process_url_turn.
 
     NEVER raises — exceptions are recorded on the recipe row via _record_failure.
     """
@@ -653,6 +1059,10 @@ def promote_draft(recipe_id: UUID) -> None:
                 db.commit()
                 db.refresh(recipe)
                 _broadcast_promoted(recipe)
+                # Phase 29 LLM-01 — emit summary/question/advisory turns on initial text capture.
+                # _run_thread_llm is async; promote_draft is sync. Wrap via asyncio.run per
+                # _broadcast_promoted's established pattern (RESEARCH §"Existing Pattern").
+                asyncio.run(_run_thread_llm(db, recipe, first_turn.id))
 
             elif kind == "voice":
                 # WR-05: migration 0009 may have backfilled `{"transcript": null}`
@@ -666,13 +1076,14 @@ def promote_draft(recipe_id: UUID) -> None:
                     transcript = (recipe.title or "").strip()
                 if not transcript:
                     raise ValueError("promote_draft voice: empty transcript")
-                extracted = extract_from_transcript(transcript)
-                _apply_extracted(recipe, extracted)
+                # Phase 29 — _run_thread_llm replaces the old extract_from_transcript +
+                # _apply_extracted pair. It reads the voice turn from the thread,
+                # calls Gemini with the full thread, applies non-conflicting fields,
+                # and emits summary/question/advisory turns.
+                asyncio.run(_run_thread_llm(db, recipe, first_turn.id))
+                # Illustration after fields are applied (relies on recipe.title from extract).
                 # Phase 24 RID-05 D-36 — illustration generation.
-                # Failure NEVER affects recipe.status (BrandIcon fallback for NULL svg).
-                recipe.illustration_svg = _generate_and_sanitize_illustration(
-                    recipe.title
-                )
+                recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
                 recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
                 db.commit()
                 db.refresh(recipe)
@@ -686,28 +1097,21 @@ def promote_draft(recipe_id: UUID) -> None:
                     photo_paths = list(recipe.photo_paths or [])
                 if not photo_paths:
                     raise ValueError("promote_draft photo: no photo paths")
-                # D-08: download bytes from Supabase Storage. Closes the
-                # v0.1 TODO(productize) that noted photo retry wasn't supported
-                # because bytes weren't stored (now kept in recipe_turns payload).
-                photo_bytes_list = [
-                    storage_service.download_recipe_photo(p)
-                    for p in photo_paths
-                ]
-                extracted = extract_from_photos(photo_bytes_list)
-                _apply_extracted(recipe, extracted)
+                # Phase 29 — _run_thread_llm builds the prompt with photo bytes downloaded
+                # via _build_thread_prompt (max 4 across thread per Pitfall 6).
+                # Replaces the old download + extract_from_photos + _apply_extracted sequence.
+                asyncio.run(_run_thread_llm(db, recipe, first_turn.id))
                 # Phase 24 RID-05 D-36 — illustration generation.
-                recipe.illustration_svg = _generate_and_sanitize_illustration(
-                    recipe.title
-                )
+                recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
                 recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
                 db.commit()
                 db.refresh(recipe)
                 _broadcast_promoted(recipe)
 
             elif kind == "url":
-                # URL extraction is Phase 26 TURN-04. Phase 25 just stamps
-                # the draft as structured so the card leaves the inbox —
-                # matches v0.5 url-capture behavior (no Gemini call).
+                # URL extraction runs via extract_and_process_url_turn (Phase 26 TURN-04)
+                # which calls process_thread_turn at its end — Phase 29 LLM emission
+                # happens there, not here. promote_draft just stamps the row as structured.
                 recipe.status = "structured"
                 recipe.promotion_error = None
                 recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
@@ -737,30 +1141,32 @@ def retry_promotion(recipe_id: UUID) -> None:
     promote_draft(recipe_id)
 
 
-def process_thread_turn(recipe_id: UUID, turn_id: UUID) -> None:
-    """Phase 26 D-21 — no-op stub. Phase 29 fills the body with the full-thread Gemini call.
+async def process_thread_turn(recipe_id: UUID, turn_id: UUID) -> None:
+    """Phase 29 LLM-01 — full-thread Gemini call after every text/voice/photo refinement.
 
-    Sync `def` (NOT async) — mirrors `promote_draft` pattern (RESEARCH §Area 8).
-    BackgroundTask invokes via FastAPI's threadpool when callable is sync.
-    Phase 29 may convert to `async def` if the new body uses async libraries;
-    the dispatch in routers/recipes.py uses `background_tasks.add_task(fn, ...)`
-    which accepts both sync and async — no callsite change needed.
+    Async per RESEARCH §"Architecture Decisions Resolved" §1 — mandatory because
+    this is called from inside extract_and_process_url_turn (async def) at line ~1307.
+    BackgroundTasks.add_task accepts async callables (confirmed from starlette source).
 
-    Scheduled from routers/recipes.py POST /turns for kind in {text, voice, photo}
-    (per D-22 dispatch matrix). The url kind dispatches to
-    extract_and_process_url_turn instead — that BackgroundTask calls THIS
-    stub at the end of its body so the eventual Phase 29 Gemini run sees
-    the extracted content.
+    Failure mode: reuses _record_turn_enrichment_failure (status unchanged) since the
+    recipe is already past initial promotion when this runs.
 
-    NEVER raises — failures (none possible in the stub, but established
-    contract for promote_draft) are swallowed.
+    NEVER raises out — exceptions are caught and recorded on the trigger turn's payload.
     """
     db = SessionLocal()
     try:
-        log.info(
-            "thread-turn LLM processing deferred to Phase 29 (recipe=%s turn=%s)",
-            recipe_id, turn_id,
-        )
+        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
+        if recipe is None:
+            log.warning("process_thread_turn: recipe %s vanished", recipe_id)
+            return
+        turn = db.scalar(select(RecipeTurn).where(RecipeTurn.id == turn_id))
+        if turn is None:
+            log.warning("process_thread_turn: turn %s vanished", turn_id)
+            return
+        try:
+            await _run_thread_llm(db, recipe, turn_id)
+        except Exception as exc:  # noqa: BLE001
+            _record_turn_enrichment_failure(db, recipe, turn, exc)
     finally:
         db.close()
 
@@ -892,13 +1298,10 @@ async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
             TurnResponse.model_validate(turn).model_dump(mode="json"),
         )
 
-        # D-28 step 6 — schedule Phase 29 LLM follow-up. In Phase 26 this is
-        # a no-op log; once Phase 29 fills the body, the LLM will see the
-        # extracted content in turn.payload.extracted_html_path and read
-        # the markdown from Storage. Direct call (not BackgroundTasks.add_task)
-        # because we are already inside a BackgroundTask — see RESEARCH
-        # §Open Questions Q2.
-        process_thread_turn(recipe_id, turn_id)
+        # D-28 step 6 — Phase 29 LLM follow-up. process_thread_turn is now async
+        # (mandatory per RESEARCH §1 / Pitfall 3 — we are inside an async def).
+        # Direct await (not BackgroundTasks.add_task) — already in a BackgroundTask.
+        await process_thread_turn(recipe_id, turn_id)
 
     except Exception as exc:  # noqa: BLE001 — never raise out (R-7 / R-8)
         # Rollback any partial DB state before recording the failure.

@@ -6,6 +6,10 @@ the same vocabulary literals the production code uses (mirror of enums).
 Architecture invariant #5 (raw inputs preserved) means callers still record
 the transcript / photo paths in recipe_turns payload (Phase 25 cutover);
 only the LLM extraction result is canned here.
+
+Phase 29 change: canned_voice_recipe and canned_photo_recipe have been deleted
+(MVP no-shim posture). _run_thread_llm subsumes both paths via the full thread
+prompt. canned_thread_extract is the single test-mode extraction fixture.
 """
 
 from typing import Any
@@ -17,31 +21,37 @@ from app.services.llm import (
 
 
 # Phase 16 D-16-13: test-only force-failure prefix. When the transcript
-# starts with this token, canned_voice_recipe raises so the
-# promote_draft BackgroundTask hits _record_failure (Plan 16-03),
-# transitioning the row to status='failed' deterministically. The prefix
-# is a test-only convention — production transcripts never start with it.
+# starts with this token, canned_thread_extract raises so the BackgroundTask
+# hits _record_failure / _record_turn_enrichment_failure deterministically.
+# The prefix is a test-only convention — production text never starts with it.
 # Used by frontend/tests/e2e/capture-voice-failed-recovery.spec.ts.
 _FORCE_FAIL_PREFIX = "__TEST_FORCE_FAIL__"
 
 
-def canned_voice_recipe(transcript: str) -> GeminiExtractedRecipe:
-    """Deterministic 'risotto' shape; ignores transcript content.
+def canned_thread_extract(
+    turns,  # list[RecipeTurn] — inspected for force-fail only; shape is deterministic
+    pinned,  # set[str] — unused for deterministic shape
+) -> GeminiExtractedRecipe:
+    """Phase 29 — deterministic full-thread extraction for test mode.
 
-    The transcript is preserved in the recipe_turns payload by the caller;
-    we don't need to vary the output by transcript for v0.2.1 specs.
-
-    Phase 16 D-16-13: when the transcript starts with __TEST_FORCE_FAIL__,
-    raises RuntimeError so the BackgroundTask hits _record_failure (Plan
-    16-03) and the row terminates at status='failed'. The Playwright spec
-    capture-voice-failed-recovery.spec.ts uses this prefix to seed a
-    deterministic failed-state row.
+    Returns the same 'risotto' shape that canned_voice_recipe used to return,
+    so existing Playwright recipe assertions still match. summary_body is a
+    French prose stub. Ignores turn content except for __TEST_FORCE_FAIL__ prefix
+    on any text or voice turn (mirrors canned_voice_recipe D-16-13 convention).
     """
-    if transcript.startswith(_FORCE_FAIL_PREFIX):
-        raise RuntimeError(
-            "Extraction forcée à échouer pour les tests (D-16-13). "
-            "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
-        )
+    # __TEST_FORCE_FAIL__ on any text or voice turn forces failure.
+    for turn in turns:
+        payload = turn.payload or {}
+        if turn.kind == "text" and payload.get("text", "").startswith(_FORCE_FAIL_PREFIX):
+            raise RuntimeError(
+                "Thread extraction forcée à échouer pour les tests (Phase 29). "
+                "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
+            )
+        if turn.kind == "voice" and payload.get("transcript", "").startswith(_FORCE_FAIL_PREFIX):
+            raise RuntimeError(
+                "Thread extraction forcée à échouer pour les tests (Phase 29). "
+                "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
+            )
     return GeminiExtractedRecipe(
         title="Risotto aux champignons (test)",
         ingredients=[
@@ -65,34 +75,7 @@ def canned_voice_recipe(transcript: str) -> GeminiExtractedRecipe:
         mood=["comfort"],
         main_protein="none",
         seasonality=["autumn", "winter"],
-    )
-
-
-def canned_photo_recipe(photo_count: int) -> GeminiExtractedRecipe:
-    """Deterministic 'tarte tatin' shape for photo capture spec."""
-    return GeminiExtractedRecipe(
-        title="Tarte Tatin (test)",
-        ingredients=[
-            GeminiIngredient(name="pommes", quantity=6.0, unit=None),
-            GeminiIngredient(name="sucre", quantity=150.0, unit="g"),
-            GeminiIngredient(name="beurre", quantity=80.0, unit="g"),
-            GeminiIngredient(name="pâte feuilletée", quantity=1.0, unit=None),
-        ],
-        steps=[
-            "Caraméliser le sucre avec le beurre.",
-            "Disposer les pommes.",
-            "Couvrir de pâte feuilletée.",
-            "Cuire 30 minutes à 200°C.",
-        ],
-        prep_time_minutes=60,
-        cook_time_minutes=30,
-        difficulty="easy",
-        description="Recette canned pour les tests.",
-        servings=6,
-        cuisine="french",
-        mood=["celebratory", "comfort"],
-        main_protein="none",
-        seasonality=["autumn"],
+        summary_body="J'ai extrait la recette : risotto aux champignons, 2 personnes.",
     )
 
 
