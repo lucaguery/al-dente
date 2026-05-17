@@ -42,7 +42,7 @@ A member of A cannot read/edit/list recipes of B. Detail endpoint returns 404
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, get_args
 from uuid import UUID
 
@@ -53,6 +53,7 @@ from fastapi import (
     File,
     HTTPException,
     Query,
+    Response,
     UploadFile,
     status,
 )
@@ -82,6 +83,7 @@ from app.schemas.recipe_turn import (
     ProposalAcceptedPayload,
     ProposalDismissedPayload,
     AdvisoryTurnPayload,
+    QuestionTurnPayload,
 )
 from app.services.llm import (
     apply_voice_modification,
@@ -89,6 +91,13 @@ from app.services.llm import (
     process_thread_turn,            # Phase 26 D-21/D-22 text/voice/photo dispatch
     promote_draft,
     retry_promotion,
+    _should_emit_question,
+)
+from app.services.completeness import (
+    compute_completeness,
+    INPUT_TYPE_MAP,
+    OPTIONS_MAP,
+    _FIELD_PROMPTS_FR,
 )
 from app.services.thread import acquire_position_lock
 from app.services.realtime import broadcast_to_household
@@ -1081,3 +1090,169 @@ def list_turns(
         .order_by(RecipeTurn.position.asc())
     ).all()
     return [TurnResponse.model_validate(r) for r in rows]
+
+
+# ===========================================================================
+# Phase 29 — Question CTA endpoints (LLM-03 / D-20)
+# ===========================================================================
+#
+# These endpoints back the « Oui, compléter » and « Plus tard » buttons in the
+# Phase 27 SystemBubble summary branch (wired by Plan 29-06 frontend slice).
+# - /questions/trigger: synchronously emits the next missing-field question
+#   using the SAME logic as services/llm._run_thread_llm's question step,
+#   minus the LLM call (no extraction needed — we already know which field
+#   is missing via the shared services/completeness module).
+# - /questions/defer: sets recipes.questions_deferred_until = now() + 24h,
+#   which the Phase 29 _run_thread_llm body reads to skip question emission
+#   for the next 24-hour window (D-08).
+
+
+@router.post(
+    "/{recipe_id}/questions/trigger",
+    response_model=None,  # response varies by branch (201 TurnResponse OR 204)
+    status_code=status.HTTP_201_CREATED,
+)
+async def trigger_next_question(
+    recipe_id: UUID,
+    response: Response,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+):
+    """Phase 29 D-20 / LLM-03 — emit the next missing-field question on demand.
+
+    Used by the « Oui, compléter » CTA in SystemBubble's summary branch.
+
+    Picks the highest-priority eligible missing field per services/completeness
+    (FIELD_KEYS order; skips ingredients/steps via INPUT_TYPE_MAP[field] is None;
+    de-dups against existing open question turns via _should_emit_question).
+    Emits ONE question turn, returns 201 + TurnResponse.
+
+    Returns 204 No Content when no eligible missing field remains (or all
+    candidates already have open questions). Frontend renders "Tout est complet."
+    toast on 204.
+
+    Cross-household → 404 (no existence leak, T-29-13).
+    """
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
+        )
+
+    # Load the full thread for the de-dup walk
+    thread = list(
+        db.scalars(
+            select(RecipeTurn)
+            .where(RecipeTurn.recipe_id == recipe_id)
+            .order_by(RecipeTurn.position.asc())
+        ).all()
+    )
+
+    # Pick the highest-priority eligible missing field (D-11 + D-12)
+    _, missing = compute_completeness(recipe)
+    chosen_field: str | None = None
+    for field in missing:
+        if INPUT_TYPE_MAP.get(field) is None:
+            continue  # D-10 SKIP — ingredients/steps
+        if not _should_emit_question(thread, field):
+            continue  # D-12 — open unanswered question already exists
+        chosen_field = field
+        break
+
+    if chosen_field is None:
+        response.status_code = status.HTTP_204_NO_CONTENT
+        return None
+
+    # Build the question payload — mirrors _run_thread_llm's emission shape (D-13)
+    q_payload = QuestionTurnPayload(
+        kind="question",
+        field=chosen_field,
+        prompt=_FIELD_PROMPTS_FR[chosen_field],
+        input_type=INPUT_TYPE_MAP[chosen_field],
+        options=OPTIONS_MAP.get(chosen_field, []),
+        multi=(chosen_field == "mood"),  # D-10 — only mood is chip-multi
+    ).model_dump(mode="json", exclude={"kind"})
+
+    # Position-locked insert (mirrors POST /turns at lines 863-883)
+    lock = await acquire_position_lock(recipe_id)
+    async with lock:
+        max_pos = db.scalar(
+            select(func.max(RecipeTurn.position)).where(
+                RecipeTurn.recipe_id == recipe_id,
+            )
+        )
+        next_position = 0 if max_pos is None else max_pos + 1
+        turn = RecipeTurn(
+            recipe_id=recipe_id,
+            position=next_position,
+            sender="system",
+            kind="question",
+            payload=q_payload,
+        )
+        db.add(turn)
+        db.commit()
+        db.refresh(turn)
+
+    # Broadcast AFTER commit — prevents phantom-state race (Phase 26 RESEARCH §Area 7)
+    await broadcast_to_household(
+        member.household_id,
+        "turn.created",
+        TurnResponse.model_validate(turn).model_dump(mode="json"),
+    )
+
+    return TurnResponse.model_validate(turn)
+
+
+@router.post(
+    "/{recipe_id}/questions/defer",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def defer_questions(
+    recipe_id: UUID,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> None:
+    """Phase 29 D-08 / D-20 — pause question emission for 24h.
+
+    Used by the « Plus tard » CTA in SystemBubble's summary branch.
+
+    Sets recipes.questions_deferred_until = now() + 24h (tz-aware UTC per
+    Pitfall 9). The Phase 29 _run_thread_llm body reads this column and
+    skips question emission while now() < questions_deferred_until.
+
+    Broadcasts recipe.updated so both phones see the new value and the
+    SystemBubble summary CTAs collapse into the "deferred" state (D-22).
+    Auto-expires after 24h — no separate "un-defer" endpoint needed (the
+    user re-engages naturally on the next session).
+
+    T-29-14: endpoint takes NO body — questions_deferred_until is server-computed
+    as datetime.now(tz=timezone.utc) + timedelta(hours=24). No client-supplied
+    value is accepted.
+
+    Cross-household → 404 (no existence leak, T-29-13).
+    """
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
+        )
+
+    recipe.questions_deferred_until = datetime.now(tz=timezone.utc) + timedelta(hours=24)
+    recipe.updated_at = datetime.now(tz=timezone.utc)
+    db.commit()
+    db.refresh(recipe)
+
+    # Mirror PUT /recipes/{id} broadcast pattern (cross-phone sync per invariant #4)
+    kind = _first_turn_kind(db, recipe.id)
+    payload = _to_response_payload(recipe, initial_turn_kind=kind)
+    await broadcast_to_household(member.household_id, "recipe.updated", payload)
