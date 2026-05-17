@@ -202,13 +202,49 @@ class ProposalDismissedPayload(BaseModel):
 # ---------------------------------------------------------------------------
 
 class SummaryTurnPayload(BaseModel):
+    """Phase 29 LLM-01 — emitted by _run_thread_llm after every successful
+    Gemini run (D-07). Idempotency-gated by D-03 extraction_hash: re-running
+    the same thread produces a byte-identical hash, and emission is skipped.
+
+    body: Gemini-generated French recap of what was extracted/modified this
+      run (D-05 — Optional because apply_voice_modification doesn't request
+      it; _run_thread_llm uses a server-fallback if None).
+    chips: "{french_label}: {value}" strings for fields changed this run (D-06).
+    extraction_hash: SHA256 hex of GeminiExtractedRecipe.model_dump() canonical
+      (D-03 — see RESEARCH Pitfall 1: use json.dumps(..., sort_keys=True,
+      ensure_ascii=False), NOT model_dump_json(sort_keys=True) which raises
+      TypeError in Pydantic v2). Stored here so the next LLM run can skip
+      emission cheaply.
+    """
+
     kind: Literal["summary"]
-    # Phase 29 LLM-01 defines content
+    body: Optional[str] = Field(default=None, max_length=240)
+    chips: List[str] = Field(default_factory=list)
+    extraction_hash: str
 
 
 class QuestionTurnPayload(BaseModel):
+    """Phase 29 LLM-03 — emitted by _run_thread_llm (Wave 2) and POST
+    /recipes/{id}/questions/trigger (Wave 3). Locked read contract for
+    Phase 27 SystemBubble.tsx question branch + Phase 28 D-12 multi field.
+
+    field: AnswerField key — reuse existing Literal (drift-free per CLAUDE.md
+      locked vocabularies).
+    prompt: French prompt string from completeness._FIELD_PROMPTS_FR per D-14.
+    input_type: chip / stepper / text per completeness.INPUT_TYPE_MAP per D-10.
+      (ingredients/steps are never emitted — D-10 SKIP.)
+    options: chip options from completeness.OPTIONS_MAP (D-15); empty for
+      stepper/text fields.
+    multi: True only for chip-multi fields (mood per D-10); defaults False
+      so frontends predating Phase 29 don't crash on missing key (Phase 28 D-12).
+    """
+
     kind: Literal["question"]
-    # Phase 29 LLM-03 defines content (input_type chip/stepper/text + field + options)
+    field: AnswerField
+    prompt: str
+    input_type: Literal["chip", "stepper", "text"]
+    options: List[str] = Field(default_factory=list)
+    multi: bool = False
 
 
 class AdvisoryTurnPayload(BaseModel):
