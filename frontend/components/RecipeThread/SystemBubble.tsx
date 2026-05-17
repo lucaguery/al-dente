@@ -398,8 +398,8 @@ function QuestionBubble({
                 type="button"
                 onClick={() => {
                   if (multi) {
-                    setSelected((prev) => {
-                      const arr = Array.isArray(prev) ? prev : [];
+                    setSelected((prev: unknown) => {
+                      const arr = Array.isArray(prev) ? (prev as string[]) : [];
                       return arr.includes(opt)
                         ? arr.filter((x) => x !== opt)
                         : [...arr, opt];
@@ -429,7 +429,7 @@ function QuestionBubble({
             aria-label="Diminuer"
             disabled={(typeof selected === "number" ? selected : 0) <= 0}
             onClick={() =>
-              setSelected((v) =>
+              setSelected((v: unknown) =>
                 Math.max(0, (typeof v === "number" ? v : 0) - stepperStep)
               )
             }
@@ -444,7 +444,9 @@ function QuestionBubble({
             type="button"
             aria-label="Augmenter"
             onClick={() =>
-              setSelected((v) => (typeof v === "number" ? v : 0) + stepperStep)
+              setSelected(
+                (v: unknown) => (typeof v === "number" ? v : 0) + stepperStep
+              )
             }
             className="h-8 w-8 rounded-full border border-border bg-background text-foreground"
           >
