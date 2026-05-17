@@ -18,7 +18,7 @@
 
 ## Phases
 
-- [ ] **Phase 30: Live-bug sweep** — Photo signed URLs self-heal on PWA resume; recipe SVG illustrations render as visible pictograms.
+- [x] **Phase 30: Live-bug sweep** — Photo signed URLs self-heal on PWA resume; recipe SVG illustrations render as visible pictograms. (completed 2026-05-17)
 - [ ] **Phase 31: Bottom nav restructure** — Central elevated « Ajouter » CTA lands in the bottom nav on every authenticated, non-onboarding screen.
 - [ ] **Phase 32: Port locked screens to Sober Kitchen** — All eight Sober Kitchen design-system §15 items (tokens, three screens, patine cards, voting scene, marginalia, brand-mark loader) are live.
 - [ ] **Phase 33: CLAUDE.md split** — Root `CLAUDE.md` shrinks to invariants + locked vocabularies + source-of-truth pointers; backend, frontend, and GSD guidance live in scoped files.
@@ -36,8 +36,8 @@
   4. `grep -rn "ns0:" backend/app/services/` returns zero matches; the sanitizer unit test asserts no `ns0:` substring and a bare `<svg` root element.
 **Plans**: 2 plans
 Plans:
-- [ ] 30-01-PLAN.md — BUG-01: Photo signed-URL self-heal (TTL bump + useSignedPhotoUrl hook + 4-surface refactor)
-- [ ] 30-02-PLAN.md — BUG-02: SVG sanitizer ns0 fix + Alembic data migration
+- [x] 30-01-PLAN.md — BUG-01: Photo signed-URL self-heal (TTL bump + useSignedPhotoUrl hook + 4-surface refactor)
+- [x] 30-02-PLAN.md — BUG-02: SVG sanitizer ns0 fix + Alembic data migration
 
 ### Phase 31: Bottom nav restructure
 **Goal**: Users can reach the recipe capture flow in one tap from any authenticated screen via a visually elevated central « Ajouter » button — the bottom nav's intent is unambiguous.
@@ -84,7 +84,7 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 30. Live-bug sweep | v0.7 | 0/2 | Not started | - |
+| 30. Live-bug sweep | v0.7 | 2/2 | Complete   | 2026-05-17 |
 | 31. Bottom nav restructure | v0.7 | 0/? | Not started | - |
 | 32. Port locked screens to Sober Kitchen | v0.7 | 0/? | Not started | - |
 | 33. CLAUDE.md split | v0.7 | 0/? | Not started | - |
