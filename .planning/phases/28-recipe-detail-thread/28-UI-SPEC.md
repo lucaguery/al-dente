@@ -5,6 +5,8 @@ status: draft
 shadcn_initialized: true
 preset: radix-nova
 created: 2026-05-17
+revised: 2026-05-17
+revision_reason: "BLOCK-1 typography fix — Marginalia-pin Caveat weight 500 → 600 to satisfy Phase 27 two-weight rule (400 + 600 only)"
 ---
 
 # Phase 28 — UI Design Contract
@@ -80,13 +82,15 @@ on the edit form — labels have horizontal space to the right of their text.
 
 Inherits all four type roles from 27-UI-SPEC.md. Phase 28 adds one role: **Marginalia-pin**.
 
+**Only two font weights are used across this entire phase: 400 (regular) and 600 (semibold).** This is the Phase 27 system lock — no weight 500 appears anywhere.
+
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
 | Body | IBM Plex Sans | 14px | 400 | 1.45 | (inherited) |
 | Caption | IBM Plex Sans | 13px | 400 | 1.5 | Advisory collapsed muted line; stepper unit label |
 | Label-small | IBM Plex Sans | 10px | 600 | 1.0 | (inherited — sys-head, state pills) |
 | Thread-meta title | Cormorant Garamond | 13px | 600 | 1.2 | (inherited) |
-| **Marginalia-pin** | **Caveat** | **12px** | **500** | **1.0** | « épinglé » and « conflit » labels only |
+| **Marginalia-pin** | **Caveat** | **12px** | **600** | **1.0** | « épinglé » and « conflit » labels only |
 | Valider button | IBM Plex Sans | 13px | 600 | 1.0 | Same register as existing advisory CTAs (h-9) |
 
 **Marginalia-pin notes:**
@@ -95,10 +99,10 @@ Inherits all four type roles from 27-UI-SPEC.md. Phase 28 adds one role: **Margi
   Tailwind value or inline `fontSize: "12px"` — do NOT define a new design-system token for
   this sub-register. Rationale: the pin label is an aside, not a primary content role;
   keeping it sub-body reinforces the "margin annotation" metaphor.
-- Weight 500 is an exception to the Phase 27 "only 400 and 600" rule. Caveat is a display
-  handwritten font; at 12px, weight 400 is visually too thin and weight 600 too bold. Weight
-  500 splits the difference for legibility. This exception applies ONLY to the Caveat
-  marginalia labels.
+- Weight 600 is the correct weight for the Caveat marginalia label. Caveat is a variable
+  handwritten font where weight semantics differ from geometric sans-serif — at 12px, weight 600
+  reads as 'annotated' rather than 'bold', providing sufficient legibility contrast without
+  violating the Phase 27 two-weight system lock (400 + 600 only).
 - Slant: apply `transform: rotate(-1.2deg); display: inline-block` on detail-page gutter
   labels (the cookbook visual gesture). SKIP the slant on edit-form inline labels — at 12px
   the rotation adds visual noise in a dense label row.
@@ -154,7 +158,7 @@ section wrapper: position: relative; overflow: visible
   ↳ <h1> or <h2> section header (existing text)
   ↳ <PinLabel>  ← NEW, absolute-positioned in left gutter
       position: absolute; left: -4px; transform: translateX(-100%); top: 2px
-      font-family: var(--font-marginalia); font-size: 12px; font-weight: 500
+      font-family: var(--font-marginalia); font-size: 12px; font-weight: 600
       color: var(--primary)   [épinglé] or var(--destructive) [conflit]
       transform: translateX(-100%) rotate(-1.2deg)
       display: inline-block; line-height: 1; white-space: nowrap
@@ -263,7 +267,7 @@ interface PinLabelProps {
   style={{
     fontFamily: "var(--font-marginalia)",
     fontSize: "12px",
-    fontWeight: 500,
+    fontWeight: 600,
     lineHeight: 1,
     color: "var(--primary)",
     display: "inline-block",
@@ -283,7 +287,7 @@ interface PinLabelProps {
   style={{
     fontFamily: "var(--font-marginalia)",
     fontSize: "12px",
-    fontWeight: 500,
+    fontWeight: 600,
     lineHeight: 1,
     color: "var(--destructive)",
     display: "inline-block",
@@ -519,6 +523,7 @@ registries.
 | `animate-spin` convention | `frontend/lib/motion.ts` (Tailwind token) | Used for Loader2 spinner |
 | `--spacing-page-x = 24px` | `docs/design-system.html` | Marginalia absolute-position reference |
 | D-01 through D-23 decisions | `28-CONTEXT.md` | All locked — this spec does not re-negotiate |
+| Two-weight system lock (400 + 600) | 27-UI-SPEC.md §Typography | Marginalia-pin weight set to 600 (not 500) |
 
 ---
 
