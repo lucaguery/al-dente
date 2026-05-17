@@ -65,7 +65,7 @@ export default async function RootLayout({
         <LocaleProvider messages={messages}>
           <SessionProvider>
             <RealtimeProvider>
-              <main className="flex flex-col flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))]">{children}</main>
+              <main className="flex flex-col flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">{children}</main>
               <BottomNav />
               <Toaster />
             </RealtimeProvider>
