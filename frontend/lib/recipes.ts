@@ -62,6 +62,13 @@ export type Recipe = {
    */
   manually_edited_fields: string[];
   last_cooked_at?: string | null;
+  /**
+   * Phase 29 D-21 / D-22 — when set to a future ISO-8601 timestamp, the
+   * SystemBubble summary CTAs render in their collapsed/deferred state
+   * (the user tapped "Plus tard"). NULL = questions allowed. Auto-expires
+   * 24h after POST /recipes/{id}/questions/defer.
+   */
+  questions_deferred_until?: string | null;
   cook_count: number;
   last_cooked_photo_path?: string | null;
   created_at: string;

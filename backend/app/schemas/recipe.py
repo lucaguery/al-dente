@@ -154,6 +154,12 @@ class RecipeResponse(BaseModel):
     # Sorted on the write side for deterministic test assertions.
     manually_edited_fields: List[str] = Field(default_factory=list)
     last_cooked_at: Optional[datetime] = None
+    # Phase 29 D-21 / D-22 — drives the SystemBubble.tsx summary CTA collapse:
+    # when set to a future timestamp, the frontend renders the summary bubble's
+    # CTAs as dimmed/collapsed (questions are deferred). Mutated by
+    # POST /recipes/{id}/questions/defer; cleared structurally by the column
+    # being NULLable (no explicit "un-defer" endpoint — auto-expires after 24h).
+    questions_deferred_until: Optional[datetime] = None
     cook_count: int
     # Phase 4 (D-05): path of the most recent cooking-log photo. Set in same
     # tx as last_cooked_at + cook_count by PUT /cooking-logs/{id}. NULL =
