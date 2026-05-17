@@ -950,8 +950,16 @@ async def _run_thread_llm(
     emitted_turns.append(summary_turn)
 
     db.commit()
+    db.refresh(recipe)
     for t in emitted_turns:
         db.refresh(t)
+
+    # Broadcast recipe.updated so the partner's phone picks up any field changes
+    # applied by _apply_extracted above (invariant #4 — every household-affecting
+    # mutation must broadcast). promote_draft's _broadcast_promoted covers the
+    # initial recipe.promoted frame; this covers subsequent field mutations.
+    recipe_payload = RecipeResponse.model_validate(recipe).model_dump(mode="json")
+    await broadcast_to_household(recipe.household_id, "recipe.updated", recipe_payload)
 
     # Broadcast turn.created for each emitted system turn (invariant #4)
     for t in emitted_turns:
