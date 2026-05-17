@@ -613,7 +613,10 @@ def _should_emit_advisory(
         if turn.position <= most_recent_advisory.position:
             continue
         if turn.kind in ("proposal_accepted", "proposal_dismissed"):
-            if (turn.payload or {}).get("in_reply_to_turn_id") == str(most_recent_advisory.id):
+            # Defensive str() on both sides — payload stores UUID as string via
+            # mode="json" serialization, but test helpers may insert raw UUID objects.
+            ref_id = str((turn.payload or {}).get("in_reply_to_turn_id") or "")
+            if ref_id == str(most_recent_advisory.id):
                 resolved = True
                 break
     if not resolved:
@@ -643,11 +646,11 @@ def _should_emit_question(
     for turn in turns:
         if turn.position <= most_recent_question.position:
             continue
-        if (
-            turn.kind == "answer"
-            and (turn.payload or {}).get("in_reply_to_turn_id") == str(most_recent_question.id)
-        ):
-            return True  # resolved → re-emission allowed
+        if turn.kind == "answer":
+            # Defensive str() on both sides — same fragility as _should_emit_advisory.
+            ref_id = str((turn.payload or {}).get("in_reply_to_turn_id") or "")
+            if ref_id == str(most_recent_question.id):
+                return True  # resolved → re-emission allowed
     return False  # unanswered → suppress
 
 
