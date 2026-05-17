@@ -9,6 +9,8 @@ Run: cd backend && uv run pytest app/services/svg_sanitizer_test.py -v
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from app.services.svg_sanitizer import sanitize_recipe_svg
@@ -27,10 +29,10 @@ CLEAN_SVG = (
 def test_accepts_clean_line_art_svg():
     result = sanitize_recipe_svg(CLEAN_SVG)
     assert result is not None
-    # ET may emit namespace-prefixed tags (e.g. <ns0:path>) when the SVG
-    # uses xmlns — the important check is viewBox normalization and that
-    # path data is present somewhere in the output.
-    assert 'path' in result
+    # Phase 30 BUG-02 — sanitizer emits a bare <svg> root with the SVG
+    # namespace as the default; no ns0 / nsN prefixes anywhere.
+    assert result.startswith('<svg'), repr(result)
+    assert '<path' in result, repr(result)
     # viewBox normalization (D-34).
     assert '0 0 160 160' in result
 
@@ -153,3 +155,43 @@ def test_rejects_when_root_is_not_svg():
     raw = '<div><svg><path d="M0 0"/></svg></div>'
     # ET treats <div> as the root; "div" not in {svg, path} → reject.
     assert sanitize_recipe_svg(raw) is None
+
+
+# --- Phase 30 BUG-02 — no-namespace-prefix contract -----------------------
+
+def test_serialized_svg_has_no_ns0_prefix():
+    """Phase 30 BUG-02 D-08 — sanitizer output must never contain 'ns0:'.
+
+    Before the fix, ET.tostring on a default-namespace SVG emitted
+    <ns0:svg xmlns:ns0="…">…</ns0:svg>, which is valid XML but unrenderable
+    by browsers as inline SVG. The fix (register_namespace + regex strip)
+    means the serialized form has the SVG namespace as the default on
+    the root <svg> only — no prefix.
+    """
+    result = sanitize_recipe_svg(CLEAN_SVG)
+    assert result is not None
+    assert "ns0:" not in result, repr(result)
+
+
+def test_serialized_svg_root_is_bare_svg():
+    """Phase 30 BUG-02 D-08 — sanitizer output must start with bare '<svg'.
+
+    Guards against any future regression that re-introduces a namespace
+    prefix on the root element (e.g. <ns0:svg …>).
+    """
+    result = sanitize_recipe_svg(CLEAN_SVG)
+    assert result is not None
+    assert result.startswith("<svg"), repr(result)
+
+
+def test_serialized_svg_has_no_nsN_prefix():
+    """Phase 30 BUG-02 D-08 — sanitizer output must contain no nsN: prefix
+    for ANY N (ns0, ns1, …).
+
+    Belt-and-suspenders companion to test_serialized_svg_has_no_ns0_prefix
+    — if a future ET update generates ns1 instead of ns0, the regex-strip
+    layer (D-06 layer 2) catches it. This test asserts that layer works.
+    """
+    result = sanitize_recipe_svg(CLEAN_SVG)
+    assert result is not None
+    assert re.search(r"\bns\d+:", result) is None, repr(result)
