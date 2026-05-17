@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: Conversation Capture
 status: executing
-stopped_at: Phase 28 UI-SPEC approved
-last_updated: "2026-05-17T11:50:25.125Z"
-last_activity: 2026-05-17 -- Phase 28 planning complete
+stopped_at: Phase 29 context gathered
+last_updated: "2026-05-17T14:39:00.934Z"
+last_activity: 2026-05-17 -- Phase 28 execution started
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 16
-  completed_plans: 12
-  percent: 75
+  completed_plans: 13
+  percent: 81
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-13 — v0.6 Conversation Capture milestone started, closes gh#20 via ADR-0001 design)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 27 — conversational-capture-screen
+**Current focus:** Phase 28 — Recipe-detail thread
 
 ## Current Position
 
 Milestone: v0.6 Conversation Capture
-Phase: 28
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-17 -- Phase 28 planning complete
+Phase: 28 (Recipe-detail thread) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 28
+Last activity: 2026-05-17 -- Phase 28 execution started
 
 Resume: `/gsd-plan-phase 25` to decompose Phase 25 into plans
 
@@ -109,6 +109,6 @@ Phase 25 may surface schema-level decisions during plan-phase (e.g. exact backfi
 ## Session Continuity
 
 Last activity: 2026-05-13 — v0.6 ROADMAP.md created (5 phases / 23 reqs / coverage 100%)
-Stopped at: Phase 28 UI-SPEC approved
-Resume file: .planning/phases/28-recipe-detail-thread/28-UI-SPEC.md
+Stopped at: Phase 29 context gathered
+Resume file: .planning/phases/29-llm-prompt-rework-completeness-wire-up/29-CONTEXT.md
 Next: `/gsd-plan-phase 25` (Backend foundation — recipe_turns + drop source_capture + promote_draft consolidation + seed update)
