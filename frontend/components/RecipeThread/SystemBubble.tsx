@@ -155,7 +155,12 @@ export function SystemBubble({
         ? labels.field(payload.field as AnswerField)
         : "";
       return (
-        <div className="self-start px-3 py-1 text-[13px] text-muted-foreground italic">
+        // data-advisory-id enables scroll-to-advisory from the « conflit » PinLabel
+        // tap on the detail page (Phase 28 DETAIL-04) even after the bubble collapses.
+        <div
+          data-advisory-id={turn.id}
+          className="self-start px-3 py-1 text-[13px] text-muted-foreground italic"
+        >
           {t("advisory_resolved", {
             field: fieldLabel,
             from: String(payload.current_value ?? ""),
@@ -198,7 +203,9 @@ export function SystemBubble({
     const reasonExcerpt = String(payload.reason_excerpt ?? "");
 
     return (
-      <div className={`${SYS_BUBBLE_BASE} ${SYS_BUBBLE_RADIUS} p-3`}>
+      // data-advisory-id enables scroll-to-advisory from the « conflit » PinLabel
+      // tap on the detail page (Phase 28 DETAIL-04).
+      <div data-advisory-id={turn.id} className={`${SYS_BUBBLE_BASE} ${SYS_BUBBLE_RADIUS} p-3`}>
         {/* sys-head */}
         <SysHead label={t("sys_advisory_head")} />
 
