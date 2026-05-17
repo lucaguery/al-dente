@@ -10,7 +10,8 @@
   "nav": {
     "home": "Accueil",
     "recipes": "Recettes",
-    "settings": "Réglages"
+    "profile": "Profil",
+    "add": "Ajouter"
   },
   "home": {
     "title": "Al Dente",
