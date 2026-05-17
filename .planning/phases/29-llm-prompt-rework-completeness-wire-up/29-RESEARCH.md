@@ -261,13 +261,11 @@ summary_body = extracted.summary_body or f"J'ai mis à jour {len(changed_fields)
 
 **Fix:** Phase 29 replaces these direct calls with the shared `_run_thread_llm` body. After replacement, `extract_from_transcript` and `extract_from_photos` have NO remaining callers and MUST be deleted per MVP no-shim posture. [VERIFIED: grep confirms zero other callers outside llm.py]
 
-### Pitfall 5: `RecipeResponse` is missing `manually_edited_fields` in current codebase state
+### Pitfall 5: ~~`RecipeResponse` is missing `manually_edited_fields`~~ — RESOLVED 2026-05-17
 
-**What happened:** The `docs(29): capture phase context` commit (81cd858) accidentally deleted `manually_edited_fields: List[str] = Field(default_factory=list)` from `RecipeResponse` in `backend/app/schemas/recipe.py`. This field was added in Phase 28 commit 0786d28 and then removed by the docs commit.
+**Status:** RESOLVED via commit `1953997 fix(28): restore Phase 28 work accidentally wiped by docs(29) commit`. The full Phase 28 wipe (1331 lines across 10 files + 4 deleted SUMMARY/VERIFICATION files) has been salvaged from `86da606`. `RecipeResponse.manually_edited_fields` is back in place (`backend/app/schemas/recipe.py:155`). All Phase 28 surfaces — SystemBubble onClick handlers, `_apply_put_pinning`, RecipeForm marginalia, page.tsx optimistic handlers, e2e specs — are restored. Wave 1 of Phase 29 should **NOT** re-add this field; it exists. The planner should skip this finding entirely.
 
-**Verified:** `RecipeResponse.model_fields` at runtime does NOT contain `manually_edited_fields`. Frontend `Recipe` type still declares `manually_edited_fields: string[]`. The WS broadcast for `recipe.updated` no longer sends `manually_edited_fields`, which would break Phase 28's pin-display feature.
-
-**Fix:** Phase 29 Wave 1 (29-01) MUST re-add `manually_edited_fields: List[str] = Field(default_factory=list)` to `RecipeResponse` alongside adding `questions_deferred_until: Optional[datetime] = None`. This is a Phase 28 regression to fix, not new Phase 29 scope.
+**Original finding** (kept for audit): The `docs(29): capture phase context` commit (81cd858) accidentally swept in pre-existing staged deletions that wiped Phase 28 work. The pattern was already documented as recurring on Phases 27 and 28 — see PROJECT.md "Worktree-harness contamination surfaced AGAIN" notes. The documented salvage pattern (`git checkout <pre-wipe-commit> -- <files>`) was applied verbatim.
 
 ### Pitfall 6: Photo turns in thread need position-aware byte fetching
 
@@ -537,7 +535,7 @@ def downgrade() -> None:
 
 **No backfill needed** (NULL = "not deferred"). [VERIFIED: existing DateTime(timezone=True) pattern at recipe.py:116 for `last_cooked_at`]
 
-**ALSO NEEDED in schema.py `RecipeResponse`:** Re-add `manually_edited_fields: List[str] = Field(default_factory=list)` (removed in docs(29) commit) AND add `questions_deferred_until: Optional[datetime] = None`. These are both pure Pydantic schema changes, no migration needed for `manually_edited_fields` (column already exists from migration 0009).
+**ALSO NEEDED in schema.py `RecipeResponse`:** Add `questions_deferred_until: Optional[datetime] = None`. (Note: `manually_edited_fields` is already present per the Phase 28 restoration in commit `1953997`; do NOT re-add — see Pitfall 5 RESOLVED note.)
 
 ---
 
@@ -718,7 +716,7 @@ def canned_thread_extract(
 
 3. **`promote_draft` `_run_thread_llm` call:** Use `asyncio.run(_run_thread_llm(db, recipe, first_turn.id))` inside the existing sync BackgroundTask body, after the kind-specific preamble (title rewrite for text; photo download for photo; illustration for both). The text branch removes the title-rewrite step OR moves it into `_run_thread_llm` (recommend: keep title-rewrite in promote_draft text branch since it's not thread-driven; `_run_thread_llm` handles the rest).
 
-4. **`manually_edited_fields` in `RecipeResponse`:** MUST be re-added in Wave 1 (29-01). It was accidentally deleted by the `docs(29)` commit. This is a Phase 28 regression, not new scope, but Phase 29 is responsible for fixing it in the same Wave 1 plan that modifies the schema.
+4. **`manually_edited_fields` in `RecipeResponse`:** RESOLVED via commit `1953997`. The Phase 28 wipe was salvaged before this research was consumed by the planner; do NOT include re-adding this field in Wave 1. See Pitfall 5 (RESOLVED) for the recovery details.
 
 5. **`summary` turn payload `extraction_hash` lookup:** When checking idempotency in `_run_thread_llm`, scan the most recent `summary` turn for `payload.get("extraction_hash")`. If it matches the new hash: skip all emission. If it differs OR no prior summary exists: proceed with emission.
 
