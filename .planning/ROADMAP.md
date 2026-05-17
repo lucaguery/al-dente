@@ -84,7 +84,7 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 30. Live-bug sweep | v0.7 | 2/2 | Complete   | 2026-05-17 |
+| 30. Live-bug sweep | v0.7 | 2/2 | Complete    | 2026-05-17 |
 | 31. Bottom nav restructure | v0.7 | 0/? | Not started | - |
 | 32. Port locked screens to Sober Kitchen | v0.7 | 0/? | Not started | - |
 | 33. CLAUDE.md split | v0.7 | 0/? | Not started | - |
