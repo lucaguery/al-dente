@@ -107,14 +107,14 @@ Plans:
   3. When the recipe's completeness (via the shared `recipe-completeness.ts` helper) reports a missing high-weight field, the user sees a `question` turn appear in the thread with the appropriate `input_type` (chip / stepper / text); question turns stop appearing once completeness clears the threshold.
   4. `CompletenessCard` on `/recipes/[id]` continues to render the progress nudge from v0.5 RID-03 unchanged in behavior — both the card and the in-thread `question` turns reference the same helper, so progress shown on the card matches the question turns generated in the thread.
 **Invariants touched**: #1 (capture pipeline — `promote_draft(id)` from Phase 25 now reads from `recipe_turns` and emits system turns alongside the recipe update, completing the v0.5→v0.6 pipeline shape) · #5 (raw inputs — every LLM-triggering refinement turn is now durably preserved in `recipe_turns`)
-**Plans:** 4/6 plans executed
+**Plans:** 6/6 plans complete
 Plans:
 - [x] 29-01-PLAN.md — Wave 1 foundation: Alembic 0011 adds recipes.questions_deferred_until (timestamptz NULL); mirror on Recipe ORM + RecipeResponse + frontend Recipe type (D-21)
 - [x] 29-02-PLAN.md — Wave 1 foundation: NEW backend/app/services/completeness.py — Python parallel of recipe-completeness.ts (FIELD_KEYS, compute_completeness, is_field_filled, is_conflict, INPUT_TYPE_MAP, _FIELD_PROMPTS_FR, _FIELD_LABELS_FR, OPTIONS_MAP) + parity tests (D-15, D-10, D-14, D-06, D-16)
 - [x] 29-03-PLAN.md — Wave 1 foundation: Graduate SummaryTurnPayload (body, chips, extraction_hash) + QuestionTurnPayload (field, prompt, input_type, options, multi) from Phase 25 stubs (D-05, D-13)
 - [x] 29-04-PLAN.md — Wave 2 LLM rework: services/llm.py — fill process_thread_turn (async), shared _run_thread_llm body, advisory/question/summary emission with extraction-hash idempotency, role-labeled French-prose prompt, photo-cap 4, reason extractor, advisory de-dup, question de-dup; extend promote_draft text/voice/photo branches; delete extract_from_transcript + extract_from_photos + canned_voice_recipe + canned_photo_recipe (LLM-01, LLM-02, LLM-03)
-- [ ] 29-05-PLAN.md — Wave 3 endpoints: POST /recipes/{id}/questions/trigger (201 question OR 204) + POST /recipes/{id}/questions/defer (204, sets now+24h, broadcasts recipe.updated) (LLM-03 / D-20)
-- [ ] 29-06-PLAN.md — Wave 3 frontend wire-up: SystemBubble summary CTAs onClick + deferred-state collapse; RecipeThread types/orchestrator pass-through; page.tsx handleSummaryComplete/Later + deferred derived from recipe.questions_deferred_until; fr.json all_complete toast; Playwright e2e; CompletenessCard UNTOUCHED (LLM-03, LLM-04 / D-22)
+- [x] 29-05-PLAN.md — Wave 3 endpoints: POST /recipes/{id}/questions/trigger (201 question OR 204) + POST /recipes/{id}/questions/defer (204, sets now+24h, broadcasts recipe.updated) (LLM-03 / D-20)
+- [x] 29-06-PLAN.md — Wave 3 frontend wire-up: SystemBubble summary CTAs onClick + deferred-state collapse; RecipeThread types/orchestrator pass-through; page.tsx handleSummaryComplete/Later + deferred derived from recipe.questions_deferred_until; fr.json all_complete toast; Playwright e2e; CompletenessCard UNTOUCHED (LLM-03, LLM-04 / D-22)
 
 ## Progress
 
@@ -127,7 +127,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 26. Thread API & realtime | v0.6 | 4/4 | Complete    | 2026-05-13 |
 | 27. Conversational capture screen | v0.6 | 5/5 | Complete    | 2026-05-17 |
 | 28. Recipe-detail thread | v0.6 | 0/4 | Not started | - |
-| 29. LLM prompt rework + completeness wire-up | v0.6 | 4/6 | In Progress|  |
+| 29. LLM prompt rework + completeness wire-up | v0.6 | 6/6 | Complete   | 2026-05-17 |
 
 ---
 
