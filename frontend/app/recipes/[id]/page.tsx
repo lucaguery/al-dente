@@ -306,11 +306,9 @@ export default function RecipeDetailPage() {
           method: "POST",
           body: JSON.stringify({
             kind: "answer",
-            payload: {
-              in_reply_to_turn_id: submission.in_reply_to_turn_id,
-              field: submission.field,
-              value: submission.value,
-            },
+            in_reply_to_turn_id: submission.in_reply_to_turn_id,
+            field: submission.field,
+            value: submission.value,
           }),
         });
       } catch (err) {
@@ -362,7 +360,7 @@ export default function RecipeDetailPage() {
           method: "POST",
           body: JSON.stringify({
             kind: "proposal_accepted",
-            payload: { in_reply_to_turn_id: advisoryTurnId },
+            in_reply_to_turn_id: advisoryTurnId,
           }),
         });
       } catch (err) {
@@ -387,7 +385,7 @@ export default function RecipeDetailPage() {
           method: "POST",
           body: JSON.stringify({
             kind: "proposal_dismissed",
-            payload: { in_reply_to_turn_id: advisoryTurnId },
+            in_reply_to_turn_id: advisoryTurnId,
           }),
         });
       } catch (err) {

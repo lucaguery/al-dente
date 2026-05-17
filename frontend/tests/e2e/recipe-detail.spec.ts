@@ -204,7 +204,7 @@ test.describe('Phase 29 — summary CTA wire-up (D-22)', () => {
     // (canned_thread_extract) synchronously emits a summary system turn.
     // We use the API directly so the test is deterministic and fast.
     const turnRes = await request.post(`/api/recipes/${recipeId}/turns`, {
-      data: { kind: 'text', payload: { text: 'ajoute du basilic' } },
+      data: { kind: 'text', text: 'ajoute du basilic' },
     });
     expect(turnRes.ok()).toBeTruthy();
 
@@ -238,7 +238,7 @@ test.describe('Phase 29 — summary CTA wire-up (D-22)', () => {
 
     // Post a text refinement turn to trigger a summary bubble.
     const turnRes = await request.post(`/api/recipes/${recipeId}/turns`, {
-      data: { kind: 'text', payload: { text: 'ajoute des poireaux' } },
+      data: { kind: 'text', text: 'ajoute des poireaux' },
     });
     expect(turnRes.ok()).toBeTruthy();
 
@@ -264,7 +264,7 @@ test.describe('Phase 29 — summary CTA wire-up (D-22)', () => {
     // Post a second refinement while deferred — backend should NOT emit a
     // question turn (defer gate: questions_deferred_until > now()).
     await request.post(`/api/recipes/${recipeId}/turns`, {
-      data: { kind: 'text', payload: { text: 'avec de la crème' } },
+      data: { kind: 'text', text: 'avec de la crème' },
     });
     await page.waitForTimeout(2000); // allow LLM run to settle (canned_thread_extract is fast)
     await page.reload();
