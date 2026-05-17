@@ -399,6 +399,54 @@ export default function RecipeDetailPage() {
     [id, tThread]
   );
 
+  // Phase 29 D-22 — summary CTA wire-up: « Oui, compléter ».
+  // POSTs /questions/trigger. Backend returns:
+  //  - 201 + TurnResponse → the new question turn arrives via the existing
+  //    turn.created WS subscription; setTurns picks it up. No local state work.
+  //  - 204 → no eligible missing field; show toast "Tout est complet."
+  // api() returns parsed JSON on 201; returns null on 204.
+  const handleSummaryComplete = useCallback(
+    async (_turnId: string) => {
+      if (!id) return;
+      try {
+        const result = await api(`/api/recipes/${id}/questions/trigger`, {
+          method: "POST",
+        });
+        if (result === null) {
+          // 204 — nothing to ask.
+          toast.success(tThread("all_complete"));
+        }
+        // 201 — new question turn lands via WS; no local state change here.
+      } catch (err) {
+        console.error("questions/trigger failed", err);
+        toast.error(tThread("action_failed"));
+        throw err; // let SystemBubble release committing state
+      }
+    },
+    [id, tThread]
+  );
+
+  // Phase 29 D-22 — summary CTA wire-up: « Plus tard ».
+  // POSTs /questions/defer. Backend returns 204 and broadcasts recipe.updated
+  // with the new questions_deferred_until timestamp. The existing recipe.updated
+  // WS handler (already wired in this file) updates `recipe`, which causes the
+  // `deferred` derived prop to flip to true and the SystemBubble CTAs collapse.
+  const handleSummaryLater = useCallback(
+    async (_turnId: string) => {
+      if (!id) return;
+      try {
+        await api(`/api/recipes/${id}/questions/defer`, { method: "POST" });
+        // recipe.updated WS carries questions_deferred_until → setRecipe updates
+        // deferred prop → CTAs render in collapsed/disabled state.
+      } catch (err) {
+        console.error("questions/defer failed", err);
+        toast.error(tThread("action_failed"));
+        throw err;
+      }
+    },
+    [id, tThread]
+  );
+
   // Phase 27 CAPTURE-04 — manual-edit link scrolls up to the recipe form.
   // formRef is attached to a <div className="contents"> wrapper around the
   // hero + form chunk so scrollIntoView targets the top of the form section.
@@ -539,6 +587,13 @@ export default function RecipeDetailPage() {
           .filter(Boolean)
           .join(" · ")
       : "";
+
+  // Phase 29 D-22 — deferred derived from recipe.questions_deferred_until being a future timestamp.
+  // NULL or past → deferred=false (questions allowed). recipe.updated WS flips this in real time
+  // when the partner taps « Plus tard » on the other phone.
+  const deferred = recipe?.questions_deferred_until
+    ? new Date(recipe.questions_deferred_until) > new Date()
+    : false;
 
   return (
     <OnboardingGuard>
@@ -734,6 +789,9 @@ export default function RecipeDetailPage() {
           onPostAnswerTurn={handlePostAnswerTurn}
           onPostProposalAccepted={handlePostProposalAccepted}
           onPostProposalDismissed={handlePostProposalDismissed}
+          deferred={deferred}
+          onSummaryComplete={handleSummaryComplete}
+          onSummaryLater={handleSummaryLater}
           onManualEditLinkClick={handleManualEditLinkClick}
         />
       </section>

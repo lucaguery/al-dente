@@ -300,6 +300,13 @@ export function RecipeThread(props: RecipeThreadProps) {
                         onPostProposalDismissed={
                           props.mode === "detail" ? props.onPostProposalDismissed : undefined
                         }
+                        deferred={props.mode === "detail" ? props.deferred : undefined}
+                        onSummaryComplete={
+                          props.mode === "detail" ? props.onSummaryComplete : undefined
+                        }
+                        onSummaryLater={
+                          props.mode === "detail" ? props.onSummaryLater : undefined
+                        }
                       />
                     )}
                   </motion.li>

@@ -183,3 +183,93 @@ test.describe('recipe-detail', () => {
     // detection in Playwright. Unskip when Phase 29 ships LLM-02.
   });
 });
+
+// Phase 29 D-22 — summary CTA loop (LLM-03). Backend in test mode emits a
+// deterministic summary turn after every text/voice/photo refinement via
+// canned_thread_extract; these specs rely on that determinism.
+//
+// questions_deferred_until: the defer gate (D-08, D-21) is tested by the
+// second spec — after « Plus tard » the CTAs collapse and subsequent
+// refinements do NOT produce a new question turn (defer gate holds in
+// _run_thread_llm server-side).
+test.describe('Phase 29 — summary CTA wire-up (D-22)', () => {
+  test('tap « Oui, compléter » emits a question turn OR shows the « Tout est complet. » toast', async ({
+    page,
+    request,
+  }) => {
+    const recipeId = await getSeededRecipeId(request);
+    await page.goto(`/recipes/${recipeId}`);
+
+    // Post a text refinement turn via the API in test mode — the backend
+    // (canned_thread_extract) synchronously emits a summary system turn.
+    // We use the API directly so the test is deterministic and fast.
+    const turnRes = await request.post(`/api/recipes/${recipeId}/turns`, {
+      data: { kind: 'text', payload: { text: 'ajoute du basilic' } },
+    });
+    expect(turnRes.ok()).toBeTruthy();
+
+    // Reload so the WS-delivered summary turn appears in the chat.
+    await page.reload();
+
+    // Wait for the summary bubble CTA to appear (« Oui, compléter »).
+    const completeBtn = page.getByRole('button', { name: 'Oui, compléter' }).first();
+    await expect(completeBtn).toBeVisible({ timeout: 5_000 });
+
+    // Tap « Oui, compléter ».
+    await completeBtn.click();
+
+    // 5a. EITHER a new question turn appears (201 path — backend picks the
+    //     highest-priority missing field and emits a question turn via WS)
+    //     OR the « Tout est complet. » toast appears (204 path — no missing
+    //     fields). The completeness state depends on the seeded recipe; assert
+    //     either outcome is visible.
+    const questionAppeared = page
+      .getByText(/Quel|Combien|Pour combien|Quelle/) // any of D-14's locked French prompts
+      .first();
+    const toastAppeared = page.getByText('Tout est complet.');
+    await expect(questionAppeared.or(toastAppeared)).toBeVisible({ timeout: 5_000 });
+  });
+
+  test('tap « Plus tard » collapses the summary CTAs and suppresses the next question turn', async ({
+    page,
+    request,
+  }) => {
+    const recipeId = await getSeededRecipeId(request);
+
+    // Post a text refinement turn to trigger a summary bubble.
+    const turnRes = await request.post(`/api/recipes/${recipeId}/turns`, {
+      data: { kind: 'text', payload: { text: 'ajoute des poireaux' } },
+    });
+    expect(turnRes.ok()).toBeTruthy();
+
+    await page.goto(`/recipes/${recipeId}`);
+
+    const laterBtn = page.getByRole('button', { name: 'Plus tard' }).first();
+    await expect(laterBtn).toBeVisible({ timeout: 5_000 });
+    await expect(laterBtn).toBeEnabled();
+
+    // Tap « Plus tard » → backend sets questions_deferred_until = now()+24h (D-08);
+    // recipe.updated WS arrives; deferred prop flips to true; CTAs collapse.
+    await laterBtn.click();
+
+    // CTAs should now be disabled (questions_deferred_until is a future timestamp).
+    await expect(laterBtn).toBeDisabled({ timeout: 3_000 });
+    await expect(page.getByRole('button', { name: 'Oui, compléter' }).first()).toBeDisabled();
+
+    // Count question bubbles BEFORE and AFTER a second text refinement.
+    // The defer gate holds in _run_thread_llm server-side so no new question
+    // turn should appear even though a new summary is emitted.
+    const questionCountBefore = await page.getByRole('button', { name: 'Valider' }).count();
+
+    // Post a second refinement while deferred — backend should NOT emit a
+    // question turn (defer gate: questions_deferred_until > now()).
+    await request.post(`/api/recipes/${recipeId}/turns`, {
+      data: { kind: 'text', payload: { text: 'avec de la crème' } },
+    });
+    await page.waitForTimeout(2000); // allow LLM run to settle (canned_thread_extract is fast)
+    await page.reload();
+
+    const questionCountAfter = await page.getByRole('button', { name: 'Valider' }).count();
+    expect(questionCountAfter).toBe(questionCountBefore);
+  });
+});
