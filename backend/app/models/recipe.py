@@ -114,6 +114,12 @@ class Recipe(Base):
     # Denormalized — updated in the same transaction as cooking_logs insert
     # (architecture invariant #3 from CLAUDE.md).
     last_cooked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Phase 29 D-21 / LLM-03 — question deferral gate. NULL = questions allowed.
+    # Populated by POST /recipes/{id}/questions/defer with now() + 24h to
+    # silence in-thread question emission for the next 24-hour window.
+    questions_deferred_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     cook_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     # Phase 4 (D-05): path of the most recent cooking-log photo for this
     # recipe. Set by PUT /cooking-logs/{id} in the same transaction as
