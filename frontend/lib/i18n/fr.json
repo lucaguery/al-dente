@@ -278,7 +278,19 @@
       "turn_failed": "Envoi impossible. Vérifie ta connexion et réessaie.",
       "empty_capture_hint": "Ajoute une note, dicte une idée, ou joins une photo pour commencer.",
       "mic_aria": "Dicter une note",
-      "send_aria": "Envoyer la note"
+      "send_aria": "Envoyer la note",
+      "answer_valider": "Valider",
+      "action_failed": "Action échouée. Réessayer.",
+      "advisory_resolved": "{field} : {from} → {to} ({status})",
+      "advisory_resolved_accepted": "accepté",
+      "advisory_resolved_dismissed": "ignoré",
+      "stepper_unit_minutes": "min",
+      "stepper_unit_servings": "{count, plural, one {# pers.} other {# pers.}}"
+    },
+    "pin": {
+      "label": "épinglé",
+      "conflict": "conflit",
+      "conflict_aria": "Conflit sur le champ {field} — Voir l'avis"
     }
   },
   "photo_uploader": {
