@@ -113,7 +113,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 |-------|-----------|----------------|--------|-----------|
 | 25. Backend foundation | v0.6 | 3/3 | Complete    | 2026-05-13 |
 | 26. Thread API & realtime | v0.6 | 4/4 | Complete    | 2026-05-13 |
-| 27. Conversational capture screen | v0.6 | 5/5 | Complete   | 2026-05-13 |
+| 27. Conversational capture screen | v0.6 | 5/5 | Complete    | 2026-05-17 |
 | 28. Recipe-detail thread | v0.6 | 0/TBD | Not started | - |
 | 29. LLM prompt rework + completeness wire-up | v0.6 | 0/TBD | Not started | - |
 
