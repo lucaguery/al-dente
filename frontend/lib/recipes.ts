@@ -94,15 +94,20 @@ export type Member = {
  * Backend endpoint: GET /api/recipes/{id}/photo-url?path=...
  * (T-01-10-01 mitigation: backend verifies path is in `recipe.photo_paths`.)
  */
-// In-memory signed-URL cache. The backend mints URLs with a 5-minute TTL
-// (SIGNED_URL_TTL_SECONDS in backend/app/services/storage.py); cache for 4
-// minutes so we keep a 1-minute safety margin before the URL would 403.
+// In-memory signed-URL cache. The backend mints URLs with a 24h TTL
+// (SIGNED_URL_TTL_SECONDS in backend/app/services/storage.py); cache for 23h
+// so we keep a 1-hour safety margin before the URL would 403 — a cached URL
+// never out-survives its signature. Hard-recover handled by the
+// useSignedPhotoUrl hook's one-shot onError refetch (Phase 30 BUG-01 D-04).
 // Scope is per-tab process — the cache resets on hard reload, which is the
 // correct behavior (the user wants fresh URLs when they manually refresh).
 // Without this cache, every BottomNav round-trip back to /recipes refetched
 // signed URLs for every visible thumbnail, producing a visible flicker and
 // hammering the backend (one /photo-url per card per nav).
-const PHOTO_URL_CACHE_TTL_MS = 4 * 60 * 1000;
+// Phase 30 BUG-01 D-02 — 23h, 1h safety margin under backend's 24h SIGNED_URL_TTL_SECONDS
+// so a cached URL never out-survives its signature. Hard-recover handled by the
+// useSignedPhotoUrl hook's one-shot onError refetch (D-04).
+const PHOTO_URL_CACHE_TTL_MS = 82_800_000;
 const photoUrlCache = new Map<string, { url: string; expiresAt: number }>();
 
 function photoUrlCacheKey(recipeId: string, path: string): string {

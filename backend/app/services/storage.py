@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 BUCKET = "recipe-photos"
 MAX_BYTES = 8 * 1024 * 1024  # 8 MiB hard cap (T-01-09-03 mitigation)
-SIGNED_URL_TTL_SECONDS = 60 * 5  # 5 minutes; FE re-fetches on each detail mount (01-10)
+SIGNED_URL_TTL_SECONDS = 86400  # 24h (Phase 30 BUG-01 D-01). Covers a full overnight PWA suspend → morning open. Within Supabase's 7-day cap.
 
 # Phase 26 D-26 — URL extracted-markdown bucket (separate from recipe-photos
 # so bucket-level MIME enforcement stays clean: photos vs text/markdown).

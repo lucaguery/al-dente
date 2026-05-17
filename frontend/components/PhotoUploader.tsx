@@ -24,11 +24,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { getSignedPhotoUrl } from "@/lib/recipes";
 import {
   uploadCookingLogPhoto,
   getCookingLogSignedPhotoUrl,
 } from "@/lib/cooking";
+import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 
 const MAX_PHOTOS = 4;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
@@ -49,43 +49,65 @@ type Props = {
   onChange: (paths: string[]) => void;
 };
 
+// Phase 30 BUG-01 — per-tile component so each slot can call useSignedPhotoUrl
+// independently. The hook is single-path; a sub-component is the right shape
+// when rendering a variable-length list.
+function FilledPhotoTile({
+  recipeId,
+  cookingLogId,
+  path,
+  onRemove,
+  removeLabel,
+}: {
+  recipeId: string | null;
+  cookingLogId: string | null | undefined;
+  path: string;
+  onRemove: () => void;
+  removeLabel: string;
+}) {
+  // Recipe photos go through the shared hook for one-shot self-heal.
+  // Cooking-log photos keep the existing per-tile fetch (out of scope).
+  const hook = useSignedPhotoUrl(recipeId ?? "", cookingLogId ? null : path);
+  const [cookingLogUrl, setCookingLogUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!cookingLogId) return;
+    let alive = true;
+    getCookingLogSignedPhotoUrl(cookingLogId, path)
+      .then((u) => { if (alive) setCookingLogUrl(u); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [cookingLogId, path]);
+  const url = cookingLogId ? cookingLogUrl : hook.src;
+  return (
+    <div className="relative h-24 w-24 rounded-lg overflow-hidden">
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element -- signed URL
+        <img
+          src={url}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => { if (!cookingLogId) hook.onError(); }}
+        />
+      ) : (
+        <div className="h-full w-full bg-muted" />
+      )}
+      <button
+        type="button"
+        aria-label={removeLabel}
+        onClick={onRemove}
+        className="absolute top-1 right-1 h-7 w-7 rounded-full bg-foreground/80 text-background flex items-center justify-center before:absolute before:-inset-2.5 before:content-['']"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 export function PhotoUploader({ recipeId, cookingLogId, paths, onChange }: Props) {
   const t = useTranslations("photo_uploader");
   const fileCameraRef = useRef<HTMLInputElement | null>(null);
   const fileLibraryRef = useRef<HTMLInputElement | null>(null);
-  const [urls, setUrls] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
-
-  // Refresh signed URLs when recipeId or paths change. Each path gets its own
-  // 5-min URL via the GET /api/recipes/{id}/photo-url helper from 01-10.
-  // We avoid clearing state synchronously here (React 19's
-  // `react-hooks/set-state-in-effect` rule); instead we let the render below
-  // gate by `urls[path]` so empty/missing entries naturally render the
-  // zinc placeholder until the fetch resolves.
-  useEffect(() => {
-    const haveTarget = Boolean(recipeId || cookingLogId);
-    if (!haveTarget || paths.length === 0) {
-      return;
-    }
-    let cancelled = false;
-    Promise.all(
-      paths.map(async (p) => {
-        const url = cookingLogId
-          ? await getCookingLogSignedPhotoUrl(cookingLogId, p)
-          : await getSignedPhotoUrl(recipeId as string, p);
-        return [p, url] as const;
-      }),
-    )
-      .then((entries) => {
-        if (!cancelled) setUrls(Object.fromEntries(entries));
-      })
-      .catch(() => {
-        // Leave urls empty for failing paths; tile will render zinc placeholder.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [recipeId, cookingLogId, paths]);
 
   async function uploadFile(f: File) {
     const haveTarget = Boolean(recipeId || cookingLogId);
@@ -180,31 +202,15 @@ export function PhotoUploader({ recipeId, cookingLogId, paths, onChange }: Props
     <div className="grid grid-cols-2 gap-3">
       {slots.map((slot, i) => {
         if (slot.kind === "filled") {
-          const url = urls[slot.path];
           return (
-            <div
+            <FilledPhotoTile
               key={slot.path}
-              className="relative h-24 w-24 rounded-lg overflow-hidden"
-            >
-              {url ? (
-                // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill (matches RecipeCard pattern)
-                <img
-                  src={url}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full bg-muted" />
-              )}
-              <button
-                type="button"
-                aria-label={t("remove_label")}
-                onClick={() => removePhoto(slot.path)}
-                className="absolute top-1 right-1 h-7 w-7 rounded-full bg-foreground/80 text-background flex items-center justify-center before:absolute before:-inset-2.5 before:content-['']"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+              recipeId={recipeId}
+              cookingLogId={cookingLogId}
+              path={slot.path}
+              onRemove={() => removePhoto(slot.path)}
+              removeLabel={t("remove_label")}
+            />
           );
         }
         if (slot.kind === "add") {

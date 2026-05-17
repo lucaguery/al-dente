@@ -41,7 +41,8 @@ import { VoiceModifySheet } from "@/components/VoiceModifySheet";
 import { api } from "@/lib/api";
 import { formatRelativeFr } from "@/lib/datetime";
 import { useEnumLabels } from "@/lib/enum-labels";
-import { deleteRecipe, getSignedPhotoUrl } from "@/lib/recipes";
+import { deleteRecipe } from "@/lib/recipes";
+import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 import { useRealtime } from "@/components/RealtimeProvider";
 import RecipeThread from "@/components/RecipeThread";
 import type { PersistedTurn, RecipeStatus, AnswerTurnSubmission } from "@/components/RecipeThread/types";
@@ -58,6 +59,25 @@ import type { AnswerField } from "@/lib/enums";
 // bypasses the api() helper which would set Content-Type: application/json).
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
+// Phase 30 BUG-01 — per-path image component so each photo in the hero /
+// carousel calls useSignedPhotoUrl independently with its own retry budget.
+function RecipePhotoImg({
+  recipeId,
+  path,
+  className,
+  alt,
+}: {
+  recipeId: string;
+  path: string;
+  className: string;
+  alt: string;
+}) {
+  const hook = useSignedPhotoUrl(recipeId, path);
+  if (!hook.src) return null;
+  // eslint-disable-next-line @next/next/no-img-element -- signed URL
+  return <img src={hook.src} alt={alt} className={className} onError={hook.onError} />;
+}
+
 export default function RecipeDetailPage() {
   const t = useTranslations("recipes");
   const tVoiceModify = useTranslations("recipes.voice_modify");
@@ -72,7 +92,6 @@ export default function RecipeDetailPage() {
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [voiceModifyOpen, setVoiceModifyOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -96,26 +115,6 @@ export default function RecipeDetailPage() {
     }
   }
 
-  const refreshPhotoUrls = useCallback(async (r: Recipe) => {
-    // TODO(productize): D-05 living image extends to the detail-page hero
-    // once we surface r.last_cooked_photo_path here. The path needs the
-    // cooking-log signed-URL helper (path layout cooking-logs/...). For v0.1
-    // the living image surfaces on RecipeCard list view only — the detail
-    // page keeps the existing recipe.photo_paths gallery. See 04-CONTEXT.md
-    // and 04-02-PLAN.md objective for the scope rationale.
-    if (r.photo_paths.length === 0) {
-      setPhotoUrls([]);
-      return;
-    }
-    const settled = await Promise.allSettled(
-      r.photo_paths.map((p) => getSignedPhotoUrl(r.id, p)),
-    );
-    const urls = settled
-      .filter((s): s is PromiseFulfilledResult<string> => s.status === "fulfilled")
-      .map((s) => s.value);
-    setPhotoUrls(urls);
-  }, []);
-
   // Initial load.
   useEffect(() => {
     if (!id) return;
@@ -124,7 +123,6 @@ export default function RecipeDetailPage() {
       .then((r) => {
         if (!alive) return;
         setRecipe(r);
-        void refreshPhotoUrls(r);
       })
       .catch((err: Error) => {
         if (!alive) return;
@@ -141,7 +139,7 @@ export default function RecipeDetailPage() {
     return () => {
       alive = false;
     };
-  }, [id, refreshPhotoUrls]);
+  }, [id]);
 
   // Phase 27 CAPTURE-04 — initial fetch of the persisted thread.
   // One-shot on mount; realtime updates land via the WS subscription below.
@@ -163,13 +161,15 @@ export default function RecipeDetailPage() {
   }, [id]);
 
   // Realtime: replace the local recipe state when the partner edits or
-  // uploads a photo to THIS recipe. Photo URL refresh is also re-driven.
+  // uploads a photo to THIS recipe. Phase 30 BUG-01 — photo URLs are now
+  // fetched reactively per-path via RecipePhotoImg / useSignedPhotoUrl;
+  // we only need to update recipe state and the hook refetches when
+  // recipe.photo_paths changes.
   useEffect(() => {
     if (!realtime || !id) return;
     const offUpdated = realtime.onEvent<Recipe>("recipe.updated", (payload) => {
       if (payload.id !== id) return;
       setRecipe(payload);
-      void refreshPhotoUrls(payload);
     });
     // If the partner deletes this recipe while we're viewing it, navigate away.
     const offDeleted = realtime.onEvent<{ id: string }>("recipe.deleted", (payload) => {
@@ -180,7 +180,7 @@ export default function RecipeDetailPage() {
       offUpdated();
       offDeleted();
     };
-  }, [realtime, id, refreshPhotoUrls, router]);
+  }, [realtime, id, router]);
 
   // Phase 27 CAPTURE-04 — realtime turn appends.
   // Phase 26 D-03 / D-06: `turn.created` fires for every persisted user OR
@@ -647,11 +647,11 @@ export default function RecipeDetailPage() {
         */}
         <div ref={formRef} className="contents">
           {/* Hero — full-bleed photo + paper-grain overlay strip OR no-photo Card fallback */}
-          {photoUrls.length > 0 ? (
+          {recipe.photo_paths.length > 0 ? (
             <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-              <img
-                src={photoUrls[0]}
+              <RecipePhotoImg
+                recipeId={recipe.id}
+                path={recipe.photo_paths[0]}
                 alt=""
                 className="aspect-[4/3] w-full rounded-b-2xl object-cover"
               />
@@ -698,13 +698,13 @@ export default function RecipeDetailPage() {
             </div>
 
             {/* Multi-photo carousel — renders photos 2..N when multi-photo (hero already shows photo 1) */}
-            {photoUrls.length > 1 && (
+            {recipe.photo_paths.length > 1 && (
               <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 -mx-6 px-6 py-4 scrollbar-none">
-                {photoUrls.slice(1).map((url, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element -- signed URL
-                  <img
-                    key={i}
-                    src={url}
+                {recipe.photo_paths.slice(1).map((p) => (
+                  <RecipePhotoImg
+                    key={p}
+                    recipeId={recipe.id}
+                    path={p}
                     alt=""
                     className="h-64 w-64 rounded-lg object-cover snap-start flex-shrink-0"
                   />

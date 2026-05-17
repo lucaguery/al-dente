@@ -25,10 +25,10 @@ import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeFr } from "@/lib/datetime";
-import { getSignedPhotoUrl } from "@/lib/recipes";
 import { getCookingLogSignedPhotoUrl } from "@/lib/cooking";
 import type { Recipe } from "@/lib/recipes";
 import { RecipeIllustration } from "@/components/RecipeIllustration";
+import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const t = useTranslations("recipes");
@@ -50,42 +50,32 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
       ? `/demo-fixtures/${(recipe.cuisine ?? "default").toString()}.svg`
       : null;
 
-  const [src, setSrc] = useState<string | null>(
-    firstPath ? null : devFallbackUrl,
-  );
-
+  // D-05: living image — the path may be either a recipe photo
+  // (recipes/{id}/{uuid}.ext) or a cooking-log photo
+  // (cooking-logs/{household_id}/{log_id}/{uuid}.ext). The cooking-log
+  // path needs the cooking-log signed-URL endpoint because the
+  // recipe-photo endpoint validates path-on-recipe (T-04-01-02).
+  // We don't have logId in props, so we extract it from the path itself —
+  // safe because the path layout is server-controlled (see
+  // backend/app/services/storage.py upload_cooking_log_photo). Layout:
+  // cooking-logs/{household_id}/{log_id}/{uuid}.{ext} — segs[2] = log_id.
+  const isCookingLogPath = firstPath.startsWith("cooking-logs/");
+  // Recipe-photo branch — uses the shared hook with one-shot self-heal (Phase 30 BUG-01).
+  const recipeHook = useSignedPhotoUrl(recipe.id, isCookingLogPath ? null : firstPath);
+  // Cooking-log branch — keeps the existing inline fetch (Phase 30 scope = recipe photos only).
+  const [cookingLogSrc, setCookingLogSrc] = useState<string | null>(null);
   useEffect(() => {
-    if (!firstPath) return;
+    if (!isCookingLogPath || !firstPath) return;
     let alive = true;
-    // D-05: living image — the path may be either a recipe photo
-    // (recipes/{id}/{uuid}.ext) or a cooking-log photo
-    // (cooking-logs/{household_id}/{log_id}/{uuid}.ext). The cooking-log
-    // path needs the cooking-log signed-URL endpoint because the
-    // recipe-photo endpoint validates path-on-recipe (T-04-01-02).
-    // We don't have logId in props, so we extract it from the path itself —
-    // safe because the path layout is server-controlled (see
-    // backend/app/services/storage.py upload_cooking_log_photo). Layout:
-    // cooking-logs/{household_id}/{log_id}/{uuid}.{ext} — segs[2] = log_id.
-    const isCookingLogPath = firstPath.startsWith("cooking-logs/");
-    const urlPromise = isCookingLogPath
-      ? (async () => {
-          const segs = firstPath.split("/");
-          const logId = segs[2];
-          if (!logId) throw new Error("malformed cooking-log path");
-          return getCookingLogSignedPhotoUrl(logId, firstPath);
-        })()
-      : getSignedPhotoUrl(recipe.id, firstPath);
-    urlPromise
-      .then((url) => {
-        if (alive) setSrc(url);
-      })
-      .catch(() => {
-        if (alive && devFallbackUrl) setSrc(devFallbackUrl);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [recipe.id, firstPath, devFallbackUrl]);
+    const segs = firstPath.split("/");
+    const logId = segs[2];
+    if (!logId) return;
+    getCookingLogSignedPhotoUrl(logId, firstPath)
+      .then((url) => { if (alive) setCookingLogSrc(url); })
+      .catch(() => { if (alive && devFallbackUrl) setCookingLogSrc(devFallbackUrl); });
+    return () => { alive = false; };
+  }, [firstPath, isCookingLogPath, devFallbackUrl]);
+  const src = isCookingLogPath ? cookingLogSrc : (recipeHook.src ?? (firstPath ? null : devFallbackUrl));
 
   return (
     <Link
@@ -99,15 +89,15 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           alt=""
           className="w-full aspect-[4/3] object-cover bg-surface-muted"
           onError={(e) => {
+            // Production self-heal — fire the hook's one-shot refetch on the
+            // recipe-photo branch. The hook tracks the retry budget per mount.
+            if (!isCookingLogPath) recipeHook.onError();
             // Three-stage dev fallback (round-3 260512-gpl):
             //   1. Signed URL 404 (typical seed: photo_paths populated but no
             //      bytes uploaded) → swap to cuisine fixture.
             //   2. Cuisine fixture missing (e.g. asian.svg not authored) →
             //      swap to generic default.svg.
             //   3. Everything failed → leave broken; browser default icon.
-            // Production keeps the original behavior — no onError handling,
-            // a real missing photo just shows the broken icon (signal of an
-            // actual problem, not noise from seed data).
             if (process.env.NODE_ENV === "production" || !devFallbackUrl) return;
             const currentSrc = e.currentTarget.src;
             if (!currentSrc.includes("/demo-fixtures/")) {

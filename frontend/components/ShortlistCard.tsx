@@ -9,7 +9,7 @@
 //
 // 03-UI-SPEC.md §Surface 6 + §Surface 7 + §"Interaction Patterns > Swipe deck"
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import {
   motion,
   useMotionValue,
@@ -32,7 +32,8 @@ import {
 } from "@/lib/swipe-tokens";
 import { easeCraft, transitions } from "@/lib/motion";
 import { useEnumLabels } from "@/lib/enum-labels";
-import { getSignedPhotoUrl, type Recipe } from "@/lib/recipes";
+import { type Recipe } from "@/lib/recipes";
+import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 import type { VoteValue } from "@/lib/votes";
 
 type PartnerVoteDot = "yes" | "no" | "unvoted";
@@ -149,27 +150,9 @@ export function ShortlistCard({
       ? `/demo-fixtures/${(cuisine ?? "default").toString()}.svg`
       : null;
 
-  // Initial state seeds with the fallback when there's no photo path — that
-  // covers the "recipe has no photos yet" case without calling setState
-  // inside an effect (react-hooks/set-state-in-effect). The effect only
-  // touches photoSrc when an actual signed-URL fetch is required.
-  const [photoSrc, setPhotoSrc] = useState<string | null>(
-    primaryPhoto ? null : devFallbackUrl,
-  );
-  useEffect(() => {
-    if (!primaryPhoto) return;
-    let alive = true;
-    getSignedPhotoUrl(recipe.id, primaryPhoto)
-      .then((url) => {
-        if (alive) setPhotoSrc(url);
-      })
-      .catch(() => {
-        if (alive && devFallbackUrl) setPhotoSrc(devFallbackUrl);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [recipe.id, primaryPhoto, devFallbackUrl]);
+  // Phase 30 BUG-01 — recipe-photo signed URL via shared hook with one-shot self-heal.
+  const hook = useSignedPhotoUrl(recipe.id, primaryPhoto ?? null);
+  const photoSrc = hook.src ?? (primaryPhoto ? null : devFallbackUrl);
 
   const partnerAriaKey =
     partnerVote === "yes"
@@ -282,6 +265,8 @@ export function ShortlistCard({
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
+              // Production self-heal — fire the hook's one-shot refetch.
+              hook.onError();
               // Three-stage dev fallback (round-3 260512-gpl, mirrors
               // RecipeCard):
               //   1. Signed URL 404 (typical seed: photo_paths populated but
