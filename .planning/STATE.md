@@ -4,14 +4,14 @@ milestone: v0.6
 milestone_name: Conversation Capture
 status: executing
 stopped_at: Phase 29 context gathered
-last_updated: "2026-05-17T14:39:00.934Z"
-last_activity: 2026-05-17 -- Phase 28 execution started
+last_updated: "2026-05-17T15:45:07.287Z"
+last_activity: 2026-05-17 -- Phase 29 planning complete
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 16
-  completed_plans: 13
-  percent: 81
+  completed_phases: 4
+  total_plans: 22
+  completed_plans: 16
+  percent: 73
 ---
 
 # Project State
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-05-13 — v0.6 Conversation Capture mile
 Milestone: v0.6 Conversation Capture
 Phase: 28 (Recipe-detail thread) — EXECUTING
 Plan: 1 of 4
-Status: Executing Phase 28
-Last activity: 2026-05-17 -- Phase 28 execution started
+Status: Ready to execute
+Last activity: 2026-05-17 -- Phase 29 planning complete
 
 Resume: `/gsd-plan-phase 25` to decompose Phase 25 into plans
 
