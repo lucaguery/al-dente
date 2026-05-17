@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
 status: executing
-stopped_at: Phase 31 context gathered
-last_updated: "2026-05-17T23:05:50.758Z"
-last_activity: 2026-05-17
+stopped_at: Phase 31 UI-SPEC approved
+last_updated: "2026-05-17T23:40:22.245Z"
+last_activity: 2026-05-17 -- Phase 31 execution started
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
+  total_plans: 3
   completed_plans: 2
-  percent: 100
+  percent: 67
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 30 — live-bug-sweep
+**Current focus:** Phase 31 — Bottom nav restructure
 
 ## Current Position
 
 Milestone: v0.7 Sober Kitchen + Polish
-Phase: 31
-Plan: Not started
-Status: Executing Phase 30
-Last activity: 2026-05-17
+Phase: 31 (Bottom nav restructure) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 31
+Last activity: 2026-05-17 -- Phase 31 execution started
 
 Resume: `/gsd-discuss-phase 30 ${GSD_WS}`
 
@@ -103,6 +103,6 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 ## Session Continuity
 
 Last activity: 2026-05-17 — v0.7 roadmap written; 4 phases (30-33), 12 requirements mapped
-Stopped at: Phase 31 context gathered
-Resume file: .planning/phases/31-bottom-nav-restructure/31-CONTEXT.md
+Stopped at: Phase 31 UI-SPEC approved
+Resume file: .planning/phases/31-bottom-nav-restructure/31-UI-SPEC.md
 Next: `/gsd-discuss-phase 30 ${GSD_WS}`

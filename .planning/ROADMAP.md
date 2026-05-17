@@ -19,7 +19,7 @@
 ## Phases
 
 - [x] **Phase 30: Live-bug sweep** — Photo signed URLs self-heal on PWA resume; recipe SVG illustrations render as visible pictograms. (completed 2026-05-17)
-- [ ] **Phase 31: Bottom nav restructure** — Central elevated « Ajouter » CTA lands in the bottom nav on every authenticated, non-onboarding screen.
+- [x] **Phase 31: Bottom nav restructure** — Central elevated « Ajouter » CTA lands in the bottom nav on every authenticated, non-onboarding screen. (completed 2026-05-17)
 - [ ] **Phase 32: Port locked screens to Sober Kitchen** — All eight Sober Kitchen design-system §15 items (tokens, three screens, patine cards, voting scene, marginalia, brand-mark loader) are live.
 - [ ] **Phase 33: CLAUDE.md split** — Root `CLAUDE.md` shrinks to invariants + locked vocabularies + source-of-truth pointers; backend, frontend, and GSD guidance live in scoped files.
 
@@ -48,7 +48,9 @@ Plans:
   2. The `aria-current="page"` attribute is set on the central CTA when the user is on the capture entry route, and the element is reachable via keyboard Tab order and a screen reader's landmark list.
   3. The drafts-tab badge and safe-area inset remain pixel-correct; `/onboarding/*` routes do not render the bottom nav.
   4. `grep -rn "variant.*tab\|variant.*central-cta" frontend/` confirms the per-tab discriminator (`variant: "tab" | "central-cta"`) is in use — no ad-hoc conditional spread across tab renders.
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [x] 31-01-PLAN.md — NAV-01: central elevated « Ajouter » CTA + variant discriminator + nav.profile/nav.add (BottomNav.tsx rewrite, app/layout.tsx pb bump, fr.json key changes)
 **UI hint**: yes
 
 ### Phase 32: Port locked screens to Sober Kitchen
@@ -85,7 +87,7 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 30. Live-bug sweep | v0.7 | 2/2 | Complete    | 2026-05-17 |
-| 31. Bottom nav restructure | v0.7 | 0/? | Not started | - |
+| 31. Bottom nav restructure | v0.7 | 1/1 | Complete   | 2026-05-17 |
 | 32. Port locked screens to Sober Kitchen | v0.7 | 0/? | Not started | - |
 | 33. CLAUDE.md split | v0.7 | 0/? | Not started | - |
 
@@ -106,4 +108,4 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 
 ---
 
-*Last updated: 2026-05-17 — v0.7 Sober Kitchen + Polish roadmap created. 4 phases (30-33), 12 requirements mapped (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Phase numbering continues from v0.6. Granularity: coarse — 4 phases driven by natural delivery clusters (bug-fix isolation → nav restructure → design port → DX). Architecture invariants touched: #2 (SOBER-06 voting scene must not introduce a stored state column), #6 (French-only via next-intl preserved across all screen ports).*
+*Last updated: 2026-05-18 — Phase 31 planned (1 plan, 4 tasks). v0.7 Sober Kitchen + Polish roadmap created 2026-05-17. 4 phases (30-33), 12 requirements mapped (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Phase numbering continues from v0.6. Granularity: coarse — 4 phases driven by natural delivery clusters (bug-fix isolation → nav restructure → design port → DX). Architecture invariants touched: #2 (SOBER-06 voting scene must not introduce a stored state column), #6 (French-only via next-intl preserved across all screen ports).*
