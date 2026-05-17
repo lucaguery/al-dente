@@ -44,7 +44,7 @@ import { useEnumLabels } from "@/lib/enum-labels";
 import { deleteRecipe, getSignedPhotoUrl } from "@/lib/recipes";
 import { useRealtime } from "@/components/RealtimeProvider";
 import RecipeThread from "@/components/RecipeThread";
-import type { PersistedTurn, RecipeStatus } from "@/components/RecipeThread/types";
+import type { PersistedTurn, RecipeStatus, AnswerTurnSubmission } from "@/components/RecipeThread/types";
 import type { Recipe } from "@/lib/recipes";
 
 // API_BASE needed for the multipart photo turn POST (Phase 26 D-01 — FormData
@@ -272,6 +272,125 @@ export default function RecipeDetailPage() {
       setPostingTurn(false);
     }
   }, [id, postingTurn, tThread]);
+
+  // Phase 28 DETAIL-02 — answer turn handler with optimistic state update.
+  // On Valider tap: write local recipe state FIRST (the form field updates
+  // instantly; the « épinglé » marginalia appears instantly), then POST.
+  // On 201 + recipe.updated WS event: state aligns. On POST failure: revert
+  // local state, fire toast.error.
+  const handlePostAnswerTurn = useCallback(
+    async (submission: AnswerTurnSubmission) => {
+      if (!id || !recipe) return;
+      const prevRecipe = recipe;
+      // Apply optimistic state: set the field + add it to pin set.
+      setRecipe((r) =>
+        r
+          ? {
+              ...r,
+              [submission.field]: submission.value,
+              manually_edited_fields: Array.from(
+                new Set([...(r.manually_edited_fields ?? []), submission.field])
+              ).sort(),
+            }
+          : null
+      );
+      try {
+        await api(`/api/recipes/${id}/turns`, {
+          method: "POST",
+          body: JSON.stringify({
+            kind: "answer",
+            payload: {
+              in_reply_to_turn_id: submission.in_reply_to_turn_id,
+              field: submission.field,
+              value: submission.value,
+            },
+          }),
+        });
+      } catch (err) {
+        console.error("answer turn failed", err);
+        setRecipe(prevRecipe);
+        toast.error(tThread("action_failed"));
+        throw err; // let SystemBubble release committing state and not assume success
+      }
+    },
+    [id, recipe, tThread]
+  );
+
+  // Phase 28 DETAIL-03 — proposal_accepted handler with optimistic apply
+  // proposed_value + remove pin. Reads the advisory turn from turns[] to
+  // extract field + proposed_value (D-17).
+  const handlePostProposalAccepted = useCallback(
+    async (advisoryTurnId: string) => {
+      if (!id || !recipe) return;
+      const advisoryTurn = turns.find(
+        (t) => t.id === advisoryTurnId && t.kind === "advisory"
+      );
+      if (!advisoryTurn) {
+        console.warn("advisory not found", advisoryTurnId);
+        return;
+      }
+      const advisoryPayload = advisoryTurn.payload as {
+        field?: string;
+        proposed_value?: unknown;
+      };
+      const field = advisoryPayload.field;
+      if (!field) {
+        console.warn("advisory missing field", advisoryTurnId);
+        return;
+      }
+      const prevRecipe = recipe;
+      setRecipe((r) =>
+        r
+          ? {
+              ...r,
+              [field]: advisoryPayload.proposed_value,
+              manually_edited_fields: (r.manually_edited_fields ?? []).filter(
+                (f) => f !== field
+              ),
+            }
+          : null
+      );
+      try {
+        await api(`/api/recipes/${id}/turns`, {
+          method: "POST",
+          body: JSON.stringify({
+            kind: "proposal_accepted",
+            payload: { in_reply_to_turn_id: advisoryTurnId },
+          }),
+        });
+      } catch (err) {
+        console.error("proposal_accepted failed", err);
+        setRecipe(prevRecipe);
+        toast.error(tThread("action_failed"));
+        throw err;
+      }
+    },
+    [id, recipe, turns, tThread]
+  );
+
+  // Phase 28 DETAIL-03 — proposal_dismissed handler. Pure no-op on the recipe
+  // row (D-18); just POST. The advisory bubble collapses when the resulting
+  // turn.created WS event lands and advisoryResolutions memo picks up the
+  // new dismissed entry.
+  const handlePostProposalDismissed = useCallback(
+    async (advisoryTurnId: string) => {
+      if (!id) return;
+      try {
+        await api(`/api/recipes/${id}/turns`, {
+          method: "POST",
+          body: JSON.stringify({
+            kind: "proposal_dismissed",
+            payload: { in_reply_to_turn_id: advisoryTurnId },
+          }),
+        });
+      } catch (err) {
+        console.error("proposal_dismissed failed", err);
+        toast.error(tThread("action_failed"));
+        throw err;
+      }
+    },
+    [id, tThread]
+  );
 
   // Phase 27 CAPTURE-04 — manual-edit link scrolls up to the recipe form.
   // formRef is attached to a <div className="contents"> wrapper around the
@@ -513,10 +632,14 @@ export default function RecipeDetailPage() {
           title={recipe.title}
           turns={turns}
           recipeStatus={recipe.status as RecipeStatus}
+          manuallyEditedFields={recipe.manually_edited_fields ?? []}
           onPostTextTurn={handlePostTextTurn}
           onPostVoiceTurn={handlePostVoiceTurn}
           onPostUrlTurn={handlePostUrlTurn}
           onPostPhotoTurn={handlePostPhotoTurn}
+          onPostAnswerTurn={handlePostAnswerTurn}
+          onPostProposalAccepted={handlePostProposalAccepted}
+          onPostProposalDismissed={handlePostProposalDismissed}
           onManualEditLinkClick={handleManualEditLinkClick}
         />
       </section>
