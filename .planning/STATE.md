@@ -4,14 +4,14 @@ milestone: v0.6
 milestone_name: Conversation Capture
 status: executing
 stopped_at: Phase 28 UI-SPEC approved
-last_updated: "2026-05-17T11:36:11.972Z"
-last_activity: 2026-05-17
+last_updated: "2026-05-17T11:50:25.125Z"
+last_activity: 2026-05-17 -- Phase 28 planning complete
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 12
+  total_plans: 16
   completed_plans: 12
-  percent: 100
+  percent: 75
 ---
 
 # Project State
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-05-13 — v0.6 Conversation Capture mile
 Milestone: v0.6 Conversation Capture
 Phase: 28
 Plan: Not started
-Status: Executing Phase 27
-Last activity: 2026-05-17
+Status: Ready to execute
+Last activity: 2026-05-17 -- Phase 28 planning complete
 
 Resume: `/gsd-plan-phase 25` to decompose Phase 25 into plans
 
