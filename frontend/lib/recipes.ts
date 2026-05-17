@@ -49,6 +49,18 @@ export type Recipe = {
   mood: string[];
   seasonality: string[];
   tags: string[];
+  /**
+   * Phase 28 DETAIL-04 / DETAIL-05 — the set of recipe fields the user has
+   * manually pinned via either:
+   *   (a) a chip/stepper `answer` turn (Phase 26 `_apply_answer_turn`), or
+   *   (b) a direct field edit via PUT /recipes/{id} (Phase 28 `_apply_put_pinning`).
+   *
+   * Backend keeps this sorted; the frontend should NOT mutate it directly —
+   * read-only signal for marginalia rendering. Single source of truth lives
+   * server-side; this field is serialized by RecipeResponse and broadcast in
+   * `recipe.updated` WS payloads.
+   */
+  manually_edited_fields: string[];
   last_cooked_at?: string | null;
   cook_count: number;
   last_cooked_photo_path?: string | null;

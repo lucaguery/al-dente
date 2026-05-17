@@ -75,3 +75,33 @@ export const TurnKind = {
   advisory: "advisory",
 } as const;
 export type TurnKind = (typeof TurnKind)[keyof typeof TurnKind];
+
+/**
+ * Phase 28 DETAIL-04 / DETAIL-05 — locked-vocabulary mirror of
+ * backend/app/schemas/recipe_turn.py:28 `AnswerField` Literal.
+ *
+ * 13 recipe fields eligible for pinning via either:
+ *   (a) chip/stepper `answer` turns (Phase 26), or
+ *   (b) direct PUT /recipes/{id} field edits (Phase 28 DETAIL-05).
+ *
+ * Drift between this list and the backend Literal = bug category
+ * (CLAUDE.md "Locked vocabularies"). When adding a new pinnable field,
+ * update BOTH this const AND the backend AnswerField in the same change.
+ */
+export const ANSWER_FIELDS = [
+  "title",
+  "description",
+  "ingredients",
+  "steps",
+  "prep_time_minutes",
+  "cook_time_minutes",
+  "difficulty",
+  "servings",
+  "cuisine",
+  "mood",
+  "main_protein",
+  "seasonality",
+  "tags",
+] as const;
+
+export type AnswerField = (typeof ANSWER_FIELDS)[number];
