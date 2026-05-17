@@ -1144,43 +1144,46 @@ async def trigger_next_question(
             status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
         )
 
-    # Load the full thread for the de-dup walk
-    thread = list(
-        db.scalars(
-            select(RecipeTurn)
-            .where(RecipeTurn.recipe_id == recipe_id)
-            .order_by(RecipeTurn.position.asc())
-        ).all()
-    )
-
-    # Pick the highest-priority eligible missing field (D-11 + D-12)
+    # Pick the highest-priority eligible missing field (D-11 + D-12).
+    # Thread read and de-dup check happen INSIDE the position lock to prevent a
+    # stale-thread race with _run_thread_llm running concurrently as a BackgroundTask
+    # (WR-04 — a concurrent commit between the thread read and lock acquisition could
+    # cause duplicate question turns for the same field).
     _, missing = compute_completeness(recipe)
-    chosen_field: str | None = None
-    for field in missing:
-        if INPUT_TYPE_MAP.get(field) is None:
-            continue  # D-10 SKIP — ingredients/steps
-        if not _should_emit_question(thread, field):
-            continue  # D-12 — open unanswered question already exists
-        chosen_field = field
-        break
 
-    if chosen_field is None:
-        response.status_code = status.HTTP_204_NO_CONTENT
-        return None
-
-    # Build the question payload — mirrors _run_thread_llm's emission shape (D-13)
-    q_payload = QuestionTurnPayload(
-        kind="question",
-        field=chosen_field,
-        prompt=_FIELD_PROMPTS_FR[chosen_field],
-        input_type=INPUT_TYPE_MAP[chosen_field],
-        options=OPTIONS_MAP.get(chosen_field, []),
-        multi=(chosen_field == "mood"),  # D-10 — only mood is chip-multi
-    ).model_dump(mode="json", exclude={"kind"})
-
-    # Position-locked insert (mirrors POST /turns at lines 863-883)
     lock = await acquire_position_lock(recipe_id)
     async with lock:
+        # Re-read thread after acquiring lock — prevents stale de-dup snapshot.
+        thread = list(
+            db.scalars(
+                select(RecipeTurn)
+                .where(RecipeTurn.recipe_id == recipe_id)
+                .order_by(RecipeTurn.position.asc())
+            ).all()
+        )
+        chosen_field: str | None = None
+        for field in missing:
+            if INPUT_TYPE_MAP.get(field) is None:
+                continue  # D-10 SKIP — ingredients/steps
+            if not _should_emit_question(thread, field):
+                continue  # D-12 — open unanswered question already exists
+            chosen_field = field
+            break
+
+        if chosen_field is None:
+            response.status_code = status.HTTP_204_NO_CONTENT
+            return None
+
+        # Build the question payload — mirrors _run_thread_llm's emission shape (D-13)
+        q_payload = QuestionTurnPayload(
+            kind="question",
+            field=chosen_field,
+            prompt=_FIELD_PROMPTS_FR[chosen_field],
+            input_type=INPUT_TYPE_MAP[chosen_field],
+            options=OPTIONS_MAP.get(chosen_field, []),
+            multi=(chosen_field == "mood"),  # D-10 — only mood is chip-multi
+        ).model_dump(mode="json", exclude={"kind"})
+
         max_pos = db.scalar(
             select(func.max(RecipeTurn.position)).where(
                 RecipeTurn.recipe_id == recipe_id,
