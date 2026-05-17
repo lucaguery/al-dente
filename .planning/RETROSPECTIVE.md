@@ -101,6 +101,56 @@
 - **Sessions:** Multiple sessions over 2 days; one long auto-chain session for Phase 22, one for Phase 23, one for Phase 24 across waves 1 and 2.
 - **Notable:** Plan 24-04 worktree collateral cost ~10 minutes of executor diagnostic time + 1 extra commit. The transient Gemini-API failure on Plan 24-04's first pass added a retry round-trip. Both were absorbed inline by the executor without escalation.
 
+## Milestone: v0.6 — Conversation Capture
+
+**Shipped:** 2026-05-17
+**Phases:** 5 (Phases 25–29) | **Plans:** 22 | **Requirements:** 23
+**Closes:** gh#20 per ADR-0001
+
+### What Was Built
+
+- Single durable conversation thread per recipe replacing five tabbed capture surfaces (`quick` / full-form / `voice` / `photo` / `url`). `recipe_turns` table added + legacy `source_capture` JSONB dropped in the same Alembic migration (0009). `promote_draft(recipe_id)` collapses four per-surface promotion functions into one dispatching on first turn's `kind`.
+- Shared `RecipeThread` component mounted on both `/recipes/new` (capture) and `/recipes/[id]` (detail) — CAPTURE-04 one-component-two-mount-points contract held.
+- Gemini rebuilt around full-thread reads with extraction-hash idempotency. Emits `advisory` turns on conflict (never silently overwrites) and `question` turns driven by `services/completeness.py` (Python port of `recipe-completeness.ts`).
+- URL extraction unstubbed (long-standing `TODO(productize)` at `recipes.py:481-490` closed) behind a real `_is_safe_url` SSRF gate; BackgroundTask uploads extracted HTML to Supabase Storage.
+- `manually_edited_fields` is on the wire and visible as Caveat marginalia on detail page + edit form; PUT auto-pin via `_apply_put_pinning`.
+
+### What Worked
+
+- **Wave-based parallel execution scaled.** v0.6 ran 22 plans across 5 phases with multiple plans per wave (Phase 24's 3-plan parallel, Phase 29's 3-wave / 6-plan structure). Worktree isolation kept independent plans from stomping each other in practice.
+- **Single-language test parity.** The Python `services/completeness.py` mirror of the TypeScript `recipe-completeness.ts` (44 parity tests at 0.07s) closed a previously implicit boundary — both halves now have to drift together, not silently apart.
+- **Defensive pre-edit `git checkout HEAD --` refresh on worktree branches** (used on Phase 29 plans 29-01, 29-04, 29-06) was the difference between clean commits and phantom-deletion contamination. When applied consistently, it works.
+- **The CAPTURE-04 contract (one shared component, two mount points)** held end-to-end — Phase 27 built `RecipeThread` once, Phase 28 mounted it on detail with no structural rebuild. The prop discriminated union (`mode: "capture" | "detail"` with `?: never` exhaustiveness markers) made the contract structurally enforceable.
+- **MVP no-shim posture pays off at the migration boundary.** The `source_capture` drop happened in the same Alembic migration as `recipe_turns` added — no dual-write phase, no compat shim, no readers-and-writers-on-both-sides interleaving. One cutover, then move on.
+
+### What Was Inefficient
+
+- **Worktree-harness contamination recurred across 7+ plans** (Phase 27 waves 1+2, Phase 28 plans 28-01 and 28-04, Phase 29 plans 29-02 / 29-03 / 29-05). Same pattern each time: stale base, phantom `.planning/` deletions baked into the commit diff. Salvage via `git checkout <commit> -- <in-scope-files>` worked but cost 5–15 min per occurrence. Until the harness itself is fixed, the defensive `git checkout HEAD --` refresh is mandatory pre-edit hygiene, not optional.
+- **Phase 28 file wipe by discuss-phase commit (`81cd858`).** The Phase 29 discuss step accidentally swept in 1,331 lines of pre-existing staged Phase 28 deletions. Recovery via `git checkout 86da606 -- <Phase-28-files>` in `1953997` took one extra commit and ~20 minutes of investigation. The lesson: `git status` before a discuss commit, especially if previous phase's commit landed atomically vs. across multiple hands.
+- **Stale traceability table.** REQUIREMENTS.md "Status" column wasn't updated as phases shipped — 20 of 23 entries still read "Pending" at milestone-close time despite all 5 phases being complete. Bookkeeping debt; should be a per-phase-close hook in future milestones, not a milestone-close cleanup.
+- **CR-01 in Phase 29 was a real Phase 28 regression** — frontend POSTs wrapped answer/proposal/text payloads under a `payload` key but the backend `TurnPayload` discriminated union expects flat top-level fields. Every chip tap + advisory CTA tap had been 422-ing since Phase 28 shipped. Caught by Phase 29's code review, not Phase 28's. Code reviews on phases that depend on prior phases' UI contracts should include a quick smoke against the prior phase's payloads.
+
+### Patterns Established
+
+- **Per-field-type strict equality `is_conflict` predicate** (`services/completeness.py:is_conflict`) — generalizes across all 13 AnswerField types via the same `INPUT_TYPE_MAP` dispatch used for question emission. Single source of truth for "did the LLM disagree with the pinned value."
+- **De-dup-against-existing-emissions pattern** (`_should_emit_advisory` + `_should_emit_question`) — both walk the thread for existing emissions of the same shape before emitting. Closes the LLM-runs-twice-in-quick-succession edge case structurally; `str(uuid)` normalization on both sides of compares (WR-03 fix) keeps it robust.
+- **Extraction-hash idempotency** — `json.dumps(model_dump(), sort_keys=True, ensure_ascii=False) → SHA256` on `GeminiExtractedRecipe` lets `_run_thread_llm` early-return when re-invoked with identical extraction output. Natural deduplication without a separate "run ID" table.
+- **Salvage commit pattern for worktree contamination.** `git checkout <executor-commit> -- <in-scope-file-list>` extracts the legitimate file changes from a contaminated commit, leaving the orchestrator's `.planning/` artifacts at main's tip. Documented across Phase 27 / 28 / 29 — should graduate to a runbook.
+
+### Key Lessons
+
+- **Defensive `git checkout HEAD --` is not optional for worktree executors.** Three of six Phase 29 worktrees stayed clean by applying it pre-edit; the other three needed salvage. The pattern is reliable when applied, costly when forgotten.
+- **Architecture invariants evolve under load — v0.6 evolved #1, #4, and #5 simultaneously.** Future milestones should expect at least one invariant to flex during a major capability shift, and the `CLAUDE.md` update should ship in the same commit as the code that justifies it (the v0.5 RID-04 pattern, applied again here in Phase 26's CLAUDE.md invariant #4 expansion).
+- **Cross-phase regressions are caught at the next phase's code review, not the current one.** CR-01 (Phase 28 frontend payload shape vs Phase 26 backend union) only fired during Phase 29's review when the wire-up exercised the payload contract end-to-end. Phases that finish with `human_needed` UAT (Phase 27, Phase 28) should not be presumed shipped until the next phase exercises their integration points.
+- **The `payload`-key wrapping bug is a class.** It came from copy-pasting a JSON shape that looked like the backend response into the request. The fix should be a typed `fetch()` helper that takes the discriminated-union schema as input — generalizing this would prevent the pattern.
+- **One Gemini call per Enregistrer scales surprisingly far at couple-scale.** Full-thread re-read every run sounds expensive but is naturally idempotent and removes a whole class of "did this LLM run already" state machine. v0.6's biggest correctness win is in the thing it chose *not* to build.
+
+### Cost Observations
+
+- **Model mix:** Opus-heavy across discuss/research/plan/executor; Sonnet for verifier where enabled. `workflow.verifier: true` and `workflow.code_review: true` for v0.6 — both surfaced regressions worth the cost.
+- **Sessions:** Multiple sessions over 5 calendar days; auto-chain active. Phase 29's 3-wave / 6-plan structure ran in two long sessions.
+- **Notable:** Worktree contamination salvage cost ~5–15 min per occurrence × 7+ occurrences = ~1 hour of overhead across the milestone. Defensive `git checkout HEAD --` pre-edit would have prevented most of it. Code review caught CR-01 (real regression) + WR-03 (potential trust-boundary leak before LLM crosses it) — both worth the depth.
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | Plans | LOC delta | Code-prod drift | Tests added | UI audit |
@@ -110,7 +160,8 @@
 | v0.2.1 | 1 | 7 | +9,431 | 56 files | 14 specs | n/a |
 | v0.3 | 4 | 16 | +19,075 | 0 (audit-only) | 0 | 20.21/24 mean (5✅/9⚠/0❌) |
 | v0.4 | 7 | 27 | ~+27K | ~140 commits | pytest scaffold + 4 new e2e | 21.71/24 mean (11✅/3⚠/0❌, +1.50) |
-| **v0.5** | **3** | **9** | **+13,491 / −142** | **75 files / 84 commits** | **28 SVG sanitizer unit + 23 completeness unit** | **n/a (no re-score this milestone)** |
+| v0.5 | 3 | 9 | +13,491 / −142 | 75 files / 84 commits | 28 SVG sanitizer unit + 23 completeness unit | n/a (no re-score this milestone) |
+| **v0.6** | **5** | **22** | **+37,649 / −2,141** | **139 files / 143 commits** | **35 backend (15 turns + 13 pin + 7 promote) + 44 completeness parity + 43 LLM-thread + 19 question-endpoints + 5 e2e** | **n/a (no re-score this milestone)** |
 
 **Trends observed:**
 
@@ -119,3 +170,6 @@
 - **Architecture invariant #1 has formally shifted** at v0.5 RID-04. This is the first invariant shift across the project — all prior milestones preserved the original 8 invariants verbatim. Future invariant shifts should follow the same pattern: code + `CLAUDE.md` in the same atomic commit.
 - The `code_review_depth: "standard"` default + post-review judgment-call workflow has produced consistent "0 critical / few warnings / few info" rhythms across phases. Couple-scale calibration is settling.
 - Worktree-isolated executor pattern is now standard for parallel wave execution (Phase 22's 3 plans, Phase 24's wave 1). Wave-1-to-wave-2 base-sync remains the recurring failure mode (Plan 24-04 needed RID-02 backend restoration).
+- v0.6 escalated the worktree pattern to 5 phases × multi-wave parallelism — and **the harness contamination failure mode recurred on 7+ plans**. Defensive `git checkout HEAD --` pre-edit on every worktree branch is the reliable mitigation; salvage via `git checkout <commit> -- <in-scope-files>` is the recovery path. Until the harness itself is fixed, this is mandatory hygiene, not optional.
+- v0.6 evolved **three architecture invariants simultaneously** (#1 single `promote_draft` dispatch, #4 `turn.created`/`turn.updated` realtime events, #5 raw inputs via `recipe_turns` instead of `source_capture`). The v0.5 RID-04 pattern (`CLAUDE.md` invariant update in same atomic commit as the code) was followed for all three. The project is now structurally proven to handle multi-invariant evolution per milestone.
+- v0.6 is the FIRST milestone to ship **a Python parallel of a TypeScript module as a parity contract** (`services/completeness.py` ↔ `recipe-completeness.ts`, 44 parity tests). This pattern generalizes — any client-and-server-both-need-this calculation can adopt the same shape.

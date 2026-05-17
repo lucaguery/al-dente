@@ -1,5 +1,37 @@
 # Milestones
 
+## v0.6 Conversation Capture (Shipped: 2026-05-17)
+
+**Phases completed:** 5 phases (25–29), 22 plans, 23/23 requirements validated
+
+**Stats:**
+
+- Timeline: 2026-05-13 → 2026-05-17 (5 calendar days, 143 commits, 34 `feat`)
+- Code: 139 files changed, +37,649 / −2,141
+- Closes: gh#20 (Recipe Conversation Thread), ADR-0001 implementation
+
+**Key accomplishments:**
+
+- **Phase 25 — Backend foundation:** Introduced `recipe_turns` table (Alembic 0009) and dropped `recipes.source_capture` in the same migration; collapsed the four per-surface `promote_*_draft` functions into a single `promote_draft(recipe_id)` entry point dispatching on the first user turn's `kind`. Frontend cutover removed `source_capture` from `Recipe`, added `initial_turn_kind`. Satisfies invariant #5 via `recipe_turns` going forward.
+- **Phase 26 — Thread API & realtime:** One append-only `POST /recipes/{id}/turns` endpoint persists every user-emitted turn (text / voice / photo / url / answer / proposal_*) and broadcasts `turn.created` / `turn.updated` over WebSocket. URL extraction is no longer a stub — `extract_and_process_url_turn` runs in a `BackgroundTask` behind a real SSRF gate (`_is_safe_url`), uploads extracted HTML to Storage, and broadcasts the backfill. Pinning is invariant from this phase.
+- **Phase 27 — Conversational capture screen:** Rebuilt `/recipes/new` as a single chat thread — title above, scrollable thread, multi-input composer (text / voice / photo / url) at the bottom — backed by the shared `RecipeThread` component. Blank-draft create + `POST /recipes/{id}/promote` coalescing trigger replaces the five tabbed capture surfaces. Bottom nav collapsed to 3 tabs; failed-pill on `RecipeCard`.
+- **Phase 28 — Recipe-detail thread:** Mounted the same `RecipeThread` component on `/recipes/[id]` (not rebuilt — CAPTURE-04 contract honored). Answer-turn UI renders `question` turns as chip / stepper / text inputs; advisory turns render as informational bubbles (option C — manual edit wins). `manually_edited_fields` is on the wire and visible as Caveat marginalia on detail page + edit form. PUT auto-pin via `_apply_put_pinning`.
+- **Phase 29 — LLM prompt rework + completeness wire-up:** Rebuilt the Gemini call to read the full thread + pinned-field set every run (idempotent by extraction-hash). LLM now emits `advisory` turns on conflict (never silently overwrites) and `question` turns driven by `recipe-completeness.ts` (Python port). New endpoints `POST /recipes/{id}/questions/trigger` / `defer` wire the summary CTA + 7-day defer flow. `CompletenessCard` stays passive.
+
+**Architecture invariant evolution:**
+
+- **Invariant #1** (five capture surfaces, one shape) further evolved — all five surfaces now flow through `promote_draft(recipe_id)` dispatching on first-turn `kind` instead of four per-surface promotion functions.
+- **Invariant #5** (raw inputs kept forever) now satisfied by `recipe_turns` rather than the deprecated `source_capture` JSONB column.
+- **CLAUDE.md invariant #4** (realtime contract) extended with `turn.created` + `turn.updated` semantics — `turn.created` fires at POST time; `turn.updated` fires from the BackgroundTask when URL extraction backfills `extracted_html_path` (D-29 — no re-broadcast of `turn.created` for the same turn).
+
+**Known carry-forward:**
+
+- v0.4 / v0.5 HUMAN-UAT items still tracked via `/gsd-audit-uat` — orthogonal to feature milestones.
+- 4 Phase 29 UAT items persisted to next milestone (per `/gsd-verify-work` output 2026-05-17).
+- Behavioral validation gate (≥ 2 weeks daily use by both members, v0.1 DoD) still pending — orthogonal.
+
+---
+
 ## v0.5 Mixed Sweep (Shipped: 2026-05-13)
 
 **Phases completed:** 3 phases (22-24), 9 plans, 12 requirements (QW × 3 / DECK × 4 / RID × 5)
