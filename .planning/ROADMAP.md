@@ -34,7 +34,10 @@
   2. `grep -rn "SIGNED_URL_TTL_SECONDS\|PHOTO_URL_CACHE_TTL_MS" backend/ frontend/` shows the raised TTL values (backend ≥ 3600 s, frontend ≥ 3000000 ms); the dev-only 3-stage fallback remains gated to non-prod.
   3. Capturing a fresh recipe without a photo and navigating to the library card and inbox row shows a visible colored pictogram, not a muted empty square.
   4. `grep -rn "ns0:" backend/app/services/` returns zero matches; the sanitizer unit test asserts no `ns0:` substring and a bare `<svg` root element.
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 30-01-PLAN.md — BUG-01: Photo signed-URL self-heal (TTL bump + useSignedPhotoUrl hook + 4-surface refactor)
+- [ ] 30-02-PLAN.md — BUG-02: SVG sanitizer ns0 fix + Alembic data migration
 
 ### Phase 31: Bottom nav restructure
 **Goal**: Users can reach the recipe capture flow in one tap from any authenticated screen via a visually elevated central « Ajouter » button — the bottom nav's intent is unambiguous.
@@ -81,7 +84,7 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 30. Live-bug sweep | v0.7 | 0/? | Not started | - |
+| 30. Live-bug sweep | v0.7 | 0/2 | Not started | - |
 | 31. Bottom nav restructure | v0.7 | 0/? | Not started | - |
 | 32. Port locked screens to Sober Kitchen | v0.7 | 0/? | Not started | - |
 | 33. CLAUDE.md split | v0.7 | 0/? | Not started | - |
