@@ -4,8 +4,8 @@ milestone: v0.6
 milestone_name: Conversation Capture
 status: executing
 stopped_at: Phase 29 context gathered
-last_updated: "2026-05-17T15:45:07.287Z"
-last_activity: 2026-05-17 -- Phase 29 planning complete
+last_updated: "2026-05-17T15:46:38.816Z"
+last_activity: 2026-05-17 -- Phase 29 execution started
 progress:
   total_phases: 5
   completed_phases: 4
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-13 — v0.6 Conversation Capture milestone started, closes gh#20 via ADR-0001 design)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 28 — Recipe-detail thread
+**Current focus:** Phase 29 — llm-prompt-rework-completeness-wire-up
 
 ## Current Position
 
 Milestone: v0.6 Conversation Capture
-Phase: 28 (Recipe-detail thread) — EXECUTING
-Plan: 1 of 4
-Status: Ready to execute
-Last activity: 2026-05-17 -- Phase 29 planning complete
+Phase: 29 (llm-prompt-rework-completeness-wire-up) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 29
+Last activity: 2026-05-17 -- Phase 29 execution started
 
 Resume: `/gsd-plan-phase 25` to decompose Phase 25 into plans
 
