@@ -126,7 +126,9 @@ _FIELD_PROMPTS_FR: dict[FieldKey, str] = {
 
 # D-06 — French field labels for summary chips ("{label}: {value}").
 # Mirrors ANSWER_FIELD_LABELS in frontend/lib/enum-labels.ts (drift = bug category).
-_FIELD_LABELS_FR: dict[FieldKey, str] = {
+# Covers the 13-key AnswerField surface (services/llm.py:extracted_map iterates 12 of
+# these, so an IN-01-style missing key would silently render a raw English label).
+_FIELD_LABELS_FR: dict[str, str] = {
     "title": "titre",
     "description": "description",
     "ingredients": "ingrédients",
@@ -138,6 +140,8 @@ _FIELD_LABELS_FR: dict[FieldKey, str] = {
     "cuisine": "cuisine",
     "mood": "ambiance",
     "main_protein": "protéine",
+    "seasonality": "saison",
+    "tags": "tags",
 }
 
 # Chip options drawn from the locked vocab frozensets in schemas/recipe_turn.py

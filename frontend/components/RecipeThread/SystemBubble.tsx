@@ -135,7 +135,7 @@ export function SystemBubble({
             aria-disabled={committing || deferred === true || !onSummaryComplete}
             className={`${PRIMARY_CTA_CLASS} disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center`}
           >
-            {committing && !deferred ? (
+            {committing ? (
               <Loader2 size={14} className="animate-spin" aria-hidden />
             ) : (
               t("summary_complete")
