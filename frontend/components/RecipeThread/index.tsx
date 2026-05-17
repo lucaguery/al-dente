@@ -16,7 +16,7 @@
 // var(--muted-foreground), var(--shadow-card). The state-pill colors are
 // component-scoped (UI-SPEC.md §"New Token Requests").
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Sparkles } from "lucide-react";
@@ -64,29 +64,6 @@ export function RecipeThread(props: RecipeThreadProps) {
   const t = useTranslations("recipes.thread");
   const tCommon = useTranslations("common");
   const lastBubbleRef = useRef<HTMLLIElement | null>(null);
-
-  // Phase 28 DETAIL-03 — Advisory resolution lookup (D-19).
-  // For each `advisory` turn, find the first later turn whose kind is
-  // `proposal_accepted` or `proposal_dismissed` AND whose payload's
-  // `in_reply_to_turn_id` matches the advisory's id. The original advisory
-  // bubble then re-renders as the collapsed muted summary line.
-  //
-  // The resolution turns themselves are NOT rendered as visible bubbles —
-  // they are state-change markers (see the null-render guard in the map below).
-  const advisoryResolutions = useMemo(() => {
-    const map = new Map<string, "accepted" | "dismissed">();
-    if (props.mode !== "detail") return map;
-    for (const turn of props.turns) {
-      if (turn.kind === "proposal_accepted" || turn.kind === "proposal_dismissed") {
-        const refId = turn.payload?.in_reply_to_turn_id as string | undefined;
-        if (refId && !map.has(refId)) {
-          map.set(refId, turn.kind === "proposal_accepted" ? "accepted" : "dismissed");
-        }
-      }
-    }
-    return map;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.mode, props.mode === "detail" ? props.turns : null]);
 
   // UI-SPEC §"Chat body > Scroll behavior"
   const listLength =
@@ -262,15 +239,6 @@ export function RecipeThread(props: RecipeThreadProps) {
               })
             : props.turns.map((turn, idx) => {
                 const isLast = idx === props.turns.length - 1;
-                // D-19 — proposal_accepted / proposal_dismissed turns are
-                // state-change markers only; they collapse the advisory bubble
-                // via advisoryResolutions and must not render their own bubble.
-                if (
-                  turn.kind === "proposal_accepted" ||
-                  turn.kind === "proposal_dismissed"
-                ) {
-                  return null;
-                }
                 return (
                   <motion.li
                     key={turn.id}
@@ -284,23 +252,7 @@ export function RecipeThread(props: RecipeThreadProps) {
                     {turn.sender === "user" ? (
                       <Bubble variant="persisted" turn={turn} />
                     ) : (
-                      <SystemBubble
-                        turn={turn}
-                        resolution={
-                          turn.kind === "advisory"
-                            ? (advisoryResolutions.get(turn.id) ?? null)
-                            : undefined
-                        }
-                        onPostAnswerTurn={
-                          props.mode === "detail" ? props.onPostAnswerTurn : undefined
-                        }
-                        onPostProposalAccepted={
-                          props.mode === "detail" ? props.onPostProposalAccepted : undefined
-                        }
-                        onPostProposalDismissed={
-                          props.mode === "detail" ? props.onPostProposalDismissed : undefined
-                        }
-                      />
+                      <SystemBubble turn={turn} />
                     )}
                   </motion.li>
                 );

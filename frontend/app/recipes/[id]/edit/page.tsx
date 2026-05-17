@@ -75,8 +75,6 @@ function EditInner() {
   const tErr = useTranslations("onboarding.errors");
   const [initial, setInitial] = useState<RecipeFormValues | null>(null);
   const [origStatus, setOrigStatus] = useState<string>("structured");
-  // Phase 28 DETAIL-04 — pin set for per-input marginalia on the edit form.
-  const [manuallyEditedFields, setManuallyEditedFields] = useState<string[]>([]);
 
   // RID-03 — build ref map for all 11 FieldKey targets (D-22, D-23).
   // Refs are stable objects; only the focusRefs object itself is recreated
@@ -124,7 +122,6 @@ function EditInner() {
           : r;
         setInitial(recipeToFormValues(merged));
         setOrigStatus(r.status);
-        setManuallyEditedFields(r.manually_edited_fields ?? []);
       })
       .catch(() => {
         if (alive) toast.error(tErr("network"));
@@ -185,7 +182,6 @@ function EditInner() {
       backHref={`/recipes/${id}`}
       title={t("title")}
       focusRefs={focusRefs}
-      manuallyEditedFields={manuallyEditedFields}
     />
   );
 }

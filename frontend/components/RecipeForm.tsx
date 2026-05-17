@@ -26,8 +26,6 @@ import { useEnumLabels } from "@/lib/enum-labels";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import type { FieldKey } from "@/lib/recipe-completeness";
 import type { Recipe } from "@/lib/recipes";
-import { PinLabel } from "@/components/RecipeThread/PinLabel";
-import type { AnswerField } from "@/lib/enums";
 
 // Sentinel select value for "no selection" — Radix Select rejects empty
 // strings as item values, so we use a non-wire-format token and translate
@@ -261,13 +259,6 @@ type Props = {
   /** RID-03 — ref map keyed by FieldKey for scroll/focus via ?focus= param.
    *  Only needed on the edit page; new-recipe form omits it (D-23). */
   focusRefs?: RecipeFormRefs;
-  /**
-   * Phase 28 DETAIL-04 — pin set, drives per-input « épinglé » Caveat
-   * marginalia next to AnswerField labels. The edit form NEVER shows
-   * « conflit » (turn data not fetched here); conflit is detail-page-only
-   * per UI-SPEC §Layout §2.
-   */
-  manuallyEditedFields?: string[];
 };
 
 export function RecipeForm({
@@ -279,22 +270,10 @@ export function RecipeForm({
   title,
   withChrome = true,
   focusRefs,
-  manuallyEditedFields,
 }: Props) {
   const t = useTranslations("recipes.new");
   const tCommon = useTranslations("common");
   const labels = useEnumLabels();
-  const pinSet = manuallyEditedFields ?? [];
-
-  // Phase 28 DETAIL-04 — render inline « épinglé » Caveat label next to an
-  // AnswerField's form label when that field is pinned. The edit form NEVER
-  // shows « conflit » (turn data is not fetched here); hasConflict is
-  // hardcoded false per UI-SPEC §Layout §2.
-  const renderInlinePin = (field: AnswerField) =>
-    pinSet.includes(field) ? (
-      <PinLabel field={field} hasConflict={false} gutter={false} />
-    ) : null;
-
   const [v, setV] = useState<RecipeFormValues>(
     initial ?? {
       title: "",
@@ -327,10 +306,7 @@ export function RecipeForm({
   const fields = (
     <div className="flex flex-col gap-(--spacing-section-y) px-(--spacing-page-x) pt-6 pb-32">
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1">
-          <Label htmlFor="rf-title">{t("title_label")}</Label>
-          {renderInlinePin("title")}
-        </div>
+        <Label htmlFor="rf-title">{t("title_label")}</Label>
         <Input
           id="rf-title"
           ref={focusRefs?.title}
@@ -344,10 +320,7 @@ export function RecipeForm({
       {/* RID-02 — Description textarea (D-14). Renders above ingredients so the
           CompletenessCard ?focus=description chip scrolls to it naturally. */}
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1">
-          <Label htmlFor="rf-description">{t("description_label")}</Label>
-          {renderInlinePin("description")}
-        </div>
+        <Label htmlFor="rf-description">{t("description_label")}</Label>
         <Textarea
           id="rf-description"
           ref={focusRefs?.description}
@@ -358,10 +331,7 @@ export function RecipeForm({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1">
-          <Label htmlFor="rf-ingredients">{t("ingredients_label")}</Label>
-          {renderInlinePin("ingredients")}
-        </div>
+        <Label htmlFor="rf-ingredients">{t("ingredients_label")}</Label>
         <Textarea
           id="rf-ingredients"
           ref={focusRefs?.ingredients}
@@ -372,10 +342,7 @@ export function RecipeForm({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1">
-          <Label htmlFor="rf-steps">{t("steps_label")}</Label>
-          {renderInlinePin("steps")}
-        </div>
+        <Label htmlFor="rf-steps">{t("steps_label")}</Label>
         <Textarea
           id="rf-steps"
           ref={focusRefs?.steps}
@@ -386,10 +353,7 @@ export function RecipeForm({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1">
-            <Label htmlFor="rf-prep">{t("prep_time_label")}</Label>
-            {renderInlinePin("prep_time_minutes")}
-          </div>
+          <Label htmlFor="rf-prep">{t("prep_time_label")}</Label>
           <Input
             id="rf-prep"
             ref={focusRefs?.prep_time_minutes}
@@ -405,10 +369,7 @@ export function RecipeForm({
         </div>
         {/* RID-02 — Cook time input (D-14) */}
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1">
-            <Label htmlFor="rf-cook">{t("cook_time_minutes_label")}</Label>
-            {renderInlinePin("cook_time_minutes")}
-          </div>
+          <Label htmlFor="rf-cook">{t("cook_time_minutes_label")}</Label>
           <Input
             id="rf-cook"
             ref={focusRefs?.cook_time_minutes}
@@ -426,10 +387,7 @@ export function RecipeForm({
       <div className="grid grid-cols-2 gap-4">
         {/* RID-02 — Difficulty select (D-14) */}
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1">
-            <Label>{t("difficulty_label")}</Label>
-            {renderInlinePin("difficulty")}
-          </div>
+          <Label>{t("difficulty_label")}</Label>
           <Select
             value={v.difficulty === "" ? NONE_VALUE : v.difficulty}
             onValueChange={(val) =>
@@ -453,10 +411,7 @@ export function RecipeForm({
           </Select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1">
-            <Label htmlFor="rf-servings">{t("servings_label")}</Label>
-            {renderInlinePin("servings")}
-          </div>
+          <Label htmlFor="rf-servings">{t("servings_label")}</Label>
           <Input
             id="rf-servings"
             ref={focusRefs?.servings}
@@ -470,10 +425,7 @@ export function RecipeForm({
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1">
-          <Label>{t("cuisine_label")}</Label>
-          {renderInlinePin("cuisine")}
-        </div>
+        <Label>{t("cuisine_label")}</Label>
         <Select
           value={v.cuisine === "" ? NONE_VALUE : v.cuisine}
           onValueChange={(val) =>
@@ -497,10 +449,7 @@ export function RecipeForm({
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1">
-          <Label>{t("mood_label")}</Label>
-          {renderInlinePin("mood")}
-        </div>
+        <Label>{t("mood_label")}</Label>
         <div
           className="flex flex-wrap gap-2"
           ref={focusRefs?.mood}
@@ -530,10 +479,7 @@ export function RecipeForm({
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1">
-          <Label>{t("protein_label")}</Label>
-          {renderInlinePin("main_protein")}
-        </div>
+        <Label>{t("protein_label")}</Label>
         <Select
           value={v.main_protein === "" ? NONE_VALUE : v.main_protein}
           onValueChange={(val) =>
