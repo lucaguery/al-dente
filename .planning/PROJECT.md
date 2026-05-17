@@ -8,9 +8,29 @@ A shared recipe + decision app for couples, built as an installable PWA with a P
 
 Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable on both iPhones with no App Store, no $99/year, no native build.
 
-## Current Milestone
+## Current Milestone: v0.7 Sober Kitchen + Polish
 
-_No active milestone — v0.6 Conversation Capture shipped 2026-05-17. Next step: `/gsd-new-milestone`._
+**Goal:** Clear the live-bug backlog, ship the missing capture entry point, port the locked screens to the Sober Kitchen design system per `docs/design-system.html` §15, and split CLAUDE.md so the root file's per-turn context cost shrinks.
+
+**Target features:**
+
+- **Bug sweep** — recipe photo signed-URL expiry self-heal (gh#23: bump backend TTL to 1h, frontend in-memory cache to 50min, prod `onError` cache-invalidate-and-retry on `RecipeCard` / `ShortlistCard` / `PhotoUploader` / recipe detail); SVG sanitizer `ns0:` namespace prefix bug (gh#24: register SVG namespace as default in `xml.etree.ElementTree`, sanitizer test for namespace emission, one-shot backfill of stored rows whose `illustration_svg` carries `ns0:`).
+- **Bottom nav restructure** — add the central elevated « Ajouter » CTA tab per `.scratch/capture-mockups/1-smart-paste.html` (gh#25: filled primary circle with `+` glyph, visibly elevated above the four flat sibling tabs, routes to existing capture entry, preserves drafts-tab badge + safe-area inset + onboarding-route hiding). Out-of-scope: « Suggérer » tab (gh#26) and other icon swaps.
+- **Sober Kitchen port** — execute `docs/design-system.html` §15 "Mise en code" checklist A→E (gh#29): port locked tokens into `frontend/app/globals.css`, register Caveat alongside Cormorant, add patine + marginalia utility classes, port the 3 locked screens (Accueil / Bibliothèque / Recette détail), apply patine cards (`cook_count → patina` mapping), table-à-manger 5-state voting scene, marginalia register (Caveat handwriting for human voice), brand-mark loader. Skip §15.E deferred screens.
+- **CLAUDE.md split** — move backend (SQLAlchemy / Alembic / `uv` / single-uvicorn-worker / APScheduler), frontend (Next.js 16 quirks / ESLint-as-formatter / `@/*` alias / `--webpack` flag), and `.planning/` (GSD workflow enforcement) area-specific guidance into scoped subfolder `CLAUDE.md` files. Keep architecture invariants, locked vocabularies, MVP posture, and source-of-truth pointers at root (gh#27).
+
+**Locked decisions (milestone-level):**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Test-coverage expansion (gh#28) | Deferred to v0.8 | Better defended against a locked visual contract. Run after v0.7 ships. |
+| « Suggérer » tab (gh#26) | Deferred to backlog | Issue itself flags "not ready" — needs product design pass first. |
+| gh#23 fix shape | Land the in-issue prescription verbatim | Issue body already specifies fix surface (TTL bump + 50-min FE cache + per-img self-heal) and follow-ups (SW cache tuning) explicitly deferred to a separate phase. |
+| gh#24 backfill mode | Re-sanitize in place (preferred) or NULL the column for regeneration on next promotion | TBD during phase planning; the issue authorizes either. |
+| Bottom-nav variant discriminator | Per-tab `variant: "tab" | "central-cta"` shape | Avoids sprinkling layout conditionals across the nav component. |
+| gh#27 frontend file | Keep `frontend/AGENTS.md` (cross-tool) **and** add `frontend/CLAUDE.md` referencing it | Cursor/Aider already read AGENTS.md; root CLAUDE.md should be cleanly split without breaking other tools. |
+
+**Phase numbering:** continues from v0.6 → starts at Phase 30.
 
 ## Previous Milestone Outcome: v0.6 Conversation Capture (shipped 2026-05-17)
 
@@ -116,9 +136,27 @@ All 49 v0.1 requirements shipped and confirmed through human UAT on physical dev
 
 - ✅ **All 23 v0.6 requirements validated** across Phases 25–29 (THREAD × 4, TURN × 4, CAPTURE × 4, DETAIL × 5, LLM × 4, MIGRATION × 2). Closes gh#20 by replacing the five tabbed capture surfaces with a single durable conversation thread (design locked in ADR-0001). **Phase 25** — Alembic 0009 introduces `recipe_turns` and drops legacy `source_capture` JSONB in the same migration; `promote_draft(recipe_id)` collapses four per-surface promotion functions into one entry point dispatching on first turn's `kind`; frontend cutover replaces `source_capture` with `initial_turn_kind` on `Recipe`. **Phase 26** — one append-only `POST /recipes/{id}/turns` endpoint persists every user-emitted turn (text/voice/photo/url/answer/proposal_*); `turn.created` + `turn.updated` WebSocket events extend invariant #4; URL extraction unstubbed behind real `_is_safe_url` SSRF gate (closes long-standing `TODO(productize)` at `recipes.py:481-490`); BackgroundTask uploads extracted HTML to Supabase Storage. **Phase 27** — `/recipes/new` rebuilt as one chat thread (title + scrollable thread + multi-input composer); shared `RecipeThread` component; blank-draft create + `POST /recipes/{id}/promote` coalescing trigger; bottom nav 4→3 tabs; failed-pill on `RecipeCard`. **Phase 28** — same `RecipeThread` mounted on `/recipes/[id]` (CAPTURE-04 one-component-two-mount-points honored); chip/stepper/text answer-turn UI for `question` turns; advisory bubbles render option C (manual edit wins); `manually_edited_fields` visible as Caveat marginalia on detail page + edit form; PUT auto-pin via `_apply_put_pinning`. **Phase 29** — Gemini rebuilt around full-thread reads with extraction-hash idempotency; emits `advisory` turns on conflict (never silently overwrites) and `question` turns driven by `services/completeness.py` (Python port of `recipe-completeness.ts`); new endpoints `POST /recipes/{id}/questions/trigger` + `defer` wire summary CTA + 7-day defer flow; `CompletenessCard` untouched (LLM-04 gate verified at 0 lines diff). **Architecture invariant #1 evolved** — all five capture surfaces now flow through `promote_draft(recipe_id)` dispatching on first-turn `kind`. **Invariant #5** (raw inputs preserved) now satisfied by `recipe_turns` going forward; `source_capture` retired. **Invariant #4** extended with `turn.created`/`turn.updated` semantics (D-29 — never re-broadcast `turn.created` for the same turn). 22 plans, 143 commits, 139 files (+37,649 / −2,141). Code review at `standard` depth: 1 critical + 4 warnings + 3 info — all 8 findings resolved (CR-01 was a real Phase 28 regression where `payload`-wrapped frontend POSTs 422-d against the flat backend `TurnPayload` union; fix flattened all 3 handlers + 3 e2e POSTs). **4 HUMAN-UAT items** persisted to next milestone (Gemini round-trip, advisory round-trip, defer gate, Playwright suite).
 
-### Active
+### Active (v0.7 — Sober Kitchen + Polish)
 
-_No active milestone — run `/gsd-new-milestone` to define the next one._
+**Bug sweep**
+- [ ] **BUG-01**: Recipe photos self-heal when their signed URL expires after a backgrounded PWA resumes (gh#23). Backend signed-URL TTL raised to 1h; frontend in-memory cache TTL raised to 50min; `<img onError>` in production invalidates the cache and refetches the signed URL once before giving up. Applies to RecipeCard, ShortlistCard, PhotoUploader, and `/recipes/[id]` photo render.
+- [ ] **BUG-02**: Recipe SVG illustrations render as visible pictograms instead of empty muted squares (gh#24). Sanitizer output uses unprefixed `<svg>` / `<path>` markup with the SVG namespace as the default on the root only — no synthetic `ns0:` prefix. Existing rows whose `illustration_svg` carries `ns0:` are remediated. All existing security guarantees of `sanitize_recipe_svg` preserved; sanitizer test covers the namespace-emission case.
+
+**Bottom nav restructure**
+- [ ] **NAV-01**: User reaches the recipe capture flow via a central elevated « Ajouter » CTA in the bottom nav on every authenticated, non-onboarding screen (gh#25). Filled primary circle with white `+`, visibly elevated above the four flat sibling tabs, label `Ajouter` beneath. Active-routing `aria-current="page"` honored on the capture route. Drafts-tab badge, safe-area inset, onboarding-route hiding preserved.
+
+**Sober Kitchen design-system port** (gh#29 — follows `docs/design-system.html` §15 checklist A→E)
+- [ ] **SOBER-01**: Locked Sober Kitchen tokens land in `frontend/app/globals.css` (terracotta sober palette + type scale per §15.A); Caveat font registered alongside Cormorant; new patine + marginalia utility classes available (per §15.B).
+- [ ] **SOBER-02**: Accueil screen ports to the locked Sober Kitchen layout — shortlist au centre.
+- [ ] **SOBER-03**: Bibliothèque screen ports to the locked Sober Kitchen layout — A par défaut, B/C accessibles.
+- [ ] **SOBER-04**: Recette — Détail screen ports to the locked Sober Kitchen layout — cookbook page register.
+- [ ] **SOBER-05**: Recipe cards across the app render the patine treatment driven by `cook_count → patina` mapping (cross-cutting register applied wherever recipe cards appear).
+- [ ] **SOBER-06**: Voting surfaces render as the table-à-manger scene — the 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis) read as one unified visual scene per the locked design (cross-cutting voting register).
+- [ ] **SOBER-07**: Marginalia register applied — Caveat handwriting carries the human-voice annotations (manual-edit pin labels, system asides, register cues) consistently across the locked screens.
+- [ ] **SOBER-08**: Brand-mark loader replaces ad-hoc spinners on slow-path surfaces (loading states route through the locked brand-mark animation).
+
+**Developer experience**
+- [ ] **DX-01**: Root `CLAUDE.md` shrinks to invariants + locked vocabularies + MVP posture + source-of-truth pointers; backend / frontend / `.planning/` area-specific guidance moves into scoped subfolder `CLAUDE.md` files that Claude Code auto-loads only when working in those subtrees (gh#27). `frontend/AGENTS.md` preserved (cross-tool).
 
 ### Surfaced for follow-up (deferred to v2 or future milestone)
 
@@ -253,4 +291,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-17 — v0.6 Conversation Capture archived via `/gsd-complete-milestone`. ROADMAP.md collapsed to one-liner under Completed Milestones; full v0.6 phase detail at `.planning/milestones/v0.6-ROADMAP.md`; requirements at `.planning/milestones/v0.6-REQUIREMENTS.md`; phase directories at `.planning/milestones/v0.6-phases/`. Seven shipped milestones: v0.1 / v0.2 / v0.2.1 / v0.3 / v0.4 / v0.5 / v0.6. Cumulative: 30 phases, 138 plans, 159 requirements validated. No active milestone — next step is `/gsd-new-milestone`.*
+*Last updated: 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`. Scoped from the 8 open GitHub issues (gh#23, gh#24, gh#25, gh#27, gh#29 in scope; gh#26 deferred to backlog pending product design; gh#28 deferred to v0.8 to land against a locked visual contract; gh#20 to be closed — shipped in v0.6). Eight shipped milestones once v0.7 lands: v0.1 / v0.2 / v0.2.1 / v0.3 / v0.4 / v0.5 / v0.6 / v0.7. Cumulative through v0.6: 30 phases, 138 plans, 159 requirements validated. Phase numbering continues from v0.6 → starts at Phase 30.*

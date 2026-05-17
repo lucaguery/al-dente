@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: between_milestones
-stopped_at: v0.6 Conversation Capture archived
-last_updated: "2026-05-17T19:00:00.000Z"
+milestone: v0.7
+milestone_name: Sober Kitchen + Polish
+status: defining_requirements
+stopped_at: REQUIREMENTS.md drafted; roadmap pending
+last_updated: "2026-05-17T19:30:00.000Z"
 last_activity: 2026-05-17
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,32 +18,32 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-17 — v0.6 Conversation Capture COMPLETE and archived via `/gsd-complete-milestone`)
+See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** No active milestone — next step is `/gsd-new-milestone`.
+**Current focus:** v0.7 — clear the live-bug backlog (gh#23, gh#24), ship the central « Ajouter » CTA (gh#25), port the locked screens to the Sober Kitchen design system (gh#29), split CLAUDE.md (gh#27).
 
 ## Current Position
 
-Milestone: None (between milestones)
-Phase: —
+Milestone: v0.7 Sober Kitchen + Polish
+Phase: Not started (defining requirements)
 Plan: —
-Status: v0.6 archived 2026-05-17; awaiting next milestone scoping
-Last activity: 2026-05-17
+Status: Defining requirements
+Last activity: 2026-05-17 — Milestone v0.7 started
 
-Resume: `/gsd-new-milestone` to start the next milestone cycle (questioning → research → requirements → roadmap)
+Resume: `/gsd-discuss-phase 30 ${GSD_WS}` (or `/gsd-plan-phase 30 ${GSD_WS}` to skip discussion) after roadmap approval.
 
-Progress: 7/7 milestones shipped (v0.1 → v0.6)
+Progress: 0/4 phases complete
 
 ## Performance Metrics
 
-**Velocity (cumulative):**
+**Velocity (cumulative through v0.6):**
 
 - Total milestones shipped: 7 (v0.1 → v0.6)
 - Total phases shipped: 30
 - Total plans shipped: 138
 - Total requirements validated: 159 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6)
-- v0.6 timeline: 2026-05-13 → 2026-05-17 (5 calendar days, 143 commits, 34 `feat`, 139 files, +37,649 / −2,141 lines, 1 critical / 4 warnings / 3 info code review findings — all 8 resolved)
+- v0.6 timeline: 2026-05-13 → 2026-05-17 (5 calendar days, 143 commits, 34 `feat`, 139 files, +37,649 / −2,141 lines)
 
 **By Milestone:**
 
@@ -56,11 +56,13 @@ Progress: 7/7 milestones shipped (v0.1 → v0.6)
 | v0.4 (Phases 15-21) | 7 | ✅ Complete (shipped 2026-05-11) |
 | v0.5 (Phases 22-24) | 3 | ✅ Complete (shipped 2026-05-13) |
 | v0.6 (Phases 25-29) | 5 | ✅ Complete (shipped 2026-05-17) |
+| v0.7 (Phases 30-33, planned) | 4 | 🚧 Defining requirements |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- v0.7 milestone opened 2026-05-17 from the 8 open GitHub issues. Scope: bug sweep (gh#23, gh#24) → bottom-nav restructure (gh#25) → Sober Kitchen port (gh#29 — `docs/design-system.html` §15 A→E) → CLAUDE.md split (gh#27). Deferred: gh#28 (test coverage → v0.8, after visual contract locks); gh#26 (« Suggérer » tab → backlog, needs product design first). gh#20 to be closed (shipped in v0.6).
 - v0.6 milestone shipped 2026-05-17: 5 phases (25-29), 22 plans, 23 requirements (THREAD × 4 + TURN × 4 + CAPTURE × 4 + DETAIL × 5 + LLM × 4 + MIGRATION × 2). Closes gh#20 per ADR-0001. **Architecture invariant #1 evolved further** — all five capture surfaces now flow through one `promote_draft(recipe_id)` entry point dispatching on first turn's `kind`. **Invariant #5 satisfied by `recipe_turns`** going forward; legacy `source_capture` JSONB retired. **Invariant #4** extended with `turn.created` + `turn.updated` semantics.
 - v0.5 milestone shipped 2026-05-13: 3 phases (22-24), 9 plans, 12 requirements (QW × 3 / DECK × 4 / RID × 5). Closed 12 GitHub issues. **Invariant #1 first shift** — quick + full-form captures moved from sync `structured`-on-return to async `BackgroundTask`.
 - v0.4 milestone shipped 2026-05-11: 7 phases (15-21), 27 plans, 24 reqs.
@@ -71,15 +73,15 @@ Progress: 7/7 milestones shipped (v0.1 → v0.6)
 
 ### Decisions
 
-See PROJECT.md Key Decisions table for the cumulative log. v0.6 milestone-level decisions are now part of historical context (ADR-0001 + v0.6 archive at `.planning/milestones/v0.6-ROADMAP.md`).
+See PROJECT.md Key Decisions table for the cumulative log. v0.7 milestone-level decisions live in the Current Milestone block in PROJECT.md (test-coverage deferral, « Suggérer » deferral, bug-fix shape, bottom-nav variant discriminator, CLAUDE.md / AGENTS.md coexistence).
 
 ### Open Research
 
-None pending. Awaiting next milestone scoping via `/gsd-new-milestone`.
+None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring `/gsd-new-milestone`'s research phase. The design contract is already locked in `docs/design-system.html` §15.
 
 ### Blockers/Concerns
 
-- **None blocking.** v0.6 archived cleanly; no active milestone.
+- **None blocking.** v0.7 ready to roadmap.
 - **4 v0.6 Phase 29 HUMAN-UAT items** carried forward — Gemini round-trip, advisory round-trip, defer gate, Playwright suite. Tracked via `/gsd-audit-uat`.
 - **2 v0.6 Phase 28 HUMAN-UAT items** carried forward — chip/stepper answer + advisory accept/dismiss (both depend on the Phase 29 LLM emissions landing in live use).
 - **15 v0.4 HUMAN-UAT items** remain orthogonal — tracked via `/gsd-audit-uat`.
@@ -99,7 +101,7 @@ None pending. Awaiting next milestone scoping via `/gsd-new-milestone`.
 
 ## Session Continuity
 
-Last activity: 2026-05-17 — v0.6 Conversation Capture archived via `/gsd-complete-milestone`
-Stopped at: Between milestones
-Resume file: None — start fresh with `/gsd-new-milestone`
-Next: `/gsd-new-milestone` (define the next milestone — questioning → research → requirements → roadmap)
+Last activity: 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`
+Stopped at: REQUIREMENTS.md drafted; roadmap pending
+Resume file: None
+Next: `/gsd-discuss-phase 30 ${GSD_WS}` (or `/gsd-plan-phase 30 ${GSD_WS}` to skip discussion) after roadmap approval
