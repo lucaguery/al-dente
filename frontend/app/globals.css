@@ -79,8 +79,8 @@
      reproduce the physical truth: a hairline contact shadow at the edge plus
      a slightly diffuse ambient shadow underneath. Per UI-SPEC §Shadows. */
   --shadow-card:
-    0 1px 2px 0 rgba(74, 56, 40, 0.06),
-    0 2px 4px 0 rgba(74, 56, 40, 0.05);
+    0 1px 2px 0 rgba(74, 56, 40, 0.05),
+    0 1px 3px 0 rgba(74, 56, 40, 0.03);
   --shadow-card-hover:
     0 1px 2px 0 rgba(74, 56, 40, 0.08),
     0 4px 10px 0 rgba(74, 56, 40, 0.07);
@@ -101,6 +101,7 @@
   --ease-craft: cubic-bezier(0.32, 0.72, 0.0, 1);
   --duration-fast: 150ms;
   --duration-normal: 280ms;
+  --duration-slow: 3200ms;
 
   /* Quick-260512-l0l — page-rhythm tokens. Single source of truth for the
      phone-mobile-PWA chrome: horizontal gutter, vertical section rhythm,
@@ -144,30 +145,30 @@
      (drifts toward sienna), h≈35 on terracotta accent + faint terracotta
      wash, h≈145 on the Validé emerald tint. All values per UI-SPEC §Color
      "Final OKLCH values — light mode" — verbatim. */
-  --background: oklch(0.985 0.008 60);
-  --foreground: oklch(0.22 0.018 50);
-  --card: oklch(0.992 0.006 60);
-  --card-foreground: oklch(0.22 0.018 50);
-  --popover: oklch(0.992 0.006 60);
-  --popover-foreground: oklch(0.22 0.018 50);
-  --primary: oklch(0.595 0.135 35);
-  --primary-foreground: oklch(0.985 0.008 60);
-  --secondary: oklch(0.945 0.012 50);
+  --background: oklch(0.975 0.006 75);
+  --foreground: oklch(0.21 0.014 55);
+  --card: oklch(0.99 0.005 75);
+  --card-foreground: oklch(0.21 0.014 55);
+  --popover: oklch(0.99 0.005 75);
+  --popover-foreground: oklch(0.21 0.014 55);
+  --primary: oklch(0.50 0.10 32);
+  --primary-foreground: oklch(0.975 0.006 75);
+  --secondary: oklch(0.93 0.010 60);
   --secondary-foreground: oklch(0.28 0.015 50);
-  --muted: oklch(0.945 0.012 50);
-  --muted-foreground: oklch(0.50 0.014 50);
-  --accent: oklch(0.945 0.012 50);
+  --muted: oklch(0.93 0.010 60);
+  --muted-foreground: oklch(0.50 0.012 55);
+  --accent: oklch(0.93 0.010 60);
   --accent-foreground: oklch(0.28 0.015 50);
-  --destructive: oklch(0.55 0.20 25);
-  --border: oklch(0.88 0.012 50);
-  --input: oklch(0.88 0.012 50);
-  --ring: oklch(0.595 0.135 35);
+  --destructive: oklch(0.50 0.15 25);
+  --border: oklch(0.86 0.010 55);
+  --input: oklch(0.86 0.010 55);
+  --ring: oklch(0.50 0.10 32);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.75rem;
+  --radius: 0.625rem;
   --sidebar: oklch(0.975 0.01 50);
   --sidebar-foreground: oklch(0.22 0.018 50);
   --sidebar-primary: oklch(0.28 0.015 50);
@@ -211,16 +212,20 @@
      `Member.color_hex` is unchanged — these tokens are the new RENDER layer
      (D-20-05/06). Backwards-compat: amber needs a dark foreground because
      amber-500 is too light to support white text at AA contrast. */
-  --color-member-rose-bg: #F43F5E;
+  --color-member-rose-bg: #C0364A;
   --color-member-rose-foreground: #FFFFFF;
-  --color-member-amber-bg: #F59E0B;
+  --color-member-amber-bg: #C98512;
   --color-member-amber-foreground: #1F1311;
-  --color-member-emerald-bg: #10B981;
+  --color-member-emerald-bg: #0D8A64;
   --color-member-emerald-foreground: #FFFFFF;
-  --color-member-sky-bg: #0EA5E9;
+  --color-member-sky-bg: #0879AD;
   --color-member-sky-foreground: #FFFFFF;
-  --color-member-violet-bg: #8B5CF6;
+  --color-member-violet-bg: #6E46C1;
   --color-member-violet-foreground: #FFFFFF;
+
+  /* Phase 32 §15.A — Sober Kitchen additions */
+  --font-marginalia: "Caveat", cursive;
+  --patina: 0;  /* global default; per-card override via inline style */
 }
 
 .dark {
@@ -367,7 +372,7 @@
     line-height: 1.05;
     letter-spacing: -0.02em;
     font-weight: 500;
-    font-style: italic;
+    /* font-style: italic REMOVED per §15.B — sober upright register */
   }
   /* Phase 5 §Typography type-scale — Cormorant Garamond upright for page
      titles, section headings, and dialog/sheet titles. 24px sits at the
