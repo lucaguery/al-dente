@@ -7,7 +7,7 @@ subsystem: "frontend/accueil"
 tags: [bug-fix, i18n-guard, marginalia, voting-state, LIVE-04, B-09]
 status: complete
 requirement_ids: [LIVE-04]
-commits: [1ff1b27]
+commits: [b48cbd8]
 dependency_graph:
   requires:
     - "lib/votes.computeVoteState (frontend mirror of services/voting.compute_vote_state)"
