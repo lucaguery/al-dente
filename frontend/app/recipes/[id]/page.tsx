@@ -27,7 +27,6 @@ import {
   Mic,
   MoreHorizontal,
   Pencil,
-  Timer,
   Trash2,
   Utensils,
 } from "lucide-react";
@@ -791,25 +790,22 @@ export default function RecipeDetailPage() {
             </Marginalia>
           </div>
 
-          {/* Badge row — prep time, difficulty, cuisine, mood */}
+          {/*
+            Badge row — prep time, difficulty, cuisine, mood.
+            Phase 36 POLISH-03 (all-text-pills): meta row is HOMOGENEOUS — all
+            four pills render text-only per Sober Kitchen editorial register
+            (CONTEXT.md POLISH-03 resolution). The leading Timer + Flame icons
+            on the prep / difficulty pills were dropped to match the cuisine
+            + mood pills which were already text-only. The « min » unit and
+            the « Moyen » / « Difficile » label carry the semantic; the icons
+            were decorative-redundant.
+          */}
           <div className="flex flex-wrap" style={{ gap: "6px" }}>
             {recipe.prep_time_minutes != null ? (
-              <span
-                className="badge"
-                style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}
-              >
-                <Timer size={11} aria-hidden />
-                {recipe.prep_time_minutes} min
-              </span>
+              <span className="badge">{recipe.prep_time_minutes} min</span>
             ) : null}
             {recipe.difficulty ? (
-              <span
-                className="badge"
-                style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}
-              >
-                <Flame size={11} aria-hidden />
-                {labels.difficulty(recipe.difficulty)}
-              </span>
+              <span className="badge">{labels.difficulty(recipe.difficulty)}</span>
             ) : null}
             {recipe.cuisine ? (
               <span className="badge">{labels.cuisine(recipe.cuisine)}</span>
@@ -834,9 +830,23 @@ export default function RecipeDetailPage() {
             </div>
           )}
 
-          {/* Ingredients section */}
+          {/*
+            Ingredients section.
+            Phase 36 SOBER-12 (gesture 1, §15.C cookbook page): the section
+            carries a terracotta-30 left margin-rule — a vertical 3px border in
+            ~30% terracotta running down the left edge of the ingredient block,
+            with paddingLeft to inset the list from the rule. This is the
+            cookbook-page gesture: the recipe reads as printed against a
+            terracotta-tinted margin guide, not as a flat list.
+          */}
           {recipe.ingredients && recipe.ingredients.length > 0 ? (
-            <section>
+            <section
+              style={{
+                borderLeft:
+                  "3px solid color-mix(in oklch, var(--primary) 30%, transparent)",
+                paddingLeft: "12px",
+              }}
+            >
               <div className="relative overflow-visible" style={{ marginBottom: "8px" }}>
                 {renderSectionPin("ingredients")}
                 <h2
@@ -849,7 +859,7 @@ export default function RecipeDetailPage() {
                       className="text-caption"
                       style={{ fontFamily: "var(--font-body)", fontWeight: 400, marginLeft: "6px" }}
                     >
-                      · {recipe.servings} personnes
+                      {" · "}{recipe.servings} personnes
                     </small>
                   ) : null}
                 </h2>
@@ -929,6 +939,15 @@ export default function RecipeDetailPage() {
                         Security: recipeLog.notes is user-authored; rendered as React
                         text child inside Marginalia; React escapes HTML by default.
                         Per RESEARCH Pitfall 8: field is `notes` (plural), not `note`.
+
+                        Phase 36 SOBER-12 (gesture 4, §15.C cookbook page +
+                        punch-list P-05): upgraded from flat-caption (the original
+                        `margin: 4px 0 0 12px` read as a regular caption per the
+                        2026-05-18 walkthrough) to a proper margin-gutter
+                        affordance — a dotted terracotta-25 left border with a
+                        16px paddingLeft inset reads as a handwritten paper-margin
+                        annotation against the printed step, matching the Sober
+                        Kitchen marginalia register (design-system §13).
                       */}
                       {isFirst && recipeLog?.notes ? (
                         <Marginalia
@@ -936,7 +955,10 @@ export default function RecipeDetailPage() {
                           slant
                           style={{
                             display: "block",
-                            margin: "4px 0 0 12px",
+                            margin: "4px 0 0 0",
+                            paddingLeft: "16px",
+                            borderLeft:
+                              "1px dotted color-mix(in oklch, var(--primary) 25%, transparent)",
                             fontSize: "14px",
                           }}
                         >
