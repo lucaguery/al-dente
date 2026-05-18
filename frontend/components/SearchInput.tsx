@@ -10,7 +10,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Search, X, Loader2 } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { BrandLoader } from "@/components/BrandLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -98,10 +99,7 @@ export function SearchInput({ onQueryChange }: Props) {
       />
       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center z-10">
         {pending && value.length > 0 ? (
-          <Loader2
-            aria-hidden
-            className="h-4 w-4 animate-spin text-foreground-muted"
-          />
+          <BrandLoader size="sm" aria-label="Chargement" className="text-foreground-muted" />
         ) : null}
         {value.length > 0 && !pending ? (
           <Button

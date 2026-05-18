@@ -15,7 +15,8 @@
 import type React from "react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight } from "lucide-react";
+import { BrandLoader } from "@/components/BrandLoader";
 
 import { useEnumLabels } from "@/lib/enum-labels";
 import type { AnswerField } from "@/lib/enums";
@@ -136,7 +137,7 @@ export function SystemBubble({
             className={`${PRIMARY_CTA_CLASS} disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center`}
           >
             {committing ? (
-              <Loader2 size={14} className="animate-spin" aria-hidden />
+              <BrandLoader size="sm" aria-label="Chargement" />
             ) : (
               t("summary_complete")
             )}
@@ -283,7 +284,7 @@ export function SystemBubble({
             className="flex-1 h-9 rounded-[10px] bg-primary text-primary-foreground font-semibold text-[13px] border-0 cursor-pointer disabled:opacity-50 flex items-center justify-center"
           >
             {committing ? (
-              <Loader2 size={14} className="animate-spin" aria-hidden />
+              <BrandLoader size="sm" aria-label="Chargement" />
             ) : (
               t("advisory_accept")
             )}
@@ -482,7 +483,7 @@ function QuestionBubble({
         className="w-full h-9 rounded-[10px] bg-primary text-primary-foreground font-semibold text-[13px] border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center"
       >
         {committing ? (
-          <Loader2 size={14} className="animate-spin" aria-hidden />
+          <BrandLoader size="sm" aria-label="Chargement" />
         ) : (
           t("answer_valider")
         )}

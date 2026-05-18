@@ -7,8 +7,9 @@
 
 import { useState, type RefObject } from "react";
 import { useTranslations } from "next-intl";
-import { Loader2, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { BrandLoader } from "@/components/BrandLoader";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -611,7 +612,7 @@ export function RecipeForm({
       >
         {submitting ? (
           <>
-            <Loader2 className="animate-spin h-4 w-4 mr-2" />
+            <BrandLoader size="sm" className="mr-2" />
             {tCommon("saving")}
           </>
         ) : (

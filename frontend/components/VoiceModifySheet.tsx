@@ -14,8 +14,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { BrandLoader } from "@/components/BrandLoader";
 
 import {
   Sheet,
@@ -106,7 +106,7 @@ export function VoiceModifySheet({ recipeId, open, onOpenChange }: Props) {
           >
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <BrandLoader size="sm" className="mr-2" />
                 {t("submitting")}
               </>
             ) : (

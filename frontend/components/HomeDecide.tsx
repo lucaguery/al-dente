@@ -12,8 +12,8 @@
 // 03-UI-SPEC.md §"Home tab content tree" + §"Interaction Patterns".
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { BrandLoader } from "@/components/BrandLoader";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/BrandIcon";
@@ -347,10 +347,7 @@ export function HomeDecide() {
     if (!showSpinner) return null;
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x)">
-        <Loader2
-          aria-hidden
-          className="h-8 w-8 animate-spin text-primary"
-        />
+        <BrandLoader aria-label="Chargement" />
       </div>
     );
   }
@@ -391,10 +388,7 @@ export function HomeDecide() {
     if (!showSpinner) return null;
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x)">
-        <Loader2
-          aria-hidden
-          className="h-8 w-8 animate-spin text-primary"
-        />
+        <BrandLoader aria-label="Chargement" />
       </div>
     );
   }

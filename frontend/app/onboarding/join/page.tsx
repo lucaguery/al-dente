@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import { BrandLoader } from "@/components/BrandLoader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -306,10 +307,7 @@ export default function OnboardingJoinPage() {
               <span className="flex items-center gap-2">
                 {t("color_label")}
                 {previewPending ? (
-                  <Loader2
-                    className="h-4 w-4 animate-spin text-foreground-muted"
-                    aria-hidden
-                  />
+                  <BrandLoader size="sm" aria-label="Chargement" className="text-foreground-muted" />
                 ) : null}
               </span>
             </Label>
@@ -342,7 +340,7 @@ export default function OnboardingJoinPage() {
         >
           {submitting ? (
             <>
-              <Loader2 className="animate-spin h-4 w-4 mr-2" aria-hidden />
+              <BrandLoader size="sm" className="mr-2" />
               {tCommon("saving")}
             </>
           ) : (
