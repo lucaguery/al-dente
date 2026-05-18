@@ -18,6 +18,14 @@
     "hero_question": "On mange quoi ce soir ?",
     "cta_browse": "Voir mes recettes",
     "cta_add": "Ajouter une recette",
+    "subhead": {
+      "validated": "— déjà une idée validée",
+      "tentative": "— une piste, à confirmer",
+      "empty": "— personne ne s'est encore prononcé"
+    },
+    "cta": {
+      "cook_named": "Cuisiner {title}"
+    },
     "shortlist": {
       "empty_heading": "Pas encore de shortlist",
       "empty_body": "Ton shortlist du jour n'est pas encore prêt. Reviens plus tard ou ajoute des recettes.",
@@ -31,7 +39,8 @@
       "vote_failed": "Vote impossible. Réessaie.",
       "vote_offline": "Hors ligne. Ton vote sera envoyé à la reconnexion.",
       "toast_validé": "Validé : « {title} »",
-      "toast_arrived": "Ton shortlist du jour est prêt."
+      "toast_arrived": "Ton shortlist du jour est prêt.",
+      "valide_meta": "validé · à cuisiner"
     },
     "summary": {
       "heading": "Vous avez tout vu",
