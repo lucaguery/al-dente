@@ -111,31 +111,31 @@ export function CookingLogFinalize({ logId }: Props) {
 
   if (state.kind === "loading") {
     return (
-      <main className="flex flex-col flex-1 px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe) gap-4">
+      <div className="flex flex-col flex-1 px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe) gap-4">
         <div className="h-8 w-2/3 rounded bg-surface-muted animate-pulse" />
         <div className="h-4 w-1/2 rounded bg-surface-muted animate-pulse" />
         <div className="h-32 w-full rounded-lg bg-surface-muted animate-pulse" />
-      </main>
+      </div>
     );
   }
 
   if (state.kind === "gone") {
     return (
-      <main className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1">
         <EmptyState
           icon={Sparkles}
           heading={t("gone_heading")}
           body={t("gone_body")}
           cta={{ label: t("gone_cta"), href: "/" }}
         />
-      </main>
+      </div>
     );
   }
 
   const canSubmit = !!rating && !submitting;
 
   return (
-    <main className="flex flex-col flex-1 px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe) gap-8">
+    <div className="flex flex-col flex-1 px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe) gap-8">
       <header className="flex flex-col gap-1">
         <h1 className="text-title text-foreground">{t("page_title")}</h1>
         <p className="text-base text-foreground-muted line-clamp-1">
@@ -204,6 +204,6 @@ export function CookingLogFinalize({ logId }: Props) {
           {submitting ? t("submitting") : t("submit")}
         </Button>
       </div>
-    </main>
+    </div>
   );
 }
