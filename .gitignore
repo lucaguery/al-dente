@@ -18,3 +18,4 @@
 # When intentionally capturing a screenshot, write to .playwright-mcp/
 # instead so this pattern doesn't need to widen.
 /*.playwright-screenshot.png
+.scratch/

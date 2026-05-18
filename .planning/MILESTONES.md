@@ -1,5 +1,26 @@
 # Milestones
 
+## v0.7 Sober Kitchen + Polish (Shipped: 2026-05-18)
+
+**Phases completed:** 4 phases (30–33), 9 plans, 12/12 requirements validated
+
+**Stats:**
+
+- Timeline: 2026-05-17 → 2026-05-18 (2 calendar days)
+- Closes: gh#23 (BUG-01 photo signed-URL self-heal), gh#24 (BUG-02 SVG sanitizer `ns0:` fix), gh#25 (NAV-01 central « Ajouter » CTA), gh#27 (DX-01 CLAUDE.md split), gh#29 (SOBER-01..08 Sober Kitchen port §15.A→E)
+- Deferred to v0.8 / backlog: gh#26 (« Suggérer » tab — needs product design first), gh#28 (test coverage — better defended against locked visual contract from v0.7)
+
+**Key accomplishments:**
+
+- **Phase 30 — Live-bug sweep:** Recipe photos self-heal on PWA resume — backend `SIGNED_URL_TTL_SECONDS = 86400` (24h) + frontend `PHOTO_URL_CACHE_TTL_MS = 82_800_000` (23h, 1h safety margin) + NEW `useSignedPhotoUrl` hook returning `{ src, onError }` with one-shot retry budget per `<img>` mount; consumed by `RecipeCard`, `ShortlistCard`, `PhotoUploader`, recipe detail. Recipe SVG illustrations render as visible pictograms — two-layer fix: `ET.register_namespace("", "http://www.w3.org/2000/svg")` at module load + belt-and-suspenders `re.sub(r"\bns\d+:", "", serialized)` defense. Alembic 0012 re-sanitizes existing `ns0:`-poisoned rows on next deploy.
+- **Phase 31 — Bottom nav restructure:** Central elevated « Ajouter » CTA tab lands in `BottomNav.tsx` on every authenticated, non-onboarding screen — filled primary circle with white `+` glyph, visibly elevated above the four flat sibling tabs. Per-tab `variant: "tab" | "central-cta"` discriminator avoids sprinkling conditionals. Drafts-tab badge + safe-area inset + `/onboarding/*` hiding all preserved. NEW `nav.add` / `nav.profile` i18n keys.
+- **Phase 32 — Sober Kitchen port (5 plans):** Sober OKLCH palette (14 value swaps, 3 new tokens, 5 desaturated member hexes) in `globals.css`; Caveat registered as `--font-marginalia`; 4 CSS primitive libraries (marginalia + ledger-card + table-scene + loader-brand) added. Four React primitives shipped: `Marginalia`, `BrandLoader`, `LedgerCard`, `TableVote`. **SOBER-08 grep gate: 0 `animate-spin` outside `BrandLoader.tsx`** (12 spinner call-sites atomically swept). Accueil ported (HomeDecide + TableVote per shortlist row, Caveat slant subhead, valide-tint row treatment, sticky Flame CTA); Bibliothèque ported (3-view switcher grid/list-editorial/patine-grouped with `cookCountToPatina` + `groupByPatina` helpers + localStorage view persistence with 150ms anti-flash hydration); Recette détail ported (sticky topbar + hero 16:10 -38px bleed + Caveat identity subhead from `cook_count` + terracotta ingredient quantities + terracotta step numerals + conditional step-1 marginalia from `cooking_logs[].notes` + sticky « Cuisiner maintenant » CTA). Worktree base drift twice caused globals.css/layout.tsx to be reverted mid-execution; commit `1872d2b` restored Wave 1 artifacts; verifier `score: 6/6` with post-verify fix recorded.
+- **Phase 33 — CLAUDE.md split:** Root `CLAUDE.md` pruned from 114 lines → **34 lines of guidance** outside `<!-- GSD:* -->` blocks (D-13 line-count gate, target ≤ 60). NEW `backend/CLAUDE.md` (Gemini SDK correction + alembic deploy contract). NEW `frontend/CLAUDE.md` (Next.js 16 framework-version warning folded verbatim from the deleted `frontend/AGENTS.md` with `<!-- BEGIN:nextjs-agent-rules -->` markers preserved). NEW `.planning/CLAUDE.md` (GSD workflow enforcement block relocated). `frontend/AGENTS.md` deleted per the D-12 override (Claude Code is the only AI assistant in active use; cross-tool AGENTS.md convention is dead weight today, revisit gate: second AI assistant added). **D-04 empirical verification: FAIL** — `gsd-tools generate-claude-md` is hard-wired to the full 6-block root template; scoped marker blocks would be clobbered. Fallback contract applied: `GSD:stack` + `GSD:conventions` stay at root unchanged. Architecture invariants #1–#8 preserved byte-for-byte at root; #2 and #7 NOT duplicated into `backend/CLAUDE.md` (D-11).
+
+**Known deferred items at close:** 13 (see STATE.md §Deferred Items) — 4 UAT/verification `human_needed` items (Phase 30 + 32) tracked via `/gsd-audit-uat`, plus 9 stale pre-v0.7 quick-task tracking entries.
+
+---
+
 ## v0.6 Conversation Capture (Shipped: 2026-05-17)
 
 **Phases completed:** 5 phases (25–29), 22 plans, 23/23 requirements validated

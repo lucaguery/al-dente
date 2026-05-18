@@ -2,48 +2,43 @@
 gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
-status: milestone_complete
-stopped_at: Milestone complete (Phase 33 was final phase)
-last_updated: 2026-05-18T13:23:04.041Z
-last_activity: 2026-05-18 -- Phase 33 execution started
+status: Awaiting next milestone
+stopped_at: Milestone v0.7 archived 2026-05-18
+last_updated: "2026-05-18T13:35:00.000Z"
+last_activity: 2026-05-18 — Milestone v0.7 completed and archived
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
-  percent: 50
+  completed_phases: 4
+  total_plans: 9
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`)
+See: .planning/PROJECT.md (updated 2026-05-18 — v0.7 Sober Kitchen + Polish milestone shipped and archived)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
 **Current focus:** Milestone complete
 
 ## Current Position
 
-Milestone: v0.7 Sober Kitchen + Polish
-Phase: 33
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-05-18
-
-Resume: `/gsd-execute-phase 33 ${GSD_WS}`
-
-Progress: 3/4 phases complete (Phases 30, 31, 32 shipped — Phase 31 progress tool-undercounted because it lacks a phase dir)
+Phase: Milestone v0.7 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-18 — Milestone v0.7 completed and archived
 
 ## Performance Metrics
 
-**Velocity (cumulative through v0.6):**
+**Velocity (cumulative through v0.7):**
 
-- Total milestones shipped: 7 (v0.1 → v0.6)
-- Total phases shipped: 30
-- Total plans shipped: 138
-- Total requirements validated: 159 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6)
-- v0.6 timeline: 2026-05-13 → 2026-05-17 (5 calendar days, 143 commits, 34 `feat`, 139 files, +37,649 / −2,141 lines)
+- Total milestones shipped: 8 (v0.1 → v0.7)
+- Total phases shipped: 34
+- Total plans shipped: 147
+- Total requirements validated: 171 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6 + 12 v0.7)
+- v0.7 timeline: 2026-05-17 → 2026-05-18 (2 calendar days)
 
 **By Milestone:**
 
@@ -56,17 +51,13 @@ Progress: 3/4 phases complete (Phases 30, 31, 32 shipped — Phase 31 progress t
 | v0.4 (Phases 15-21) | 7 | ✅ Complete (shipped 2026-05-11) |
 | v0.5 (Phases 22-24) | 3 | ✅ Complete (shipped 2026-05-13) |
 | v0.6 (Phases 25-29) | 5 | ✅ Complete (shipped 2026-05-17) |
-| v0.7 (Phases 30-33) | 4 | 🚧 In Progress |
-| Phase 32 P32-03 | 6 | 2 tasks | 3 files |
-| Phase 32 P04 | 8 | 3 tasks | 6 files |
-| Phase 32 P05 | 11 | 2 tasks | 2 files |
+| v0.7 (Phases 30-33) | 4 | ✅ Complete (shipped 2026-05-18) |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
-- v0.7 roadmap written 2026-05-17: 4 phases (30-33), 12 requirements (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Phase shape locked during `/gsd-new-milestone`. Granularity: coarse.
-- v0.7 milestone opened 2026-05-17 from the 8 open GitHub issues. Scope: bug sweep (gh#23, gh#24) → bottom-nav restructure (gh#25) → Sober Kitchen port (gh#29 — `docs/design-system.html` §15 A→E) → CLAUDE.md split (gh#27). Deferred: gh#28 (test coverage → v0.8, after visual contract locks); gh#26 (« Suggérer » tab → backlog, needs product design first). gh#20 to be closed (shipped in v0.6).
+- v0.7 milestone shipped 2026-05-18: 4 phases (30-33), 9 plans, 12 requirements (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Closes gh#23/24/25/27/29; defers gh#26 (« Suggérer ») to backlog and gh#28 (test coverage) to v0.8. **No new architecture-invariant evolutions** (D-11 explicitly kept invariants #2 and #7 at root, not duplicated to backend/CLAUDE.md). **CLAUDE.md restructure** — root pruned from 114 → 34 lines of guidance; backend/frontend/.planning scoped files load per-subtree; `frontend/AGENTS.md` deleted per the D-12 override (Claude Code is the only AI assistant in active use today, revisit gate: second AI assistant added).
 - v0.6 milestone shipped 2026-05-17: 5 phases (25-29), 22 plans, 23 requirements (THREAD × 4 + TURN × 4 + CAPTURE × 4 + DETAIL × 5 + LLM × 4 + MIGRATION × 2). Closes gh#20 per ADR-0001. **Architecture invariant #1 evolved further** — all five capture surfaces now flow through one `promote_draft(recipe_id)` entry point dispatching on first turn's `kind`. **Invariant #5 satisfied by `recipe_turns`** going forward; legacy `source_capture` JSONB retired. **Invariant #4** extended with `turn.created` + `turn.updated` semantics.
 - v0.5 milestone shipped 2026-05-13: 3 phases (22-24), 9 plans, 12 requirements (QW × 3 / DECK × 4 / RID × 5). Closed 12 GitHub issues. **Invariant #1 first shift** — quick + full-form captures moved from sync `structured`-on-return to async `BackgroundTask`.
 - v0.4 milestone shipped 2026-05-11: 7 phases (15-21), 27 plans, 24 reqs.
@@ -77,28 +68,17 @@ Progress: 3/4 phases complete (Phases 30, 31, 32 shipped — Phase 31 progress t
 
 ### Decisions
 
-See PROJECT.md Key Decisions table for the cumulative log. v0.7 milestone-level decisions live in the Current Milestone block in PROJECT.md (test-coverage deferral, « Suggérer » deferral, bug-fix shape, bottom-nav variant discriminator, CLAUDE.md / AGENTS.md coexistence).
-
-- [Phase 32]: VoteSummary redesigned in place (Choice 1) — single HomeDecide consumer, props interface preserved
-- [Phase 32]: home.hero_question + nav.home keys reused for Accueil A header — no new heading key needed
-- [Phase 32]: PatinaSection/PatinaView defined as file-scoped functions outside RecipesPage to avoid re-creation on render
-- [Phase 32]: Grid breakpoints: 2-col mobile → 3-col @md (skip 4-col @lg — iPhone PWA is primary)
-- [Phase 32]: List-view marginalia omitted for Phase 32 — no per-row data source wired; deferred to 32-05
-- [Phase 32]: fetchCookingLogs HIST-01 reused for step-1 marginalia; no new backend endpoint (D-08)
-- [Phase 32]: handleStartCooking wired via postStartCooking (mirrors HomeDecide pattern); existing ingredient qty/step numeral pattern in terracotta
+See PROJECT.md Key Decisions table for the cumulative log. v0.7 decisions archived in `.planning/milestones/v0.7-ROADMAP.md` and the per-phase context files (test-coverage deferral, « Suggérer » deferral, bug-fix shape, bottom-nav variant discriminator, AGENTS.md deletion override D-12, D-04 verification FAIL fallback).
 
 ### Open Research
 
-None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring research. The design contract is already locked in `docs/design-system.html` §15.
+None — v0.7 ships clean. Next milestone scope unknown until `/gsd-new-milestone` runs.
 
 ### Blockers/Concerns
 
-- **None blocking.** v0.7 ready to discuss Phase 33 (CLAUDE.md split — pure docs restructure, DX-01 only).
-- **Phase 32 HUMAN-UAT items** persisted in `.planning/phases/32-port-locked-screens-to-sober-kitchen/32-HUMAN-UAT.md` — tracked via `/gsd-audit-uat`.
-- **4 v0.6 Phase 29 HUMAN-UAT items** carried forward — Gemini round-trip, advisory round-trip, defer gate, Playwright suite. Tracked via `/gsd-audit-uat`.
-- **2 v0.6 Phase 28 HUMAN-UAT items** carried forward — chip/stepper answer + advisory accept/dismiss (both depend on the Phase 29 LLM emissions landing in live use).
-- **15 v0.4 HUMAN-UAT items** remain orthogonal — tracked via `/gsd-audit-uat`.
-- **3 acknowledged v0.5 warnings:** WR-01 (idempotent `db.close()` in `retry_promotion`), WR-02 (seed misses Phase 24 fields on 18 of 21 recipes per intended D-16 nudge). WR-03 from v0.5 was structurally resolved by v0.6 Phase 25's `source_capture` drop.
+- **None blocking.** v0.7 milestone closed cleanly.
+- **HUMAN-UAT backlog carried forward** — Phase 30 (3 items: iPhone PWA self-heal, fresh pictogram render, post-deploy migration heal), Phase 32 (4 items: live Sober Kitchen verification), Phase 29 (4 items: Gemini round-trip, advisory round-trip, defer gate, Playwright suite), Phase 28 (2 items: chip/stepper answer, advisory accept/dismiss), Phase 21 v0.4 era (15 items). All tracked via `/gsd-audit-uat`.
+- **3 acknowledged v0.5 warnings:** WR-01 (idempotent `db.close()` in `retry_promotion`), WR-02 (seed misses Phase 24 fields on 18 of 21 recipes per intended D-16 nudge). WR-03 was structurally resolved by v0.6 Phase 25's `source_capture` drop.
 - **Behavioral validation gate** (≥ 2 weeks daily use by both members, v0.1 definition-of-done) still pending — orthogonal to feature milestones.
 
 ### Quick Tasks Completed
@@ -112,9 +92,35 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 | fast-19 | Fix Accueil spinner flash on cache hits — `useDelayedFlag(250)` gates both spinner returns in `HomeDecide` | 2026-05-12 | 7a1f39c | gh#19 (closed) |
 | 260518-kba | Playwright MCP walkthrough — observation-only punch list (10 bugs / 7 polish / 8 design-drift) for v0.7 Sober Kitchen triage | 2026-05-18 | e303a6a | [260518-kba](./quick/260518-kba-ui-walkthrough-punch-list/) |
 
+## Deferred Items
+
+Items acknowledged and deferred at v0.7 milestone close on 2026-05-18:
+
+| Category | Item | Status | Notes |
+|----------|------|--------|-------|
+| uat_gap | Phase 30 — 30-HUMAN-UAT.md | partial (3 open) | iPhone PWA self-heal · fresh pictogram render · post-deploy migration heal of in-prod ns0 rows. Tracked via /gsd-audit-uat. |
+| uat_gap | Phase 32 — 32-HUMAN-UAT.md | partial (4 open) | Live Sober Kitchen UAT items. Tracked via /gsd-audit-uat. |
+| verification_gap | Phase 30 — 30-VERIFICATION.md | human_needed | Verifier passed 4/4 must-haves in code; 3 items need physical-device UAT. |
+| verification_gap | Phase 32 — 32-VERIFICATION.md | human_needed | Verifier passed 6/6 in code (post_verify_fix 1872d2b closed truth-1/2/3 gaps); 4 items need physical-device UAT. |
+| quick_task | 260507-g0k-ui-polish-complet-bug-fix-bottomnav-safe | missing | Pre-v0.7 (May 7), orphaned tracking. |
+| quick_task | 260507-hbw-module-level-stale-while-revalidate-cach | missing | Pre-v0.7 (May 7), orphaned tracking. |
+| quick_task | 260507-hd0-create-a-beautiful-polished-layout-for-t | missing | Pre-v0.7 (May 7), orphaned tracking. |
+| quick_task | 260507-nmi-catch-up-with-what-has-been-done | missing | Pre-v0.7 (May 7), orphaned tracking. |
+| quick_task | 260508-1ln-fix-audit-gaps-cooking-finalized-handler | missing | Pre-v0.7 (May 8), orphaned tracking. |
+| quick_task | 260512-df0-improve-suggestion-list-layout-slide-smo | missing | Pre-v0.7 (May 12, v0.5/v0.6 era), orphaned tracking. |
+| quick_task | 260512-gpl-ui-cormorant-garamond-font-swap-directio | missing | Pre-v0.7 (May 12), orphaned tracking. |
+| quick_task | 260512-l0l-harmonize-typography-and-spacing-across- | missing | Pre-v0.7 (May 12), orphaned tracking. |
+| quick_task | 260512-lif-harmonize-capture-tab-summary-components | missing | Pre-v0.7 (May 12), orphaned tracking. |
+
+UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surface via `/gsd-audit-uat`. The 9 quick-task entries are pre-v0.7 — the audit reports them as `missing` because tracking files aren't in the expected layout; the underlying work shipped in earlier milestones.
+
 ## Session Continuity
 
-Last activity: 2026-05-18 — Phase 33 planned (`6f1195f`); single atomic plan 33-01 with 8 tasks. Coverage gates green (DX-01 + 6/6 trackable decisions). D-02/03/09/14 marked `[informational]` (rejected-option annotations).
-Stopped at: Phase 33 plan committed; ready to execute
-Resume file: .planning/phases/33-claude-md-split/33-01-PLAN.md
-Next: `/gsd-execute-phase 33 ${GSD_WS}`
+Last activity: 2026-05-18 — Milestone v0.7 Sober Kitchen + Polish shipped and archived. Phase 33 (CLAUDE.md split) closed the milestone with a single atomic plan (DX-01); root `CLAUDE.md` pruned from 114 → 34 lines of guidance; backend/frontend/.planning scoped files load per-subtree; `frontend/AGENTS.md` deleted per D-12 override. v0.7-ROADMAP.md and v0.7-REQUIREMENTS.md archived to `.planning/milestones/`.
+Stopped at: Milestone v0.7 archived; ROADMAP collapsed; PROJECT.md evolved; awaiting next milestone scope.
+Next: `/gsd-new-milestone` to scope v0.8.
+
+## Operator Next Steps
+
+- Start the next milestone with `/gsd-new-milestone`
+- Review v0.7 HUMAN-UAT carry-forward via `/gsd-audit-uat` (Phase 30 + Phase 32 items need physical-device validation)
