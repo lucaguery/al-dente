@@ -81,11 +81,17 @@ OFFENDERS=$(printf '%s\n%s\n' "$OFFENDERS_QUOTED" "$OFFENDERS_JSX" | sort -u | g
 #   2. Drop single-line comment-only lines (// ...).
 #   3. Drop TS type-literal positions (`: "italian" |`, `as "italian"`).
 #   4. Drop wire-shape array defaults (e.g. `["spring", "summer", ...]`).
+#   5. Drop JSX attribute wire values (`<SelectItem value="italian">`).
+#      WR-03 — these are legitimate controlled-component wire values, not
+#      user-facing copy. Require both `<TagName` (capitalized — JSX) earlier
+#      on the line AND `attr="TOKEN"` so `const x = "italian"` (a real leak)
+#      is not silently dropped.
 FILTERED=$(printf '%s\n' "$OFFENDERS" \
   | grep -v -E '^[^:]+:[0-9]+:[[:space:]]*(import |from |//|\*|[[:space:]]*\*)' \
   | grep -v -E '^[^:]+:[0-9]+:[[:space:]]*$' \
   | grep -v -E '(:[[:space:]]*"('"$TOKENS"')"[[:space:]]*[,|)]|as[[:space:]]+"('"$TOKENS"')")' \
   | grep -v -E '\[([[:space:]]*"('"$TOKENS"')",?[[:space:]]*){2,}' \
+  | grep -v -E '<[A-Za-z][^>]*[[:space:]][a-z][a-zA-Z]*=["'"'"']('"$TOKENS"')["'"'"']' \
   || true)
 
 if [ -n "$FILTERED" ]; then
