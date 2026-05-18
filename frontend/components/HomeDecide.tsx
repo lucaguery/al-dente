@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { BrandLoader } from "@/components/BrandLoader";
+import { Marginalia } from "@/components/Marginalia";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/BrandIcon";
@@ -57,6 +58,9 @@ export function HomeDecide() {
   const tShortlist = useTranslations("home.shortlist");
   const tSummary = useTranslations("home.summary");
   const tPartnerWaiting = useTranslations("home.partner_waiting");
+  const tSubhead = useTranslations("home.subhead");
+  const tHome = useTranslations("home");
+  const tNav = useTranslations("nav");
   const { session, refresh: refreshSession } = useSession();
 
   const [shortlist, setShortlist] = useState<ShortlistResponse | null>(null);
@@ -453,6 +457,20 @@ export function HomeDecide() {
   const unvotedByMe = dealableRecipes.filter((r) => !myVotes.has(r.id));
   const allVoted = unvotedByMe.length === 0;
 
+  // State-derived Accueil subhead (D-13) — scans ALL shortlist recipes
+  // (not just dealable) to reflect the full vote landscape.
+  const allRowStates = shortlist.recipes.map((r) => {
+    const recipeVotes = shortlist.votes.filter((v) => v.recipe_id === r.id);
+    return computeVoteState(recipeVotes, session.members.length ?? 2);
+  });
+  const subheadKey: "validated" | "tentative" | "empty" =
+    allRowStates.includes("valide")
+      ? "validated"
+      : allRowStates.includes("pressenti")
+        ? "tentative"
+        : "empty";
+  const subheadText = tSubhead(subheadKey);
+
   // bug 4 fix (260512-df0): explicit empty-shortlist guard. If
   // `shortlist.recipes` is empty (e.g. a regenerate produced a zero-result
   // list), the original code would fall through to `allVoted=true` and
@@ -485,8 +503,33 @@ export function HomeDecide() {
           onSkip={handleBannerSkip}
         />
       )}
+      {/* Accueil A header composition — docs/design-system.html #accueil lines 1481-1486 */}
       <header className="px-(--spacing-page-x) pt-8 pb-2">
-        <h1 className="text-display text-foreground">{formattedDate}</h1>
+        {/* Header date row: page label left + date caption right (UI-SPEC §9.1 step 1) */}
+        <div className="flex items-baseline justify-between">
+          <span
+            className="text-foreground"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 500,
+              fontSize: "20px",
+            }}
+          >
+            {tNav("home")}
+          </span>
+          <small className="text-caption capitalize">{formattedDate}</small>
+        </div>
+        {/* H1 — Cormorant 500 28px upright "On mange quoi ce soir ?" (UI-SPEC §9.1 step 2) */}
+        <h1
+          className="text-display text-foreground mt-4"
+          style={{ fontSize: "28px", fontStyle: "normal" }}
+        >
+          {tHome("hero_question")}
+        </h1>
+        {/* State-derived Caveat slant subhead (D-13 + UI-SPEC §9.1 step 3) */}
+        <Marginalia size="sm" slant className="mt-[-4px]">
+          {subheadText}
+        </Marginalia>
       </header>
 
       {shortlistIsEmpty ? (
