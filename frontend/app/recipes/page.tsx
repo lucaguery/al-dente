@@ -22,6 +22,11 @@
 // draft→failed transitions (full row replace via prev.map) so no additional
 // `recipe.promoted` subscription is needed — promote_draft broadcasts
 // `recipe.updated` which covers the status flip.
+//
+// Phase 32 §15.C (SOBER-03) — 3-view switcher (grid / list / patina) with
+// localStorage["aldente.library.view"] persistence (D-09, D-10).
+// Anti-flash: SSR pre-renders grid; useEffect hydrates from storage post-mount
+// with 150ms opacity transition (RESEARCH Pattern 7).
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -32,11 +37,14 @@ import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/BrandIcon";
 import { EmptyState } from "@/components/EmptyState";
 import { RecipeCard } from "@/components/RecipeCard";
+import { RecipeRow } from "@/components/RecipeRow";
+import { LibraryViewSwitch, type LibraryView } from "@/components/LibraryViewSwitch";
+import { Marginalia } from "@/components/Marginalia";
 import { SearchInput } from "@/components/SearchInput";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { api } from "@/lib/api";
 import { useRealtime } from "@/components/RealtimeProvider";
-import type { Recipe } from "@/lib/recipes";
+import { groupByPatina, type Recipe } from "@/lib/recipes";
 
 function dedupeReplace(prev: Recipe[], next: Recipe): Recipe[] {
   const idx = prev.findIndex((p) => p.id === next.id);
@@ -54,14 +62,111 @@ function dedupeReplace(prev: Recipe[], next: Recipe): Recipe[] {
 // results never touch this variable.
 let recipesCache: Recipe[] | null = null;
 
+// Phase 32 §15.C (D-09/D-10) — patine view sub-components.
+// Defined outside RecipesPage so they don't re-create on every render.
+
+function PatinaSection({
+  label,
+  count,
+  recipes,
+  columnClass,
+}: {
+  label: string;
+  count: number;
+  recipes: Recipe[];
+  columnClass: string;
+}) {
+  return (
+    <section>
+      <header className="flex items-baseline gap-2 mt-4 mb-2">
+        <h2 className="font-display" style={{ fontSize: "16px", fontWeight: 500 }}>
+          {label}
+        </h2>
+        <Marginalia size="sm" as="span" style={{ fontSize: "15px" }}>
+          · {count}
+        </Marginalia>
+      </header>
+      <div className={columnClass}>
+        {recipes.map((r) => (
+          <RecipeCard key={r.id} recipe={r} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PatinaView({
+  recipes,
+  tPatina,
+}: {
+  recipes: Recipe[];
+  tPatina: ReturnType<typeof useTranslations>;
+}) {
+  const grouped = groupByPatina(recipes);
+  return (
+    <div className="flex flex-col gap-[8px] px-(--spacing-page-x)">
+      {grouped.heritage.length > 0 ? (
+        <PatinaSection
+          label={tPatina("heritage")}
+          count={grouped.heritage.length}
+          recipes={grouped.heritage}
+          columnClass="grid grid-cols-1 gap-[10px]"
+        />
+      ) : null}
+      {grouped.habitudes.length > 0 ? (
+        <PatinaSection
+          label={tPatina("habitudes")}
+          count={grouped.habitudes.length}
+          recipes={grouped.habitudes}
+          columnClass="grid grid-cols-2 gap-[10px]"
+        />
+      ) : null}
+      {grouped.essai.length > 0 ? (
+        <PatinaSection
+          label={tPatina("essai")}
+          count={grouped.essai.length}
+          recipes={grouped.essai}
+          columnClass="grid grid-cols-3 gap-[8px]"
+        />
+      ) : null}
+    </div>
+  );
+}
+
 export default function RecipesPage() {
   const t = useTranslations("recipes");
   const tErr = useTranslations("onboarding.errors");
+  const tPatina = useTranslations("home.library.patina_section");
   const router = useRouter();
   const realtime = useRealtime();
   const [recipes, setRecipes] = useState<Recipe[]>(recipesCache ?? []);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(recipesCache === null);
+
+  // Phase 32 §15.C (D-10) — view choice persisted in localStorage.
+  // SSR pre-renders grid (the default); useEffect hydrates from storage
+  // post-mount. Anti-flash: panel opacity transitions 0→1 over 150ms.
+  const [view, setView] = useState<LibraryView>("grid");
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("aldente.library.view");
+      if (stored === "list" || stored === "patina") setView(stored);
+    } catch {
+      /* localStorage may throw in private-mode Safari; degrade silently */
+    }
+    setHydrated(true);
+  }, []);
+
+  const handleViewChange = useCallback((next: LibraryView) => {
+    setView(next);
+    try {
+      window.localStorage.setItem("aldente.library.view", next);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const handleSearch = useCallback(
     async (q: string) => {
@@ -159,9 +264,38 @@ export default function RecipesPage() {
             )}
           </div>
         ) : (
-          <div className="px-(--spacing-page-x) grid grid-cols-2 gap-3 pb-(--spacing-bottom-safe) md:grid-cols-3 lg:grid-cols-4">
-            {recipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
-          </div>
+          <>
+            {/* Meta row: recipe count + view switcher */}
+            <div className="flex items-center justify-between mt-2 mb-3 px-(--spacing-page-x)">
+              <small className="text-caption">
+                {recipes.length === 1
+                  ? t("library.count_singular", { n: recipes.length })
+                  : t("library.count_plural", { n: recipes.length })}
+              </small>
+              <LibraryViewSwitch value={view} onChange={handleViewChange} />
+            </div>
+
+            {/* Anti-flash: opacity transitions 0→1 after hydration (RESEARCH Pattern 7) */}
+            <div
+              className={`transition-opacity duration-150 pb-(--spacing-bottom-safe) ${hydrated ? "opacity-100" : "opacity-0"}`}
+            >
+              {view === "grid" ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-[10px] px-(--spacing-page-x)">
+                  {recipes.map((r) => (
+                    <RecipeCard key={r.id} recipe={r} />
+                  ))}
+                </div>
+              ) : view === "list" ? (
+                <div className="flex flex-col gap-[14px] px-(--spacing-page-x)">
+                  {recipes.map((r) => (
+                    <RecipeRow key={r.id} recipe={r} />
+                  ))}
+                </div>
+              ) : (
+                <PatinaView recipes={recipes} tPatina={tPatina} />
+              )}
+            </div>
+          </>
         )}
       </section>
     </OnboardingGuard>
