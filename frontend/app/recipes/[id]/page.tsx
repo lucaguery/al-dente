@@ -25,7 +25,6 @@ import {
   FileQuestion,
   Flame,
   Mic,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Utensils,
@@ -711,19 +710,8 @@ export default function RecipeDetailPage() {
             >
               <Trash2 size={16} aria-hidden />
             </button>
-            <button
-              type="button"
-              aria-label="Menu"
-              className="inline-flex items-center justify-center rounded-full border"
-              style={{
-                width: "36px",
-                height: "36px",
-                background: "var(--card)",
-                borderColor: "var(--border)",
-              }}
-            >
-              <MoreHorizontal size={16} aria-hidden />
-            </button>
+            {/* gh#35 E2 — kebab "..." menu removed (it had no onClick wired).
+                If a structured action menu is needed later, reintroduce here. */}
           </div>
         </div>
 
@@ -761,11 +749,27 @@ export default function RecipeDetailPage() {
           Phase 32 §15.C — Body block.
           padding: 18px 20px 24px; gap: 14px between sections.
           Per design-system.html #recette line 1789.
+
+          gh#35 E1 — body is click-to-edit: tap anywhere inside this block
+          routes to /recipes/[id]/edit (structured edit mode). The body
+          contains no interactive children (badges + ingredients + steps are
+          read-only), so a single block-level handler is enough. The Pencil
+          icon in the topbar above is kept as the canonical edit affordance;
+          this click handler is the secondary "tap a field" path.
         */}
         <div
           ref={formRef}
-          className="flex flex-col flex-1"
+          role="button"
+          tabIndex={0}
+          className="flex flex-col flex-1 cursor-pointer"
           style={{ padding: "18px 20px 24px", gap: "14px" }}
+          onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              router.push(`/recipes/${recipe.id}/edit`);
+            }
+          }}
         >
           {/* Title + identity subhead (D-13) */}
           <div className="relative overflow-visible">
