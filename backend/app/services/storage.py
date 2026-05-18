@@ -35,6 +35,24 @@ BUCKET = "recipe-photos"
 MAX_BYTES = 8 * 1024 * 1024  # 8 MiB hard cap (T-01-09-03 mitigation)
 SIGNED_URL_TTL_SECONDS = 86400  # 24h (Phase 30 BUG-01 D-01). Covers a full overnight PWA suspend → morning open. Within Supabase's 7-day cap.
 
+
+class StorageObjectNotFound(Exception):
+    """Phase 34 LIVE-02 — typed signal for "the storage object isn't there".
+
+    Raised by ``create_signed_photo_url`` when the supabase-py client either
+    raises with a missing-object shape (404 / NoSuchKey / "not found") OR
+    returns an envelope that lacks the expected ``signedURL`` key. The
+    router catches this by type and converts to ``HTTPException(404)`` —
+    a generic ``Exception`` would conflate "real outage" with "object gone",
+    and a bare ``RuntimeError`` (the pre-Phase-34 shape) bubbled to a 500
+    which the frontend's single-retry self-heal couldn't distinguish from
+    a real server error.
+    """
+
+    def __init__(self, path: str) -> None:
+        super().__init__(f"storage object not found: {path}")
+        self.path = path
+
 # Phase 26 D-26 — URL extracted-markdown bucket (separate from recipe-photos
 # so bucket-level MIME enforcement stays clean: photos vs text/markdown).
 URL_BUCKET = "recipe-urls"
@@ -325,6 +343,27 @@ def upload_cooking_log_photo(
     return path
 
 
+_MISSING_OBJECT_MARKERS = ("not found", "not_found", "nosuchkey", "404")
+
+
+def _looks_like_missing_object(exc: BaseException) -> bool:
+    """Heuristic for supabase-py / storage3 'object missing' shapes.
+
+    supabase-py's StorageException surfaces under several shapes across SDK
+    versions: dict-attached `.code == "NoSuchKey"`, HTTP-status `.status == 404`,
+    or just a message string containing "not found". Match all three so a
+    minor SDK bump doesn't silently revert this to 500. Case-insensitive.
+    """
+    code = getattr(exc, "code", None)
+    if isinstance(code, str) and code.lower() in {"nosuchkey", "not_found"}:
+        return True
+    status = getattr(exc, "status", None) or getattr(exc, "statusCode", None)
+    if status in (404, "404"):
+        return True
+    text = str(exc).lower()
+    return any(marker in text for marker in _MISSING_OBJECT_MARKERS)
+
+
 def create_signed_photo_url(path: str) -> str:
     """Return a short-lived URL the frontend can drop into ``<img src>``.
 
@@ -336,18 +375,40 @@ def create_signed_photo_url(path: str) -> str:
     supabase-py returns the signed URL under one of several keys depending on
     SDK version. We normalize all three known shapes so a minor SDK bump
     doesn't silently break the read path.
+
+    Phase 34 LIVE-02: raises ``StorageObjectNotFound`` when the upstream
+    indicates a missing object (SDK exception with 404/NoSuchKey shape, OR
+    a response envelope without any of the expected signed-URL keys). All
+    other unexpected exceptions propagate unchanged so a real storage outage
+    still surfaces as a 500.
     """
     client = _supabase()
-    result = client.storage.from_(BUCKET).create_signed_url(
-        path, SIGNED_URL_TTL_SECONDS
-    )
+    try:
+        result = client.storage.from_(BUCKET).create_signed_url(
+            path, SIGNED_URL_TTL_SECONDS
+        )
+    except StorageObjectNotFound:
+        raise
+    except Exception as exc:  # noqa: BLE001 — narrow via heuristic below
+        if _looks_like_missing_object(exc):
+            raise StorageObjectNotFound(path) from exc
+        raise
+
+    # Some SDK versions don't raise on a missing object — they return an
+    # error envelope or an empty dict. Treat both as missing.
+    if isinstance(result, dict) and result.get("error") is not None:
+        raise StorageObjectNotFound(path)
+
     url = (
         (result or {}).get("signedURL")
         or (result or {}).get("signedUrl")
         or ((result or {}).get("data") or {}).get("signedUrl")
     )
     if not url:
-        raise RuntimeError(f"unexpected signed-url response: {result!r}")
+        # Empty / unexpected envelope — most likely a missing object on an
+        # SDK that swallows the 404. Treat as missing so the router can map
+        # to 404 instead of bubbling a generic 500.
+        raise StorageObjectNotFound(path)
     return url
 
 

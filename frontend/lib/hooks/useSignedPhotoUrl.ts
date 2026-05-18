@@ -66,10 +66,14 @@ export function useSignedPhotoUrl(
     getSignedPhotoUrl(recipeId, path)
       .then((url) => setSrc(url))
       .catch(() => {
-        // Second failure — stop. Leave src as the now-broken URL; the
-        // consumer's <img onError> already fired once, so the browser's
-        // own broken-image icon takes over (production behavior) or the
-        // component's dev fallback (RecipeCard / ShortlistCard) takes over.
+        // Second failure — stop retrying AND drop the now-broken URL.
+        // Phase 34 LIVE-02: with the backend now returning 404 on a
+        // missing storage object (B-02), the second attempt for a
+        // permanently-gone path will reject again. Setting src to null
+        // surfaces the consumer's placeholder branch instead of leaving
+        // the broken <img src> visible, which would otherwise paint the
+        // browser's default broken-image icon over the patine gradient.
+        setSrc(null);
       });
   }, [recipeId, path]);
 

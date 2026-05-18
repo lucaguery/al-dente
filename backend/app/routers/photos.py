@@ -25,6 +25,7 @@ and 01-09 can land in parallel without merge conflict on the same file.
 
 from __future__ import annotations
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
@@ -40,9 +41,12 @@ from app.services.realtime import broadcast_to_household
 from app.services.storage import (
     MAX_BYTES,
     SIGNED_URL_TTL_SECONDS,
+    StorageObjectNotFound,
     create_signed_photo_url,
     upload_recipe_photo,
 )
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/recipes", tags=["recipes-photos"])
 
@@ -176,5 +180,22 @@ def signed_photo_url(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="path not on recipe"
         )
-    url = create_signed_photo_url(path)
+    try:
+        url = create_signed_photo_url(path)
+    except StorageObjectNotFound:
+        # Phase 34 LIVE-02 (B-02): the path was authorized (recipe + photo_paths
+        # match) but Supabase Storage has no object at that path. Return 404
+        # rather than letting the missing-object signal bubble to a 500 — the
+        # frontend's useSignedPhotoUrl single-retry self-heal can then settle
+        # cleanly on the placeholder branch. Warn (not error) so ops can spot
+        # seed/upload drift without paging.
+        log.warning(
+            "signed_photo_url.storage_object_missing recipe=%s path=%s",
+            recipe_id,
+            path,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="storage object not found",
+        ) from None
     return {"url": url, "expires_in": SIGNED_URL_TTL_SECONDS}
