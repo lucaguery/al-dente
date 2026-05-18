@@ -27,7 +27,8 @@
 // and matches the spec's "row contains affordance" composition.
 
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { Flame, RotateCw, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Flame, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,9 @@ export type VoteSummaryProps = {
   onVoteApplied: (vote: ShortlistVote) => void;
   onCookStart: (recipeId: string) => void;
   onDelegate: () => void;
-  onRegenerate: () => void;
+  // gh#32 — onRegenerate prop dropped. The regenerate action now lives in
+  // the Accueil header (HomeDecide.tsx) and the empty-state CTAs, no longer
+  // surfaced as a no-ctaTarget bottom fallback inside this summary.
   cookInFlight?: boolean;
   delegateInFlight?: boolean;
 };
@@ -94,7 +97,6 @@ export function VoteSummary({
   onVoteApplied,
   onCookStart,
   onDelegate: _onDelegate,
-  onRegenerate,
   cookInFlight,
   delegateInFlight: _delegateInFlight,
 }: VoteSummaryProps) {
@@ -103,6 +105,7 @@ export function VoteSummary({
   const tSummary = useTranslations("home.summary");
   const tEmpty = useTranslations("home.empty");
   const labels = useEnumLabels();
+  const router = useRouter();
 
   const members = [me, partner] as const;
 
@@ -220,7 +223,20 @@ export function VoteSummary({
             .join(" ");
 
           return (
-            <div key={r.id} className={rowClass} style={rowStyle}>
+            <div
+              key={r.id}
+              className={`${rowClass} cursor-pointer`}
+              style={rowStyle}
+              role="button"
+              tabIndex={0}
+              onClick={() => router.push(`/recipes/${r.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  router.push(`/recipes/${r.id}`);
+                }
+              }}
+            >
               <TableVote
                 votes={recipeVotes}
                 members={members}
@@ -285,9 +301,11 @@ export function VoteSummary({
                     ShortlistThumbButtons primitive from ShortlistCard.tsx so
                     the aria + visual register matches the retired swipe-deck
                     flow. Renders below the meta line, inside the row, keeps
-                    the row a single visual unit. */}
+                    the row a single visual unit.
+                    gh#38 — stopPropagation so tapping a vote thumb doesn't
+                    bubble up to the row's navigation handler. */}
                 {isUnvoted && (
-                  <div className="mt-2">
+                  <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                     <ShortlistThumbButtons
                       onVote={(value) => {
                         void handleInlineVote(r.id, value);
@@ -305,7 +323,11 @@ export function VoteSummary({
       {/* Sticky bottom CTA — POLISH-04: fixed-length "Cuisiner ce soir" copy
           with the recipe title rendered as Caveat-slant marginalia in its own
           visual layer below. 320px-safe (button never wraps; title can
-          ellipsis without clipping the button text). */}
+          ellipsis without clipping the button text).
+          gh#32 — the no-ctaTarget regenerate fallback below was dropped:
+          the regenerate action is now always reachable from the Accueil header
+          icon (HomeDecide.tsx). When ctaTarget is null, the bottom is empty —
+          the user is meant to vote, not regenerate. */}
       {ctaTarget ? (
         <div className="mt-auto pt-6 flex flex-col gap-1">
           <Button
@@ -327,20 +349,7 @@ export function VoteSummary({
             {ctaTarget.title}
           </Marginalia>
         </div>
-      ) : (
-        /* No valide / pressenti — offer regenerate as fallback action */
-        <div className="mt-auto pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full h-12"
-            onClick={onRegenerate}
-          >
-            <RotateCw size={16} className="mr-2" aria-hidden />
-            {tSummary("regenerate_cta")}
-          </Button>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
