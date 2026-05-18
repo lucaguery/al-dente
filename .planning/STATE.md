@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
 status: executing
-stopped_at: Phase 32 UI-SPEC approved
-last_updated: "2026-05-18T09:22:46.421Z"
-last_activity: 2026-05-18
+stopped_at: Phase 30 context gathered
+last_updated: "2026-05-17T22:39:09.087Z"
+last_activity: 2026-05-17
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
   percent: 100
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 31 — Bottom nav restructure
+**Current focus:** Phase 30 — live-bug-sweep
 
 ## Current Position
 
 Milestone: v0.7 Sober Kitchen + Polish
-Phase: 32
+Phase: 31
 Plan: Not started
-Status: Executing Phase 31
-Last activity: 2026-05-18
+Status: Executing Phase 30
+Last activity: 2026-05-17
 
 Resume: `/gsd-discuss-phase 30 ${GSD_WS}`
 
@@ -103,6 +103,6 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 ## Session Continuity
 
 Last activity: 2026-05-17 — v0.7 roadmap written; 4 phases (30-33), 12 requirements mapped
-Stopped at: Phase 32 UI-SPEC approved
-Resume file: .planning/phases/32-port-locked-screens-to-sober-kitchen/32-UI-SPEC.md
+Stopped at: Phase 30 context gathered
+Resume file: .planning/phases/30-live-bug-sweep/30-CONTEXT.md
 Next: `/gsd-discuss-phase 30 ${GSD_WS}`

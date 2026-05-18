@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, IBM_Plex_Sans, Caveat } from "next/font/google";
+import { Cormorant_Garamond, IBM_Plex_Sans } from "next/font/google";
 import { getMessages } from "next-intl/server";
 import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
@@ -24,13 +24,6 @@ const ibmPlexSans = IBM_Plex_Sans({
   display: "swap",
 });
 
-const caveat = Caveat({
-  variable: "--font-marginalia",
-  subsets: ["latin", "latin-ext"],
-  weight: ["500", "600"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   title: "Al Dente",
   description: "Décide ce qu'on mange ensemble.",
@@ -44,7 +37,7 @@ export const metadata: Metadata = {
 
 // Next.js 16: themeColor moved from `metadata` to the `viewport` export.
 export const viewport: Viewport = {
-  themeColor: "#8B4A35",
+  themeColor: "#C8553D",
   width: "device-width",
   initialScale: 1,
   // viewportFit=cover lets us paint into the iOS notch / home-indicator
@@ -61,7 +54,7 @@ export default async function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${cormorantGaramond.variable} ${ibmPlexSans.variable} ${caveat.variable} h-full antialiased`}
+      className={`${cormorantGaramond.variable} ${ibmPlexSans.variable} h-full antialiased`}
     >
       <body
         className="min-h-dvh flex flex-col bg-background text-foreground"
@@ -72,7 +65,7 @@ export default async function RootLayout({
         <LocaleProvider messages={messages}>
           <SessionProvider>
             <RealtimeProvider>
-              <main className="flex flex-col flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">{children}</main>
+              <main className="flex flex-col flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))]">{children}</main>
               <BottomNav />
               <Toaster />
             </RealtimeProvider>
