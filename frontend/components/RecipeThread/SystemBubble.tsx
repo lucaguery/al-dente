@@ -19,6 +19,7 @@ import { Sparkles, ArrowRight } from "lucide-react";
 import { BrandLoader } from "@/components/BrandLoader";
 
 import { useEnumLabels } from "@/lib/enum-labels";
+import { formatFieldChip } from "@/lib/format-field";
 import type { AnswerField } from "@/lib/enums";
 import type { PersistedTurn, AnswerTurnSubmission } from "./types";
 
@@ -73,8 +74,12 @@ export function SystemBubble({
 
   if (kind === "summary") {
     const bodyText = turn.payload.body as string | undefined;
+    // Phase 35 ENUM-01 — accept both legacy string chips (pre-Plan-35-01
+    // summary turns persisted with the old wire shape) and the new structured
+    // ChipPayload shape. CONTEXT D-01 migration path: frontend handles both
+    // during the transition; legacy chips fade out as recipes re-extract.
     const chips = Array.isArray(turn.payload.chips)
-      ? (turn.payload.chips as string[])
+      ? (turn.payload.chips as Array<string | { field: string; value: unknown }>)
       : [];
 
     const handleComplete = async () => {
@@ -106,18 +111,44 @@ export function SystemBubble({
         {/* sys-head */}
         <SysHead label={t("sys_summary_head")} />
 
-        {/* Summary chips */}
+        {/* Summary chips — Phase 35 ENUM-01 shape-branching:
+            • string chip      → render verbatim (legacy back-compat).
+            • ChipPayload chip → format via formatFieldChip(field, value, labels).
+            • anything else    → String(chip) defensive fallback. */}
         {chips.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {chips.map((chip, i) => (
-              <span
-                key={i}
-                className="border border-border rounded-full px-2 py-1 text-[13px] font-semibold text-foreground"
-                style={{ background: "oklch(0.96 0.012 50)" }}
-              >
-                {chip}
-              </span>
-            ))}
+            {chips.map((chip, i) => {
+              let content: string;
+              if (typeof chip === "string") {
+                content = chip;
+              } else if (
+                chip &&
+                typeof chip === "object" &&
+                "field" in chip
+              ) {
+                const { label, display } = formatFieldChip(
+                  chip.field,
+                  chip.value,
+                  labels,
+                );
+                // Legacy-coerced chip (field === "_legacy" from Plan 35-01
+                // read-side validator) returns label === ""; render display
+                // verbatim so the user never sees a "_legacy : ..." artifact.
+                content = label ? `${label} : ${display}` : display;
+              } else {
+                // Defensive — malformed payload, never crash the bubble.
+                content = String(chip);
+              }
+              return (
+                <span
+                  key={i}
+                  className="border border-border rounded-full px-2 py-1 text-[13px] font-semibold text-foreground"
+                  style={{ background: "oklch(0.96 0.012 50)" }}
+                >
+                  {content}
+                </span>
+              );
+            })}
           </div>
         )}
 
