@@ -23,7 +23,7 @@
 
 ## Phases
 
-- [ ] **Phase 34: Live-bug sweep** — High-severity broken behavior surfaced by the walkthrough is fixed: `/cooking-logs` renders from its API response (B-01), photo signed-URL handler returns 404 (not 500) on missing storage objects with prod verified first (B-02), Settings shows both household members (B-07), Accueil pre-vote marginalia + hero stop contradicting (B-09), VersionFooter reflects current milestone (B-08), nested `<main>` collision removed (B-10).
+- [x] **Phase 34: Live-bug sweep** — All 6 LIVE-* requirements shipped: LIVE-01 `/cooking-logs` renders 3 seed cards (root cause: `Promise.all` rejection on `?limit=500` 422 from `/api/recipes`); LIVE-02 backend `StorageObjectNotFound` typed exception → 404 + warn log; LIVE-03 Settings extends `useSession().session.members` to render Partner block; LIVE-04 marginalia branch guards on `validéCount > 0`; LIVE-05 version 0.1.0 → 0.7.1; LIVE-06 inner `<main>` stripped from `app/page.tsx:42`. (5 plans, 5 commits).
 - [ ] **Phase 35: Enum + extraction-leak sweep** — One systemic class with one fix per locked vocabulary. `SystemBubble.tsx` summary branch threads each field through `useEnumLabels` and a units formatter; backend serializes ingredients as structured `Ingredient[]` not `str(dict)` (B-03 two-layer fix). `RecipeCard.tsx` (Bibliothèque grid) and post-vote Accueil ledger meta rows consume `useEnumLabels` (B-04, B-05). Repo-wide grep gate ensures no raw locked-vocabulary value reaches user-facing copy.
 - [ ] **Phase 36: Sober Kitchen finish + polish** — Closes the §15 locked-screen contract gaps and the polish backlog. Accueil Composition A renders the ledger from first paint with the un-voted card embedded as a special row (SOBER-09); BottomNav central CTA visibly elevated per `.scratch/capture-mockups/1-smart-paste.html` (SOBER-10); Bibliothèque "Patine" view renders sections with empty-bucket fallback (SOBER-11); Recette detail cookbook gestures verified live and missing pieces shipped (SOBER-12); table-à-manger seat geometry verified on iPhone (SOBER-13); dogear renders on highly-patined recipes + seed bumped (SOBER-14); post-vote ledger Rejeté row policy resolved (SOBER-15); `docs/design-system.html` §15 updated to drop "Réception" tab (SOBER-16); plus 4 polish requirements (NBSP middle-dot, push banner placement, meta-pill icon harmonization, long-CTA truncation).
 
@@ -79,7 +79,7 @@ Phases execute in numeric order: 34 → 35 → 36 (Phase 35 may run in parallel 
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 34. Live-bug sweep | v0.7.1 | 4/5 | 🚧 In Progress | — |
+| 34. Live-bug sweep | v0.7.1 | 5/5 | Plans complete (code review next) | — |
 | 35. Enum + extraction-leak sweep | v0.7.1 | 0/0 | Awaiting plan-phase | — |
 | 36. Sober Kitchen finish + polish | v0.7.1 | 0/0 | Awaiting plan-phase | — |
 

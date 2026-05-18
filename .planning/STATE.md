@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.7.1
 milestone_name: Sober Kitchen Finish
-status: Phase 34 in progress — 34-02 LIVE-01 complete (d73baa1); only 34-03 LIVE-03 remains
-stopped_at: 34-02 LIVE-01 shipped; only Phase 34 plan 34-03 (LIVE-03 Settings members) remains before Phase 34 closes.
-last_updated: "2026-05-18T15:00:00.000Z"
-last_activity: 2026-05-18 — Plan 34-02 (LIVE-01) shipped (d73baa1). `/cooking-logs` now renders 3 seed cards instead of the empty state; root cause was `Promise.all` atomic rejection on a 422 from `/api/recipes?limit=500` (backend cap is `le=200`). Two new i18n keys `cooking_logs.empty_heading` / `empty_body` close the file's "Phase 20 i18n sweep" tech-debt comment.
+status: Phase 34 plans complete — awaiting code review + verification
+stopped_at: All 5 Phase 34 plans shipped (34-01..05); Phase 34 closes once code review passes
+last_updated: "2026-05-18T15:30:00.000Z"
+last_activity: 2026-05-18 — Phase 34 plan 34-03 (LIVE-03) shipped (a53fb28). All 6 LIVE-* requirements closed: LIVE-01 d73baa1, LIVE-02 cd43b3b, LIVE-03 a53fb28, LIVE-04 b48cbd8, LIVE-05+06 2afa5dd. Ready for code review then Phase 35.
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-18 — v0.7.1 Sober Kitchen Finish sc
 
 ## Current Position
 
-Phase: Phase 34 — Live-bug sweep (in progress)
-Plan: 34-02 complete (d73baa1); 34-03 LIVE-03 (Settings members) is the only remaining Phase 34 plan
-Status: 4/5 Phase 34 plans complete (34-01, 34-02, 34-04, 34-05 shipped; 34-03 awaiting execute)
-Last activity: 2026-05-18 — Plan 34-02 (LIVE-01) shipped. `/cooking-logs` renders 3 seed cards instead of empty state; root cause was `Promise.all` atomic rejection on a 422 from `/api/recipes?limit=500` (backend cap is `le=200`). New i18n keys `cooking_logs.empty_heading` / `empty_body` close the file's "Phase 20 i18n sweep" tech-debt comment.
+Phase: Phase 34 — Live-bug sweep (plans complete, awaiting code review)
+Plan: All 5 plans shipped (34-01..05); 6/6 LIVE-* requirements closed
+Status: Awaiting `/gsd-code-review 34` then Phase 35 dispatch
+Last activity: 2026-05-18 — Phase 34 plan 34-03 (LIVE-03) shipped (a53fb28). All 6 LIVE-* requirements closed: LIVE-01 d73baa1, LIVE-02 cd43b3b, LIVE-03 a53fb28, LIVE-04 b48cbd8, LIVE-05+06 2afa5dd.
 
 ## Performance Metrics
 
