@@ -253,6 +253,11 @@ class SummaryTurnPayload(BaseModel):
     chips: List[ChipPayload] = Field(default_factory=list)
     extraction_hash: str
 
+    # TODO(productize): pre-Phase-35 summary turns have `chips: list[str]`.
+    # This validator coerces legacy rows so they parse, emitting ChipPayload(field='_legacy', value=str).
+    # Remove this validator + the frontend `_legacy` short-circuit once all in-flight summary turns
+    # have regenerated via a new LLM run, or once a data migration rewrites pre-Phase-35 rows.
+    # Tracked as v0.8 follow-up: drop _legacy shim after canary deploy verification.
     @field_validator("chips", mode="before")
     @classmethod
     def _coerce_legacy_chips(cls, v: Any) -> Any:

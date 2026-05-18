@@ -55,6 +55,8 @@ export function formatFieldChip(
 ): { label: string; display: string } {
   // Legacy bridge — pre-Phase-35 list[str] chips coerce to field=_legacy on
   // the backend; render their pre-baked string verbatim with no label.
+  // TODO(productize): `_legacy` sentinel matches the backend validator's
+  // coercion of pre-Phase-35 string chips. Remove with the validator. v0.8.
   if (field === "_legacy") {
     return { label: "", display: String(value) };
   }

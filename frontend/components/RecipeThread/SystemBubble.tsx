@@ -119,6 +119,9 @@ export function SystemBubble({
           <div className="flex flex-wrap gap-1">
             {chips.map((chip, i) => {
               let content: string;
+              // TODO(productize): legacy string-chip branch for pre-Phase-35 turns.
+              // Remove with the backend's _coerce_legacy_chips validator once in-flight
+              // summary turns have regenerated. Tracked as v0.8 follow-up.
               if (typeof chip === "string") {
                 content = chip;
               } else if (
