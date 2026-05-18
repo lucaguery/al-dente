@@ -140,3 +140,75 @@ def test_signed_photo_url_logs_warning_on_storage_miss(
     msg = matching[0].getMessage()
     assert str(recipe.id) in msg, msg
     assert phantom_path in msg, msg
+
+
+def test_signed_photo_url_returns_404_when_sdk_returns_unexpected_shape(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    """Phase 34 follow-up WR-02 — the create_signed_photo_url response
+    normalization must reject every non-dict, non-string shape and raise
+    StorageObjectNotFound so the router still maps to 404.
+
+    Pre-fix, `(result or {}).get("signedURL")` evaluated to `result.get(...)`
+    when result was a truthy non-dict (list, custom object), raising
+    AttributeError outside the SDK try/except — bubbled as a generic 500
+    and defeated LIVE-02's "missing object → 404" contract.
+
+    Three SDK-return shapes are exercised by patching the storage facade
+    directly so the real normalization branch executes end-to-end:
+      - bare list ([])
+      - None
+      - a non-dict, non-string object (sentinel instance)
+    Each must surface as a clean 404 from the router.
+    """
+    member = _seeded_member(db_session)
+    recipe, phantom_path = _seed_recipe_with_phantom_path(db_session, member)
+
+    class _FakeBucket:
+        def __init__(self, payload: object) -> None:
+            self._payload = payload
+
+        def create_signed_url(self, path: str, ttl: int) -> object:  # noqa: ARG002
+            return self._payload
+
+    class _FakeStorage:
+        def __init__(self, payload: object) -> None:
+            self._payload = payload
+
+        def from_(self, bucket: str) -> _FakeBucket:  # noqa: ARG002
+            return _FakeBucket(self._payload)
+
+    class _FakeClient:
+        def __init__(self, payload: object) -> None:
+            self.storage = _FakeStorage(payload)
+
+    class _OpaqueSentinel:
+        """A truthy non-dict, non-string — pre-fix, this would hit
+        AttributeError on `(result or {}).get(...)` and 500 the response."""
+
+    unexpected_shapes: list[object] = [
+        [],  # list — `.get` not defined
+        None,  # falsy non-dict
+        _OpaqueSentinel(),  # truthy non-dict, non-string
+    ]
+
+    for payload in unexpected_shapes:
+        fake = _FakeClient(payload)
+        # Patch the lazy-singleton accessor used by create_signed_photo_url
+        # so the real normalization branch runs against `payload`.
+        with mock.patch(
+            "app.services.storage._supabase", return_value=fake
+        ):
+            resp = client.get(
+                f"/recipes/{recipe.id}/photo-url",
+                params={"path": phantom_path},
+                headers=AUTH_HEADERS,
+            )
+
+        assert resp.status_code == 404, (
+            f"payload={payload!r} expected 404, got {resp.status_code}: {resp.text}"
+        )
+        assert resp.json() == {"detail": "storage object not found"}, (
+            f"payload={payload!r} unexpected body: {resp.json()}"
+        )

@@ -395,14 +395,26 @@ def create_signed_photo_url(path: str) -> str:
         raise
 
     # Some SDK versions don't raise on a missing object — they return an
-    # error envelope or an empty dict. Treat both as missing.
-    if isinstance(result, dict) and result.get("error") is not None:
+    # error envelope, an empty dict, or even a bare URL string. Normalize
+    # every shape to either a usable URL string or StorageObjectNotFound;
+    # never let a non-dict response reach `.get(...)` (Phase 34 follow-up
+    # WR-02: AttributeError on result.get bypassed StorageObjectNotFound
+    # and surfaced as 500, defeating LIVE-02's contract).
+    if isinstance(result, str) and result:
+        return result
+
+    if not isinstance(result, dict):
+        # None, list, or any other unexpected type — treat as missing so
+        # the router maps to 404 rather than minting a 500.
+        raise StorageObjectNotFound(path)
+
+    if result.get("error") is not None:
         raise StorageObjectNotFound(path)
 
     url = (
-        (result or {}).get("signedURL")
-        or (result or {}).get("signedUrl")
-        or ((result or {}).get("data") or {}).get("signedUrl")
+        result.get("signedURL")
+        or result.get("signedUrl")
+        or (result.get("data") or {}).get("signedUrl")
     )
     if not url:
         # Empty / unexpected envelope — most likely a missing object on an
