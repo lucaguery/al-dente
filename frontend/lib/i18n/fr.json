@@ -203,6 +203,10 @@
     "detail_404_heading": "Recette introuvable",
     "detail_404_body": "Cette recette n'existe pas ou a été supprimée.",
     "detail_404_cta": "Retour aux recettes",
+    "summary": {
+      "toast_cooking_started": "C'est parti ! Bon appétit.",
+      "cook_failed": "Impossible de démarrer la cuisson. Réessaie."
+    },
     "delete_recipe": "Supprimer cette recette",
     "delete_draft": "Supprimer ce brouillon",
     "delete_confirm": "Supprimer définitivement ?",
