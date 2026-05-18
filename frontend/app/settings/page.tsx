@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -54,6 +54,20 @@ function readPushState(): PushState {
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const { status, session, refresh } = useSession();
+  // LIVE-03 (Phase 34 B-07 punch-list): the Foyer section must render one
+  // Card per household member. The seed and prod both deliver the partner
+  // in session.members alongside `me` (the Partner already renders on
+  // Accueil voting cards via this same context), but Settings only consumed
+  // session.me — silently hiding the partner block. Filter out `me` to get
+  // the partner list. Sorted by id for determinism if a future 3-member
+  // family lands; couple-scale today has exactly one partner.
+  const partners = useMemo(() => {
+    if (!session) return [];
+    return session.members
+      .filter((m) => m.id !== session.me.id)
+      .slice()
+      .sort((a, b) => a.id.localeCompare(b.id));
+  }, [session]);
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
   // Phase 18 IDM-02 — Membre Card inline rename.
@@ -341,6 +355,30 @@ export default function SettingsPage() {
             )}
           </div>
         </Card>
+
+        {/* Card 1b — Partenaire block(s). LIVE-03 (B-07) fix: Settings was
+            silently dropping the partner because it only read session.me.
+            Mirrors the Toi Card's visual chrome (member dot + name) WITHOUT
+            the rename affordance — only `me` can rename `me`. Solo-household
+            (members.length === 1) renders nothing; the .map naturally
+            no-ops. A future 3-member family would render a stable order
+            (sorted by id in the `partners` memo). */}
+        {partners.map((partner) => (
+          <Card
+            key={partner.id}
+            className="paper-grain shadow-card p-6 flex flex-col gap-2"
+          >
+            <span className="text-sm text-foreground-muted">
+              {t("partner_label")}
+            </span>
+            <div className="flex items-center gap-3">
+              <MemberDot colorHex={partner.color_hex} />
+              <span className="text-base font-medium flex-1">
+                {partner.name}
+              </span>
+            </div>
+          </Card>
+        ))}
 
         {/* Card 2 — Foyer. Household name + invite-code identity signature + copy affordance.
             The invite-code rendering MIRRORS share-code (Plan 02) byte-for-byte

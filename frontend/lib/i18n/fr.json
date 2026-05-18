@@ -351,6 +351,7 @@
     "invite_code_copy_failed": "Impossible de copier",
     "invite_code_helper": "Partage ce code avec ton partenaire pour qu'il rejoigne le foyer.",
     "member_label": "Toi",
+    "partner_label": "Partenaire",
     "invite_code_copy_cta": "Copier le code",
     "member": {
       "rename_aria": "Modifier mon prénom",
