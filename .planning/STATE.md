@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
 status: executing
-stopped_at: Completed 32-03-PLAN.md — Accueil A port
-last_updated: "2026-05-18T10:24:14.825Z"
+stopped_at: Completed 32-04-PLAN.md — Bibliothèque port
+last_updated: "2026-05-18T10:36:24.455Z"
 last_activity: 2026-05-18
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish mi
 
 Milestone: v0.7 Sober Kitchen + Polish
 Phase: 32 (port-locked-screens-to-sober-kitchen) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-05-18
 
@@ -58,6 +58,7 @@ Progress: 0/4 phases complete
 | v0.6 (Phases 25-29) | 5 | ✅ Complete (shipped 2026-05-17) |
 | v0.7 (Phases 30-33) | 4 | 🚧 In Progress |
 | Phase 32 P32-03 | 6 | 2 tasks | 3 files |
+| Phase 32 P04 | 8 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ See PROJECT.md Key Decisions table for the cumulative log. v0.7 milestone-level 
 
 - [Phase 32]: VoteSummary redesigned in place (Choice 1) — single HomeDecide consumer, props interface preserved
 - [Phase 32]: home.hero_question + nav.home keys reused for Accueil A header — no new heading key needed
+- [Phase 32]: PatinaSection/PatinaView defined as file-scoped functions outside RecipesPage to avoid re-creation on render
+- [Phase 32]: Grid breakpoints: 2-col mobile → 3-col @md (skip 4-col @lg — iPhone PWA is primary)
+- [Phase 32]: List-view marginalia omitted for Phase 32 — no per-row data source wired; deferred to 32-05
 
 ### Open Research
 
@@ -107,6 +111,6 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 ## Session Continuity
 
 Last activity: 2026-05-17 — v0.7 roadmap written; 4 phases (30-33), 12 requirements mapped
-Stopped at: Completed 32-03-PLAN.md — Accueil A port
+Stopped at: Completed 32-04-PLAN.md — Bibliothèque port
 Resume file: None
 Next: `/gsd-discuss-phase 30 ${GSD_WS}`

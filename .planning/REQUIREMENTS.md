@@ -22,9 +22,9 @@
 
 - [ ] **SOBER-01** — Locked Sober Kitchen tokens land in `frontend/app/globals.css` per §15.A (terracotta sober palette + type scale). Caveat font registered alongside Cormorant per §15.B. New patine + marginalia utility classes available. Parallel cleanup per §15.D removes the ad-hoc CSS that the new system replaces. Acceptance: grep gates confirm no ad-hoc duplicates of the locked tokens remain in any `frontend/{app,components}` file.
 - [x] **SOBER-02** — Accueil (home) screen ports to the locked Sober Kitchen layout per the doc's locked-screen reference — shortlist au centre.
-- [ ] **SOBER-03** — Bibliothèque (recipe library) screen ports to the locked Sober Kitchen layout — A par défaut, B/C accessibles per the doc.
+- [x] **SOBER-03** — Bibliothèque (recipe library) screen ports to the locked Sober Kitchen layout — A par défaut, B/C accessibles per the doc.
 - [ ] **SOBER-04** — Recette — Détail (recipe detail) screen ports to the locked Sober Kitchen layout — cookbook page register per the doc.
-- [ ] **SOBER-05** — Recipe cards across the app render the patine treatment driven by `cook_count → patina` mapping. Cross-cutting register applied wherever recipe cards appear (Accueil, Bibliothèque, Recette détail at minimum).
+- [x] **SOBER-05** — Recipe cards across the app render the patine treatment driven by `cook_count → patina` mapping. Cross-cutting register applied wherever recipe cards appear (Accueil, Bibliothèque, Recette détail at minimum).
 - [ ] **SOBER-06** — Voting surfaces render as the table-à-manger scene — the 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis) read as one unified visual scene per the locked design. Cross-cutting voting register; underlying state machine (invariant #2 — computed, not stored) unchanged.
 - [ ] **SOBER-07** — Marginalia register applied — Caveat handwriting carries the human-voice annotations (manual-edit pin labels, system asides, register cues) consistently across the locked screens. Phase 28's `PinLabel.tsx` is the precedent.
 - [ ] **SOBER-08** — Brand-mark loader replaces ad-hoc spinners on slow-path surfaces. Loading states route through the locked brand-mark animation per the doc.
