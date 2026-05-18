@@ -10,7 +10,34 @@ Eliminate the daily "on mange quoi ?" debate via a shared library, async voting,
 
 ## Current Milestone
 
-_No active milestone._ v0.7 Sober Kitchen + Polish shipped on 2026-05-18. Run `/gsd-new-milestone` to scope the next cycle.
+**v0.7.1 Sober Kitchen Finish** (started 2026-05-18)
+
+**Goal:** Close the v0.7 contract per the 260518-kba Playwright walkthrough punch list (25 findings: 10 bugs / 7 polish / 8 design-drift). Finish what v0.7 started — live-bug residuals, the systemic `useEnumLabels` leak surfaced after v0.5 QW-03 shipped, and the Sober Kitchen §15 locked-screen gaps — before any v0.8 feature work breaks the visual baseline.
+
+**Source:** `.planning/quick/260518-kba-ui-walkthrough-punch-list/PUNCH-LIST.md` — observation-only punch list from a Playwright MCP walk against the seeded test stack. Discovery is complete; this milestone is execution.
+
+**Target features:**
+
+- **Live-bug sweep (Phase 34, LIVE-01..06)** — `/cooking-logs` renders from API response (B-01); photo signed-URL handler returns 404 (not 500) on missing storage with **plan step 0 verifying prod first** (B-02); Settings shows both household members (B-07); pre-vote Accueil marginalia stops contradicting hero (B-09 — structurally resolved if SOBER-09 lands first); `frontend/package.json` version bump fixes stale `v0.1.0` footer (B-08); nested `<main>` collision removed (B-10).
+- **Enum + extraction-leak sweep (Phase 35, ENUM-01..04)** — One systemic class with one repo-wide grep gate. `SystemBubble.tsx` summary branch threads each field through `useEnumLabels` + units formatter; backend serializes ingredients as structured `Ingredient[]` not `str(dict)` (**B-03 two-layer fix**). `RecipeCard.tsx` (Bibliothèque grid) and post-vote Accueil ledger meta rows consume `useEnumLabels` (B-04, B-05). Grep gate (mirroring v0.5 Phase 22 D-18) asserts no raw locked-vocabulary value reaches user-facing copy.
+- **Sober Kitchen finish + polish (Phase 36, SOBER-09..16 + POLISH-01..04)** — Accueil Composition A renders the ledger from first paint with un-voted card embedded as a special row (**SOBER-09 user-locked decision**); BottomNav central CTA elevated per the mockup (SOBER-10); Bibliothèque Patine view renders sections with empty-bucket fallback (SOBER-11); Recette détail cookbook gestures verified live (SOBER-12); table-à-manger seat geometry verified on iPhone (SOBER-13); dogear renders on highly-patined recipes + seed bumped (SOBER-14); post-vote ledger Rejeté row policy resolved during discuss-phase (SOBER-15); `docs/design-system.html` §15 updated to drop "Réception" tab (SOBER-16). Polish: NBSP middle-dot (P-01), push banner repositioned (P-02), meta-pill icon harmonization (P-04), long-CTA truncation (P-07).
+
+**Locked decisions (milestone-level):**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Milestone shape | 3 phases (34-36) mirroring v0.2.1 patch-milestone discipline | Tight scope; closes contract; defers feature work to v0.8 |
+| SOBER-09 ledger mode | First-paint ledger (un-voted card embedded as special row) | User pick — port HomeDecide to locked spec literally; LIVE-04 becomes structurally consistent |
+| B-03 fix layer | Two-layer (backend serializes structured Ingredient[]; frontend formats via useEnumLabels + units formatter) | User pick — closes the serialization boundary; future captures won't leak |
+| LIVE-02 prod verification | Plan step 0 gates the fix — verify deployed handler on known-missing path before touching code | User pick — if prod 404s, scope shrinks to seed gap; if prod 500s, escalates to backend hardening |
+| Phase 35 grep gate | Mirror v0.5 Phase 22 D-18 — CI-runnable script blocks raw locked-vocab in user-facing copy | Closes the systemic class, not just three instances |
+| POLISH-03 + SOBER-15 | TBD during Phase 36 discuss-phase | Substantive design calls — operator input needed |
+
+**Phase numbering:** continues from v0.7 → starts at Phase 34.
+
+**Out of scope (deferred):** P-03 Bibliothèque filter chips → v0.8 (feature); P-06 dual voting affordances → backlog `needs-design`; gh#28 test coverage → v0.8; MediaRecorder + photo-upload Playwright coverage → v0.8 with `uat-tester` agent; SW cache tuning + `visibilitychange` refetch → Phase 4 cache-strategy carve-out (consistent with v0.7); HUMAN-UAT carry-forward from v0.7 → tracked via `/gsd-audit-uat`.
+
+
 
 ## Previous Milestone Outcome: v0.7 Sober Kitchen + Polish (shipped 2026-05-18)
 

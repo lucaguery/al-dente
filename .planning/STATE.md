@@ -1,34 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.7
-milestone_name: Sober Kitchen + Polish
-status: Awaiting next milestone
-stopped_at: Milestone v0.7 archived 2026-05-18
-last_updated: "2026-05-18T13:35:00.000Z"
-last_activity: 2026-05-18 — Milestone v0.7 completed and archived
+milestone: v0.7.1
+milestone_name: Sober Kitchen Finish
+status: Awaiting plan-phase
+stopped_at: Milestone v0.7.1 scoped 2026-05-18 — roadmap + requirements scaffolded; first phase awaiting /gsd-plan-phase
+last_updated: "2026-05-18T14:00:00.000Z"
+last_activity: 2026-05-18 — Milestone v0.7.1 scaffolded direct from 260518-kba punch list (3 phases, 22 requirements)
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-18 — v0.7 Sober Kitchen + Polish milestone shipped and archived)
+See: .planning/PROJECT.md (updated 2026-05-18 — v0.7.1 Sober Kitchen Finish scoped from 260518-kba walkthrough punch list)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Milestone complete
+**Current focus:** v0.7.1 — close the v0.7 contract per the 260518-kba punch list (25 findings).
 
 ## Current Position
 
-Phase: Milestone v0.7 complete
+Phase: Phase 34 — Live-bug sweep (next)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-05-18 — Milestone v0.7 completed and archived
+Status: Awaiting plan-phase (`/gsd-plan-phase 34`)
+Last activity: 2026-05-18 — v0.7.1 milestone scaffolded direct from the 260518-kba punch list per Route B (no orchestrator). 3 phases (34-36), 22 requirements mapped (LIVE × 6 + ENUM × 4 + SOBER × 8 + POLISH × 4).
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Last activity: 2026-05-18 — Milestone v0.7 completed and archived
 
 ### Roadmap Evolution
 
+- v0.7.1 milestone scaffolded 2026-05-18 direct from 260518-kba walkthrough punch list (Route B — no orchestrator): 3 phases (34-36), 22 requirements (LIVE × 6 + ENUM × 4 + SOBER × 8 + POLISH × 4). Patch milestone in v0.2.1 mold — closes the v0.7 contract before v0.8 feature work. **3 locked decisions captured at scaffold time:** SOBER-09 first-paint ledger (vs dual-mode doc update), B-03 two-layer fix (backend ingredient serialization + frontend formatter), LIVE-02 plan-step-0 prod verification gate. **No new architecture-invariant changes expected** — patch milestone closes contract gaps, doesn't restructure.
 - v0.7 milestone shipped 2026-05-18: 4 phases (30-33), 9 plans, 12 requirements (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Closes gh#23/24/25/27/29; defers gh#26 (« Suggérer ») to backlog and gh#28 (test coverage) to v0.8. **No new architecture-invariant evolutions** (D-11 explicitly kept invariants #2 and #7 at root, not duplicated to backend/CLAUDE.md). **CLAUDE.md restructure** — root pruned from 114 → 34 lines of guidance; backend/frontend/.planning scoped files load per-subtree; `frontend/AGENTS.md` deleted per the D-12 override (Claude Code is the only AI assistant in active use today, revisit gate: second AI assistant added).
 - v0.6 milestone shipped 2026-05-17: 5 phases (25-29), 22 plans, 23 requirements (THREAD × 4 + TURN × 4 + CAPTURE × 4 + DETAIL × 5 + LLM × 4 + MIGRATION × 2). Closes gh#20 per ADR-0001. **Architecture invariant #1 evolved further** — all five capture surfaces now flow through one `promote_draft(recipe_id)` entry point dispatching on first turn's `kind`. **Invariant #5 satisfied by `recipe_turns`** going forward; legacy `source_capture` JSONB retired. **Invariant #4** extended with `turn.created` + `turn.updated` semantics.
 - v0.5 milestone shipped 2026-05-13: 3 phases (22-24), 9 plans, 12 requirements (QW × 3 / DECK × 4 / RID × 5). Closed 12 GitHub issues. **Invariant #1 first shift** — quick + full-form captures moved from sync `structured`-on-return to async `BackgroundTask`.
@@ -72,11 +73,14 @@ See PROJECT.md Key Decisions table for the cumulative log. v0.7 decisions archiv
 
 ### Open Research
 
-None — v0.7 ships clean. Next milestone scope unknown until `/gsd-new-milestone` runs.
+None — v0.7.1 discovery already captured in the 260518-kba punch list (Playwright walk + accessibility-tree snapshots + screenshots). Plan-phase consumes that artifact directly.
 
 ### Blockers/Concerns
 
-- **None blocking.** v0.7 milestone closed cleanly.
+- **None blocking.** v0.7.1 milestone scaffolded; awaiting `/gsd-plan-phase 34`.
+- **LIVE-02 prod verification is plan step 0** for Phase 34 — if the deployed photo-url handler returns 500 on missing storage objects (not 404), scope expands to backend handler hardening before any UI work.
+- **SOBER-09 + LIVE-04 coupling** — if Phase 36 SOBER-09 (first-paint ledger) lands before Phase 34 LIVE-04 (marginalia branch), LIVE-04 is structurally resolved by SOBER-09 and the verification step asserts consistency held; if Phase 34 ships first, LIVE-04 ships the explicit `validéCount === 0` branch guard.
+- **SOBER-15 + POLISH-03 deferred to Phase 36 discuss-phase** — Rejeté row visibility and meta-pill icon harmonization are substantive design calls; operator input gates final implementation shape.
 - **HUMAN-UAT backlog carried forward** — Phase 30 (3 items: iPhone PWA self-heal, fresh pictogram render, post-deploy migration heal), Phase 32 (4 items: live Sober Kitchen verification), Phase 29 (4 items: Gemini round-trip, advisory round-trip, defer gate, Playwright suite), Phase 28 (2 items: chip/stepper answer, advisory accept/dismiss), Phase 21 v0.4 era (15 items). All tracked via `/gsd-audit-uat`.
 - **3 acknowledged v0.5 warnings:** WR-01 (idempotent `db.close()` in `retry_promotion`), WR-02 (seed misses Phase 24 fields on 18 of 21 recipes per intended D-16 nudge). WR-03 was structurally resolved by v0.6 Phase 25's `source_capture` drop.
 - **Behavioral validation gate** (≥ 2 weeks daily use by both members, v0.1 definition-of-done) still pending — orthogonal to feature milestones.
@@ -116,11 +120,12 @@ UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surfac
 
 ## Session Continuity
 
-Last activity: 2026-05-18 — Milestone v0.7 Sober Kitchen + Polish shipped and archived. Phase 33 (CLAUDE.md split) closed the milestone with a single atomic plan (DX-01); root `CLAUDE.md` pruned from 114 → 34 lines of guidance; backend/frontend/.planning scoped files load per-subtree; `frontend/AGENTS.md` deleted per D-12 override. v0.7-ROADMAP.md and v0.7-REQUIREMENTS.md archived to `.planning/milestones/`.
-Stopped at: Milestone v0.7 archived; ROADMAP collapsed; PROJECT.md evolved; awaiting next milestone scope.
-Next: `/gsd-new-milestone` to scope v0.8.
+Last activity: 2026-05-18 — v0.7.1 Sober Kitchen Finish milestone scaffolded direct from `.planning/quick/260518-kba-ui-walkthrough-punch-list/PUNCH-LIST.md` (Route B, no orchestrator). Four files touched: `.planning/ROADMAP.md` (v0.7 → Completed, v0.7.1 as Current Milestone), `.planning/REQUIREMENTS.md` (new — 22 LIVE/ENUM/SOBER/POLISH requirements + locked-decisions table), `.planning/PROJECT.md` (Current Milestone section + locked-decisions), `.planning/STATE.md` (milestone + status + accumulated context). 3 milestone-level decisions captured at scaffold time per user input.
+Stopped at: Milestone scaffolded; awaiting `/gsd-plan-phase 34` to draft Phase 34's plans against the 6 LIVE-* requirements.
+Next: `/gsd-plan-phase 34` — start the live-bug sweep. Phase 34 plan step 0 must verify prod's photo-url handler behavior before any code touches.
 
 ## Operator Next Steps
 
-- Start the next milestone with `/gsd-new-milestone`
-- Review v0.7 HUMAN-UAT carry-forward via `/gsd-audit-uat` (Phase 30 + Phase 32 items need physical-device validation)
+- Run `/gsd-plan-phase 34` to draft plans for the live-bug sweep
+- (Optional) Run `/gsd-discuss-phase 34` first if more context-gathering desired before planning
+- Review v0.7 HUMAN-UAT carry-forward via `/gsd-audit-uat` (Phase 30 + Phase 32 items need physical-device validation — orthogonal to v0.7.1 scope)
