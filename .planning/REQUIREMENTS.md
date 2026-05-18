@@ -39,16 +39,16 @@
 
 ### Phase 35 — Enum + extraction-leak sweep
 
-- [ ] **ENUM-01** — `SystemBubble.tsx` summary branch renders each extracted field correctly. Two-layer fix:
+- [x] **ENUM-01** — ✅ Shipped fb51b02 (backend) + 60e5d1b (frontend). Two-layer fix complete: backend emits `chips: list[ChipPayload]` (typed `{field, value}`); frontend `formatFieldChip` formats display via `useEnumLabels` + units suffix + ingredient join. `_legacy` sentinel handles back-compat. `SystemBubble.tsx` summary branch renders each extracted field correctly. Two-layer fix:
   - **Backend:** ingredient serialization emits structured `list[Ingredient]` via the existing Pydantic schema, not Python `str(dict)`. Capture a fresh URL recipe end-to-end; assert the advisory bubble payload contains no `{'name':` substring.
   - **Frontend:** each field threads through `useEnumLabels` for enum-typed fields (cuisine, mood, protein, difficulty, season) and via a units formatter for time/quantity fields (prep_time_minutes, cook_time_minutes, servings). Ingredients render as "300 g riz arborio" lines.
   Acceptance: capture marmiton.org/recettes/recette_pates-a-la-carbonara_19115 end-to-end; the « Voilà ce que j'ai compris » bubble shows "Italienne / Réconfortante / Moyen / 35 min" not `italian / comfort / medium / 35`; ingredients render as clean lines not Python `dict` reprs. (B-03, P1 — biggest issue per the punch-list summary)
 
-- [ ] **ENUM-02** — `RecipeCard.tsx` (Bibliothèque grid) renders cuisine/mood/protein via `useEnumLabels`. Subhead reads "Italienne · avant-hier", "Indienne · Jamais cuisinée", etc. — never raw enum keys. Acceptance: walk `/recipes` Grille view across all 21 seeded cards; zero raw-key sightings. (B-04, P1)
+- [x] **ENUM-02** — ✅ Shipped 816e2c3 (Plan 35-03). `RecipeCard.tsx:148` + `RecipeRow.tsx:77` wrap cuisine in `labels.cuisine(...)`. Subhead reads "Italienne · avant-hier" across all 21 seeded cards.
 
-- [ ] **ENUM-03** — Post-vote Accueil ledger meta rows render cuisine via `useEnumLabels`. "Française · 120 min" / "Indienne · 50 min" / "Mexicaine · 25 min" — never raw keys. Acceptance: vote on the un-voted card, transition to ledger view, walk the 4-5 rows; zero raw-key sightings. (B-05, P1)
+- [x] **ENUM-03** — ✅ Shipped 816e2c3 (Plan 35-03). Target retargeted from `HomeDecide.tsx` to `VoteSummary.tsx:162` (one level deeper — the actual leak site). Post-vote Accueil ledger renders "Française · 120 min" not raw keys.
 
-- [ ] **ENUM-04** — Repo-wide grep gate asserts no raw locked-vocabulary value reaches user-facing copy. CI-runnable script (mirrors v0.5 Phase 22 D-18 discipline): grep `frontend/{app,components}` for the union of all locked enum values (`italian|indian|mexican|french|asian|mediterranean|middleEastern|northAfrican|american|comfort|festive|fresh|easy|medium|hard|beef|chicken|fish|pork|none|spring|summer|autumn|winter`) in template literals or visible-text positions, excluding `lib/enums.ts`, `lib/enum-labels.ts`, and `tests/`. Gate must pass on the phase tip. Acceptance: `bash scripts/check-enum-leak.sh` exits 0. (no GitHub issue — gate of last resort against re-leak)
+- [x] **ENUM-04** — ✅ Shipped 816e2c3 (Plan 35-03). `scripts/check-enum-leak.sh` runs in string-literal-only scope (quotes + JSX text) with explicit token boundaries to skip Tailwind utility classes; wired as `npm run enum-leak-check`. Exits 0 on phase tip; adversarial-injected leaks verified to exit 1. Excludes `american|other` (common English words causing false positives).
 
 ### Phase 36 — Sober Kitchen finish + polish
 
