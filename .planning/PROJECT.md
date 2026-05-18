@@ -10,9 +10,13 @@ Eliminate the daily "on mange quoi ?" debate via a shared library, async voting,
 
 ## Current Milestone
 
-**v0.7.1 Sober Kitchen Finish** (started 2026-05-18)
+_No active milestone._ v0.7.1 Sober Kitchen Finish shipped on 2026-05-18. Run `/gsd-new-milestone` to scope the next cycle.
 
-**Goal:** Close the v0.7 contract per the 260518-kba Playwright walkthrough punch list (25 findings: 10 bugs / 7 polish / 8 design-drift). Finish what v0.7 started — live-bug residuals, the systemic `useEnumLabels` leak surfaced after v0.5 QW-03 shipped, and the Sober Kitchen §15 locked-screen gaps — before any v0.8 feature work breaks the visual baseline.
+## Previous Milestone Outcome: v0.7.1 Sober Kitchen Finish (shipped 2026-05-18)
+
+**Outcome:** Closed the 260518-kba walkthrough punch list (22/25 findings shipped; 3 deferred to v0.8 backlog — P-03 filter chips, P-06 dual voting affordances, gh#28 test coverage). 3 phases (34-36), 15 plans, 22 requirements (LIVE × 6 + ENUM × 4 + SOBER × 8 + POLISH × 4), 7 code-review warnings resolved across 3 review cycles, ~190 LOC dead code retired (ShortlistDeck.tsx) per MVP no-shim posture. Cross-phase highlights: SOBER-09 first-paint Composition A ledger retired the dual-mode swipe-deck composition; ENUM-01 two-layer fix introduced `ChipPayload` wire shape + frontend `formatFieldChip` formatter; ENUM-04 grep gate (`scripts/check-enum-leak.sh`) is now CI-enforceable against future raw-vocab leaks. Architecture invariants preserved (especially #2 voting computed, #6 next-intl).
+
+**Goal (at scoping):** Close the v0.7 contract per the 260518-kba Playwright walkthrough punch list (25 findings: 10 bugs / 7 polish / 8 design-drift). Finish what v0.7 started — live-bug residuals, the systemic `useEnumLabels` leak surfaced after v0.5 QW-03 shipped, and the Sober Kitchen §15 locked-screen gaps — before any v0.8 feature work breaks the visual baseline.
 
 **Source:** `.planning/quick/260518-kba-ui-walkthrough-punch-list/PUNCH-LIST.md` — observation-only punch list from a Playwright MCP walk against the seeded test stack. Discovery is complete; this milestone is execution.
 

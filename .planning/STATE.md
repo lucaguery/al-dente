@@ -2,33 +2,33 @@
 gsd_state_version: 1.0
 milestone: v0.7.1
 milestone_name: Sober Kitchen Finish
-status: Phase 34 plans complete — awaiting code review + verification
-stopped_at: All 5 Phase 34 plans shipped (34-01..05); Phase 34 closes once code review passes
-last_updated: "2026-05-18T15:30:00.000Z"
-last_activity: 2026-05-18 — Phase 34 plan 34-03 (LIVE-03) shipped (a53fb28). All 6 LIVE-* requirements closed: LIVE-01 d73baa1, LIVE-02 cd43b3b, LIVE-03 a53fb28, LIVE-04 b48cbd8, LIVE-05+06 2afa5dd. Ready for code review then Phase 35.
+status: Milestone v0.7.1 complete — archived 2026-05-18
+stopped_at: Milestone v0.7.1 shipped and archived; awaiting next milestone scope
+last_updated: "2026-05-18T18:00:00.000Z"
+last_activity: 2026-05-18 — v0.7.1 Sober Kitchen Finish milestone complete. 3 phases (34/35/36) shipped, 15 plans, 22/22 requirements, 7 code-review warnings resolved. ROADMAP archived to .planning/milestones/v0.7.1-ROADMAP.md; REQUIREMENTS archived; ROADMAP collapsed to one-line summary.
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 5
-  completed_plans: 5
-  percent: 0
+  completed_phases: 3
+  total_plans: 15
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-18 — v0.7.1 Sober Kitchen Finish scoped from 260518-kba walkthrough punch list)
+See: .planning/PROJECT.md (updated 2026-05-18 — v0.7.1 Sober Kitchen Finish shipped and archived)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** v0.7.1 — close the v0.7 contract per the 260518-kba punch list (25 findings).
+**Current focus:** Milestone complete
 
 ## Current Position
 
-Phase: Phase 34 — Live-bug sweep (plans complete, awaiting code review)
-Plan: All 5 plans shipped (34-01..05); 6/6 LIVE-* requirements closed
-Status: Awaiting `/gsd-code-review 34` then Phase 35 dispatch
-Last activity: 2026-05-18 — Phase 34 plan 34-03 (LIVE-03) shipped (a53fb28). All 6 LIVE-* requirements closed: LIVE-01 d73baa1, LIVE-02 cd43b3b, LIVE-03 a53fb28, LIVE-04 b48cbd8, LIVE-05+06 2afa5dd.
+Phase: Milestone v0.7.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-18 — v0.7.1 Sober Kitchen Finish shipped and archived. 22/22 requirements validated; 7 code-review warnings resolved; ShortlistDeck.tsx retired per MVP no-shim posture.
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Last activity: 2026-05-18 — Phase 34 plan 34-03 (LIVE-03) shipped (a53fb28). A
 | v0.5 (Phases 22-24) | 3 | ✅ Complete (shipped 2026-05-13) |
 | v0.6 (Phases 25-29) | 5 | ✅ Complete (shipped 2026-05-17) |
 | v0.7 (Phases 30-33) | 4 | ✅ Complete (shipped 2026-05-18) |
+| v0.7.1 (Phases 34-36) | 3 | ✅ Complete (shipped 2026-05-18) |
 
 ## Accumulated Context
 
