@@ -29,11 +29,9 @@
 // with 150ms opacity transition (RESEARCH Pattern 7).
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/BrandIcon";
 import { EmptyState } from "@/components/EmptyState";
 import { RecipeCard } from "@/components/RecipeCard";
@@ -148,7 +146,6 @@ export default function RecipesPage() {
   const t = useTranslations("recipes");
   const tErr = useTranslations("onboarding.errors");
   const tPatina = useTranslations("home.library.patina_section");
-  const router = useRouter();
   const realtime = useRealtime();
   const [recipes, setRecipes] = useState<Recipe[]>(recipesCache ?? []);
   const [query, setQuery] = useState("");
@@ -240,17 +237,11 @@ export default function RecipesPage() {
   return (
     <OnboardingGuard>
       <section className="flex flex-col flex-1 bg-background">
-        <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-20">
+        {/* gh#33 C1 — removed the top-right `<Plus>` button; the central
+            elevated CTA in BottomNav.tsx (variant: "central-cta", href: /recipes/new)
+            is the single capture entry point. */}
+        <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-20">
           <h1 className="text-page-header">{t("tab_title")}</h1>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-12 w-12"
-            aria-label={t("add_cta_aria")}
-            onClick={() => router.push("/recipes/new")}
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
         </header>
 
         <div className="px-(--spacing-page-x) py-3 sticky top-12 z-10 bg-background/80 backdrop-blur-sm">
@@ -291,7 +282,12 @@ export default function RecipesPage() {
               className={`transition-opacity duration-150 pb-(--spacing-bottom-safe) ${hydrated ? "opacity-100" : "opacity-0"}`}
             >
               {view === "grid" ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-[10px] px-(--spacing-page-x)">
+                // gh#33 C2 — fixed-feel card sizing in grid: auto-fill min
+                // 150px guarantees each card has a stable minimum width
+                // regardless of viewport, instead of stretching across 2 or
+                // 3 evenly-distributed columns (which made cards visibly
+                // narrower at md+).
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-[10px] px-(--spacing-page-x)">
                   {recipes.map((r) => (
                     <RecipeCard key={r.id} recipe={r} />
                   ))}

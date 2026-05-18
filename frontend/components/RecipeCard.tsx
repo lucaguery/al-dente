@@ -2,8 +2,10 @@
 
 // Recipe library card — Direction B (quick-260512-gpl).
 // Vertical photo-grid card: 4:3 photo on top + body below with Cormorant
-// Garamond title (font-display, upright, line-clamp-2) and a meta row
-// (cuisine Badge · relative last-cooked).
+// Garamond title (font-display, upright, line-clamp-2).
+// gh#33 — meta row (cuisine Badge · relative last-cooked) was removed
+// from the library card; those signals stay available in the recipe
+// detail view.
 //
 // Photo fallback chain (round-2): real signed-URL photo → dev cuisine
 // fixture SVG → default.svg → surface-muted placeholder div. Mirrors
@@ -23,20 +25,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { formatRelativeFr } from "@/lib/datetime";
 import { getCookingLogSignedPhotoUrl } from "@/lib/cooking";
 import { cookCountToPatina, type PatinaLevel } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
 import { RecipeIllustration } from "@/components/RecipeIllustration";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 import { LedgerCard } from "@/components/LedgerCard";
-import { useEnumLabels } from "@/lib/enum-labels";
 
 export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: PatinaLevel }) {
   const resolvedPatina: PatinaLevel = patina ?? cookCountToPatina(recipe.cook_count);
   const t = useTranslations("recipes");
-  const labels = useEnumLabels();
   // Derive the photo-path key from props; effect runs only when it changes.
   // D-05 living image: prefer the most recent cooking-log photo over the
   // canonical recipe photo so the library list reflects "your own food".
@@ -87,7 +85,14 @@ export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: Patina
       href={`/recipes/${recipe.id}`}
       className="relative block hover:opacity-95 active:translate-y-px transition-all duration-150"
     >
-      <LedgerCard patina={resolvedPatina} className="flex flex-col overflow-hidden p-0">
+      {/* gh#33 C3 — inline padding: 0 overrides the .ledger-card { padding: 14px }
+          rule in globals.css (Tailwind utility p-0 lost the cascade fight against
+          the @layer components rule). Edge-to-edge image inside the card. */}
+      <LedgerCard
+        patina={resolvedPatina}
+        className="flex flex-col overflow-hidden"
+        style={{ padding: 0 }}
+      >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill
         <img
@@ -138,23 +143,13 @@ export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: Patina
           {t("promotion.failed_badge")}
         </span>
       ) : null}
+      {/* gh#33 C4 — library card content reduced to title + image only.
+          The cuisine badge + relative last-cooked meta row was removed;
+          those signals stay available in the recipe detail view. */}
       <div className="flex flex-col gap-1 px-2.5 pt-2 pb-2.5 min-w-0">
         <h3 className="font-display text-base font-medium leading-tight tracking-tight line-clamp-2">
           {recipe.title}
         </h3>
-        <div className="flex items-center gap-1.5 flex-wrap text-xs text-foreground-muted">
-          {recipe.cuisine ? (
-            <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
-              {labels.cuisine(recipe.cuisine)}
-            </Badge>
-          ) : null}
-          {recipe.cuisine ? <span aria-hidden className="meta-sep">{" · "}</span> : null}
-          <span>
-            {recipe.last_cooked_at
-              ? formatRelativeFr(recipe.last_cooked_at)
-              : t("never_cooked")}
-          </span>
-        </div>
       </div>
       </LedgerCard>
     </Link>
