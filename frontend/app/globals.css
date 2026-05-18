@@ -479,6 +479,183 @@
   }
 }
 
+@layer utilities {
+  /* Phase 32 §15.B — Marginalia register (Caveat handwriting).
+     Source: docs/design-system.html lines 170-184. */
+  .marginalia {
+    font-family: var(--font-marginalia);
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--primary);
+  }
+  .marginalia-sm { font-size: 1rem; }
+  .marginalia-md { font-size: 1.2rem; }
+  .marginalia-lg { font-size: 1.5rem; }
+  .marginalia.slant {
+    transform: rotate(-1.2deg);
+    display: inline-block;
+  }
+  .marginalia em {
+    font-style: italic;
+    color: color-mix(in oklch, var(--primary) 70%, var(--foreground));
+  }
+
+  /* Phase 32 §15.C — Patine ledger card.
+     Source: docs/design-system.html lines 186-236.
+     Driven by inline --patina: 0|1|2|3 set per-instance by <LedgerCard>. */
+  .ledger-card {
+    position: relative;
+    background: color-mix(in oklch,
+      var(--card) calc(100% - var(--patina) * 6%),
+      oklch(0.91 0.032 50));
+    border: 1px solid color-mix(in oklch,
+      var(--border) calc(100% - var(--patina) * 12%),
+      oklch(0.72 0.035 35));
+    border-radius: calc(12px - var(--patina) * 1px);
+    box-shadow: var(--shadow-card);
+    padding: 14px;
+    overflow: hidden;
+    transition: background var(--duration-normal) var(--ease-craft);
+  }
+  .ledger-card::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 22% 28%,
+        color-mix(in oklch, oklch(0.62 0.10 50) calc(var(--patina) * 5%), transparent) 0,
+        transparent 32%),
+      radial-gradient(circle at 82% 72%,
+        color-mix(in oklch, oklch(0.55 0.08 30) calc(var(--patina) * 4%), transparent) 0,
+        transparent 30%);
+    background-repeat: no-repeat;
+    mix-blend-mode: multiply;
+    opacity: calc(0.3 + var(--patina) * 0.10);
+    border-radius: inherit; pointer-events: none; z-index: 0;
+  }
+  .ledger-card::after {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(rgba(74, 56, 40, 0.12) 1px, transparent 1px),
+      radial-gradient(rgba(74, 56, 40, 0.08) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 2px;
+    opacity: calc(0.08 + var(--patina) * 0.03);
+    mix-blend-mode: multiply;
+    border-radius: inherit; pointer-events: none; z-index: 0;
+  }
+  .ledger-card > * { position: relative; z-index: 1; }
+  .dogear {
+    position: absolute; top: 0; right: 0;
+    width: 26px; height: 26px; pointer-events: none; z-index: 2;
+  }
+  .patina-stamp {
+    position: absolute; top: 10px; left: 12px; z-index: 3;
+    font-family: var(--font-marginalia); font-size: 14px;
+    color: color-mix(in oklch, var(--primary) 70%, oklch(0.30 0 0));
+    opacity: 0.65; transform: rotate(-5deg);
+  }
+
+  /* Phase 32 §15.C — Table-à-manger voting scene.
+     Source: docs/design-system.html lines 238-297. */
+  .table-scene {
+    position: relative; width: 90px; height: 90px; flex-shrink: 0;
+  }
+  .table-scene.ts-72 { width: 72px; height: 72px; }
+  .table-scene.ts-56 { width: 56px; height: 56px; }
+  .table-plate {
+    position: absolute; inset: 16px;
+    background: radial-gradient(circle at 50% 45%,
+      var(--card),
+      color-mix(in oklch, var(--card) 92%, var(--foreground)) 80%);
+    border-radius: 50%; border: 1px solid var(--border);
+    box-shadow:
+      inset 0 0 0 4px color-mix(in oklch, var(--card) 92%, var(--foreground)),
+      inset 0 0 0 5px color-mix(in oklch, var(--border) 60%, transparent);
+  }
+  .table-scene.ts-56 .table-plate { inset: 10px; }
+  .table-seat {
+    position: absolute; width: 22px; height: 22px;
+    border-radius: 50%;
+    font-family: var(--font-body); font-weight: 600; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--card);
+    box-shadow: 0 0 0 1px var(--border);
+    transition:
+      transform var(--duration-normal) var(--ease-craft),
+      opacity var(--duration-normal) var(--ease-craft),
+      box-shadow var(--duration-normal) var(--ease-craft);
+  }
+  .table-scene.ts-56 .table-seat { width: 16px; height: 16px; font-size: 9px; }
+  .seat-north { top: -2px; left: 50%; transform: translateX(-50%); }
+  .seat-south { bottom: -2px; left: 50%; transform: translateX(-50%); }
+  .seat-east  { right: -2px; top: 50%; transform: translateY(-50%); }
+  .seat-west  { left: -2px;  top: 50%; transform: translateY(-50%); }
+
+  .seat-state-valide {
+    box-shadow:
+      0 0 0 1.5px var(--color-valide-border),
+      0 0 0 2.5px color-mix(in oklch, var(--color-valide-foreground) 25%, transparent);
+  }
+  .seat-state-pressenti {
+    box-shadow:
+      0 0 0 1.5px color-mix(in oklch, var(--primary) 50%, transparent),
+      inset 0 0 0 2px color-mix(in oklch, var(--card) 70%, transparent);
+  }
+  .seat-state-neutral { opacity: 0.32; filter: grayscale(0.7); }
+  .seat-state-rejected { opacity: 0.45; filter: grayscale(0.85); }
+  .seat-north.seat-state-rejected { transform: translateX(-50%) translateY(-6px); }
+  .seat-south.seat-state-rejected { transform: translateX(-50%) translateY(6px); }
+  .seat-east.seat-state-rejected  { transform: translateY(-50%) translateX(6px); }
+  .seat-west.seat-state-rejected  { transform: translateY(-50%) translateX(-6px); }
+
+  /* CONTESTÉ — locked: trait barré (foreground-muted strike) */
+  .seat-state-contested { position: relative; }
+  .seat-state-contested::after {
+    content: ""; position: absolute;
+    left: -6px; right: -6px; top: 50%;
+    height: 1.5px;
+    background: var(--foreground);
+    opacity: 0.55;
+    transform: translateY(-50%);
+    z-index: 3;
+    border-radius: 1px;
+  }
+
+  /* Phase 32 §15.C — Brand-mark loader (drawing stroke).
+     Source: docs/design-system.html lines 299-320.
+     Consumes --duration-slow added to @theme inline in Task 1. */
+  .loader-brand {
+    width: 96px; height: 96px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .loader-brand.loader-brand-sm { width: 18px; height: 18px; }
+  .loader-brand svg path {
+    stroke-dasharray: 220;
+    stroke-dashoffset: 220;
+    animation: drawLoop var(--duration-slow) var(--ease-craft) infinite;
+  }
+  .loader-brand svg path:nth-child(2) {
+    animation-delay: 280ms;
+  }
+}
+
+@keyframes drawLoop {
+  0%   { stroke-dashoffset: 220; opacity: 0.25; }
+  38%  { stroke-dashoffset: 0;   opacity: 1; }
+  62%  { stroke-dashoffset: 0;   opacity: 1; }
+  100% { stroke-dashoffset: -220; opacity: 0.25; }
+}
+
+/* The global prefers-reduced-motion rule in this file already
+   sets animation-duration: 0ms !important on all elements, which neutralizes
+   drawLoop. The explicit fallback below is included for clarity and per-doc parity. */
+@media (prefers-reduced-motion: reduce) {
+  .loader-brand svg path {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
 /* Phase 5 dark-mode paper-grain override (DESIGN-04). In dark mode the
    physical metaphor inverts — paper fibers catch light against a dark
    surface — so opacity raises to 10% and blend mode flips to `overlay` to
