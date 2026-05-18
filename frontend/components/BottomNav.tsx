@@ -91,7 +91,16 @@ export function BottomNav() {
             >
               <span
                 aria-hidden
-                className={`flex items-center justify-center rounded-full bg-primary text-primary-foreground w-14 h-14 transition-all duration-fast ease-craft active:scale-95${active ? " ring-2 ring-primary/30 ring-offset-1 ring-offset-background" : ""}`}
+                // SOBER-10 — central CTA elevation per locked Phase 31 mockup
+                // (.scratch/capture-mockups/1-smart-paste.html): translateY(-12px)
+                // + soft drop shadow so the pill reads as "elevated CTA above the
+                // row" rather than "the third of four tabs." `-translate-y-3` and
+                // `active:scale-95` both feed Tailwind's `transform` utility and
+                // compose cleanly (translate stays; scale layers on press). The
+                // outer <Link> keeps flex-1 so the four-slot footprint is intact;
+                // the lift is purely vertical. `shadow-card` is the project token
+                // (frontend/app/globals.css :81 / :312) — reads in light + dark.
+                className={`flex items-center justify-center rounded-full bg-primary text-primary-foreground w-14 h-14 -translate-y-3 shadow-card transition-all duration-fast ease-craft active:scale-95${active ? " ring-2 ring-primary/30 ring-offset-1 ring-offset-background" : ""}`}
               >
                 <Plus size={24} strokeWidth={2.5} aria-hidden />
               </span>
