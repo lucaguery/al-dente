@@ -7,6 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "enum-leak-check": "bash ../scripts/check-enum-leak.sh",
     "test:e2e": "playwright test --project=seeded && playwright test --project=fresh",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:reset": "docker compose -f ../docker-compose.test.yml down -v"

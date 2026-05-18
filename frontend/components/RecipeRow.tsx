@@ -18,6 +18,7 @@ import { getCookingLogSignedPhotoUrl } from "@/lib/cooking";
 import { cookCountToPatina, type Recipe } from "@/lib/recipes";
 import { RecipeIllustration } from "@/components/RecipeIllustration";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
+import { useEnumLabels } from "@/lib/enum-labels";
 
 export interface RecipeRowProps {
   recipe: Recipe;
@@ -25,6 +26,7 @@ export interface RecipeRowProps {
 
 export function RecipeRow({ recipe }: RecipeRowProps) {
   const t = useTranslations("recipes");
+  const labels = useEnumLabels();
   const patina = cookCountToPatina(recipe.cook_count);
 
   // Photo URL resolution — mirror RecipeCard pattern exactly.
@@ -72,7 +74,7 @@ export function RecipeRow({ recipe }: RecipeRowProps) {
           <div className="flex items-center gap-1.5 flex-wrap text-caption">
             {recipe.cuisine ? (
               <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
-                {recipe.cuisine}
+                {labels.cuisine(recipe.cuisine)}
               </Badge>
             ) : null}
             {recipe.cuisine ? <span aria-hidden>·</span> : null}

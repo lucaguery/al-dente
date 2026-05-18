@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { TableVote } from "@/components/TableVote";
 import { Marginalia } from "@/components/Marginalia";
 import { computeVoteState, type ShortlistVote } from "@/lib/votes";
+import { useEnumLabels } from "@/lib/enum-labels";
 import type { Recipe } from "@/lib/recipes";
 
 export type VoteSummaryMember = {
@@ -56,6 +57,7 @@ export function VoteSummary({
   const tHome = useTranslations("home");
   const tSummary = useTranslations("home.summary");
   const tEmpty = useTranslations("home.empty");
+  const labels = useEnumLabels();
 
   const members = [me, partner] as const;
 
@@ -157,7 +159,7 @@ export function VoteSummary({
                     style={{ fontSize: "12px" }}
                   >
                     {[
-                      r.cuisine,
+                      r.cuisine ? labels.cuisine(r.cuisine) : null,
                       r.prep_time_minutes
                         ? `${r.prep_time_minutes} min`
                         : null,

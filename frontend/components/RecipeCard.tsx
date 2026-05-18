@@ -31,10 +31,12 @@ import type { Recipe } from "@/lib/recipes";
 import { RecipeIllustration } from "@/components/RecipeIllustration";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 import { LedgerCard } from "@/components/LedgerCard";
+import { useEnumLabels } from "@/lib/enum-labels";
 
 export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: PatinaLevel }) {
   const resolvedPatina: PatinaLevel = patina ?? cookCountToPatina(recipe.cook_count);
   const t = useTranslations("recipes");
+  const labels = useEnumLabels();
   // Derive the photo-path key from props; effect runs only when it changes.
   // D-05 living image: prefer the most recent cooking-log photo over the
   // canonical recipe photo so the library list reflects "your own food".
@@ -143,7 +145,7 @@ export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: Patina
         <div className="flex items-center gap-1.5 flex-wrap text-xs text-foreground-muted">
           {recipe.cuisine ? (
             <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
-              {recipe.cuisine}
+              {labels.cuisine(recipe.cuisine)}
             </Badge>
           ) : null}
           {recipe.cuisine ? <span aria-hidden>·</span> : null}
