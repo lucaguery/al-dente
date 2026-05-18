@@ -40,8 +40,8 @@ Pre-split root `CLAUDE.md` is 114 lines / 17 H2 sections (10 hand-written, lines
   - **Split bullets between scoped files:** `GSD:conventions` — frontend bullets (ESLint flat config, strict TS, `@/*` alias, `--webpack` build flag) → `frontend/CLAUDE.md`; backend bullets (`uv`-managed Python 3.12, SQLAlchemy 2.0 typed style, Pydantic v2, APScheduler single-worker) → `backend/CLAUDE.md`. The comment convention ("explain *why*, not *what*") stays at root as hand-written prose (not inside a GSD marker, since the marker source is split).
   - **Split or stay (planner verifies):** `GSD:stack` — frontend versions → `frontend/CLAUDE.md`; backend versions → `backend/CLAUDE.md`. If `gsd-docs-update` cannot refresh marker blocks at non-root paths (D-04), keep `GSD:stack` at root unchanged and accept the small cross-cutting leak.
   - **Relocate (mandated by ROADMAP success criterion #4):** `GSD:workflow` → `.planning/CLAUDE.md`.
-- **D-02:** Strip-all-markers option (hand-maintain) was rejected — the auto-refresh is small overhead and silently keeps content in sync with `PROJECT.md` / `STACK` source files.
-- **D-03:** Keep-all-markers-at-root option was rejected — leaves `GSD:conventions` (mixed frontend + backend) as scoped guidance at root, which violates the spirit of success criterion #1.
+- **D-02 [informational]:** Strip-all-markers option (hand-maintain) was rejected — the auto-refresh is small overhead and silently keeps content in sync with `PROJECT.md` / `STACK` source files.
+- **D-03 [informational]:** Keep-all-markers-at-root option was rejected — leaves `GSD:conventions` (mixed frontend + backend) as scoped guidance at root, which violates the spirit of success criterion #1.
 
 ### Tooling verification gate
 - **D-04: Plan 33-01 verifies `gsd-docs-update` behavior** with the moved markers. Concrete tests: (a) write a `frontend/CLAUDE.md` containing `<!-- GSD:conventions-start source:CONVENTIONS.md -->...<!-- GSD:conventions-end -->`, (b) trigger the refresh path the same way `/gsd-docs-update` does, (c) confirm the block body is regenerated correctly. If the tool only finds markers in root `CLAUDE.md`: fall back to keeping `GSD:conventions` and `GSD:stack` at root unchanged and accept that the convention bullets remain (slightly) at root. This fallback is OK because the *load-bearing* sections (Tests, Gemini SDK, Workflow Enforcement, hand-written conventions context) all still move. Outcome of the verification is captured in 33-01-SUMMARY.md.
@@ -54,7 +54,7 @@ Pre-split root `CLAUDE.md` is 114 lines / 17 H2 sections (10 hand-written, lines
   - **Root keeps:** "Hosting: Vercel (frontend, free) + Railway (backend, ~$5/mo) + Supabase (Postgres + Storage, free). Couple-scale workload assumed throughout." (cross-cutting orientation.)
   - **Moves to `backend/CLAUDE.md`:** "Railway runs `alembic upgrade head` before uvicorn restart on each deploy." (backend-specific runtime contract.)
 - **D-08:** `## Current state` (root lines 21-23, "v0.5 (Mixed Sweep) shipped 2026-05-13. No active milestone") → **deleted entirely**. The "Source of truth" block already points to `.planning/STATE.md`; a static "current state" line in CLAUDE.md goes stale on every milestone shipping (v0.5 → v0.6 → v0.7 drift observed in this very file).
-- **D-09:** `docs/DEPLOYMENT.md` extraction was rejected — keeps the split contained to the four mandated files.
+- **D-09 [informational]:** `docs/DEPLOYMENT.md` extraction was rejected — keeps the split contained to the four mandated files.
 
 ### `frontend/CLAUDE.md` structure
 - **D-10:** `frontend/CLAUDE.md` absorbs four content sources:
@@ -90,7 +90,7 @@ Pre-split root `CLAUDE.md` is 114 lines / 17 H2 sections (10 hand-written, lines
     - `grep -rn "@/\*\|--webpack\|ESLint" backend/CLAUDE.md` → zero matches.
     - `ls frontend/AGENTS.md` → file not found (per D-12).
     - `wc -l < CLAUDE.md` → counts only the lines outside `<!-- GSD:* -->` blocks; result ≤ 60 of guidance content.
-- **D-14:** Section-hash script option was rejected — adds a script for one-shot use that becomes dead code after the split lands.
+- **D-14 [informational]:** Section-hash script option was rejected — adds a script for one-shot use that becomes dead code after the split lands.
 
 </decisions>
 
