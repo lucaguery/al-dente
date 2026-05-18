@@ -5,7 +5,7 @@ phase: "34-live-bug-sweep"
 plan: 1
 status: complete
 requirement_ids: [LIVE-02]
-commits: [TBD]
+commits: [cd43b3b]
 files_modified:
   - backend/app/services/storage.py
   - backend/app/routers/photos.py
