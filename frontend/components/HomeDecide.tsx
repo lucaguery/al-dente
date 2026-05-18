@@ -537,14 +537,7 @@ export function HomeDecide() {
       <header className="px-(--spacing-page-x) pt-8 pb-2">
         {/* Header date row: page label left + date caption + regenerate icon right */}
         <div className="flex items-baseline justify-between">
-          <span
-            className="text-foreground"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 500,
-              fontSize: "20px",
-            }}
-          >
+          <span className="text-page-header text-foreground">
             {tNav("home")}
           </span>
           <div className="flex items-center gap-2">
