@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
 status: executing
-stopped_at: Phase 32 UI-SPEC approved
-last_updated: "2026-05-18T09:45:45.108Z"
-last_activity: 2026-05-18 -- Phase 32 execution started
+stopped_at: Completed 32-03-PLAN.md — Accueil A port
+last_updated: "2026-05-18T10:24:14.825Z"
+last_activity: 2026-05-18
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 3
-  percent: 38
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 5
+  percent: 71
 ---
 
 # Project State
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish mi
 
 Milestone: v0.7 Sober Kitchen + Polish
 Phase: 32 (port-locked-screens-to-sober-kitchen) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 32
-Last activity: 2026-05-18 -- Phase 32 execution started
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-05-18
 
 Resume: `/gsd-discuss-phase 30 ${GSD_WS}`
 
@@ -57,6 +57,7 @@ Progress: 0/4 phases complete
 | v0.5 (Phases 22-24) | 3 | ✅ Complete (shipped 2026-05-13) |
 | v0.6 (Phases 25-29) | 5 | ✅ Complete (shipped 2026-05-17) |
 | v0.7 (Phases 30-33) | 4 | 🚧 In Progress |
+| Phase 32 P32-03 | 6 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Progress: 0/4 phases complete
 ### Decisions
 
 See PROJECT.md Key Decisions table for the cumulative log. v0.7 milestone-level decisions live in the Current Milestone block in PROJECT.md (test-coverage deferral, « Suggérer » deferral, bug-fix shape, bottom-nav variant discriminator, CLAUDE.md / AGENTS.md coexistence).
+
+- [Phase 32]: VoteSummary redesigned in place (Choice 1) — single HomeDecide consumer, props interface preserved
+- [Phase 32]: home.hero_question + nav.home keys reused for Accueil A header — no new heading key needed
 
 ### Open Research
 
@@ -103,6 +107,6 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 ## Session Continuity
 
 Last activity: 2026-05-17 — v0.7 roadmap written; 4 phases (30-33), 12 requirements mapped
-Stopped at: Phase 32 UI-SPEC approved
-Resume file: .planning/phases/32-port-locked-screens-to-sober-kitchen/32-UI-SPEC.md
+Stopped at: Completed 32-03-PLAN.md — Accueil A port
+Resume file: None
 Next: `/gsd-discuss-phase 30 ${GSD_WS}`

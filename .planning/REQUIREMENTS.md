@@ -21,7 +21,7 @@
 ### Sober Kitchen design-system port (gh#29 — executes `docs/design-system.html` §15 "Mise en code" A→E)
 
 - [ ] **SOBER-01** — Locked Sober Kitchen tokens land in `frontend/app/globals.css` per §15.A (terracotta sober palette + type scale). Caveat font registered alongside Cormorant per §15.B. New patine + marginalia utility classes available. Parallel cleanup per §15.D removes the ad-hoc CSS that the new system replaces. Acceptance: grep gates confirm no ad-hoc duplicates of the locked tokens remain in any `frontend/{app,components}` file.
-- [ ] **SOBER-02** — Accueil (home) screen ports to the locked Sober Kitchen layout per the doc's locked-screen reference — shortlist au centre.
+- [x] **SOBER-02** — Accueil (home) screen ports to the locked Sober Kitchen layout per the doc's locked-screen reference — shortlist au centre.
 - [ ] **SOBER-03** — Bibliothèque (recipe library) screen ports to the locked Sober Kitchen layout — A par défaut, B/C accessibles per the doc.
 - [ ] **SOBER-04** — Recette — Détail (recipe detail) screen ports to the locked Sober Kitchen layout — cookbook page register per the doc.
 - [ ] **SOBER-05** — Recipe cards across the app render the patine treatment driven by `cook_count → patina` mapping. Cross-cutting register applied wherever recipe cards appear (Accueil, Bibliothèque, Recette détail at minimum).
