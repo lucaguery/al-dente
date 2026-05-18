@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b45309"/>
+      <stop offset="1" stop-color="#78350f"/>
+    </linearGradient>
+    <radialGradient id="spice" cx="0.5" cy="0.4" r="0.8">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="450" fill="url(#bg)"/>
+  <rect width="600" height="450" fill="url(#spice)"/>
+  <path d="M300 120 L340 200 L420 200 L356 252 L380 332 L300 286 L220 332 L244 252 L180 200 L260 200 Z" fill="#fef3c7" opacity="0.18"/>
+  <g fill="#fef3c7" opacity="0.45">
+    <circle cx="160" cy="350" r="18"/>
+    <circle cx="200" cy="360" r="10"/>
+    <circle cx="430" cy="350" r="14"/>
+    <circle cx="465" cy="358" r="9"/>
+  </g>
+  <g stroke="#fef3c7" stroke-width="3" fill="none" opacity="0.4">
+    <path d="M80 130 q60 -20 120 0 t120 0 t120 0"/>
+    <path d="M80 90 q60 -20 120 0 t120 0 t120 0"/>
+  </g>
+  <text x="50" y="430" font-family="Georgia, serif" font-style="italic" font-size="22" fill="#fef3c7" opacity="0.7">north african</text>
+</svg>

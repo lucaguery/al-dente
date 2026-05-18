@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e7490"/>
+      <stop offset="1" stop-color="#155e75"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.8" cy="0.2" r="0.5">
+      <stop offset="0" stop-color="#fde68a" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#fde68a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="450" fill="url(#bg)"/>
+  <rect width="600" height="450" fill="url(#sun)"/>
+  <g fill="none" stroke="#fef3c7" stroke-width="5" stroke-linecap="round" opacity="0.55">
+    <path d="M40 260 Q160 230 280 260 T560 240"/>
+    <path d="M40 295 Q160 270 280 300 T560 280"/>
+    <path d="M40 330 Q160 310 280 340 T560 320"/>
+  </g>
+  <circle cx="220" cy="370" r="14" fill="#16a34a" opacity="0.75"/>
+  <circle cx="260" cy="385" r="9" fill="#16a34a" opacity="0.7"/>
+  <circle cx="320" cy="370" r="11" fill="#dc2626" opacity="0.75"/>
+  <ellipse cx="430" cy="190" rx="60" ry="8" fill="#fef3c7" opacity="0.4"/>
+  <text x="50" y="430" font-family="Georgia, serif" font-style="italic" font-size="22" fill="#fef3c7" opacity="0.7">mediterranean</text>
+</svg>

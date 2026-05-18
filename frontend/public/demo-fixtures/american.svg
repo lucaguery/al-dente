@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#991b1b"/>
+      <stop offset="1" stop-color="#450a0a"/>
+    </linearGradient>
+    <radialGradient id="grill" cx="0.4" cy="0.6" r="0.7">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="450" fill="url(#bg)"/>
+  <rect width="600" height="450" fill="url(#grill)"/>
+  <rect x="120" y="240" width="360" height="48" rx="18" fill="#fde68a" opacity="0.85"/>
+  <rect x="120" y="280" width="360" height="34" rx="14" fill="#92400e" opacity="0.85"/>
+  <rect x="120" y="306" width="360" height="22" rx="10" fill="#16a34a" opacity="0.6"/>
+  <rect x="120" y="240" width="360" height="48" rx="18" fill="none" stroke="#fef3c7" stroke-width="2" opacity="0.5"/>
+  <g fill="#fef3c7" opacity="0.5">
+    <circle cx="170" cy="200" r="5"/>
+    <circle cx="240" cy="190" r="4"/>
+    <circle cx="320" cy="200" r="5"/>
+    <circle cx="400" cy="188" r="4"/>
+    <circle cx="450" cy="200" r="5"/>
+  </g>
+  <text x="50" y="430" font-family="Georgia, serif" font-style="italic" font-size="22" fill="#fef3c7" opacity="0.7">american</text>
+</svg>
