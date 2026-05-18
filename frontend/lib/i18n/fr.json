@@ -25,7 +25,8 @@
       "empty": "— personne ne s'est encore prononcé"
     },
     "cta": {
-      "cook_named": "Cuisiner {title}"
+      "cook_named": "Cuisiner {title}",
+      "cook_short": "Cuisiner ce soir"
     },
     "shortlist": {
       "empty_heading": "Pas encore de shortlist",

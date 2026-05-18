@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/BrandIcon";
 import { EmptyState } from "@/components/EmptyState";
-import { ShortlistDeck } from "@/components/ShortlistDeck";
 import { VoteSummary } from "@/components/VoteSummary";
 import { CookingBanner } from "@/components/CookingBanner";
 import { PushPermissionBanner } from "@/components/PushPermissionBanner";
@@ -442,20 +441,24 @@ export function HomeDecide() {
     );
   }
 
-  // D-06: rejete recipes never appear in the deck or the summary. Filter
-  // upstream of both views so the same predicate applies.
+  // Phase 36 SOBER-09 — first-paint ledger. The dual-mode swipe-deck-then-
+  // ledger toggle is retired; VoteSummary renders all 5 row states (Validé /
+  // Pressenti / Contesté / Rejeté muted / Sans avis) from first paint, with
+  // the un-voted-by-me rows carrying an inline vote affordance.
+  //
+  // The full `shortlist.recipes` slice is passed to VoteSummary so the
+  // Rejeté row renders muted (SOBER-15) instead of being filtered upstream.
+  // `unvotedByMe` is still derived from the rejete-filtered set — both
+  // members already rejected, no productive vote remains. The ledger shows
+  // the muted Rejeté row but does NOT offer an inline affordance on it.
   const dealableRecipes = shortlist.recipes.filter((r) => {
     const recipeVotes = shortlist.votes.filter((v) => v.recipe_id === r.id);
     return computeVoteState(recipeVotes, session.members.length) !== "rejete";
   });
-
-  // The local user's voted recipes (any vote — yes or no).
   const myVotes = new Set(
     shortlist.votes.filter((v) => v.member_id === me.id).map((v) => v.recipe_id),
   );
-  // Cards I haven't voted on yet — these are the ones the deck shows.
   const unvotedByMe = dealableRecipes.filter((r) => !myVotes.has(r.id));
-  const allVoted = unvotedByMe.length === 0;
 
   // State-derived Accueil subhead (D-13 + Phase 34 LIVE-04) — scans ALL
   // shortlist recipes (not just dealable) to reflect the full vote
@@ -566,26 +569,26 @@ export function HomeDecide() {
             {tShortlist("regenerate_cta")}
           </Button>
         </div>
-      ) : allVoted ? (
+      ) : (
+        // SOBER-09 first-paint ledger — single render path, no allVoted toggle.
+        // VoteSummary receives the full shortlist.recipes (Rejeté rows render
+        // muted via SOBER-15's row-state-rejete variant; rejete is no longer
+        // filtered upstream). `unvotedByMe` drives which rows carry the inline
+        // vote affordance; `onVoteApplied` wires optimistic vote propagation
+        // (mirrors the retired swipe-deck flow).
         <VoteSummary
-          recipes={dealableRecipes}
+          shortlistId={shortlist.shortlist_id}
+          recipes={shortlist.recipes}
           votes={shortlist.votes}
           me={me}
           partner={partner}
+          unvotedByMe={unvotedByMe}
+          onVoteApplied={handleVoteApplied}
           onCookStart={handleCookStart}
           onDelegate={handleDelegate}
           onRegenerate={() => setRegenOpen(true)}
           cookInFlight={cookInFlight}
           delegateInFlight={delegateInFlight}
-        />
-      ) : (
-        <ShortlistDeck
-          shortlistId={shortlist.shortlist_id}
-          recipes={unvotedByMe}
-          votes={shortlist.votes}
-          me={me}
-          partner={partner}
-          onVoteApplied={handleVoteApplied}
         />
       )}
 

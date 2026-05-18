@@ -620,6 +620,16 @@
     border-radius: 1px;
   }
 
+  /* Phase 36 SOBER-15 — Rejeté row muted variant on the Accueil ledger.
+     Symmetric with the other 4 row states (Validé tint / Pressenti / Contesté /
+     Sans avis neutral). Visual gradient bottoms out here. CONTEXT §SOBER-15
+     "render muted, not hide" — see .planning/phases/36-sober-kitchen-finish-polish/36-CONTEXT.md. */
+  .shortlist-row.row-state-rejete {
+    opacity: 0.6;
+    color: var(--color-muted-foreground);
+    border-left: 2px solid color-mix(in oklch, var(--destructive) 50%, transparent);
+  }
+
   /* Phase 32 §15.C — Brand-mark loader (drawing stroke).
      Source: docs/design-system.html lines 299-320.
      Consumes --duration-slow added to @theme inline in Task 1. */
