@@ -3,7 +3,7 @@ plan_id: "35-01"
 plan_name: "ENUM-01 backend — chips emit ChipPayload(field, value)"
 status: complete
 requirement_ids: [ENUM-01]
-commits: [57c90ae]
+commits: [fb51b02]
 files_modified:
   - backend/app/schemas/recipe_turn.py
   - backend/app/services/llm.py
@@ -90,4 +90,4 @@ This plan's three tasks all carry `tdd="true"`. Per MVP+TDD posture, the changes
   - `backend/app/schemas/recipe_turn.py` — FOUND (ChipPayload class + chips: List[ChipPayload] + _coerce_legacy_chips validator).
   - `backend/app/services/llm.py` — FOUND (ChipPayload import + chip comprehension + _FIELD_LABELS_FR import removed).
   - `backend/tests/test_llm_thread.py` — FOUND (4 new tests + json import).
-- Commit hash: `57c90ae` — verified via `git log --oneline -1`.
+- Commit hash: `fb51b02` — verified via `git log --oneline -1`.
