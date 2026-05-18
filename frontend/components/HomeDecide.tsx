@@ -404,7 +404,6 @@ export function HomeDecide() {
   if (shortlist === null) {
     return (
       <div className="flex flex-col flex-1">
-        <PushPermissionBanner />
         {cookingBannerVisible && activeLog && (
           <CookingBanner
             logId={activeLog.id}
@@ -431,6 +430,12 @@ export function HomeDecide() {
             {tShortlist("regenerate_cta")}
           </Button>
         </div>
+        {/* POLISH-02 (Plan 36-07) — PushPermissionBanner moved BELOW the
+            empty-state content so the locked Accueil first paint wins
+            above the fold. Banner self-suppresses when permission is no
+            longer "default" (granted / denied / dismissed) — when present
+            it sits as a tertiary callout above the BottomNav. */}
+        <PushPermissionBanner />
         <RegenerateSheet
           open={regenOpen}
           onOpenChange={setRegenOpen}
@@ -509,7 +514,12 @@ export function HomeDecide() {
 
   return (
     <div className="flex flex-col flex-1">
-      <PushPermissionBanner />
+      {/* POLISH-02 (Plan 36-07) — PushPermissionBanner moved from above the
+          <header> (its old top-of-screen slot was the very first paint, which
+          contradicted the locked Sober Kitchen hierarchy: H1 + marginalia
+          first, banner as a tertiary affordance). New mount is BELOW the
+          shortlist ledger, just before <RegenerateSheet>. The CookingBanner
+          retains its top placement — different priority, different banner. */}
       {cookingBannerVisible && activeLog && (
         <CookingBanner
           logId={activeLog.id}
@@ -591,6 +601,12 @@ export function HomeDecide() {
           delegateInFlight={delegateInFlight}
         />
       )}
+
+      {/* POLISH-02 — push-permission banner now lives below the ledger.
+          The component self-suppresses when permission !== "default"; on a
+          fresh-install render, the H1 + marginalia + ledger paint first and
+          the banner appears as a tertiary callout above the BottomNav. */}
+      <PushPermissionBanner />
 
       <RegenerateSheet
         open={regenOpen}

@@ -22,7 +22,7 @@ export function VersionFooter() {
       className="text-xs text-foreground-muted text-center pt-2"
       aria-label="Version de l'application"
     >
-      v{version} · {sha} · {env}
+      v{version}<span className="meta-sep">{" · "}</span>{sha}<span className="meta-sep">{" · "}</span>{env}
     </p>
   );
 }

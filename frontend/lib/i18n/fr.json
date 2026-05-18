@@ -302,7 +302,7 @@
       "summary_complete": "Oui, compléter",
       "summary_later": "Plus tard",
       "all_complete": "Tout est complet.",
-      "progress_capture": "Capture · {count, plural, one {# élément} other {# éléments}}",
+      "progress_capture": "Capture · {count, plural, one {# élément} other {# éléments}}",
       "progress_question": "Question {current} / {total}",
       "state_structured": "Structurée",
       "state_draft": "Extraction…",

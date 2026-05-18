@@ -77,7 +77,7 @@ export function RecipeRow({ recipe }: RecipeRowProps) {
                 {labels.cuisine(recipe.cuisine)}
               </Badge>
             ) : null}
-            {recipe.cuisine ? <span aria-hidden>·</span> : null}
+            {recipe.cuisine ? <span aria-hidden className="meta-sep">{" · "}</span> : null}
             <span>
               {recipe.last_cooked_at
                 ? formatRelativeFr(recipe.last_cooked_at)

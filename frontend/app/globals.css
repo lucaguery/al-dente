@@ -410,6 +410,15 @@
     color: var(--foreground-muted);
   }
 
+  /* POLISH-01 — French typography: NBSP both sides of middle-dot via
+     .meta-sep utility. Sweep applied in Plan 36-07. The NBSPs live in the
+     JSX text content (approach (b) in the plan: `<span className="meta-sep">{" · "}</span>`)
+     so screen readers receive the literal characters; this rule only adds
+     no-wrap behavior so the separator never breaks across lines. */
+  .meta-sep {
+    white-space: nowrap;
+  }
+
   /* Quick-260512-l0l — page-chrome header register. Sits between
      `.text-display` (hero / wordmark) and `.text-body` (running text).
      Mirrors `.scratch/ui-proposals.html` `.frame-head h3` (Cormorant

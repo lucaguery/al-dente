@@ -90,7 +90,7 @@ function PatinaSection({
           {label}
         </h2>
         <Marginalia size="sm" as="span" style={{ fontSize: "15px" }}>
-          · {count}
+          <span className="meta-sep">{" · "}</span>{count}
         </Marginalia>
       </header>
       {recipes.length === 0 ? (

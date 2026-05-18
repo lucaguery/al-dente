@@ -26,7 +26,7 @@
 // modifying TableVote.tsx's seat-tap API, reuses an existing primitive,
 // and matches the spec's "row contains affordance" composition.
 
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { Flame, RotateCw, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -241,19 +241,34 @@ export function VoteSummary({
                     {tShortlist("valide_meta")}
                   </Marginalia>
                 ) : (
-                  /* Non-valide meta — cuisine · prep-time caption, IBM Plex 12px */
+                  /* Non-valide meta — cuisine · prep-time caption, IBM Plex 12px.
+                     POLISH-01 (Plan 36-07): interleave parts with a .meta-sep
+                     span so the middle-dot carries NBSP both sides + no-wrap
+                     (was: .join(" · ") with regular spaces). */
                   <span
                     className="text-caption truncate"
                     style={{ fontSize: "12px" }}
                   >
-                    {[
-                      r.cuisine ? labels.cuisine(r.cuisine) : null,
-                      r.prep_time_minutes
-                        ? `${r.prep_time_minutes} min`
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
+                    {(
+                      [
+                        r.cuisine ? labels.cuisine(r.cuisine) : null,
+                        r.prep_time_minutes
+                          ? `${r.prep_time_minutes} min`
+                          : null,
+                      ].filter(Boolean) as string[]
+                    ).reduce<ReactNode[]>(
+                      (acc, part, idx) =>
+                        idx === 0
+                          ? [part]
+                          : [
+                              ...acc,
+                              <span key={`sep-${idx}`} className="meta-sep">
+                                {" · "}
+                              </span>,
+                              part,
+                            ],
+                      [],
+                    )}
                   </span>
                 )}
                 {/* SOBER-09 inline vote affordance — compact thumb buttons

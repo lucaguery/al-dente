@@ -859,7 +859,7 @@ export default function RecipeDetailPage() {
                       className="text-caption"
                       style={{ fontFamily: "var(--font-body)", fontWeight: 400, marginLeft: "6px" }}
                     >
-                      {" · "}{recipe.servings} personnes
+                      <span className="meta-sep">{" · "}</span>{recipe.servings} personnes
                     </small>
                   ) : null}
                 </h2>
@@ -978,9 +978,7 @@ export default function RecipeDetailPage() {
               when: recipe.last_cooked_at
                 ? formatRelativeFr(recipe.last_cooked_at)
                 : t("never_cooked"),
-            })}{" "}
-            ·{" "}
-            {t("footer_cook_count", { count: recipe.cook_count })}
+            })}<span className="meta-sep">{" · "}</span>{t("footer_cook_count", { count: recipe.cook_count })}
           </p>
         </div>
 
