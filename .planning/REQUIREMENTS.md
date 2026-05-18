@@ -25,7 +25,7 @@
 
 ### Phase 34 — Live-bug sweep
 
-- [ ] **LIVE-01** — `/cooking-logs` renders the cooking-log cards returned by `GET /api/cooking-logs`. Three cards visible against the seeded stack (loved Ragu / liked Poulet citron / disliked Burger), grouped by date with Fraunces-italic section headers per v0.2 Phase 8. EmptyState copy on the cooking-log page references cooking logs (not "Aucune recette pour le moment"). Acceptance: navigate to `/cooking-logs` while authenticated as Luca against the seed → 3 cards render. (B-01, P1)
+- [x] **LIVE-01** — `/cooking-logs` renders the cooking-log cards returned by `GET /api/cooking-logs`. Three cards visible against the seeded stack (loved Ragu / liked Poulet citron / disliked Burger), grouped by date with Fraunces-italic section headers per v0.2 Phase 8. EmptyState copy on the cooking-log page references cooking logs (not "Aucune recette pour le moment"). Acceptance: navigate to `/cooking-logs` while authenticated as Luca against the seed → 3 cards render. (B-01, P1) ✅ Shipped d73baa1 (Plan 34-02).
 
 - [ ] **LIVE-02** — Photo signed-URL handler degrades gracefully on missing storage objects. **Plan step 0:** verify the deployed photo-url handler returns 404 (not 500) on a known-missing path. If prod returns 500, scope expands to backend handler hardening; if 404, scope is local-seed gap + UI graceful-fallback only. Either way, end state: handler returns 404, `useSignedPhotoUrl` `onError` swap renders the empty pictogram fallback without console-500 noise. Acceptance: local seed walk shows zero 500 console errors on Accueil / Bibliothèque / Recette détail; prod audit recorded in phase HUMAN-UAT. (B-02, P1)
 
@@ -100,7 +100,7 @@ _Filled by direct-scaffold 2026-05-18. Each REQ-ID maps to exactly one phase._
 
 | REQ-ID | Phase | Plan(s) |
 |--------|-------|---------|
-| LIVE-01 | Phase 34 | TBD (plan-phase) |
+| LIVE-01 | Phase 34 | 34-02 ✅ (d73baa1) |
 | LIVE-02 | Phase 34 | TBD (plan-phase) |
 | LIVE-03 | Phase 34 | TBD (plan-phase) |
 | LIVE-04 | Phase 34 | TBD (plan-phase) |

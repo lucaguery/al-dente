@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.7.1
 milestone_name: Sober Kitchen Finish
-status: Awaiting plan-phase
-stopped_at: Milestone v0.7.1 scoped 2026-05-18 — roadmap + requirements scaffolded; first phase awaiting /gsd-plan-phase
-last_updated: "2026-05-18T14:00:00.000Z"
-last_activity: 2026-05-18 — Milestone v0.7.1 scaffolded direct from 260518-kba punch list (3 phases, 22 requirements)
+status: Phase 34 in progress — 34-02 LIVE-01 complete (d73baa1); only 34-03 LIVE-03 remains
+stopped_at: 34-02 LIVE-01 shipped; only Phase 34 plan 34-03 (LIVE-03 Settings members) remains before Phase 34 closes.
+last_updated: "2026-05-18T15:00:00.000Z"
+last_activity: 2026-05-18 — Plan 34-02 (LIVE-01) shipped (d73baa1). `/cooking-logs` now renders 3 seed cards instead of the empty state; root cause was `Promise.all` atomic rejection on a 422 from `/api/recipes?limit=500` (backend cap is `le=200`). Two new i18n keys `cooking_logs.empty_heading` / `empty_body` close the file's "Phase 20 i18n sweep" tech-debt comment.
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 5
+  completed_plans: 4
   percent: 0
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-18 — v0.7.1 Sober Kitchen Finish sc
 
 ## Current Position
 
-Phase: Phase 34 — Live-bug sweep (next)
-Plan: —
-Status: Awaiting plan-phase (`/gsd-plan-phase 34`)
-Last activity: 2026-05-18 — v0.7.1 milestone scaffolded direct from the 260518-kba punch list per Route B (no orchestrator). 3 phases (34-36), 22 requirements mapped (LIVE × 6 + ENUM × 4 + SOBER × 8 + POLISH × 4).
+Phase: Phase 34 — Live-bug sweep (in progress)
+Plan: 34-02 complete (d73baa1); 34-03 LIVE-03 (Settings members) is the only remaining Phase 34 plan
+Status: 4/5 Phase 34 plans complete (34-01, 34-02, 34-04, 34-05 shipped; 34-03 awaiting execute)
+Last activity: 2026-05-18 — Plan 34-02 (LIVE-01) shipped. `/cooking-logs` renders 3 seed cards instead of empty state; root cause was `Promise.all` atomic rejection on a 422 from `/api/recipes?limit=500` (backend cap is `le=200`). New i18n keys `cooking_logs.empty_heading` / `empty_body` close the file's "Phase 20 i18n sweep" tech-debt comment.
 
 ## Performance Metrics
 
@@ -120,12 +120,12 @@ UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surfac
 
 ## Session Continuity
 
-Last activity: 2026-05-18 — v0.7.1 Sober Kitchen Finish milestone scaffolded direct from `.planning/quick/260518-kba-ui-walkthrough-punch-list/PUNCH-LIST.md` (Route B, no orchestrator). Four files touched: `.planning/ROADMAP.md` (v0.7 → Completed, v0.7.1 as Current Milestone), `.planning/REQUIREMENTS.md` (new — 22 LIVE/ENUM/SOBER/POLISH requirements + locked-decisions table), `.planning/PROJECT.md` (Current Milestone section + locked-decisions), `.planning/STATE.md` (milestone + status + accumulated context). 3 milestone-level decisions captured at scaffold time per user input.
-Stopped at: Milestone scaffolded; awaiting `/gsd-plan-phase 34` to draft Phase 34's plans against the 6 LIVE-* requirements.
-Next: `/gsd-plan-phase 34` — start the live-bug sweep. Phase 34 plan step 0 must verify prod's photo-url handler behavior before any code touches.
+Last activity: 2026-05-18 — Plan 34-02 (LIVE-01) shipped. Atomic commit at d73baa1 touched `frontend/app/cooking-logs/page.tsx` (clamp `/api/recipes?limit=500` → `?limit=200`; bind `useTranslations("cooking_logs")`; dev-only `console.error` in catch) + `frontend/lib/i18n/fr.json` (new `cooking_logs.empty_heading` / `empty_body` keys) + `.planning/phases/34-live-bug-sweep/34-02-SUMMARY.md` (root-cause receipt). Phase 34 progress: 4/5 (34-01 LIVE-02, 34-02 LIVE-01, 34-04 LIVE-04, 34-05 LIVE-05+06 all shipped). Only 34-03 LIVE-03 (Settings household members) remains before Phase 34 closes.
+Stopped at: 34-02 LIVE-01 shipped; only Phase 34 plan 34-03 (LIVE-03 Settings members) remains before Phase 34 closes.
+Next: Execute Plan 34-03 (LIVE-03 — Settings renders both household members) to close Phase 34.
 
 ## Operator Next Steps
 
-- Run `/gsd-plan-phase 34` to draft plans for the live-bug sweep
-- (Optional) Run `/gsd-discuss-phase 34` first if more context-gathering desired before planning
+- Run `/gsd-execute-phase 34` (or `/gsd:execute-plan 34-03`) to land LIVE-03 — Settings renders both household members
+- After Phase 34 closes, advance to `/gsd-plan-phase 35` for the enum sweep
 - Review v0.7 HUMAN-UAT carry-forward via `/gsd-audit-uat` (Phase 30 + Phase 32 items need physical-device validation — orthogonal to v0.7.1 scope)

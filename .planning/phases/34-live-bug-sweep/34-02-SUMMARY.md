@@ -5,7 +5,7 @@ phase: "34-live-bug-sweep"
 plan: 2
 status: complete
 requirement_ids: [LIVE-01]
-commits: [pending]
+commits: [d73baa1]
 files_modified:
   - frontend/app/cooking-logs/page.tsx
   - frontend/lib/i18n/fr.json

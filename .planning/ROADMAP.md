@@ -79,7 +79,7 @@ Phases execute in numeric order: 34 → 35 → 36 (Phase 35 may run in parallel 
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 34. Live-bug sweep | v0.7.1 | 0/0 | Awaiting plan-phase | — |
+| 34. Live-bug sweep | v0.7.1 | 4/5 | 🚧 In Progress | — |
 | 35. Enum + extraction-leak sweep | v0.7.1 | 0/0 | Awaiting plan-phase | — |
 | 36. Sober Kitchen finish + polish | v0.7.1 | 0/0 | Awaiting plan-phase | — |
 
