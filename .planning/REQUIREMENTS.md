@@ -31,7 +31,7 @@
 
 ### Developer experience
 
-- [ ] **DX-01** — Root `CLAUDE.md` shrinks to (a) architecture invariants, (b) locked vocabularies, (c) MVP posture, (d) source-of-truth pointers (PROJECT.md / SPEC.md / design-system.html / frontend/AGENTS.md). Backend-specific guidance (SQLAlchemy 2.0 typed style, Alembic conventions, `uv` workflow, single-uvicorn-worker reasoning, APScheduler in-process pattern) moves to `backend/CLAUDE.md`. Frontend-specific guidance (Next.js 16 breaking changes, ESLint-as-formatter, `@/*` alias, `--webpack` build flag rationale) moves to `frontend/CLAUDE.md` while `frontend/AGENTS.md` is deleted; its Next.js 16 warning lives in `frontend/CLAUDE.md`. GSD workflow enforcement moves to `.planning/CLAUDE.md`. Acceptance: root `CLAUDE.md` line count drops materially; every moved rule is verifiably present in exactly one scoped file (no duplication, no drop).
+- [x] **DX-01** — Root `CLAUDE.md` shrinks to (a) architecture invariants, (b) locked vocabularies, (c) MVP posture, (d) source-of-truth pointers (PROJECT.md / SPEC.md / design-system.html / frontend/AGENTS.md). Backend-specific guidance (SQLAlchemy 2.0 typed style, Alembic conventions, `uv` workflow, single-uvicorn-worker reasoning, APScheduler in-process pattern) moves to `backend/CLAUDE.md`. Frontend-specific guidance (Next.js 16 breaking changes, ESLint-as-formatter, `@/*` alias, `--webpack` build flag rationale) moves to `frontend/CLAUDE.md` while `frontend/AGENTS.md` is deleted; its Next.js 16 warning lives in `frontend/CLAUDE.md`. GSD workflow enforcement moves to `.planning/CLAUDE.md`. Acceptance: root `CLAUDE.md` line count drops materially; every moved rule is verifiably present in exactly one scoped file (no duplication, no drop).
 
 ---
 

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
-status: executing
-stopped_at: Phase 33 plan committed; ready to execute
-last_updated: "2026-05-18T13:00:47.456Z"
+status: milestone_complete
+stopped_at: Milestone complete (Phase 33 was final phase)
+last_updated: 2026-05-18T13:23:04.041Z
 last_activity: 2026-05-18 -- Phase 33 execution started
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 50
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 33 — claude-md-split
+**Current focus:** Milestone complete
 
 ## Current Position
 
 Milestone: v0.7 Sober Kitchen + Polish
-Phase: 33 (claude-md-split) — EXECUTING
-Plan: 1 of 1
-Status: Executing Phase 33
-Last activity: 2026-05-18 -- Phase 33 execution started
+Phase: 33
+Plan: Not started
+Status: Milestone complete
+Last activity: 2026-05-18
 
 Resume: `/gsd-execute-phase 33 ${GSD_WS}`
 
