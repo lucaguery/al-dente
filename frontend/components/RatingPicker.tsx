@@ -9,7 +9,10 @@
 // semantic --color-valide-* tokens from globals.css, which carry the dark-mode swap):
 //   loved    → bg-surface-rose-100 border-2 border-primary text-primary
 //   liked    → bg-valide-tint border-2 border-[var(--color-valide-foreground)] text-[var(--color-valide-emphasis)]
-//   disliked → bg-surface-muted border-2 border-foreground-muted text-foreground
+//   disliked → bg-surface-muted border-2 border-foreground-muted text-destructive
+// gh#37 — "Passable" selected text uses --destructive (semantic match for the
+// negative rating) instead of the default --foreground which renders as plain
+// black against bg-surface-muted, indistinguishable from the unselected state.
 
 import { Heart, ThumbsUp, Meh, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -40,7 +43,7 @@ const CARDS: CardSpec[] = [
     value: "disliked",
     Icon: Meh,
     selectedClass:
-      "bg-surface-muted border-2 border-foreground-muted text-foreground",
+      "bg-surface-muted border-2 border-foreground-muted text-destructive",
   },
 ];
 
