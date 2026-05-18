@@ -3,7 +3,7 @@ plan_id: "34-05"
 plan_name: "LIVE-05 version bump + LIVE-06 nested main strip"
 status: complete
 requirement_ids: [LIVE-05, LIVE-06]
-commits: [PENDING]
+commits: [2afa5dd]
 files_modified:
   - frontend/package.json
   - frontend/app/page.tsx
