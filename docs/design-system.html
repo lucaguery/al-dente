@@ -568,6 +568,23 @@
         background: color-mix(in oklch, var(--primary) 8%, transparent);
       }
       .bottom-nav-tab svg, .bottom-nav-tab span { position: relative; z-index: 1; }
+      /* Phase 31 NAV-01 + Phase 36 SOBER-10 — central elevated « Ajouter » CTA.
+         Sits in the same flex row as flat tabs but lifts visually via translateY +
+         drop shadow so the pill reads as an elevated CTA above the row. */
+      .bottom-nav-cta {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 4px; font-size: 11px;
+        color: var(--foreground-muted); position: relative; cursor: pointer;
+      }
+      .bottom-nav-cta .cta-pill {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 56px; height: 56px; border-radius: 999px;
+        background: var(--primary); color: var(--primary-foreground);
+        transform: translateY(-12px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+      }
+      .bottom-nav-cta .cta-label { transform: translateY(-8px); }
 
       .phone-frame {
         max-width: 380px; margin: 0 auto;
@@ -1539,8 +1556,8 @@
                 <div class="bottom-nav">
                   <div class="bottom-nav-tab active"><i data-lucide="home" style="width:20px;height:20px;"></i><span>Accueil</span></div>
                   <div class="bottom-nav-tab"><i data-lucide="book-open" style="width:20px;height:20px;"></i><span>Recettes</span></div>
-                  <div class="bottom-nav-tab"><i data-lucide="inbox" style="width:20px;height:20px;"></i><span>Réception</span></div>
-                  <div class="bottom-nav-tab"><i data-lucide="settings" style="width:20px;height:20px;"></i><span>Réglages</span></div>
+                  <div class="bottom-nav-cta"><span class="cta-pill"><i data-lucide="plus" style="width:22px;height:22px;"></i></span><span class="cta-label">Ajouter</span></div>
+                  <div class="bottom-nav-tab"><i data-lucide="settings" style="width:20px;height:20px;"></i><span>Profil</span></div>
                 </div>
               </div>
 
@@ -1731,8 +1748,8 @@
                 <div class="bottom-nav">
                   <div class="bottom-nav-tab"><i data-lucide="home" style="width:20px;height:20px;"></i><span>Accueil</span></div>
                   <div class="bottom-nav-tab active"><i data-lucide="book-open" style="width:20px;height:20px;"></i><span>Recettes</span></div>
-                  <div class="bottom-nav-tab"><i data-lucide="inbox" style="width:20px;height:20px;"></i><span>Réception</span></div>
-                  <div class="bottom-nav-tab"><i data-lucide="settings" style="width:20px;height:20px;"></i><span>Réglages</span></div>
+                  <div class="bottom-nav-cta"><span class="cta-pill"><i data-lucide="plus" style="width:22px;height:22px;"></i></span><span class="cta-label">Ajouter</span></div>
+                  <div class="bottom-nav-tab"><i data-lucide="settings" style="width:20px;height:20px;"></i><span>Profil</span></div>
                 </div>
               </div>
 
