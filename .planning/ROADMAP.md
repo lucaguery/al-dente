@@ -21,7 +21,7 @@
 - [x] **Phase 30: Live-bug sweep** — Photo signed URLs self-heal on PWA resume; recipe SVG illustrations render as visible pictograms. (completed 2026-05-17)
 - [x] **Phase 31: Bottom nav restructure** — Central elevated « Ajouter » CTA lands in the bottom nav on every authenticated, non-onboarding screen. (completed 2026-05-17)
 - [x] **Phase 32: Port locked screens to Sober Kitchen** — All eight Sober Kitchen design-system §15 items (tokens, three screens, patine cards, voting scene, marginalia, brand-mark loader) are live. (completed 2026-05-18)
-- [ ] **Phase 33: CLAUDE.md split** — Root `CLAUDE.md` shrinks to invariants + locked vocabularies + source-of-truth pointers; backend, frontend, and GSD guidance live in scoped files.
+- [x] **Phase 33: CLAUDE.md split** — Root `CLAUDE.md` shrinks to invariants + locked vocabularies + source-of-truth pointers; backend, frontend, and GSD guidance live in scoped files. (completed 2026-05-18)
 
 ## Phase Details
 
@@ -85,7 +85,7 @@ Plans:
   5. `grep -rn "SQLAlchemy\|alembic\|uvicorn" CLAUDE.md` at repo root returns zero matches (content moved, not duplicated); `grep` across `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `.planning/CLAUDE.md` confirms every moved rule is present in exactly one scoped file.
 **Plans**: 1 plan
 Plans:
-- [ ] 33-01-PLAN.md — DX-01: split CLAUDE.md (root pruning + backend/frontend/.planning scoped files + AGENTS.md deletion override + locked-artifact edits + D-04 verification + D-13 grep gates)
+- [x] 33-01-PLAN.md — DX-01: split CLAUDE.md (root pruning + backend/frontend/.planning scoped files + AGENTS.md deletion override + locked-artifact edits + D-04 verification + D-13 grep gates)
 
 ## Progress
 
@@ -97,7 +97,7 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 | 30. Live-bug sweep | v0.7 | 2/2 | Complete    | 2026-05-17 |
 | 31. Bottom nav restructure | v0.7 | 1/1 | Complete    | 2026-05-18 |
 | 32. Port locked screens to Sober Kitchen | v0.7 | 5/5 | Complete    | 2026-05-18 |
-| 33. CLAUDE.md split | v0.7 | 0/1 | Not started | - |
+| 33. CLAUDE.md split | v0.7 | 1/1 | Complete   | 2026-05-18 |
 
 ## Completed Milestone Progress
 
