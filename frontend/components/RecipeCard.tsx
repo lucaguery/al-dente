@@ -145,9 +145,14 @@ export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: Patina
       ) : null}
       {/* gh#33 C4 — library card content reduced to title + image only.
           The cuisine badge + relative last-cooked meta row was removed;
-          those signals stay available in the recipe detail view. */}
+          those signals stay available in the recipe detail view.
+          gh#33 follow-up — `min-h-[2lh]` reserves two line-heights for the
+          title block so cards with short titles (1 line) match the body
+          height of cards with long titles (2 lines, clamped). Without
+          this, grid-row stretch creates ragged bottom edges and an
+          uneven visual rhythm across the library. */}
       <div className="flex flex-col gap-1 px-2.5 pt-2 pb-2.5 min-w-0">
-        <h3 className="font-display text-base font-medium leading-tight tracking-tight line-clamp-2">
+        <h3 className="font-display text-base font-medium leading-tight tracking-tight line-clamp-2 min-h-[2lh]">
           {recipe.title}
         </h3>
       </div>

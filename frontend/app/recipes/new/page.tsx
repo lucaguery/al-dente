@@ -212,8 +212,15 @@ function Inner() {
   // mid-line) with very-low opacity so it never competes with the Composer.
   const showWatermark = pendingBubbles.length === 0;
 
+  // gh#34 follow-up — section uses `flex-1 min-h-0` instead of `h-[100dvh]`.
+  // The root layout's <main> already reserves `pb-[5rem+safe-area]` for
+  // BottomNav; pinning the section to 100dvh ignores that reservation and
+  // pushed the composer (last child) below BottomNav, requiring a scroll
+  // to surface the input. `flex-1` lets the section fill main's *content
+  // area* (after the bottom reservation), so the composer rests above
+  // BottomNav by default.
   return (
-    <section className="relative flex flex-col h-[100dvh]">
+    <section className="relative flex flex-col flex-1 min-h-0">
       <header className="sticky top-0 z-10 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border">
         <Button
           size="icon"
