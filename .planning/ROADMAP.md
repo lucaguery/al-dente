@@ -72,7 +72,14 @@
   9. Push permission banner sits below the shortlist hero on Accueil; the locked H1 + marginalia register is the first paint (POLISH-02).
   10. Recette détail meta-pill row icons are homogeneous (all text or all with leading icon); decision during discuss-phase (POLISH-03).
   11. Long post-vote ledger CTA copy truncates gracefully on narrow phones via "Cuisiner ce soir" + marginalia title underneath (POLISH-04).
-**Plans**: TBD (plan-phase)
+**Plans**: 7 plans
+  - [ ] 36-01-PLAN.md — SOBER-10 BottomNav central CTA elevation (Wave 1)
+  - [ ] 36-02-PLAN.md — SOBER-11 Bibliothèque Patine view empty-bucket fallback + section dividers (Wave 1)
+  - [ ] 36-03-PLAN.md — SOBER-12 + SOBER-13 + POLISH-03 Recette détail cookbook gestures audit, TableVote seat geometry verify, all-text meta-pills (Wave 1)
+  - [ ] 36-04-PLAN.md — SOBER-14 seed cook_count bump for dogear demo (Wave 1)
+  - [ ] 36-05-PLAN.md — SOBER-16 design-system.html §15 BottomNav mockup re-align (doc-only, Wave 1)
+  - [ ] 36-06-PLAN.md — SOBER-09 + SOBER-15 + POLISH-04 Accueil first-paint ledger, muted Rejeté row, truncated CTA (Wave 2, depends on 36-01..05)
+  - [ ] 36-07-PLAN.md — POLISH-01 + POLISH-02 NBSP middle-dot sweep + push banner relocation (Wave 3, depends on 36-06)
 **UI hint**: yes
 
 ## Progress
@@ -84,7 +91,7 @@ Phases execute in numeric order: 34 → 35 → 36 (Phase 35 may run in parallel 
 |-------|-----------|----------------|--------|-----------|
 | 34. Live-bug sweep | v0.7.1 | 5/5 | Plans complete (code review next) | — |
 | 35. Enum + extraction-leak sweep | v0.7.1 | 0/0 | Awaiting plan-phase | — |
-| 36. Sober Kitchen finish + polish | v0.7.1 | 0/0 | Awaiting plan-phase | — |
+| 36. Sober Kitchen finish + polish | v0.7.1 | 0/7 | Plans ready (execute next) | — |
 
 ## Completed Milestone Progress
 
