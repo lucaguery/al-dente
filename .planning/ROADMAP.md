@@ -20,7 +20,7 @@
 
 - [x] **Phase 30: Live-bug sweep** — Photo signed URLs self-heal on PWA resume; recipe SVG illustrations render as visible pictograms. (completed 2026-05-17)
 - [x] **Phase 31: Bottom nav restructure** — Central elevated « Ajouter » CTA lands in the bottom nav on every authenticated, non-onboarding screen. (completed 2026-05-17)
-- [ ] **Phase 32: Port locked screens to Sober Kitchen** — All eight Sober Kitchen design-system §15 items (tokens, three screens, patine cards, voting scene, marginalia, brand-mark loader) are live.
+- [x] **Phase 32: Port locked screens to Sober Kitchen** — All eight Sober Kitchen design-system §15 items (tokens, three screens, patine cards, voting scene, marginalia, brand-mark loader) are live. (completed 2026-05-18)
 - [ ] **Phase 33: CLAUDE.md split** — Root `CLAUDE.md` shrinks to invariants + locked vocabularies + source-of-truth pointers; backend, frontend, and GSD guidance live in scoped files.
 
 ## Phase Details
@@ -70,7 +70,7 @@ Plans:
 - [x] 32-02-PLAN.md — SOBER-07, SOBER-08: four primitives (LedgerCard / TableVote / Marginalia / BrandLoader) + 12-site spinner sweep + Sonner icons.loading swap
 - [x] 32-03-PLAN.md — SOBER-02: Accueil A port (HomeDecide.tsx — page-header + 28px Cormorant upright H1 + Caveat state-derived subhead + TableVote shortlist rows + Validé tint + sticky CTA)
 - [x] 32-04-PLAN.md — SOBER-03, SOBER-05: Bibliothèque port (recipes/page.tsx + LibraryViewSwitch + RecipeRow + cookCountToPatina + groupByPatina + 3 views with localStorage anti-flash + LedgerCard wrap)
-- [ ] 32-05-PLAN.md — SOBER-04, SOBER-06: Recette port (recipes/[id]/page.tsx — sticky topbar + 16:10 hero with -38px bleed + Caveat identity subhead from cook_count + terracotta numerals + conditional step-1 marginalia from cooking_logs[].notes + sticky CTA)
+- [x] 32-05-PLAN.md — SOBER-04, SOBER-06: Recette port (recipes/[id]/page.tsx — sticky topbar + 16:10 hero with -38px bleed + Caveat identity subhead from cook_count + terracotta numerals + conditional step-1 marginalia from cooking_logs[].notes + sticky CTA)
 **UI hint**: yes
 
 ### Phase 33: CLAUDE.md split
@@ -94,7 +94,7 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 |-------|-----------|----------------|--------|-----------|
 | 30. Live-bug sweep | v0.7 | 2/2 | Complete    | 2026-05-17 |
 | 31. Bottom nav restructure | v0.7 | 1/1 | Complete    | 2026-05-18 |
-| 32. Port locked screens to Sober Kitchen | v0.7 | 4/5 | In Progress|  |
+| 32. Port locked screens to Sober Kitchen | v0.7 | 5/5 | Complete   | 2026-05-18 |
 | 33. CLAUDE.md split | v0.7 | 0/? | Not started | - |
 
 ## Completed Milestone Progress

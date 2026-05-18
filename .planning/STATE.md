@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
 status: executing
-stopped_at: Completed 32-04-PLAN.md — Bibliothèque port
-last_updated: "2026-05-18T10:36:24.455Z"
+stopped_at: Completed 32-05-PLAN.md — Recette port (final plan)
+last_updated: "2026-05-18T10:51:43.577Z"
 last_activity: 2026-05-18
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish mi
 
 Milestone: v0.7 Sober Kitchen + Polish
 Phase: 32 (port-locked-screens-to-sober-kitchen) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-05-18
 
@@ -59,6 +59,7 @@ Progress: 0/4 phases complete
 | v0.7 (Phases 30-33) | 4 | 🚧 In Progress |
 | Phase 32 P32-03 | 6 | 2 tasks | 3 files |
 | Phase 32 P04 | 8 | 3 tasks | 6 files |
+| Phase 32 P05 | 11 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ See PROJECT.md Key Decisions table for the cumulative log. v0.7 milestone-level 
 - [Phase 32]: PatinaSection/PatinaView defined as file-scoped functions outside RecipesPage to avoid re-creation on render
 - [Phase 32]: Grid breakpoints: 2-col mobile → 3-col @md (skip 4-col @lg — iPhone PWA is primary)
 - [Phase 32]: List-view marginalia omitted for Phase 32 — no per-row data source wired; deferred to 32-05
+- [Phase 32]: fetchCookingLogs HIST-01 reused for step-1 marginalia; no new backend endpoint (D-08)
+- [Phase 32]: handleStartCooking wired via postStartCooking (mirrors HomeDecide pattern); existing ingredient qty/step numeral pattern in terracotta
 
 ### Open Research
 
@@ -111,6 +114,6 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 ## Session Continuity
 
 Last activity: 2026-05-17 — v0.7 roadmap written; 4 phases (30-33), 12 requirements mapped
-Stopped at: Completed 32-04-PLAN.md — Bibliothèque port
+Stopped at: Completed 32-05-PLAN.md — Recette port (final plan)
 Resume file: None
 Next: `/gsd-discuss-phase 30 ${GSD_WS}`
