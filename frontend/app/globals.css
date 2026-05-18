@@ -422,18 +422,19 @@
   /* Quick-260512-l0l — page-chrome header register. Sits between
      `.text-display` (hero / wordmark) and `.text-body` (running text).
      Mirrors `.scratch/ui-proposals.html` `.frame-head h3` (Cormorant
-     italic 22px) — the "you are on this surface" gesture for sticky
+     22px) — the "you are on this surface" gesture for sticky
      headers (Bibliothèque, Réception, Réglages, recipe detail).
-     Italic differentiates it from `.text-title` (used for Card titles
-     inside the page, which stay upright). 1.25rem = 20px, sits just
-     above body for a chrome-density read on phone. */
+     1.25rem = 20px, sits just above body for a chrome-density read.
+     gh#31 — italic dropped: the page-header register now reads upright
+     across Recettes / Ajouter recette / Profil for visual consistency
+     with the rest of the Sober Kitchen typography stack. */
   .text-page-header {
     font-family: var(--font-display), ui-serif, Georgia, serif;
     font-size: 1.25rem;
     line-height: 1.2;
     letter-spacing: -0.01em;
     font-weight: 500;
-    font-style: italic;
+    font-style: normal;
   }
 
   /* Phase 5 paper-grain texture (DESIGN-04). Single SVG asset at
