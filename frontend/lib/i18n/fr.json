@@ -96,6 +96,18 @@
     "partner_waiting": {
       "message": "En attente de ton/ta partenaire…",
       "refresh_cta": "Actualiser"
+    },
+    "library": {
+      "patina_section": {
+        "heritage": "Héritage",
+        "habitudes": "Habitudes",
+        "essai": "À l'essai"
+      },
+      "view": {
+        "grid": { "aria": "Grille" },
+        "list": { "aria": "Liste" },
+        "patina": { "aria": "Patine" }
+      }
     }
   },
   "vote": {
@@ -157,6 +169,10 @@
   },
   "recipes": {
     "tab_title": "Recettes",
+    "library": {
+      "count_singular": "{n} recette",
+      "count_plural": "{n} recettes"
+    },
     "search_placeholder": "Chercher par titre ou ingrédient",
     "search_clear": "Effacer la recherche",
     "add_cta_aria": "Ajouter une recette",

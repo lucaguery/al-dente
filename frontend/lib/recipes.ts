@@ -227,3 +227,41 @@ export async function postRetryPromotion(
     },
   );
 }
+
+// ─── Phase 32 §15.C (SOBER-05) — Patine helpers. ──────────────────────
+// Source: CONTEXT D-11 + D-12, cross-verified with design-system.html mock
+// (Risotto 34× → 3, jamais → 0).
+
+export type PatinaLevel = 0 | 1 | 2 | 3;
+
+/**
+ * Map a recipe's cook_count to a patine intensity used by <LedgerCard>.
+ *
+ *   0      → 0 (À l'essai — jamais cuisiné)
+ *   1-2    → 1 (récent)
+ *   3-10   → 2 (Habitudes)
+ *   >10    → 3 (Héritage)
+ */
+export function cookCountToPatina(n: number): PatinaLevel {
+  if (n === 0) return 0;
+  if (n <= 2) return 1;
+  if (n <= 10) return 2;
+  return 3;
+}
+
+/**
+ * Bucket recipes into the three Bibliothèque patine sections.
+ * Empty buckets are still represented with empty arrays — the page omits
+ * the section header when bucket.length === 0 (UI-SPEC §6.3).
+ */
+export function groupByPatina(recipes: readonly Recipe[]): {
+  heritage: Recipe[];
+  habitudes: Recipe[];
+  essai: Recipe[];
+} {
+  return {
+    heritage: recipes.filter((r) => cookCountToPatina(r.cook_count) >= 3),
+    habitudes: recipes.filter((r) => cookCountToPatina(r.cook_count) === 2),
+    essai: recipes.filter((r) => cookCountToPatina(r.cook_count) <= 1),
+  };
+}

@@ -26,11 +26,14 @@ import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeFr } from "@/lib/datetime";
 import { getCookingLogSignedPhotoUrl } from "@/lib/cooking";
+import { cookCountToPatina, type PatinaLevel } from "@/lib/recipes";
 import type { Recipe } from "@/lib/recipes";
 import { RecipeIllustration } from "@/components/RecipeIllustration";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
+import { LedgerCard } from "@/components/LedgerCard";
 
-export function RecipeCard({ recipe }: { recipe: Recipe }) {
+export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: PatinaLevel }) {
+  const resolvedPatina: PatinaLevel = patina ?? cookCountToPatina(recipe.cook_count);
   const t = useTranslations("recipes");
   // Derive the photo-path key from props; effect runs only when it changes.
   // D-05 living image: prefer the most recent cooking-log photo over the
@@ -80,8 +83,9 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <Link
       href={`/recipes/${recipe.id}`}
-      className="relative paper-grain flex flex-col bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150 overflow-hidden"
+      className="relative block hover:opacity-95 active:translate-y-px transition-all duration-150"
     >
+      <LedgerCard patina={resolvedPatina} className="flex flex-col overflow-hidden p-0">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill
         <img
@@ -150,6 +154,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           </span>
         </div>
       </div>
+      </LedgerCard>
     </Link>
   );
 }
