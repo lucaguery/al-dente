@@ -457,16 +457,27 @@ export function HomeDecide() {
   const unvotedByMe = dealableRecipes.filter((r) => !myVotes.has(r.id));
   const allVoted = unvotedByMe.length === 0;
 
-  // State-derived Accueil subhead (D-13) — scans ALL shortlist recipes
-  // (not just dealable) to reflect the full vote landscape.
+  // State-derived Accueil subhead (D-13 + Phase 34 LIVE-04) — scans ALL
+  // shortlist recipes (not just dealable) to reflect the full vote
+  // landscape. The `validated` branch requires validéCount > 0 to avoid
+  // the contradiction the 260518-kba walkthrough flagged (B-09): the
+  // marginalia "déjà une idée validée" used to render whenever any
+  // recipe was in `valide` state — but pre-SOBER-09 the swipe-deck
+  // hides the validated row, so the marginalia contradicted the view.
+  // Guarding on `validéCount > 0` is correct in BOTH the current
+  // dual-mode AND the SOBER-09 first-paint ledger; the guard remains
+  // load-bearing after SOBER-09 lands (zero-validé seed case).
+  // Invariant #2: derived from the computed vote-state map, never stored.
   const allRowStates = shortlist.recipes.map((r) => {
     const recipeVotes = shortlist.votes.filter((v) => v.recipe_id === r.id);
     return computeVoteState(recipeVotes, session.members.length ?? 2);
   });
+  const validéCount = allRowStates.filter((s) => s === "valide").length;
+  const pressentiCount = allRowStates.filter((s) => s === "pressenti").length;
   const subheadKey: "validated" | "tentative" | "empty" =
-    allRowStates.includes("valide")
+    validéCount > 0
       ? "validated"
-      : allRowStates.includes("pressenti")
+      : pressentiCount > 0
         ? "tentative"
         : "empty";
   const subheadText = tSubhead(subheadKey);
