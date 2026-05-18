@@ -7,7 +7,9 @@ Guidance for Claude Code working in this repo. Keep this file short — it's loa
 - **`.planning/PROJECT.md`** — current state, milestone goals, requirements, key decisions. **Read first.** Refreshed via `/gsd-transition`.
 - **`.planning/STATE.md`** — live position: current milestone, phase, plan, progress.
 - **`SPEC.md`** — locked data model, capture pipeline, scoring algorithm, voting state machine, auth scheme, original 4-wave build plan. Read before designing new features. Note: the auth scheme there has been superseded — see invariant 8 below.
-- **`frontend/AGENTS.md`** — Next.js 16 has breaking changes that may not be in your training data. Consult `frontend/node_modules/next/dist/docs/` before writing frontend code.
+- **`backend/CLAUDE.md`** — backend-specific rules (ORM/migration conventions, `uv` workflow, Gemini SDK correction, Railway migration deploy contract). Load when working in `backend/`.
+- **`frontend/CLAUDE.md`** — frontend-specific rules (Next.js 16 breaking changes, lint/formatter authority, path alias, webpack build flag, E2E test posture). Load when working in `frontend/`.
+- **`.planning/CLAUDE.md`** — GSD workflow enforcement. Load when working in `.planning/` or running GSD commands.
 - **`docs/design-system.html`** — living design system reference (Sober Kitchen). Locked tokens (terracotta sober + Cormorant + Caveat), patine cards, table-à-manger voting, marginalia register, brand-mark loader, plus locked screens for Accueil / Bibliothèque / Recette with porting checklist. Open in browser before designing new UI; do not duplicate its decisions in ad-hoc CSS.
 
 ## Repo layout
@@ -17,10 +19,6 @@ Monorepo, two independently deployable apps, shared Supabase Postgres:
 - `frontend/` — Next.js 16 App Router PWA → Vercel.
 - `backend/` — FastAPI in `app/`: routers (`households`, `auth_session`, `recipes`, `exports`, `photos`, `shortlist`, `votes`, `cooking_logs`, `push`, `ws`), SQLAlchemy 2.0 models in `app/models/`, Pydantic schemas in `app/schemas/`, business logic in `app/services/` (`llm`, `algorithm`, `shortlist`, `realtime`, `voting`, `storage`, `push`, `invite_codes`), Alembic migrations in `alembic/versions/`. → Railway.
 - `.planning/` — GSD workflow artifacts (PROJECT.md, STATE.md, ROADMAP.md, milestones/, phases/, intel/).
-
-## Current state
-
-v0.5 (Mixed Sweep) shipped 2026-05-13. **No active milestone** — see `.planning/PROJECT.md` for next-milestone scoping and `.planning/STATE.md` for live position. Treat any "not yet wired" / "intended" / "stub" language in older planning notes as historical.
 
 ## MVP phase posture
 
@@ -50,16 +48,7 @@ Cross-cutting rules that are easy to break by editing one file in isolation:
 ## Deployment
 
 - **Push to `main` is the only deploy path.** Both apps auto-deploy in ~60s. **Never run `vercel --prod` or manual Railway deploys.**
-- Railway runs `alembic upgrade head` before uvicorn restart on each deploy.
 - Hosting: Vercel (frontend, free) + Railway (backend, ~$5/mo) + Supabase (Postgres + Storage, free). Couple-scale workload assumed throughout.
-
-## Tests
-
-`@playwright/test` is wired; specs in `frontend/tests/e2e/`, config in `frontend/playwright.config.ts`. **v0.2.1 Phase 10 is the milestone expanding this** — committed full-screen coverage plus an idempotent backend seed (`uv run seed`). No Python test runner yet.
-
-## Gemini SDK
-
-Uses **`google-genai`** (the new unified Google AI SDK), not the legacy `google-generativeai`. Imports look like `from google import genai`. If your training data references `google.generativeai`, that's the wrong SDK for this repo.
 
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
@@ -92,19 +81,6 @@ See **Architecture invariants** above for the load-bearing rules. High-level: ba
 
 No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, or `.github/skills/` with a `SKILL.md` index file.
 <!-- GSD:skills-end -->
-
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-- `/gsd-quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd-debug` for investigation and bug fixing
-- `/gsd-execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
 
 <!-- GSD:profile-start -->
 ## Developer Profile

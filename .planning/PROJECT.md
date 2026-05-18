@@ -28,7 +28,7 @@ Eliminate the daily "on mange quoi ?" debate via a shared library, async voting,
 | gh#23 fix shape | Land the in-issue prescription verbatim | Issue body already specifies fix surface (TTL bump + 50-min FE cache + per-img self-heal) and follow-ups (SW cache tuning) explicitly deferred to a separate phase. |
 | gh#24 backfill mode | Re-sanitize in place (preferred) or NULL the column for regeneration on next promotion | TBD during phase planning; the issue authorizes either. |
 | Bottom-nav variant discriminator | Per-tab `variant: "tab" | "central-cta"` shape | Avoids sprinkling layout conditionals across the nav component. |
-| gh#27 frontend file | Keep `frontend/AGENTS.md` (cross-tool) **and** add `frontend/CLAUDE.md` referencing it | Cursor/Aider already read AGENTS.md; root CLAUDE.md should be cleanly split without breaking other tools. |
+| gh#27 frontend file | Delete `frontend/AGENTS.md`; fold its Next.js 16 warning into a new `frontend/CLAUDE.md`. Reverses the original cross-tool decision because Claude Code is the only assistant in active use as of v0.7. | Claude Code is the only AI assistant in active use; the AGENTS.md cross-tool convention is dead weight in this repo today (revisit gate: second AI assistant added to active workflow). |
 
 **Phase numbering:** continues from v0.6 → starts at Phase 30.
 

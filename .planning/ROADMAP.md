@@ -80,7 +80,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Root `CLAUDE.md` line count is materially lower than pre-split (target: ≤ 60 lines of guidance, excluding the auto-managed sections); the file contains architecture invariants, locked vocabularies, MVP posture, and source-of-truth pointers — nothing else.
   2. `backend/CLAUDE.md` exists and contains every backend-specific rule that was in root (SQLAlchemy 2.0 typed style, Alembic conventions, `uv` workflow, single-uvicorn-worker reasoning, APScheduler in-process pattern).
-  3. `frontend/CLAUDE.md` exists and contains every frontend-specific rule that was in root (Next.js 16 breaking changes, ESLint-as-formatter, `@/*` alias, `--webpack` build flag rationale); `frontend/AGENTS.md` is untouched.
+  3. `frontend/CLAUDE.md` exists and contains every frontend-specific rule that was in root (Next.js 16 breaking changes, ESLint-as-formatter, `@/*` alias, `--webpack` build flag rationale); `frontend/AGENTS.md` is deleted; its Next.js 16 warning is folded verbatim into `frontend/CLAUDE.md`.
   4. `.planning/CLAUDE.md` exists and contains the GSD workflow enforcement block.
   5. `grep -rn "SQLAlchemy\|alembic\|uvicorn" CLAUDE.md` at repo root returns zero matches (content moved, not duplicated); `grep` across `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `.planning/CLAUDE.md` confirms every moved rule is present in exactly one scoped file.
 **Plans**: 1 plan
