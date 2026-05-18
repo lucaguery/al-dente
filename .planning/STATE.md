@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
 status: executing
-stopped_at: Phase 31 UI-SPEC approved
-last_updated: "2026-05-18T07:06:04.937Z"
+stopped_at: Phase 32 context gathered
+last_updated: "2026-05-18T08:57:58.364Z"
 last_activity: 2026-05-18
 progress:
   total_phases: 4
@@ -103,6 +103,6 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 ## Session Continuity
 
 Last activity: 2026-05-17 — v0.7 roadmap written; 4 phases (30-33), 12 requirements mapped
-Stopped at: Phase 31 UI-SPEC approved
-Resume file: .planning/phases/31-bottom-nav-restructure/31-UI-SPEC.md
+Stopped at: Phase 32 context gathered
+Resume file: .planning/phases/32-port-locked-screens-to-sober-kitchen/32-CONTEXT.md
 Next: `/gsd-discuss-phase 30 ${GSD_WS}`
