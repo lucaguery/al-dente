@@ -83,7 +83,9 @@ Plans:
   3. `frontend/CLAUDE.md` exists and contains every frontend-specific rule that was in root (Next.js 16 breaking changes, ESLint-as-formatter, `@/*` alias, `--webpack` build flag rationale); `frontend/AGENTS.md` is untouched.
   4. `.planning/CLAUDE.md` exists and contains the GSD workflow enforcement block.
   5. `grep -rn "SQLAlchemy\|alembic\|uvicorn" CLAUDE.md` at repo root returns zero matches (content moved, not duplicated); `grep` across `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `.planning/CLAUDE.md` confirms every moved rule is present in exactly one scoped file.
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 33-01-PLAN.md — DX-01: split CLAUDE.md (root pruning + backend/frontend/.planning scoped files + AGENTS.md deletion override + locked-artifact edits + D-04 verification + D-13 grep gates)
 
 ## Progress
 
@@ -95,7 +97,7 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 | 30. Live-bug sweep | v0.7 | 2/2 | Complete    | 2026-05-17 |
 | 31. Bottom nav restructure | v0.7 | 1/1 | Complete    | 2026-05-18 |
 | 32. Port locked screens to Sober Kitchen | v0.7 | 5/5 | Complete    | 2026-05-18 |
-| 33. CLAUDE.md split | v0.7 | 0/? | Not started | - |
+| 33. CLAUDE.md split | v0.7 | 0/1 | Not started | - |
 
 ## Completed Milestone Progress
 
@@ -114,4 +116,4 @@ Phases execute in numeric order: 30 → 31 → 32 → 33 (Phase 33 has no code d
 
 ---
 
-*Last updated: 2026-05-18 — Phase 32 planned (5 plans, 11 tasks). v0.7 Sober Kitchen + Polish roadmap created 2026-05-17. 4 phases (30-33), 12 requirements mapped (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Phase numbering continues from v0.6. Granularity: coarse — 4 phases driven by natural delivery clusters (bug-fix isolation → nav restructure → design port → DX). Architecture invariants touched: #2 (SOBER-06 voting scene must not introduce a stored state column), #6 (French-only via next-intl preserved across all screen ports).*
+*Last updated: 2026-05-18 — Phase 33 planned (1 plan, 8 tasks). v0.7 Sober Kitchen + Polish roadmap created 2026-05-17. 4 phases (30-33), 12 requirements mapped (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Phase numbering continues from v0.6. Granularity: coarse — 4 phases driven by natural delivery clusters (bug-fix isolation → nav restructure → design port → DX). Architecture invariants touched: #2 (SOBER-06 voting scene must not introduce a stored state column), #6 (French-only via next-intl preserved across all screen ports).*
