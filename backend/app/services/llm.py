@@ -531,7 +531,6 @@ from app.services.completeness import (  # noqa: E402
     FIELD_KEYS,
     INPUT_TYPE_MAP,
     OPTIONS_MAP,
-    _FIELD_LABELS_FR,
     _FIELD_PROMPTS_FR,
     compute_completeness,
     is_conflict,
@@ -539,6 +538,7 @@ from app.services.completeness import (  # noqa: E402
 from app.schemas.recipe_turn import (  # noqa: E402
     AdvisoryTurnPayload,
     AnswerField,
+    ChipPayload,
     QuestionTurnPayload,
     SummaryTurnPayload,
 )
@@ -924,16 +924,15 @@ async def _run_thread_llm(
             emitted_turns.append(q_turn)
             next_pos += 1
 
-    # D-05/D-06/D-07 — emit summary turn (always when hash changed)
-    chips = []
-    for field in changed_fields:
-        label = _FIELD_LABELS_FR.get(field, field)
-        val = extracted_map[field]
-        if isinstance(val, list):
-            val_str = ", ".join(str(v) for v in val)
-        else:
-            val_str = str(val) if val is not None else ""
-        chips.append(f"{label}: {val_str}")
+    # D-05/D-06/D-07 — emit summary turn (always when hash changed).
+    # Phase 35 ENUM-01 (B-03 two-layer fix) — emit structured ChipPayload
+    # objects; frontend formats display via useEnumLabels + per-field
+    # formatter. Backend NEVER concatenates display strings (prior code
+    # serialized list[dict] via str(), leaking Python dict reprs to UI).
+    chips = [
+        ChipPayload(field=field, value=extracted_map[field])
+        for field in changed_fields
+    ]
 
     body = extracted.summary_body or f"J'ai mis à jour {len(changed_fields)} champ(s)."
     summary_payload = SummaryTurnPayload(

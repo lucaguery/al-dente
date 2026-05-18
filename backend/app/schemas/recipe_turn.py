@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Annotated, Any, List, Literal, Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # Phase 26 D-08 — named Literal type for AnswerTurnPayload.field, grep-able per
 # CLAUDE.md locked-vocabulary discipline.
@@ -201,6 +201,32 @@ class ProposalDismissedPayload(BaseModel):
 # System-turn payloads — Phase 29 owns summary/question; Phase 26 graduates advisory (D-17).
 # ---------------------------------------------------------------------------
 
+class ChipPayload(BaseModel):
+    """Phase 35 ENUM-01 (B-03 two-layer fix) — structured chip payload for
+    `SummaryTurnPayload.chips`.
+
+    `field` carries the extracted-map key (e.g. `cuisine`, `ingredients`,
+    `mood`); it is intentionally an unconstrained `str` rather than the
+    `AnswerField` Literal because the chip-emission loop iterates over the
+    full set of changed fields on `GeminiExtractedRecipe`, which can include
+    future keys not yet in `AnswerField`. Constraining here would surface as
+    a 422 on read whenever Gemini's extraction schema gains a field.
+
+    `value` is the typed value as Pydantic round-trips it — enum strings stay
+    strings, `list[dict]` ingredients stay JSON-serialisable dicts, ints stay
+    ints. The backend NEVER concatenates display strings (the prior code
+    serialized via `str(val)`, which leaked Python `dict` reprs into the UI
+    — see B-03). The frontend owns display formatting via `useEnumLabels`
+    and a per-field formatter.
+
+    Sentinel: `field == "_legacy"` is reserved for the `@field_validator`
+    that coerces pre-Phase-35 `list[str]` chips persisted in the DB.
+    """
+
+    field: str
+    value: Any
+
+
 class SummaryTurnPayload(BaseModel):
     """Phase 29 LLM-01 — emitted by _run_thread_llm after every successful
     Gemini run (D-07). Idempotency-gated by D-03 extraction_hash: re-running
@@ -209,7 +235,12 @@ class SummaryTurnPayload(BaseModel):
     body: Gemini-generated French recap of what was extracted/modified this
       run (D-05 — Optional because apply_voice_modification doesn't request
       it; _run_thread_llm uses a server-fallback if None).
-    chips: "{french_label}: {value}" strings for fields changed this run (D-06).
+    chips: Structured `ChipPayload(field, value)` items per changed field —
+      display formatting belongs to the frontend (B-03 two-layer fix, Phase
+      35 ENUM-01). Backend never concatenates display strings. A read-side
+      `@field_validator(mode='before')` coerces legacy `list[str]` summary
+      turns persisted before Phase 35 to `ChipPayload(field='_legacy', value=str)`
+      so old DB rows still parse during the deploy transition.
     extraction_hash: SHA256 hex of GeminiExtractedRecipe.model_dump() canonical
       (D-03 — see RESEARCH Pitfall 1: use json.dumps(..., sort_keys=True,
       ensure_ascii=False), NOT model_dump_json(sort_keys=True) which raises
@@ -219,8 +250,31 @@ class SummaryTurnPayload(BaseModel):
 
     kind: Literal["summary"]
     body: Optional[str] = Field(default=None, max_length=240)
-    chips: List[str] = Field(default_factory=list)
+    chips: List[ChipPayload] = Field(default_factory=list)
     extraction_hash: str
+
+    @field_validator("chips", mode="before")
+    @classmethod
+    def _coerce_legacy_chips(cls, v: Any) -> Any:
+        """Phase 35 ENUM-01 — read-side back-compat for legacy `list[str]` chips.
+
+        Summary turns persisted before this phase carry `chips: list[str]`
+        with pre-formatted "label: value" content (and, for ingredients, the
+        leaky Python dict repr that motivated B-03). We coerce each string
+        item to `{field: '_legacy', value: <str>}` so older DB rows still
+        parse cleanly. ChipPayload instances and dicts pass through; only
+        bare strings get wrapped. Non-list inputs pass through unchanged so
+        Pydantic's normal type-mismatch error still fires.
+        """
+        if not isinstance(v, list):
+            return v
+        coerced: list[Any] = []
+        for item in v:
+            if isinstance(item, str):
+                coerced.append({"field": "_legacy", "value": item})
+            else:
+                coerced.append(item)
+        return coerced
 
 
 class QuestionTurnPayload(BaseModel):
