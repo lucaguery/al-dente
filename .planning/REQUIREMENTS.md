@@ -16,7 +16,7 @@
 
 ### Bottom nav
 
-- [ ] **NAV-01** — User reaches the recipe capture flow via a central elevated « Ajouter » CTA in the bottom nav on every authenticated, non-onboarding screen (gh#25). Filled primary circle with white `+`, visibly elevated above the four flat sibling tabs, label `Ajouter` beneath. Active routing semantics (`aria-current="page"`) honored when the user is on the capture entry route. Drafts-tab badge, safe-area inset, and `/onboarding/*` hiding preserved. Per-tab visual variant discriminator (`variant: "tab" | "central-cta"`) introduced to avoid sprinkling conditionals. Out-of-scope here: « Suggérer » tab (gh#26 — deferred); icon swaps on the other four tabs. Acceptance: visual match to `.scratch/capture-mockups/1-smart-paste.html`; keyboard + screen-reader reachable.
+- [x] **NAV-01** — User reaches the recipe capture flow via a central elevated « Ajouter » CTA in the bottom nav on every authenticated, non-onboarding screen (gh#25). Filled primary circle with white `+`, visibly elevated above the four flat sibling tabs, label `Ajouter` beneath. Active routing semantics (`aria-current="page"`) honored when the user is on the capture entry route. Drafts-tab badge, safe-area inset, and `/onboarding/*` hiding preserved. Per-tab visual variant discriminator (`variant: "tab" | "central-cta"`) introduced to avoid sprinkling conditionals. Out-of-scope here: « Suggérer » tab (gh#26 — deferred); icon swaps on the other four tabs. Acceptance: visual match to `.scratch/capture-mockups/1-smart-paste.html`; keyboard + screen-reader reachable.
 
 ### Sober Kitchen design-system port (gh#29 — executes `docs/design-system.html` §15 "Mise en code" A→E)
 
