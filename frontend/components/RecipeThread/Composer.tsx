@@ -71,7 +71,13 @@ export function Composer({
           <Plus size={18} aria-hidden />
         </button>
 
-        {/* Auto-grow textarea */}
+        {/* Auto-grow textarea.
+            gh#34 D1 — `style.color = var(--foreground)` defends against CSS
+            specificity from globals.css (paper-grain / .text-page-header
+            layers occasionally won over the Tailwind text-foreground utility,
+            leaving typed text near-invisible on the capture page).
+            gh#36 — font-size 16px on mobile kills iOS Safari focus auto-zoom;
+            14px restored at sm+ for desktop density. */}
         <textarea
           rows={1}
           placeholder={
@@ -92,7 +98,8 @@ export function Composer({
             e.target.style.height = "auto";
             e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
           }}
-          className="flex-1 bg-card border-[1.5px] border-border rounded-[20px] px-3 py-2 min-h-9 max-h-[120px] text-[14px] leading-[1.4] resize-none focus:outline-none focus:border-ring focus:shadow-[0_0_0_3px_color-mix(in_oklch,var(--ring)_25%,transparent)] text-foreground placeholder:text-muted-foreground disabled:opacity-50"
+          style={{ color: "var(--foreground)" }}
+          className="flex-1 bg-card border-[1.5px] border-border rounded-[20px] px-3 py-2 min-h-9 max-h-[120px] text-[16px] sm:text-[14px] leading-[1.4] resize-none focus:outline-none focus:border-ring focus:shadow-[0_0_0_3px_color-mix(in_oklch,var(--ring)_25%,transparent)] text-foreground placeholder:text-muted-foreground disabled:opacity-50"
         />
 
         {/* Mic-or-send button (D-04 morph) */}
