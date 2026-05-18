@@ -106,10 +106,10 @@ _Filled by direct-scaffold 2026-05-18. Each REQ-ID maps to exactly one phase._
 | LIVE-04 | Phase 34 | TBD (plan-phase) |
 | LIVE-05 | Phase 34 | TBD (plan-phase) |
 | LIVE-06 | Phase 34 | TBD (plan-phase) |
-| ENUM-01 | Phase 35 | TBD (plan-phase) |
-| ENUM-02 | Phase 35 | TBD (plan-phase) |
-| ENUM-03 | Phase 35 | TBD (plan-phase) |
-| ENUM-04 | Phase 35 | TBD (plan-phase) |
+| ENUM-01 | Phase 35 | 35-01 (backend) + 35-02 (frontend) |
+| ENUM-02 | Phase 35 | 35-03 |
+| ENUM-03 | Phase 35 | 35-03 |
+| ENUM-04 | Phase 35 | 35-03 |
 | SOBER-09 | Phase 36 | TBD (plan-phase) |
 | SOBER-10 | Phase 36 | TBD (plan-phase) |
 | SOBER-11 | Phase 36 | TBD (plan-phase) |

@@ -51,7 +51,10 @@
   2. Backend ingredient serialization emits structured `list[Ingredient]` via Pydantic schema, not Python `str(dict)`. Validated by capturing a fresh URL recipe end-to-end and asserting the advisory bubble payload contains no `{'name':` substring (ENUM-01 backend).
   3. `RecipeCard.tsx` (Bibliothèque grid) and the post-vote Accueil ledger meta rows consume `useEnumLabels` for cuisine/mood/protein renders. Manual walk shows "Italienne · avant-hier" not "italian · avant-hier" (ENUM-02, ENUM-03).
   4. Repo-wide grep gate (mirrors v0.5 Phase 22 D-18 pattern): a CI-runnable script confirms no raw locked-vocabulary value (`italian|indian|mexican|french|asian|mediterranean|middleEastern|northAfrican|american|comfort|festive|fresh|easy|medium|hard|beef|chicken|fish|pork|none|spring|summer|autumn|winter`) appears in `frontend/{app,components}` template literals or visible-text positions outside `lib/enums.ts` and `lib/enum-labels.ts` (ENUM-04).
-**Plans**: TBD (plan-phase)
+**Plans**: 3 plans
+  - [ ] 35-01-PLAN.md — ENUM-01 backend: structured `ChipPayload` wire shape + Pydantic legacy-shape read-side coercion (Wave 1)
+  - [ ] 35-02-PLAN.md — ENUM-01 frontend: `formatFieldChip` helper + `SystemBubble` summary branch shape-branching (Wave 2, depends on 35-01)
+  - [ ] 35-03-PLAN.md — ENUM-02/03/04: `useEnumLabels` at `RecipeCard` + `RecipeRow` + `VoteSummary` call sites + `scripts/check-enum-leak.sh` repo-wide grep gate (Wave 1, parallel with 35-01)
 
 ### Phase 36: Sober Kitchen finish + polish
 **Goal**: The `docs/design-system.html` §15 locked-screen contract — Accueil Composition A, Bibliothèque Patine, Recette détail cookbook gestures, BottomNav elevation, table-à-manger seat geometry, dogear corner-fold — fully ships as documented; the design system as built ↔ as documented re-aligns; the seven polish findings close.
