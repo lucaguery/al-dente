@@ -169,6 +169,13 @@
   },
   "recipes": {
     "tab_title": "Recettes",
+    "detail": {
+      "subhead": {
+        "cooked": "cuisiné {count} fois",
+        "never": "pas encore cuisiné"
+      },
+      "cook_cta": "Cuisiner maintenant"
+    },
     "library": {
       "count_singular": "{n} recette",
       "count_plural": "{n} recettes"
