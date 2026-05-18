@@ -191,15 +191,24 @@ export function VoteSummary({
           // second guard is defense-in-depth.
           const isUnvoted = unvotedIds.has(r.id) && !isRejete;
 
+          // WR-01 (Phase 36 review fix): The Rejeté branch deliberately
+          // omits `borderColor` so the SOBER-15 `.row-state-rejete` rule in
+          // globals.css owns `border-left-color` (the muted destructive tint).
+          // Setting the inline longhand here would override the class via
+          // inline-style specificity, collapsing the bottom of the 5-state
+          // visual gradient (Validé → Pressenti → Contesté → Rejeté muted →
+          // Sans avis).
           const rowStyle: CSSProperties = isValide
             ? {
                 background: "var(--valide-tint)",
                 borderColor: "var(--color-valide-border-faint)",
               }
-            : {
-                background: "var(--card)",
-                borderColor: "var(--border)",
-              };
+            : isRejete
+              ? { background: "var(--card)" }
+              : {
+                  background: "var(--card)",
+                  borderColor: "var(--border)",
+                };
 
           const rowClass = [
             "shortlist-row",
