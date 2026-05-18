@@ -71,6 +71,11 @@ export function formatFieldChip(
       // mood is multi-valued post Phase 28 D-12 (list of strings), but we
       // defensively handle scalar shape too.
       if (Array.isArray(value)) {
+        // WR-02 defense-in-depth: empty array renders as "—" rather than
+        // an empty display (would surface as "ambiance : " — visually
+        // ambiguous). Backend llm.py filter is the primary gate; this
+        // catches manual-edit paths that bypass _run_thread_llm.
+        if (value.length === 0) return { label, display: "—" };
         return {
           label,
           display: value.map((v) => labels.mood(String(v))).join(", "),
@@ -87,6 +92,8 @@ export function formatFieldChip(
 
     case "seasonality":
       if (Array.isArray(value)) {
+        // WR-02 defense-in-depth (see mood case).
+        if (value.length === 0) return { label, display: "—" };
         return {
           label,
           display: value.map((v) => labels.season(String(v))).join(", "),
@@ -126,6 +133,8 @@ export function formatFieldChip(
 
     case "tags":
       if (Array.isArray(value)) {
+        // WR-02 defense-in-depth (see mood case).
+        if (value.length === 0) return { label, display: "—" };
         return { label, display: value.map((v) => String(v)).join(", ") };
       }
       return { label, display: String(value) };

@@ -929,10 +929,17 @@ async def _run_thread_llm(
     # objects; frontend formats display via useEnumLabels + per-field
     # formatter. Backend NEVER concatenates display strings (prior code
     # serialized list[dict] via str(), leaking Python dict reprs to UI).
-    chips = [
-        ChipPayload(field=field, value=extracted_map[field])
-        for field in changed_fields
-    ]
+    # Phase 35 WR-02 — skip chip emission for cleared-list fields
+    # (e.g. mood/seasonality/tags moving from non-empty to []); rendering
+    # an empty-array chip surfaces as "label : " with no value, which is
+    # visually ambiguous. Frontend formatFieldChip retains a "—" fallback
+    # as defense-in-depth for manual-edit paths that bypass this filter.
+    chips = []
+    for field in changed_fields:
+        val = extracted_map[field]
+        if isinstance(val, list) and len(val) == 0:
+            continue
+        chips.append(ChipPayload(field=field, value=val))
 
     body = extracted.summary_body or f"J'ai mis à jour {len(changed_fields)} champ(s)."
     summary_payload = SummaryTurnPayload(
