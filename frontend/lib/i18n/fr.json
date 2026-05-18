@@ -472,6 +472,10 @@
       "helper_keyboard_mic": "Tu peux dicter avec le micro du clavier."
     }
   },
+  "cooking_logs": {
+    "empty_heading": "Aucun repas cuisiné cette semaine",
+    "empty_body": "Quand tu marqueras une recette comme cuisinée, elle apparaîtra ici."
+  },
   "completeness": {
     "header": "À compléter — {filled}/11",
     "progress_aria": "{percent} % complète",

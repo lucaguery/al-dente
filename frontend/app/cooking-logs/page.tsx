@@ -13,10 +13,16 @@
 // titles against the existing `/api/recipes` list, and renders each row as
 // a tap-target that navigates to the detail page (HIST-02 — D-17-13).
 //
-// Empty-state copy: per UI-SPEC §Surface 6 the cooking-log history view
-// reuses the existing `recipes.empty_heading` / `empty_body` keys as
-// placeholder strings — semantic mismatch is acceptable until the Phase 20
-// i18n sweep adds cooking-log-specific empty copy.
+// Phase 34 / LIVE-01: the `/api/recipes` join query previously asked for
+// `?limit=500` which exceeds the backend's `list_recipes` cap of
+// `Query(default=50, ge=1, le=200)`. The backend returned 422, `Promise.all`
+// rejected atomically, the silent catch below swallowed the array of 3
+// real cooking logs as `[]`, and the EmptyState rendered against a populated
+// household. Clamped to 200 (the backend max — couple-scale households are
+// well below the cap). The empty-copy semantic mismatch (recipes.empty_*
+// borrowed for cooking-log empty state, flagged as "Phase 20 i18n sweep"
+// tech debt in this file's prior header) is closed alongside the fix:
+// dedicated `cooking_logs.empty_heading` / `empty_body` keys.
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -74,17 +80,21 @@ function groupLogsByDay(
 }
 
 export default function CookingLogsHistoryPage() {
-  const tRecipes = useTranslations("recipes");
+  const tEmpty = useTranslations("cooking_logs");
   const [logs, setLogs] = useState<CookingLogCardData[] | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
+        // `limit=200` is the backend's documented maximum (Query le=200 in
+        // routers/recipes.py::list_recipes). The prior `limit=500` value
+        // returned 422 and rejected the whole Promise.all, hiding the
+        // cooking-logs leg (LIVE-01 root cause).
         const [rawLogs, recipes] = await Promise.all([
           fetchCookingLogs(14),
           api<Array<{ id: string; title: string }>>(
-            "/api/recipes?limit=500",
+            "/api/recipes?limit=200",
           ),
         ]);
         if (!alive) return;
@@ -95,9 +105,14 @@ export default function CookingLogsHistoryPage() {
             titleById.get(log.recipe_id) ?? "Recette supprimée",
         }));
         setLogs(enriched);
-      } catch {
+      } catch (err) {
         // Best-effort: 401 / 500 / network errors → empty state. No toast —
-        // the route still serves as the destination shell.
+        // the route still serves as the destination shell. Surface the
+        // exception in dev so a future LIVE-01-style silent swallow gets
+        // caught at the console instead of masquerading as "no logs".
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[cooking-logs] fetch failed", err);
+        }
         if (alive) setLogs([]);
       }
     })();
@@ -124,8 +139,8 @@ export default function CookingLogsHistoryPage() {
           ) : logs.length === 0 ? (
             <EmptyState
               icon={ChefHat}
-              heading={tRecipes("empty_heading")}
-              body={tRecipes("empty_body")}
+              heading={tEmpty("empty_heading")}
+              body={tEmpty("empty_body")}
             />
           ) : (
             grouped.map(([dateLabel, logsInGroup]) => (
