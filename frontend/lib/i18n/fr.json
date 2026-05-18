@@ -102,7 +102,8 @@
       "patina_section": {
         "heritage": "Héritage",
         "habitudes": "Habitudes",
-        "essai": "À l'essai"
+        "essai": "À l'essai",
+        "empty": "Encore aucune recette dans cette section."
       },
       "view": {
         "grid": { "aria": "Grille" },

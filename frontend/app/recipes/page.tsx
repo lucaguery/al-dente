@@ -65,16 +65,23 @@ let recipesCache: Recipe[] | null = null;
 // Phase 32 §15.C (D-09/D-10) — patine view sub-components.
 // Defined outside RecipesPage so they don't re-create on every render.
 
+// SOBER-11 (Plan 36-02): all three Patine sections render unconditionally,
+// including empty buckets. The section structure is part of the Bibliothèque
+// visual contract — a single-bucket distribution must NOT collapse to a blank
+// container (B-06 + D-08 walkthrough findings). Empty buckets render a
+// Caveat-slant marginalia line in place of the empty grid.
 function PatinaSection({
   label,
   count,
   recipes,
   columnClass,
+  emptyLabel,
 }: {
   label: string;
   count: number;
   recipes: Recipe[];
   columnClass: string;
+  emptyLabel: string;
 }) {
   return (
     <section>
@@ -86,11 +93,17 @@ function PatinaSection({
           · {count}
         </Marginalia>
       </header>
-      <div className={columnClass}>
-        {recipes.map((r) => (
-          <RecipeCard key={r.id} recipe={r} />
-        ))}
-      </div>
+      {recipes.length === 0 ? (
+        <Marginalia size="sm" slant as="p">
+          {emptyLabel}
+        </Marginalia>
+      ) : (
+        <div className={columnClass}>
+          {recipes.map((r) => (
+            <RecipeCard key={r.id} recipe={r} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -103,32 +116,30 @@ function PatinaView({
   tPatina: ReturnType<typeof useTranslations>;
 }) {
   const grouped = groupByPatina(recipes);
+  const emptyLabel = tPatina("empty");
   return (
     <div className="flex flex-col gap-[8px] px-(--spacing-page-x)">
-      {grouped.heritage.length > 0 ? (
-        <PatinaSection
-          label={tPatina("heritage")}
-          count={grouped.heritage.length}
-          recipes={grouped.heritage}
-          columnClass="grid grid-cols-1 gap-[10px]"
-        />
-      ) : null}
-      {grouped.habitudes.length > 0 ? (
-        <PatinaSection
-          label={tPatina("habitudes")}
-          count={grouped.habitudes.length}
-          recipes={grouped.habitudes}
-          columnClass="grid grid-cols-2 gap-[10px]"
-        />
-      ) : null}
-      {grouped.essai.length > 0 ? (
-        <PatinaSection
-          label={tPatina("essai")}
-          count={grouped.essai.length}
-          recipes={grouped.essai}
-          columnClass="grid grid-cols-3 gap-[8px]"
-        />
-      ) : null}
+      <PatinaSection
+        label={tPatina("heritage")}
+        count={grouped.heritage.length}
+        recipes={grouped.heritage}
+        columnClass="grid grid-cols-1 gap-[10px]"
+        emptyLabel={emptyLabel}
+      />
+      <PatinaSection
+        label={tPatina("habitudes")}
+        count={grouped.habitudes.length}
+        recipes={grouped.habitudes}
+        columnClass="grid grid-cols-2 gap-[10px]"
+        emptyLabel={emptyLabel}
+      />
+      <PatinaSection
+        label={tPatina("essai")}
+        count={grouped.essai.length}
+        recipes={grouped.essai}
+        columnClass="grid grid-cols-3 gap-[8px]"
+        emptyLabel={emptyLabel}
+      />
     </div>
   );
 }

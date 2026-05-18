@@ -251,8 +251,13 @@ export function cookCountToPatina(n: number): PatinaLevel {
 
 /**
  * Bucket recipes into the three Bibliothèque patine sections.
- * Empty buckets are still represented with empty arrays — the page omits
- * the section header when bucket.length === 0 (UI-SPEC §6.3).
+ *
+ * Empty buckets are still rendered by callers as labeled sections with `(0)`
+ * chips and an empty-state line — the section structure is part of the
+ * Bibliothèque visual contract (SOBER-11, Plan 36-02). See PatinaView in
+ * frontend/app/recipes/page.tsx. The earlier policy of omitting empty
+ * section headers (B-06 + D-08 walkthrough findings) collapsed the view to
+ * a blank container when seed distribution put everything in one bucket.
  */
 export function groupByPatina(recipes: readonly Recipe[]): {
   heritage: Recipe[];

@@ -563,6 +563,30 @@ def run_test_seed() -> None:
                 else recipe.last_cooked_at
             )
 
+        # ---- 4b. SOBER-14 dogear-demo bump ----
+        # One recipe well above the patina-3 threshold (cook_count > 10) so
+        # LedgerCard.dogear renders visibly against the dev seed (D-07 from
+        # the 260518-kba walkthrough — the .dogear primitive shipped in
+        # Phase 32 with no consumer at cook_count > 10 in the seed).
+        #
+        # `risotto-champignons` is chosen because:
+        #   - it is NOT in the cooking-log set (ragu/poulet-citron/burger),
+        #     so the COUNT recomputation in the loop above does NOT clobber
+        #     the assignment below;
+        #   - the title "Risotto aux champignons" is visually recognizable
+        #     in the Grille view.
+        #
+        # Idempotent: re-runs converge on cook_count = 12 (a direct
+        # assignment, not an increment). No new cooking-log rows are added —
+        # the dogear render gate is `patina >= 3` via cookCountToPatina(12).
+        # last_cooked_at is left None; the card subhead reads "Jamais
+        # cuisinée" but cookCountToPatina(12) = 3 still places the recipe
+        # in the Héritage bucket and triggers the dogear.
+        _DOGEAR_DEMO_SLUG = "risotto-champignons"
+        _dogear_recipe = recipes_by_slug.get(_DOGEAR_DEMO_SLUG)
+        if _dogear_recipe is not None:
+            _dogear_recipe.cook_count = 12
+
         # ---- 5. Daily shortlist for today ----
         # 5 recipes spanning cuisine diversity for the shortlist-vote spec.
         shortlist_recipe_slugs = [
