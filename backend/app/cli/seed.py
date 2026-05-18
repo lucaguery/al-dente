@@ -32,7 +32,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from sqlalchemy import func, select, text
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.config import settings
@@ -431,6 +431,24 @@ def run_test_seed() -> None:
         # Without this, SQLAlchemy may batch the recipes INSERT before the
         # members INSERT and trip recipes_created_by_member_id_fkey.
         db.flush()
+
+        # gh#43 — drop fixture-leak recipes from prior capture testing so
+        # `uv run seed` converges to exactly 21. canned_thread_extract in
+        # llm_fixtures.py creates rows titled "... (test)" via the live
+        # capture pipeline; those persist across seed re-runs (upsert-only).
+        # votes.recipe_id and cooking_logs.recipe_id don't ON DELETE CASCADE,
+        # so we clear them explicitly before deleting the recipe rows.
+        leaked_recipe_ids = db.scalars(
+            select(Recipe.id).where(
+                Recipe.household_id == household.id,
+                Recipe.title.like("%(test)"),
+            )
+        ).all()
+        if leaked_recipe_ids:
+            db.execute(delete(Vote).where(Vote.recipe_id.in_(leaked_recipe_ids)))
+            db.execute(delete(CookingLog).where(CookingLog.recipe_id.in_(leaked_recipe_ids)))
+            db.execute(delete(Recipe).where(Recipe.id.in_(leaked_recipe_ids)))
+            db.flush()
 
         # ---- 3. Recipes (21) ----
         # Pitfall 5 mitigation: explicitly set every NOT NULL column.
