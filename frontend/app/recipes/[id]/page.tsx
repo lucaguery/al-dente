@@ -1,51 +1,59 @@
 "use client";
 
-// UI-SPEC §7 — Recipe detail.
-// Photo gallery uses 5-minute signed URLs (private bucket); we re-fetch
-// each path on mount and on `recipe.updated` realtime frames so the
-// gallery stays in sync if the partner uploads a photo while we're here.
+// Phase 32 §15.C (SOBER-04) — Recette A Sober Kitchen composition.
+// Sticky topbar + hero 16:10 -38px bleed + body block (title + Caveat
+// marginalia identity subhead from cook_count + badges + ingredients with
+// terracotta qty + steps with terracotta numerals + step-1 marginalia from
+// most recent cooking_logs[].notes) + sticky bottom CTA.
+// Per CONTEXT D-08 + D-13 + UI-SPEC §9.3 + design-system.html #recette.
 //
-// 404 branch is full-page (UI-SPEC §"Toast vs inline rules": permanent
-// state lives inline, NOT a toast). 401 redirects to /onboarding/welcome
-// (handled by lib/api.ts).
+// Preserves:
+//   - Phase 27 CAPTURE-04 — RecipeThread in detail mode below
+//   - Phase 28 DETAIL-04 — PinLabel gutter labels on manually-edited fields
+//   - Phase 30 BUG-01 — RecipePhotoImg / useSignedPhotoUrl self-heal
+//   - Phase 29 D-22 — summary CTA wire-up (complete / defer)
 //
-// Phase 27 CAPTURE-04 — RecipeThread in detail mode mounted below the form.
-// The existing form (hero, CompletenessCard, metadata, ingredients, steps,
-// VoiceModifySheet) is untouched per D-15. The chat thread sits below it;
-// the manual-link inside the thread scrolls back up to the form.
-//
-// Note on layout: the thread-meta strip rendered by RecipeThread appears
-// ABOVE the chat body (i.e., BELOW the form section), which deviates from
-// the mockup's ordering (strip between appheader and form). UI-SPEC §"Layout
-// > /recipes/[id]" resolves this as the accepted "chat below the recipe form"
-// layout — the thread-meta strip acts as a visual header for the chat section.
-//
-// Note on title style: the existing hero title strip renders recipe.title in
-// upright Cormorant Garamond regardless of status. The thread-meta strip
-// (rendered by RecipeThread) shows the italic draft placeholder when
-// status='draft'. Both are intentional: the hero is the "this is the recipe"
-// header; the thread-meta is the "what state is this in?" indicator.
+// Security: cooking_logs[].notes is user-authored content — rendered as
+// React text children only inside <Marginalia>. React default-escapes text.
+// (T-32-05-01 mitigation — see 32-05-PLAN.md threat_model.)
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, FileQuestion, Mic, Pencil, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  FileQuestion,
+  Flame,
+  Mic,
+  MoreHorizontal,
+  Pencil,
+  Timer,
+  Trash2,
+  Utensils,
+} from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CompletenessCard } from "@/components/CompletenessCard";
 import { EmptyState } from "@/components/EmptyState";
+import { Marginalia } from "@/components/Marginalia";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { VoiceModifySheet } from "@/components/VoiceModifySheet";
 import { api } from "@/lib/api";
 import { formatRelativeFr } from "@/lib/datetime";
 import { useEnumLabels } from "@/lib/enum-labels";
 import { deleteRecipe } from "@/lib/recipes";
+import {
+  fetchCookingLogs,
+  postStartCooking,
+  type CookingLogResponse,
+} from "@/lib/cooking";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 import { useRealtime } from "@/components/RealtimeProvider";
 import RecipeThread from "@/components/RecipeThread";
-import type { PersistedTurn, RecipeStatus, AnswerTurnSubmission } from "@/components/RecipeThread/types";
+import type {
+  PersistedTurn,
+  RecipeStatus,
+  AnswerTurnSubmission,
+} from "@/components/RecipeThread/types";
 import type { Recipe } from "@/lib/recipes";
 import { PinLabel } from "@/components/RecipeThread/PinLabel";
 import {
@@ -80,6 +88,8 @@ function RecipePhotoImg({
 
 export default function RecipeDetailPage() {
   const t = useTranslations("recipes");
+  const tDetail = useTranslations("recipes.detail");
+  const tSubhead = useTranslations("recipes.detail.subhead");
   const tVoiceModify = useTranslations("recipes.voice_modify");
   const tErr = useTranslations("onboarding.errors");
   // Phase 27 CAPTURE-04 — tThread for turn-POST error toast (recipes.thread.turn_failed)
@@ -94,6 +104,15 @@ export default function RecipeDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [voiceModifyOpen, setVoiceModifyOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Phase 32 SOBER-04 (D-13) — step-1 marginalia data source.
+  // Cheap reuse of existing /api/cooking-logs?days=365 endpoint;
+  // client-side filter by recipe_id, find most recent with notes (logs are
+  // cooked_at DESC from backend). Render only when truthy — no fallback copy per D-13.
+  const [recipeLog, setRecipeLog] = useState<CookingLogResponse | null>(null);
+
+  // Phase 32 SOBER-04 — cooking-start in-flight state for the sticky CTA.
+  const [cookInFlight, setCookInFlight] = useState(false);
 
   // Phase 27 CAPTURE-04 — thread state
   const [turns, setTurns] = useState<PersistedTurn[]>([]);
@@ -114,6 +133,21 @@ export default function RecipeDetailPage() {
       setDeleting(false);
     }
   }
+
+  // Phase 32 SOBER-04 — sticky bottom CTA handler.
+  // Mirrors the handleCookStart in HomeDecide for couple-scale parity.
+  const handleStartCooking = useCallback(async () => {
+    if (!recipe) return;
+    setCookInFlight(true);
+    try {
+      await postStartCooking(recipe.id);
+      toast.success(t("summary.toast_cooking_started"));
+    } catch {
+      toast.error(t("summary.cook_failed"));
+    } finally {
+      setCookInFlight(false);
+    }
+  }, [recipe, t]);
 
   // Initial load.
   useEffect(() => {
@@ -140,6 +174,28 @@ export default function RecipeDetailPage() {
       alive = false;
     };
   }, [id]);
+
+  // Phase 32 SOBER-04 (D-13) — fetch cooking logs for step-1 marginalia.
+  // Separate from the recipe fetch; non-fatal (step-1 marginalia is optional).
+  // Per RESEARCH Pattern 8 + Pitfall 8 (field is `notes`, not `note`).
+  useEffect(() => {
+    let cancelled = false;
+    if (!recipe?.id) return;
+    fetchCookingLogs(365)
+      .then((logs) => {
+        if (cancelled) return;
+        const match = logs.find(
+          (l) => l.recipe_id === recipe.id && l.notes && l.notes.trim().length > 0,
+        );
+        setRecipeLog(match ?? null);
+      })
+      .catch(() => {
+        /* non-fatal — step-1 marginalia is optional */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [recipe?.id]);
 
   // Phase 27 CAPTURE-04 — initial fetch of the persisted thread.
   // One-shot on mount; realtime updates land via the WS subscription below.
@@ -574,18 +630,6 @@ export default function RecipeDetailPage() {
     );
   }
 
-  const hasPrep = recipe.prep_time_minutes != null;
-  const hasServings = recipe.servings != null;
-  const metaSpan =
-    hasPrep || hasServings
-      ? [
-          hasPrep ? `${recipe.prep_time_minutes}min` : null,
-          hasServings ? `${recipe.servings} pers.` : null,
-        ]
-          .filter(Boolean)
-          .join(" · ")
-      : "";
-
   // Phase 29 D-22 — deferred derived from recipe.questions_deferred_until being a future timestamp.
   // NULL or past → deferred=false (questions allowed). recipe.updated WS flips this in real time
   // when the partner taps « Plus tard » on the other phone.
@@ -596,173 +640,326 @@ export default function RecipeDetailPage() {
   return (
     <OnboardingGuard>
       <section className="flex flex-col flex-1 bg-background">
-        <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-10">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-12 w-12"
-            aria-label={t("back_aria")}
+        {/*
+          Phase 32 §15.C — Sticky floating topbar.
+          backdrop-blur over the hero photo which bleeds -38px into this bar.
+          Per design-system.html #recette line 1782.
+        */}
+        <div
+          className="sticky top-0 z-40 flex items-center justify-between"
+          style={{
+            padding: "14px 18px 8px",
+            backdropFilter: "blur(12px)",
+            background: "color-mix(in oklch, var(--background) 80%, transparent)",
+          }}
+        >
+          <button
+            type="button"
             onClick={() => router.back()}
+            aria-label={t("back_aria")}
+            className="inline-flex items-center justify-center rounded-full border"
+            style={{
+              width: "36px",
+              height: "36px",
+              background: "var(--card)",
+              borderColor: "var(--border)",
+            }}
           >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
+            <ChevronLeft size={16} aria-hidden />
+          </button>
+          {/* Right-side menu: voice modify + edit + delete */}
           <div className="flex items-center gap-1">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-12 w-12"
-              aria-label={tVoiceModify("trigger_aria")}
+            <button
+              type="button"
               onClick={() => setVoiceModifyOpen(true)}
+              aria-label={tVoiceModify("trigger_aria")}
+              className="inline-flex items-center justify-center rounded-full border"
+              style={{
+                width: "36px",
+                height: "36px",
+                background: "var(--card)",
+                borderColor: "var(--border)",
+              }}
             >
-              <Mic className="h-5 w-5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-12 w-12"
-              aria-label={t("edit_aria")}
+              <Mic size={16} aria-hidden />
+            </button>
+            <button
+              type="button"
               onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
+              aria-label={t("edit_aria")}
+              className="inline-flex items-center justify-center rounded-full border"
+              style={{
+                width: "36px",
+                height: "36px",
+                background: "var(--card)",
+                borderColor: "var(--border)",
+              }}
             >
-              <Pencil className="h-5 w-5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
+              <Pencil size={16} aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
               aria-label={t("delete_aria")}
               disabled={deleting}
-              onClick={handleDelete}
-              className="h-12 w-12 text-foreground-muted hover:text-destructive"
+              className="inline-flex items-center justify-center rounded-full border"
+              style={{
+                width: "36px",
+                height: "36px",
+                background: "var(--card)",
+                borderColor: "var(--border)",
+              }}
             >
-              <Trash2 className="h-5 w-5" />
-            </Button>
+              <Trash2 size={16} aria-hidden />
+            </button>
+            <button
+              type="button"
+              aria-label="Menu"
+              className="inline-flex items-center justify-center rounded-full border"
+              style={{
+                width: "36px",
+                height: "36px",
+                background: "var(--card)",
+                borderColor: "var(--border)",
+              }}
+            >
+              <MoreHorizontal size={16} aria-hidden />
+            </button>
           </div>
-        </header>
+        </div>
 
         {/*
-          Phase 27 CAPTURE-04 — form ref wrapper.
-          `className="contents"` makes this div transparent to flex layout so
-          the children render as direct children of the outer <section>. The
-          ref is the scroll target for the manual-edit link (D-15 + UI-SPEC
-          §"Manual-edit link").
+          Phase 32 §15.C — Hero photo 16:10, -38px bleed into topbar.
+          Per design-system.html #recette line 1786: margin-top: -38px; border-radius: 0.
+          useSignedPhotoUrl (Phase 30 BUG-01) drives the URL via RecipePhotoImg.
         */}
-        <div ref={formRef} className="contents">
-          {/* Hero — full-bleed photo + paper-grain overlay strip OR no-photo Card fallback */}
+        <div
+          className="relative"
+          style={{
+            aspectRatio: "16 / 10",
+            marginTop: "-38px",
+            borderRadius: "0",
+            overflow: "hidden",
+            background:
+              "linear-gradient(135deg, color-mix(in oklch, var(--primary) 30%, var(--background)), color-mix(in oklch, var(--primary) 8%, var(--background)))",
+          }}
+        >
           {recipe.photo_paths.length > 0 ? (
-            <div className="relative">
-              <RecipePhotoImg
-                recipeId={recipe.id}
-                path={recipe.photo_paths[0]}
-                alt=""
-                className="aspect-[4/3] w-full rounded-b-2xl object-cover"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-card/85 backdrop-blur-sm paper-grain px-6 py-4 rounded-b-2xl">
-                <div className="relative overflow-visible">
-                  {renderSectionPin("title")}
-                  <h1 className="text-display text-foreground">{recipe.title}</h1>
-                </div>
-              </div>
-            </div>
+            <RecipePhotoImg
+              recipeId={recipe.id}
+              path={recipe.photo_paths[0]}
+              alt=""
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <Card className="paper-grain shadow-card mx-6 my-4 px-6 py-6">
-              <div className="relative overflow-visible">
-                {renderSectionPin("title")}
-                <h1 className="text-display text-foreground">{recipe.title}</h1>
-              </div>
-            </Card>
+            <div className="w-full h-full flex items-center justify-center opacity-30">
+              <Utensils size={48} aria-hidden />
+            </div>
+          )}
+        </div>
+
+        {/*
+          Phase 32 §15.C — Body block.
+          padding: 18px 20px 24px; gap: 14px between sections.
+          Per design-system.html #recette line 1789.
+        */}
+        <div
+          ref={formRef}
+          className="flex flex-col flex-1"
+          style={{ padding: "18px 20px 24px", gap: "14px" }}
+        >
+          {/* Title + identity subhead (D-13) */}
+          <div className="relative overflow-visible">
+            {renderSectionPin("title")}
+            <h1
+              className="font-display text-foreground"
+              style={{
+                fontSize: "26px",
+                fontWeight: 500,
+                letterSpacing: "-0.015em",
+                lineHeight: 1.1,
+                margin: 0,
+              }}
+            >
+              {recipe.title}
+            </h1>
+            {/* Phase 32 D-13 — identity subhead from cook_count via i18n */}
+            <Marginalia size="sm" slant style={{ marginTop: "4px" }}>
+              {recipe.cook_count > 0
+                ? tSubhead("cooked", { count: recipe.cook_count })
+                : tSubhead("never")}
+            </Marginalia>
+          </div>
+
+          {/* Badge row — prep time, difficulty, cuisine, mood */}
+          <div className="flex flex-wrap" style={{ gap: "6px" }}>
+            {recipe.prep_time_minutes != null ? (
+              <span
+                className="badge"
+                style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}
+              >
+                <Timer size={11} aria-hidden />
+                {recipe.prep_time_minutes} min
+              </span>
+            ) : null}
+            {recipe.difficulty ? (
+              <span
+                className="badge"
+                style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}
+              >
+                <Flame size={11} aria-hidden />
+                {labels.difficulty(recipe.difficulty)}
+              </span>
+            ) : null}
+            {recipe.cuisine ? (
+              <span className="badge">{labels.cuisine(recipe.cuisine)}</span>
+            ) : null}
+            {recipe.mood.length > 0 ? (
+              <span className="badge">{labels.mood(recipe.mood[0])}</span>
+            ) : null}
+          </div>
+
+          {/* Multi-photo carousel — photos 2..N when multi-photo */}
+          {recipe.photo_paths.length > 1 && (
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 -mx-5 px-5 py-2 scrollbar-none">
+              {recipe.photo_paths.slice(1).map((p) => (
+                <RecipePhotoImg
+                  key={p}
+                  recipeId={recipe.id}
+                  path={p}
+                  alt=""
+                  className="h-48 w-48 rounded-lg object-cover snap-start flex-shrink-0"
+                />
+              ))}
+            </div>
           )}
 
-          <div className="px-(--spacing-page-x) flex flex-col gap-(--spacing-section-y) pb-(--spacing-bottom-safe) mt-6">
-            {/* RID-03 — CompletenessCard above body content when percent < 100 (D-20) */}
-            <CompletenessCard recipe={recipe} />
-
-            {/* Metadata pill row — cuisine, moods, protein, prep/servings */}
-            <div className="relative overflow-visible flex flex-wrap gap-2 items-center">
-              {renderSectionPin("metadata")}
-              {recipe.cuisine ? (
-                <Badge variant="secondary">{labels.cuisine(recipe.cuisine)}</Badge>
-              ) : null}
-              {recipe.mood.map((m) => (
-                <Badge key={m} variant="secondary">
-                  {labels.mood(m)}
-                </Badge>
-              ))}
-              {recipe.main_protein ? (
-                <Badge variant="secondary">{labels.protein(recipe.main_protein)}</Badge>
-              ) : null}
-              {metaSpan ? (
-                <span className="relative overflow-visible text-sm text-foreground-muted">
-                  {renderSectionPin("prep_servings")}
-                  {metaSpan}
-                </span>
-              ) : null}
-            </div>
-
-            {/* Multi-photo carousel — renders photos 2..N when multi-photo (hero already shows photo 1) */}
-            {recipe.photo_paths.length > 1 && (
-              <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 -mx-6 px-6 py-4 scrollbar-none">
-                {recipe.photo_paths.slice(1).map((p) => (
-                  <RecipePhotoImg
-                    key={p}
-                    recipeId={recipe.id}
-                    path={p}
-                    alt=""
-                    className="h-64 w-64 rounded-lg object-cover snap-start flex-shrink-0"
-                  />
-                ))}
+          {/* Ingredients section */}
+          {recipe.ingredients && recipe.ingredients.length > 0 ? (
+            <section>
+              <div className="relative overflow-visible" style={{ marginBottom: "8px" }}>
+                {renderSectionPin("ingredients")}
+                <h2
+                  className="font-display"
+                  style={{ fontSize: "17px", fontWeight: 500, margin: 0 }}
+                >
+                  {t("section_ingredients")}
+                  {recipe.servings != null ? (
+                    <small
+                      className="text-caption"
+                      style={{ fontFamily: "var(--font-body)", fontWeight: 400, marginLeft: "6px" }}
+                    >
+                      · {recipe.servings} personnes
+                    </small>
+                  ) : null}
+                </h2>
               </div>
-            )}
-
-            {recipe.ingredients && recipe.ingredients.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                <div className="relative overflow-visible">
-                  {renderSectionPin("ingredients")}
-                  <h2 className="text-title">{t("section_ingredients")}</h2>
-                </div>
-                <ul className="border-l-2 border-primary/30 pl-4 flex flex-col gap-2 py-1">
-                  {recipe.ingredients.map((ing, i) => {
-                    const qty = ing.quantity != null ? `${ing.quantity}` : "";
-                    const unit = ing.unit ? ` ${ing.unit}` : "";
-                    const lead = `${qty}${unit}`.trim();
-                    return (
-                      <li key={i} className="text-base leading-relaxed">
-                        {lead ? `${lead} ` : ""}
-                        {ing.name}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ) : null}
-
-            {recipe.steps && recipe.steps.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                <div className="relative overflow-visible">
-                  {renderSectionPin("steps")}
-                  <h2 className="text-title">{t("section_steps")}</h2>
-                </div>
-                <ol className="flex flex-col gap-3 py-1">
-                  {recipe.steps.map((s, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span className="font-display italic text-primary/80 text-base shrink-0">
-                        {i + 1}.
+              <div className="flex flex-col" style={{ gap: "6px" }}>
+                {recipe.ingredients.map((ing, idx) => {
+                  const qty = ing.quantity != null ? `${ing.quantity}` : "";
+                  const unit = ing.unit ? ` ${ing.unit}` : "";
+                  const lead = `${qty}${unit}`.trim();
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-baseline"
+                      style={{ gap: "10px" }}
+                    >
+                      <span
+                        className="font-display"
+                        style={{
+                          fontSize: "13.5px",
+                          fontWeight: 500,
+                          color: "var(--primary)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {lead || "—"}
                       </span>
-                      <span className="text-base leading-relaxed">{s}</span>
-                    </li>
-                  ))}
-                </ol>
+                      <span style={{ fontSize: "13.5px" }}>{ing.name}</span>
+                    </div>
+                  );
+                })}
               </div>
-            ) : null}
+            </section>
+          ) : null}
 
-            <p className="text-sm text-foreground-muted">
-              {t("footer_last_cooked", {
-                when: recipe.last_cooked_at
-                  ? formatRelativeFr(recipe.last_cooked_at)
-                  : t("never_cooked"),
-              })}{" "}
-              ·{" "}
-              {t("footer_cook_count", { count: recipe.cook_count })}
-            </p>
-          </div>
+          {/* Steps section */}
+          {recipe.steps && recipe.steps.length > 0 ? (
+            <section>
+              <div className="relative overflow-visible" style={{ marginBottom: "6px" }}>
+                {renderSectionPin("steps")}
+                <h2
+                  className="font-display"
+                  style={{ fontSize: "17px", fontWeight: 500, margin: 0 }}
+                >
+                  {t("section_steps")}
+                </h2>
+              </div>
+              <div className="flex flex-col" style={{ gap: 0 }}>
+                {recipe.steps.map((step, idx) => {
+                  const isFirst = idx === 0;
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: "8px 0",
+                        borderTop: isFirst ? "none" : "1px dashed var(--border)",
+                      }}
+                    >
+                      <div className="flex items-baseline">
+                        <span
+                          className="font-display"
+                          style={{
+                            fontSize: "13.5px",
+                            fontWeight: 500,
+                            color: "var(--primary)",
+                            marginRight: "8px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {idx + 1}.
+                        </span>
+                        <span style={{ fontSize: "13.5px", lineHeight: 1.55 }}>{step}</span>
+                      </div>
+                      {/*
+                        Phase 32 D-13 — step-1 marginalia (conditional).
+                        Renders ONLY when the most recent cooking log for this recipe
+                        has a non-empty `notes` field. No fallback copy per D-13.
+                        Security: recipeLog.notes is user-authored; rendered as React
+                        text child inside Marginalia; React escapes HTML by default.
+                        Per RESEARCH Pitfall 8: field is `notes` (plural), not `note`.
+                      */}
+                      {isFirst && recipeLog?.notes ? (
+                        <Marginalia
+                          size="sm"
+                          slant
+                          style={{
+                            display: "block",
+                            margin: "4px 0 0 12px",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {recipeLog.notes}
+                        </Marginalia>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          {/* Footer — last cooked + cook count */}
+          <p className="text-sm text-foreground-muted">
+            {t("footer_last_cooked", {
+              when: recipe.last_cooked_at
+                ? formatRelativeFr(recipe.last_cooked_at)
+                : t("never_cooked"),
+            })}{" "}
+            ·{" "}
+            {t("footer_cook_count", { count: recipe.cook_count })}
+          </p>
         </div>
 
         {/*
@@ -792,7 +989,34 @@ export default function RecipeDetailPage() {
           onSummaryLater={handleSummaryLater}
           onManualEditLinkClick={handleManualEditLinkClick}
         />
+
+        {/*
+          Phase 32 §15.C — Sticky bottom CTA: "Cuisiner maintenant".
+          Sits above BottomNav (which is mounted in app/layout.tsx globally).
+          z-30 (below topbar z-40, above content). Backdrop blur + border-top.
+          Per design-system.html #recette line 1825.
+        */}
+        <div
+          className="sticky bottom-0 z-30"
+          style={{
+            padding: "12px 20px calc(12px + env(safe-area-inset-bottom))",
+            background: "color-mix(in oklch, var(--background) 92%, transparent)",
+            backdropFilter: "blur(12px)",
+            borderTop: "1px solid var(--border)",
+          }}
+        >
+          <Button
+            type="button"
+            className="w-full h-12"
+            onClick={handleStartCooking}
+            disabled={cookInFlight}
+          >
+            <Flame size={18} className="mr-2" aria-hidden />
+            {tDetail("cook_cta")}
+          </Button>
+        </div>
       </section>
+
       <VoiceModifySheet
         recipeId={recipe.id}
         open={voiceModifyOpen}
