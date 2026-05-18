@@ -39,7 +39,7 @@ export default function Home() {
 
   return (
     <OnboardingGuard>
-      <main className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1">
         {/* iOS install hint — per-device PWA UX, not part of Decide content. */}
         {showInstallHint ? (
           <Card className="mx-6 mt-4 bg-card border-border shadow-card p-4 gap-2">
@@ -54,7 +54,7 @@ export default function Home() {
 
         {/* Decide layer (Phase 3) — replaces the former hero + CTA section. */}
         <HomeDecide />
-      </main>
+      </div>
     </OnboardingGuard>
   );
 }
