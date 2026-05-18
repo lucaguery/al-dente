@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.7
 milestone_name: Sober Kitchen + Polish
-status: executing
-stopped_at: Completed 32-05-PLAN.md — Recette port (final plan)
-last_updated: "2026-05-18T11:04:43.505Z"
+status: Ready to discuss
+stopped_at: Phase 33 context gathered
+last_updated: "2026-05-18T12:26:06.124Z"
 last_activity: 2026-05-18
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 7
   completed_plans: 7
-  percent: 100
+  percent: 50
 ---
 
 # Project State
@@ -21,19 +21,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-17 — v0.7 Sober Kitchen + Polish milestone opened via `/gsd-new-milestone`)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 32 — port-locked-screens-to-sober-kitchen
+**Current focus:** Phase 33 — CLAUDE.md split (DX-01)
 
 ## Current Position
 
 Milestone: v0.7 Sober Kitchen + Polish
-Phase: 33
-Plan: Not started
-Status: Ready to execute
+Phase: 33 of 33
+Plan: Not started (33-CONTEXT.md gathered 2026-05-18; ready to plan)
+Status: Ready to plan
 Last activity: 2026-05-18
 
-Resume: `/gsd-discuss-phase 30 ${GSD_WS}`
+Resume: `/gsd-plan-phase 33 ${GSD_WS}`
 
-Progress: 0/4 phases complete
+Progress: 3/4 phases complete (Phases 30, 31, 32 shipped — Phase 31 progress tool-undercounted because it lacks a phase dir)
 
 ## Performance Metrics
 
@@ -93,13 +93,13 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 
 ### Blockers/Concerns
 
-- **None blocking.** v0.7 ready to execute Phase 30.
+- **None blocking.** v0.7 ready to discuss Phase 33 (CLAUDE.md split — pure docs restructure, DX-01 only).
+- **Phase 32 HUMAN-UAT items** persisted in `.planning/phases/32-port-locked-screens-to-sober-kitchen/32-HUMAN-UAT.md` — tracked via `/gsd-audit-uat`.
 - **4 v0.6 Phase 29 HUMAN-UAT items** carried forward — Gemini round-trip, advisory round-trip, defer gate, Playwright suite. Tracked via `/gsd-audit-uat`.
 - **2 v0.6 Phase 28 HUMAN-UAT items** carried forward — chip/stepper answer + advisory accept/dismiss (both depend on the Phase 29 LLM emissions landing in live use).
 - **15 v0.4 HUMAN-UAT items** remain orthogonal — tracked via `/gsd-audit-uat`.
 - **3 acknowledged v0.5 warnings:** WR-01 (idempotent `db.close()` in `retry_promotion`), WR-02 (seed misses Phase 24 fields on 18 of 21 recipes per intended D-16 nudge). WR-03 from v0.5 was structurally resolved by v0.6 Phase 25's `source_capture` drop.
 - **Behavioral validation gate** (≥ 2 weeks daily use by both members, v0.1 definition-of-done) still pending — orthogonal to feature milestones.
-- **Pending Vercel fix** (commit `217b597`) sitting locally — annotates `setSelected` updater params in `SystemBubble.tsx`; needs manual `git push origin main` (auto-deny on push to main blocked the automated push).
 
 ### Quick Tasks Completed
 
@@ -113,7 +113,7 @@ None — v0.7 is bugs + design port + DX, no new domain ecosystem requiring rese
 
 ## Session Continuity
 
-Last activity: 2026-05-17 — v0.7 roadmap written; 4 phases (30-33), 12 requirements mapped
-Stopped at: Completed 32-05-PLAN.md — Recette port (final plan)
-Resume file: None
-Next: `/gsd-discuss-phase 30 ${GSD_WS}`
+Last activity: 2026-05-18 — Phase 33 context gathered (`ed03b40`); 14 decisions captured, AGENTS.md override flagged for Plan 33-01 first commit
+Stopped at: Phase 33 context gathered
+Resume file: .planning/phases/33-claude-md-split/33-CONTEXT.md
+Next: `/gsd-plan-phase 33 ${GSD_WS}`
