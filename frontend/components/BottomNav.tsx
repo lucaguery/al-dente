@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Home, BookOpen, Settings, Plus } from "lucide-react";
+import { Home, BookOpen, User, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 // Phase 31 NAV-01 — 3 flat tabs + 1 central elevated « Ajouter » CTA = 4 slots.
@@ -43,7 +43,10 @@ const TABS: ReadonlyArray<Tab> = [
   { variant: "tab",         href: "/",            pathname: "/",            matchExact: true,  icon: Home,     labelKey: "home"    },
   { variant: "tab",         href: "/recipes",     pathname: "/recipes",     matchExact: false, icon: BookOpen, labelKey: "recipes" },
   { variant: "central-cta", href: "/recipes/new", pathname: "/recipes/new",                                    labelKey: "add"     },
-  { variant: "tab",         href: "/settings",    pathname: "/settings",    matchExact: false, icon: Settings, labelKey: "profile" },
+  // gh#31 A3 — Profil tab icon switched from Settings (gear) to User
+  // (person silhouette) so the icon matches the "Profil" label semantics
+  // instead of reading as a system-settings affordance.
+  { variant: "tab",         href: "/settings",    pathname: "/settings",    matchExact: false, icon: User,     labelKey: "profile" },
 ];
 
 export function BottomNav() {

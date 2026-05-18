@@ -31,6 +31,7 @@ import { api } from "@/lib/api";
 import { createBlankRecipe, promoteDraft } from "@/lib/recipes";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import RecipeThread from "@/components/RecipeThread";
+import { BrandIcon } from "@/components/BrandIcon";
 import type { PendingBubble } from "@/components/RecipeThread/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
@@ -204,8 +205,22 @@ function Inner() {
     }
   }, [pendingBubbles, router, t]);
 
+  // gh#34 D2 — empty-state watermark: the brand mark in low opacity sits
+  // behind the RecipeThread while there are zero pending bubbles, so the
+  // capture surface reads as "intentionally empty" rather than "broken".
+  // Disappears as soon as the first bubble lands. Sized at 280px (page
+  // mid-line) with very-low opacity so it never competes with the Composer.
+  const showWatermark = pendingBubbles.length === 0;
+
+  // gh#34 follow-up — section uses `flex-1 min-h-0` instead of `h-[100dvh]`.
+  // The root layout's <main> already reserves `pb-[5rem+safe-area]` for
+  // BottomNav; pinning the section to 100dvh ignores that reservation and
+  // pushed the composer (last child) below BottomNav, requiring a scroll
+  // to surface the input. `flex-1` lets the section fill main's *content
+  // area* (after the bottom reservation), so the composer rests above
+  // BottomNav by default.
   return (
-    <section className="flex flex-col h-[100dvh]">
+    <section className="relative flex flex-col flex-1 min-h-0">
       <header className="sticky top-0 z-10 h-12 px-(--spacing-page-x) flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border">
         <Button
           size="icon"
@@ -218,6 +233,14 @@ function Inner() {
         <span className="text-page-header">{tNew("tab_title")}</span>
         <span className="w-10" aria-hidden />
       </header>
+      {showWatermark ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 flex items-center justify-center text-foreground-muted opacity-[0.08]"
+        >
+          <BrandIcon size={280} strokeWidth={4} />
+        </div>
+      ) : null}
       <RecipeThread
         mode="capture"
         pendingBubbles={pendingBubbles}

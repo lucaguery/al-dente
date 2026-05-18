@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { RotateCw } from "lucide-react";
 import { BrandLoader } from "@/components/BrandLoader";
 import { Marginalia } from "@/components/Marginalia";
 import { toast } from "sonner";
@@ -527,9 +528,14 @@ export function HomeDecide() {
           onSkip={handleBannerSkip}
         />
       )}
-      {/* Accueil A header composition — docs/design-system.html #accueil lines 1481-1486 */}
+      {/* Accueil A header composition — docs/design-system.html #accueil lines 1481-1486.
+          gh#32 — header row now carries a RotateCw icon button next to the
+          date caption so the regenerate action is always reachable, not gated
+          on shortlist state (previously: only visible in the no-ctaTarget else
+          branch of VoteSummary, which hid the action whenever a validé or
+          pressenti recipe existed). */}
       <header className="px-(--spacing-page-x) pt-8 pb-2">
-        {/* Header date row: page label left + date caption right (UI-SPEC §9.1 step 1) */}
+        {/* Header date row: page label left + date caption + regenerate icon right */}
         <div className="flex items-baseline justify-between">
           <span
             className="text-foreground"
@@ -541,7 +547,18 @@ export function HomeDecide() {
           >
             {tNav("home")}
           </span>
-          <small className="text-caption capitalize">{formattedDate}</small>
+          <div className="flex items-center gap-2">
+            <small className="text-caption capitalize">{formattedDate}</small>
+            <button
+              type="button"
+              aria-label={tSummary("regenerate_cta")}
+              onClick={() => setRegenOpen(true)}
+              className="inline-flex items-center justify-center rounded-full text-foreground-muted hover:text-foreground active:scale-95 transition-all duration-fast ease-craft"
+              style={{ width: "32px", height: "32px" }}
+            >
+              <RotateCw size={16} aria-hidden />
+            </button>
+          </div>
         </div>
         {/* H1 — Cormorant 500 28px upright "On mange quoi ce soir ?" (UI-SPEC §9.1 step 2) */}
         <h1
@@ -596,7 +613,6 @@ export function HomeDecide() {
           onVoteApplied={handleVoteApplied}
           onCookStart={handleCookStart}
           onDelegate={handleDelegate}
-          onRegenerate={() => setRegenOpen(true)}
           cookInFlight={cookInFlight}
           delegateInFlight={delegateInFlight}
         />
