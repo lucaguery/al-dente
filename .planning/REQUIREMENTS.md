@@ -14,7 +14,7 @@ This file lists requirements. Phase mapping is filled by `gsd-roadmapper` into t
 
 Plumbing that makes the rest measurable. Lands first; everything else depends on it.
 
-- [ ] **COV-01**: Repo-wide line coverage reaches ≥ 85%, asserted via `[tool.coverage.report].fail_under` in `backend/pyproject.toml` and enforced in CI.
+- [x] **COV-01**: Repo-wide line coverage reaches ≥ 85%, asserted via `[tool.coverage.report].fail_under` in `backend/pyproject.toml` and enforced in CI.
 - [ ] **COV-02**: `app/services/voting.py` reaches 100% line coverage, asserted via per-file `fail_under = 100`.
 - [ ] **COV-03**: `app/services/algorithm.py` reaches 100% line coverage, asserted via per-file `fail_under = 100`.
 - [ ] **COV-04**: `app/services/shortlist.py` reaches 100% line coverage, asserted via per-file `fail_under = 100`.
@@ -26,14 +26,14 @@ Plumbing that makes the rest measurable. Lands first; everything else depends on
 
 One named regression test per CLAUDE.md architecture invariant. Each test fails if the invariant is violated.
 
-- [ ] **INV-01**: Regression test asserts all five capture surfaces (`quick`, full-form, `voice`, `photo`, `url`) dispatch through `promote_draft(recipe_id)`. (Invariant #1)
-- [ ] **INV-02**: Regression test asserts the `votes` table has no `state` column; vote state is computed via `services/voting.compute_vote_state` from rows. (Invariant #2)
-- [ ] **INV-03**: Regression test asserts `recipes.last_cooked_at` and `recipes.cook_count` update atomically with `cooking_logs` insert (same DB transaction). (Invariant #3)
-- [ ] **INV-04**: Regression test asserts every household-mutation endpoint broadcasts via `services/realtime.broadcast_to_household` (`recipe.created`, `recipe.promoted`, `recipe.updated`, `turn.created`, `turn.updated`, `vote.created`, `cooking_log.*`). (Invariant #4)
-- [ ] **INV-05**: Regression test asserts the first user turn (position 0) of each recipe preserves capture payload verbatim and is immutable; `recipes.source_capture` column no longer exists. (Invariant #5)
-- [ ] **INV-06**: Regression test asserts APScheduler runs in-process at module level and registers exactly one shortlist job per household at lifespan startup (single-worker assumption). (Invariant #7)
-- [ ] **INV-07**: Regression test asserts auth via the `aldente_auth` HttpOnly cookie wins over (and is mutually exclusive with) the Bearer-header fallback used only in cross-origin local dev. (Invariant #8)
-- [ ] **INV-08**: Regression test asserts every `HTTPException(detail=...)` user-visible string is wrapped in or sourced from a French translation key (or is a recognized internal code), not raw English. (Invariant #6 — backend side)
+- [x] **INV-01**: Regression test asserts all five capture surfaces (`quick`, full-form, `voice`, `photo`, `url`) dispatch through `promote_draft(recipe_id)`. (Invariant #1)
+- [x] **INV-02**: Regression test asserts the `votes` table has no `state` column; vote state is computed via `services/voting.compute_vote_state` from rows. (Invariant #2)
+- [x] **INV-03**: Regression test asserts `recipes.last_cooked_at` and `recipes.cook_count` update atomically with `cooking_logs` insert (same DB transaction). (Invariant #3)
+- [x] **INV-04**: Regression test asserts every household-mutation endpoint broadcasts via `services/realtime.broadcast_to_household` (`recipe.created`, `recipe.promoted`, `recipe.updated`, `turn.created`, `turn.updated`, `vote.created`, `cooking_log.*`). (Invariant #4)
+- [x] **INV-05**: Regression test asserts the first user turn (position 0) of each recipe preserves capture payload verbatim and is immutable; `recipes.source_capture` column no longer exists. (Invariant #5)
+- [x] **INV-06**: Regression test asserts APScheduler runs in-process at module level and registers exactly one shortlist job per household at lifespan startup (single-worker assumption). (Invariant #7)
+- [x] **INV-07**: Regression test asserts auth via the `aldente_auth` HttpOnly cookie wins over (and is mutually exclusive with) the Bearer-header fallback used only in cross-origin local dev. (Invariant #8)
+- [x] **INV-08**: Regression test asserts every `HTTPException(detail=...)` user-visible string is wrapped in or sourced from a French translation key (or is a recognized internal code), not raw English. (Invariant #6 — backend side)
 
 ### Endpoint Contract Coverage (ROUT × 10)
 

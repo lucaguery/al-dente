@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: Backend Coverage Until Done
-status: Phase 37 closed; ready for `/gsd-plan-phase 38`
-stopped_at: Roadmap written; STATE.md and REQUIREMENTS.md updated.
-last_updated: "2026-05-19T22:27:36.681Z"
-last_activity: 2026-05-19 — Phase 37 closed. 4 rules files at 100% line + 100% branch coverage (algorithm + shortlist + voting + auth). Repo coverage 35.9% → 64.5%. 288 tests pass / 16 fail (pre-existing test-isolation bugs in test_turns.py — db_session.commit() pollution; surfaced as follow-up TODO for Phase 38 cleanup OR a Phase 39 prerequisite gate).
+status: Phase 38 closed; ready for Phase 39 (MIG-01..02 + CI-01..02)
+stopped_at: 38-04 committed. SUMMARY.md written. Coverage 85.0% TOTAL (COV-01 closed).
+last_updated: "2026-05-20T00:00:00.000Z"
+last_activity: 2026-05-20 — Phase 38 closed. 4 plans shipped: 38-01 (conftest SAVEPOINT isolation, 64.5%→68.6%), 38-02 (5 data routers contracts, 68.6%→70.5%), 38-03 (5 infra routers contracts, 70.5%→73.1%), 38-04 (8 INV invariant tests + 155 gap-closure tests, 73.1%→85.0%). COV-01 closed at exactly 85.0% (2622 statements, 332 missed). No source modifications. D-38-03 break-observe-revert completed for all 8 CLAUDE.md invariants.
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 33
+  completed_plans: 7
+  percent: 67
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-19 — v0.8 Backend Coverage Until Do
 
 ## Current Position
 
-Phase: 37 (Test Infrastructure + Service Branch Coverage) — **complete**
-Plan: 37-03 shipped (a4943f9 worktree merge after 4 atomic test commits)
-Status: Phase 37 closed; ready for `/gsd-plan-phase 38`
-Last activity: 2026-05-19 — Phase 37 closed. 4 rules files at 100% line + 100% branch coverage (algorithm + shortlist + voting + auth). Repo coverage 35.9% → 64.5%. 288 tests pass / 16 fail (pre-existing test-isolation bugs in test_turns.py — db_session.commit() pollution; surfaced as follow-up TODO for Phase 38 cleanup OR a Phase 39 prerequisite gate).
+Phase: 38 (Endpoint Contract + Invariant Coverage) — **complete**
+Plan: 38-04 shipped (0468429 — COV-01 gap-closure tests; 4e2322a — INV-01..08 tests)
+Status: Phase 38 closed; ready for Phase 39 (MIG-01..02 + CI-01..02)
+Last activity: 2026-05-20 — Phase 38 closed. 4 plans shipped. Coverage 73.1%→85.0%. 8 architecture invariant regression tests with D-38-03 break-observe-revert proof. COV-01 closed. INV-01..08 all closed.
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 

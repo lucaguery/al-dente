@@ -23,7 +23,7 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
 ### Phases
 
 - [ ] **Phase 37: Test Infrastructure + Service Branch Coverage** — Unblock 96 failing tests, relocate svg_sanitizer_test, drive 4 rules files to 100% line coverage.
-- [ ] **Phase 38: Endpoint Contract + Invariant Coverage** — 10 routers × 4-test contract + 8 named invariant regression tests; repo coverage reaches ≥85%.
+- [x] **Phase 38: Endpoint Contract + Invariant Coverage** — 10 routers × 4-test contract + 8 named invariant regression tests; repo coverage reaches ≥85%. (completed 2026-05-19)
 - [ ] **Phase 39: Migration Safety + CI Gate** — Throwaway-DB migration tests for all 11 Alembic revisions; GitHub Actions gate blocks merge on coverage regression.
 
 ### Phase Details
@@ -64,7 +64,7 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 37. Test Infrastructure + Service Branch Coverage | 0/? | Not started | - |
-| 38. Endpoint Contract + Invariant Coverage | 3/4 | In Progress|  |
+| 38. Endpoint Contract + Invariant Coverage | 4/4 | Complete   | 2026-05-19 |
 | 39. Migration Safety + CI Gate | 0/? | Not started | - |
 
 ---
