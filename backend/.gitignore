@@ -31,3 +31,9 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Coverage artifacts (Phase quick-260519-uxn — backend coverage baseline)
+.coverage
+.coverage.*
+.coverage_html/
+.coverage.json
