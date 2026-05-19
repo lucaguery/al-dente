@@ -1,0 +1,32 @@
+# GSD workflow artifacts — ephemeral, already in CLAUDE.md hot path
+.planning/
+
+# Test trace / debug dumps
+.playwright-mcp/
+.scratch/
+playwright-report/
+
+# Build + deploy artifacts
+.vercel/
+.next/
+.github/
+dist/
+build/
+
+# Dependency trees
+node_modules/
+
+# Python caches
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# graphify's own output
+graphify-out/
+
+# Test fixtures + brand assets (no semantic signal beyond their filenames)
+backend/app/cli/synthetic_photos/
+frontend/public/demo-fixtures/
+frontend/public/textures/
+frontend/tests/e2e/fixtures/
