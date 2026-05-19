@@ -24,12 +24,12 @@ See: .planning/PROJECT.md (updated 2026-05-19 — v0.8 Backend Coverage Until Do
 
 ## Current Position
 
-Phase: 37 (Test Infrastructure + Service Branch Coverage) — not started, defining scope
-Plan: —
-Status: Defining scope (roadmap created, awaiting `/gsd:plan-phase 37`)
-Last activity: 2026-05-19 — Roadmap created; 3 phases (37-39) mapped across 33 requirements
+Phase: 37 (Test Infrastructure + Service Branch Coverage) — **complete**
+Plan: 37-03 shipped (a4943f9 worktree merge after 4 atomic test commits)
+Status: Phase 37 closed; ready for `/gsd-plan-phase 38`
+Last activity: 2026-05-19 — Phase 37 closed. 4 rules files at 100% line + 100% branch coverage (algorithm + shortlist + voting + auth). Repo coverage 35.9% → 64.5%. 288 tests pass / 16 fail (pre-existing test-isolation bugs in test_turns.py — db_session.commit() pollution; surfaced as follow-up TODO for Phase 38 cleanup OR a Phase 39 prerequisite gate).
 
-Progress: `[ ] [ ] [ ]` — 0/3 phases complete
+Progress: `[x] [ ] [ ]` — 1/3 phases complete (10/33 requirements closed: COV-02/03/04/05/06/07 + SERV-01/02/03/04)
 
 ## Performance Metrics
 
