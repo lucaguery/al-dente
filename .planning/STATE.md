@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.7.1
-milestone_name: Sober Kitchen Finish
-status: Milestone v0.7.1 complete — archived 2026-05-18
-stopped_at: Milestone v0.7.1 shipped and archived; awaiting next milestone scope
-last_updated: "2026-05-18T18:00:00.000Z"
-last_activity: 2026-05-18 — v0.7.1 Sober Kitchen Finish milestone complete. 3 phases (34/35/36) shipped, 15 plans, 22/22 requirements, 7 code-review warnings resolved. ROADMAP archived to .planning/milestones/v0.7.1-ROADMAP.md; REQUIREMENTS archived; ROADMAP collapsed to one-line summary.
+milestone: v0.8
+milestone_name: Backend Coverage Until Done
+status: planning
+last_updated: "2026-05-19T20:31:32.717Z"
+last_activity: 2026-05-19
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 15
-  completed_plans: 15
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-05-18 — v0.7.1 Sober Kitchen Finish sh
 
 ## Current Position
 
-Phase: Milestone v0.7.1 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-05-18 — v0.7.1 Sober Kitchen Finish shipped and archived. 22/22 requirements validated; 7 code-review warnings resolved; ShortlistDeck.tsx retired per MVP no-shim posture.
+Status: Defining requirements
+Last activity: 2026-05-19 — Milestone v0.8 started
 
 ## Performance Metrics
 

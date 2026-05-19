@@ -8,9 +8,48 @@ A shared recipe + decision app for couples, built as an installable PWA with a P
 
 Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable on both iPhones with no App Store, no $99/year, no native build.
 
-## Current Milestone
+## Current Milestone: v0.8 Backend Coverage Until Done
 
-_No active milestone._ v0.7.1 Sober Kitchen Finish shipped on 2026-05-18. Run `/gsd-new-milestone` to scope the next cycle.
+**Goal:** Backend has a test suite that catches any regression to a documented architectural invariant, endpoint contract, or business-logic state machine — with line coverage as a sanity floor (≥85% repo, 100% on the 4 named rules files), not the target.
+
+**Target features (the 6 user-defined DoD items):**
+
+1. **Invariant coverage** — every CLAUDE.md architecture invariant (#1–#8) has ≥1 named regression test that fails if the invariant is violated.
+2. **Endpoint contract coverage** — every router (households, auth_session, recipes, exports, photos, shortlist, votes, cooking_logs, push, ws) has: happy path, 401 on missing/invalid auth, 404 on cross-household access (not 403 — invariant), and validation failure cases.
+3. **Service branch coverage** — `services/voting.compute_vote_state` covers all 5 vote states across household sizes 1 and 2; `services/algorithm` scoring covers every weight/penalty branch; `services/shortlist.generate_daily_shortlist` covers empty/partial/full pool + idempotent re-run; `services/llm` thread-processing covers each `TurnKind`.
+4. **Migration safety** — every Alembic migration in `alembic/versions/` runs forward + back on a clean test DB.
+5. **Coverage floor** — ≥85% line coverage repo-wide; 100% line on `services/voting.py` + `services/algorithm.py` + `services/shortlist.py` + `auth.py`.
+6. **CI gate** — `pytest --cov` runs in GitHub Actions on every PR; floors block merge if they regress.
+
+**Baseline (captured 2026-05-19 in quick-260519-uxn):**
+
+| Metric | Value | Notes |
+|---|---|---|
+| Repo line coverage | 35.9% | with 96 tests failing on missing seed |
+| Branch coverage | 6.8% | 49 / 722 branches |
+| `app/auth.py` | 82.5% | 4-line gap — cheapest 100% |
+| `app/services/voting.py` | 35.5% | 12-line gap |
+| `app/services/shortlist.py` | 22.0% | 48-line gap |
+| `app/services/algorithm.py` | 17.6% | 60-line gap — hardest 100% |
+| Biggest opportunity | `app/services/llm.py` | 481 stmts @ 13.4% — covered by LLM-04 + SERV-04 |
+| Anomaly | `app/services/svg_sanitizer_test.py` | misplaced test (77 stmts @ 0%) — relocate or omit |
+
+**Locked decisions (milestone-level, captured at scaffold time):**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Milestone shape | 3 phases (37, 38, 39): infra+service-branch → router+invariant → migration+CI gate | Mirrors v0.2.1 patch-milestone discipline; high-leverage phase first (closes 4 rules files); CI gate ships last so coverage history exists when threshold lands |
+| Seed dependency for 96 failing tests | TBD during Phase 37 discuss-phase — choose between (a) autouse session-scoped seed fixture in `conftest.py`, or (b) rewrite the 96 tests to insert their own data and not depend on `test-token-luca` | Operator pick — (a) is faster but couples test isolation to a global seed; (b) is cleaner per pytest-best-practice but is N×96 test surgery |
+| Coverage floor enforcement | `fail_under = 85` (repo) + per-file `fail_under = 100` (4 rules files) in `backend/pyproject.toml`, asserted in CI gate (Phase 39) | Single source of truth; both local `uv run pytest --cov` and CI red-line on same threshold |
+| Migration safety test pattern | Separate `backend/tests/migrations/` with throwaway-DB fixture (create/drop a dedicated DB per test) — does NOT reuse the connection-scoped txn rollback fixture | Migration tests need a clean schema baseline; rollback fixture assumes schema is fixed |
+| CI runtime | GitHub Actions with Postgres service container (not docker compose) | Native to GHA; matches Railway's prod env (`alembic upgrade head` on push) — per backend/CLAUDE.md |
+| svg_sanitizer_test relocation vs omit | Move to `backend/tests/test_svg_sanitizer.py` (proper home) | Cleaner than `omit` in pyproject; one more file in the proper test location lifts repo % honestly |
+
+**Phase numbering:** continues from v0.7.1 → starts at Phase 37.
+
+**Closes:** gh#28 (test coverage deferred from v0.7).
+
+**Out of scope:** testing trivial Pydantic schemas, SQLAlchemy column definitions, or dependency-injection wiring without behavior. Performance/load testing. Frontend test coverage (Playwright suite stays as-is per `TESTING.md`). UI-REVIEW / UI-AUDIT regeneration (orthogonal to backend coverage). Productize-later items in `# TODO(productize)` markers.
 
 ## Previous Milestone Outcome: v0.7.1 Sober Kitchen Finish (shipped 2026-05-18)
 
@@ -312,4 +351,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-18 — v0.7 Sober Kitchen + Polish milestone shipped and archived. 4 phases (30–33), 9 plans, 12/12 requirements validated. Closes gh#23/24/25/27/29; defers gh#26 (« Suggérer ») to backlog and gh#28 (test coverage) to v0.8. Cumulative through v0.7: 8 milestones shipped · 34 phases · 147 plans · 171 requirements validated. Next: run `/gsd-new-milestone` to scope v0.8.*
+*Last updated: 2026-05-19 — v0.8 Backend Coverage Until Done scaffolded. 3 phases (37, 38, 39), 6 DoD items, anchored on baseline 35.9% line / 6.8% branch (captured in quick-260519-uxn). Closes gh#28. Cumulative through v0.7.1: 9 milestones shipped · 37 phases · 162 plans · 193 requirements validated. Next: define REQUIREMENTS.md and run gsd-roadmapper for v0.8 phase structure.*
