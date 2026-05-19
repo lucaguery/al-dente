@@ -159,23 +159,37 @@ class TestGenerateDailyShortlist:
         assert len(result.recipe_ids) == 2
 
     @pytest.mark.asyncio
-    async def test_full_corpus_seeded_household_returns_up_to_5(
+    async def test_full_corpus_large_pool_returns_up_to_5(
         self, db_session: Session, monkeypatch
     ) -> None:
-        """Seeded household (21 structured recipes) → shortlist with ≤5 picks (broadcast called once)."""
+        """Household with 8 structured recipes (corpus_size >= 30 threshold not met but
+        large enough to prove shortlist picks ≤5 from a pool that exceeds 5 candidates).
+
+        Uses an isolated fresh household so we don't touch committed seeded data
+        and avoid UNIQUE (household_id, date, generation) constraint collisions.
+        """
         broadcast_mock = AsyncMock()
         push_mock = MagicMock()
         monkeypatch.setattr("app.services.shortlist.broadcast_to_household", broadcast_mock)
         monkeypatch.setattr("app.services.shortlist.send_push_to_household", push_mock)
         monkeypatch.setattr("app.services.algorithm.random.uniform", lambda a, b: 0.0)
 
-        member = _seeded_member(db_session)
+        hh = _make_household(db_session)
+        member = _make_member(db_session, household_id=hh.id)
+        cuisines = ["italian", "french", "asian", "mediterranean", "indian", "mexican", "american", "northAfrican"]
+        proteins = ["poultry", "redMeat", "fish", "seafood", "egg", "legume", "none", "poultry"]
+        for i in range(8):
+            _make_recipe(
+                db_session,
+                household_id=hh.id,
+                member_id=member.id,
+                cuisine=cuisines[i],
+                main_protein=proteins[i],
+                title=f"Recette {i}",
+            )
+        db_session.commit()
 
-        # Use a different generation number to avoid UNIQUE conflict with any
-        # pre-existing shortlist for today (the seed may have already created one).
-        result = await generate_daily_shortlist(
-            member.household_id, db=db_session, generation=99
-        )
+        result = await generate_daily_shortlist(hh.id, db=db_session, generation=1)
 
         assert result is not None
         assert 1 <= len(result.recipe_ids) <= 5
