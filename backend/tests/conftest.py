@@ -10,6 +10,24 @@ teardown (15-RESEARCH §Pattern 2). Schema stays in place; only data
 inserted during the test is undone. The `dependency_overrides` clear in the
 client fixture's `finally` defends against leakage between tests
 (15-RESEARCH §Pitfall 5).
+
+# 38-01 fix — SAVEPOINT pattern (Option A):
+# Tests in test_turns.py call db_session.commit() to make data visible to
+# the TestClient's dependency-override session. Without protection, that
+# commit pushes through the outer connection-level transaction, turning the
+# fixture's teardown rollback() into a no-op and leaking test rows to
+# subsequent tests (the 16-failure root cause documented in 37-01-SUMMARY).
+#
+# Fix: wrap each test in a SAVEPOINT (begin_nested). The after_transaction_end
+# event re-opens a fresh nested transaction whenever the inner one ends (i.e.
+# when a test calls commit()), so the session always has an active SAVEPOINT.
+# The outer transaction is NEVER committed — it rolls back unconditionally at
+# teardown, undoing everything including any inner commits. The seeded rows
+# (committed at session scope by _seeded_database before any test runs) stay
+# visible because they live outside the outer per-test transaction.
+# SQLAlchemy 2.0 / psycopg2 verified pattern:
+# https://docs.sqlalchemy.org/en/20/orm/session_transaction.html
+#   §joining-a-session-into-an-external-transaction-such-as-for-test-suites
 """
 from __future__ import annotations
 
@@ -18,7 +36,7 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.db import get_db
@@ -40,10 +58,34 @@ def db_session() -> Generator[Session, None, None]:
     """Per-test connection-scoped transaction; rolled back at teardown.
 
     Faster than DROP/CREATE per test — schema persists, only data rolls back.
+
+    38-01 SAVEPOINT wrapper: the outer transaction is never committed.
+    When a test calls db_session.commit(), it ends the current SAVEPOINT
+    (inner transaction). The after_transaction_end listener immediately
+    opens a fresh SAVEPOINT so the session is always nested inside the
+    outer transaction. Teardown rolls back the outer transaction, undoing
+    all per-test writes regardless of how many commit() calls occurred.
     """
     connection = _engine.connect()
     transaction = connection.begin()
     session = _TestSessionLocal(bind=connection)
+
+    # Open the first SAVEPOINT.
+    nested = connection.begin_nested()
+
+    @event.listens_for(session, "after_transaction_end")
+    def _reopen_savepoint(session: Session, transaction: object) -> None:
+        """Re-open a SAVEPOINT after the current nested transaction ends.
+
+        Fires whenever the session's innermost transaction block ends
+        (including when a test calls commit()). If the outer connection-level
+        transaction is still active, open a fresh SAVEPOINT so subsequent
+        DB operations stay inside the rollback-at-teardown envelope.
+        """
+        nonlocal nested
+        if not connection.closed and connection.in_transaction():
+            nested = connection.begin_nested()
+
     try:
         yield session
     finally:

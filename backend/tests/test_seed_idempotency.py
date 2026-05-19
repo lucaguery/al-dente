@@ -105,10 +105,20 @@ def _cleanup() -> None:
 def _cleanup_around_test():
     """Ensure a clean slate before and after — the seed merges on stable UUIDs
     but other tests may have inserted unrelated rows under the same household_id.
+
+    38-01 fix: after teardown _cleanup(), re-seed so subsequent test files
+    (e.g. test_turns.py) can find the seeded member via _seeded_member().
+    Without this re-seed, _cleanup()'s direct DELETE via SessionLocal() removes
+    the session-scoped _seeded_database rows permanently for the remainder of
+    the pytest process, causing 14 test_turns.py failures (Category A,
+    37-01-SUMMARY §Remaining Failures).
     """
+    from app.cli.seed import run_test_seed
+
     _cleanup()
     yield
     _cleanup()
+    run_test_seed()
 
 
 def test_seed_cross_day_no_duplicates(monkeypatch: pytest.MonkeyPatch) -> None:
