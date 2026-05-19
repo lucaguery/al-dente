@@ -69,6 +69,8 @@ Who/what updates which doc. Hand-editing a doc inside a tool-managed region wast
 - `graphify-out/` — refreshed by `graphify update .` after code changes (AST-only, no API cost).
 - `README.md`, `RUNBOOK.md`, `TESTING.md` — manual; YAML front-matter `last_verified` field.
 
+Run `scripts/docs-audit` anytime to see a freshness table (every T1/T4/T5 doc with its `last_verified` / `Snapshot` age). Exits nonzero if any doc is ≥ 60 days stale — wire into CI if you want a hard gate.
+
 <!-- GSD:project-start source:PROJECT.md -->
 
 ## Project
