@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: Backend Coverage Until Done
-status: Phase 38 closed; ready for Phase 39 (MIG-01..02 + CI-01..02)
-stopped_at: 38-04 committed. SUMMARY.md written. Coverage 85.0% TOTAL (COV-01 closed).
-last_updated: "2026-05-20T00:00:00.000Z"
-last_activity: 2026-05-20 — Phase 38 closed. 4 plans shipped: 38-01 (conftest SAVEPOINT isolation, 64.5%→68.6%), 38-02 (5 data routers contracts, 68.6%→70.5%), 38-03 (5 infra routers contracts, 70.5%→73.1%), 38-04 (8 INV invariant tests + 155 gap-closure tests, 73.1%→85.0%). COV-01 closed at exactly 85.0% (2622 statements, 332 missed). No source modifications. D-38-03 break-observe-revert completed for all 8 CLAUDE.md invariants.
+status: Phase 39 Plan 01 complete; MIG-01 + MIG-02 closed. Ready for Plan 39-02 (CI gate).
+stopped_at: 39-01 committed (c39b367 + 95f31e3). SUMMARY.md written. 11 migration tests: 10 passed, 1 xfailed (0006 intentional non-downgradeable).
+last_updated: "2026-05-20T12:00:00.000Z"
+last_activity: 2026-05-20 — Phase 39 Plan 01 shipped. 3 files created: tests/migrations/__init__.py, conftest.py (throwaway-DB fixture), test_migration_safety.py (11 parametrized upgrade+downgrade cases). MIG-01 + MIG-02 closed. 0006 xfailed (Postgres ALTER TYPE DROP VALUE unsupported, intentional). Parent suite 521/2 baseline preserved.
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 7
-  completed_plans: 7
-  percent: 67
+  completed_plans: 8
+  percent: 75
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-19 — v0.8 Backend Coverage Until Do
 
 ## Current Position
 
-Phase: 38 (Endpoint Contract + Invariant Coverage) — **complete**
-Plan: 38-04 shipped (0468429 — COV-01 gap-closure tests; 4e2322a — INV-01..08 tests)
-Status: Phase 38 closed; ready for Phase 39 (MIG-01..02 + CI-01..02)
-Last activity: 2026-05-20 — Phase 38 closed. 4 plans shipped. Coverage 73.1%→85.0%. 8 architecture invariant regression tests with D-38-03 break-observe-revert proof. COV-01 closed. INV-01..08 all closed.
+Phase: 39 (Migration Safety + CI Gate) — **in progress**
+Plan: 39-01 shipped (c39b367 — migrations conftest; 95f31e3 — parametrized upgrade+downgrade test)
+Status: MIG-01 + MIG-02 closed. Ready for Plan 39-02 (CI gate: fail_under + GHA workflow).
+Last activity: 2026-05-20 — 39-01 shipped. 11 migration upgrade+downgrade tests: 10 passed, 1 xfailed (0006 intentional asymmetric migration). Throwaway-DB pattern confirmed: zero leaked DBs after test run. Scope fence honored: only backend/tests/migrations/ touched.
 
 Progress: [██████████] 100%
 

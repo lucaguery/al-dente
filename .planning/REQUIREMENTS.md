@@ -61,8 +61,8 @@ Targeted unit tests of state machines and scoring branches. Each requirement dri
 
 ### Migration Safety (MIG × 2)
 
-- [ ] **MIG-01**: `backend/tests/migrations/conftest.py` provides a throwaway-DB fixture (create + drop a dedicated test DB per test) — separate from the connection-scoped txn rollback fixture used by `tests/conftest.py`.
-- [ ] **MIG-02**: One parameterized test per file in `backend/alembic/versions/*.py` asserts `alembic upgrade <rev>` followed by `alembic downgrade <prev>` runs without error on a clean DB.
+- [x] **MIG-01**: `backend/tests/migrations/conftest.py` provides a throwaway-DB fixture (create + drop a dedicated test DB per test) — separate from the connection-scoped txn rollback fixture used by `tests/conftest.py`.
+- [x] **MIG-02**: One parameterized test per file in `backend/alembic/versions/*.py` asserts `alembic upgrade <rev>` followed by `alembic downgrade <prev>` runs without error on a clean DB.
 
 ### CI Gate (CI × 2)
 
@@ -116,8 +116,8 @@ Targeted unit tests of state machines and scoring branches. Each requirement dri
 | SERV-02 | Phase 37 | TBD | Pending |
 | SERV-03 | Phase 37 | TBD | Pending |
 | SERV-04 | Phase 37 | TBD | Pending |
-| MIG-01 | Phase 39 | TBD | Pending |
-| MIG-02 | Phase 39 | TBD | Pending |
+| MIG-01 | Phase 39 | 39-01 | Complete |
+| MIG-02 | Phase 39 | 39-01 | Complete |
 | CI-01 | Phase 39 | TBD | Pending |
 | CI-02 | Phase 39 | TBD | Pending |
 
