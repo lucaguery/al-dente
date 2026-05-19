@@ -1,8 +1,17 @@
+---
+status: historical
+last_verified: 2026-05-19
+superseded_by: docs/adr/0002-httponly-cookie-auth.md
+audience: developer
+---
+
 # Al Dente — MVP Spec v0.1 (PWA + Python)
 
 A shared recipe + decision app for couples, built as a Progressive Web App with a Python backend. Same product as the deck, different infrastructure — chosen for skill-fit (Python AI engineer) and zero-cost distribution.
 
 Output of `/grill-me` session on 2026-05-05, with stack pivot 2026-05-05.
+
+> **Doc status — historical, with two superseded sections.** This is the v0.1 scoping artifact. The architecture invariants and data model below remain accurate; the auth section (§ Onboarding, L309+) is superseded by [ADR-0002](docs/adr/0002-httponly-cookie-auth.md) and the build plan (§ Build plan, L389+) is historical. Live state lives in `.planning/STATE.md` and current milestones in `.planning/MILESTONES.md`.
 
 ---
 
@@ -308,6 +317,8 @@ State machine computed from votes that exist for `(shortlist_id, recipe_id)`:
 
 ## Onboarding (3 screens, one-time)
 
+> **Superseded by [ADR-0002](docs/adr/0002-httponly-cookie-auth.md) (HttpOnly cookie auth).** This section reflects the original v0.1 invite-code Bearer-token scheme. The production scheme is HttpOnly cookie via Next.js same-origin rewrites — see invariant 8 in `CLAUDE.md`. The invite-code flow itself (Create / Join via 6-char code) is unchanged; only the token storage + transmission mechanism is different.
+
 **Approach: invite-code, not OAuth.** Simpler than Supabase Auth for v0.1, generalizes to magic-link OAuth in productize-later (the `auth_token` column abstracts the source).
 
 ```
@@ -388,6 +399,8 @@ al-dente/
 
 ## Build plan
 
+> **Historical.** This four-wave plan is the v0.1 scoping artifact. It shipped in 7 days (2026-05-05 → 2026-05-08), not the projected 23–30 weekends. Subsequent milestones (v0.2 through v0.7.1) live in `.planning/MILESTONES.md`; current state in `.planning/STATE.md`.
+
 | Wave | Effort | Scope | Dogfood gate |
 |---|---|---|---|
 | **W1 Foundations** | ~70h, 7-9 weekends | Repo + Vercel + Railway + Supabase wiring; Postgres schema + Alembic; bearer-token auth; household onboarding (create + join via code); manual entry (full + quick); recipe list + detail + search; empty drafts inbox; WebSocket realtime sync; PWA install works; JSON export | 2 weeks of solo manual use. Stop here if not used. |
@@ -424,6 +437,8 @@ If this works, the entire infrastructure is validated. If not, you have ~4 likel
 ---
 
 ## Productize-later TODOs
+
+> **Scoped to v0.1.** Newer productize-later items live as `# TODO(productize)` comments in code (Python) / `// TODO(productize)` (TS) and in `.planning/PROJECT.md` §Out of Scope.
 
 Mark inline as `# TODO(productize)`:
 

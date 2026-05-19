@@ -1,3 +1,9 @@
+---
+status: accepted
+last_verified: 2026-05-19
+audience: operator
+---
+
 # Production Synthetic Household — Operator Runbook
 
 **Phase:** v0.3 Phase 11 (SEED-01..05)

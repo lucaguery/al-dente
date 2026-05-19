@@ -1,3 +1,10 @@
+---
+status: accepted
+last_verified: 2026-05-19
+superseded_by: null
+audience: developer
+---
+
 # Recipes have a durable conversation thread
 
 Capture and editing of a recipe are unified into a single durable **conversation thread** attached to the recipe (replacing the legacy "five capture surfaces" UI). Users emit **turns** (text, voice, photo, URL); the system replies post-promotion with extraction summaries and targeted completeness questions. **Semantic editing** = a new turn that re-interprets the thread. **Manual editing** = direct field edit via the recipe form, which *pins* the field. When a refinement turn's interpretation conflicts with a pinned field, the system emits an **advisory turn** (informational, not a modal) — manual edit wins by default; user can tap to accept the new interpretation.

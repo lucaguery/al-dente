@@ -1,3 +1,9 @@
+---
+status: accepted
+last_verified: 2026-05-19
+audience: developer
+---
+
 # Testing — Al Dente
 
 **Goal:** Make the shipped v0.1 / v0.2 PWA testable end-to-end on a fresh checkout via a one-command synthetic seed and a committed Playwright suite. From a clean clone, a green run is **4 bootstrap commands** plus a one-time env-file load (≤ 5 total per ROADMAP success criterion #1).

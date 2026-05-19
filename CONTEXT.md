@@ -1,3 +1,9 @@
+---
+status: accepted
+last_verified: 2026-05-19
+audience: claude-only
+---
+
 # Domain context — al-dente
 
 This file locks the vocabulary that domain conversations use. Terms here have
