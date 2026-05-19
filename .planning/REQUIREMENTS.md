@@ -1,6 +1,6 @@
 # Milestone v0.8 Requirements — Backend Coverage Until Done
 
-**Status:** Scaffolded 2026-05-19 · Awaiting roadmap
+**Status:** Roadmap created 2026-05-19 · Phase 37 defining scope
 **Goal:** Backend test suite catches any regression to a documented architectural invariant, endpoint contract, or business-logic state machine. Line coverage is a sanity floor, not the target.
 **Baseline (quick-260519-uxn):** 35.9% line / 6.8% branch · 4 rules files at 17.6% / 22.0% / 35.5% / 82.5%
 
@@ -87,8 +87,40 @@ Targeted unit tests of state machines and scoring branches. Each requirement dri
 
 | REQ-ID | Phase | Plan(s) | Status |
 |--------|-------|---------|--------|
-| _populated by gsd-roadmapper_ | | | |
+| COV-01 | Phase 38 | TBD | Pending |
+| COV-02 | Phase 37 | TBD | Pending |
+| COV-03 | Phase 37 | TBD | Pending |
+| COV-04 | Phase 37 | TBD | Pending |
+| COV-05 | Phase 37 | TBD | Pending |
+| COV-06 | Phase 37 | TBD | Pending |
+| COV-07 | Phase 37 | TBD | Pending |
+| INV-01 | Phase 38 | TBD | Pending |
+| INV-02 | Phase 38 | TBD | Pending |
+| INV-03 | Phase 38 | TBD | Pending |
+| INV-04 | Phase 38 | TBD | Pending |
+| INV-05 | Phase 38 | TBD | Pending |
+| INV-06 | Phase 38 | TBD | Pending |
+| INV-07 | Phase 38 | TBD | Pending |
+| INV-08 | Phase 38 | TBD | Pending |
+| ROUT-01 | Phase 38 | TBD | Pending |
+| ROUT-02 | Phase 38 | TBD | Pending |
+| ROUT-03 | Phase 38 | TBD | Pending |
+| ROUT-04 | Phase 38 | TBD | Pending |
+| ROUT-05 | Phase 38 | TBD | Pending |
+| ROUT-06 | Phase 38 | TBD | Pending |
+| ROUT-07 | Phase 38 | TBD | Pending |
+| ROUT-08 | Phase 38 | TBD | Pending |
+| ROUT-09 | Phase 38 | TBD | Pending |
+| ROUT-10 | Phase 38 | TBD | Pending |
+| SERV-01 | Phase 37 | TBD | Pending |
+| SERV-02 | Phase 37 | TBD | Pending |
+| SERV-03 | Phase 37 | TBD | Pending |
+| SERV-04 | Phase 37 | TBD | Pending |
+| MIG-01 | Phase 39 | TBD | Pending |
+| MIG-02 | Phase 39 | TBD | Pending |
+| CI-01 | Phase 39 | TBD | Pending |
+| CI-02 | Phase 39 | TBD | Pending |
 
 ---
 
-*Total: 33 requirements across 6 categories. Anchored on baseline 35.9% line / 6.8% branch (quick-260519-uxn, 2026-05-19). Phase mapping pending roadmapper output.*
+*Total: 33 requirements across 6 categories. Anchored on baseline 35.9% line / 6.8% branch (quick-260519-uxn, 2026-05-19). Roadmap: Phase 37 (COV-02..07 + SERV-01..04) → Phase 38 (ROUT-01..10 + INV-01..08 + COV-01) → Phase 39 (MIG-01..02 + CI-01..02).*

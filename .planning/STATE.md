@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: Backend Coverage Until Done
-status: planning
+status: active
 last_updated: "2026-05-19T20:31:32.717Z"
 last_activity: 2026-05-19
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,27 +17,29 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-18 — v0.7.1 Sober Kitchen Finish shipped and archived)
+See: .planning/PROJECT.md (updated 2026-05-19 — v0.8 Backend Coverage Until Done scaffolded)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Milestone complete
+**Current focus:** v0.8 — Backend Coverage Until Done
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 37 (Test Infrastructure + Service Branch Coverage) — not started, defining scope
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-19 — Milestone v0.8 started
+Status: Defining scope (roadmap created, awaiting `/gsd:plan-phase 37`)
+Last activity: 2026-05-19 — Roadmap created; 3 phases (37-39) mapped across 33 requirements
+
+Progress: `[ ] [ ] [ ]` — 0/3 phases complete
 
 ## Performance Metrics
 
-**Velocity (cumulative through v0.7):**
+**Velocity (cumulative through v0.7.1):**
 
-- Total milestones shipped: 8 (v0.1 → v0.7)
-- Total phases shipped: 34
-- Total plans shipped: 147
-- Total requirements validated: 171 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6 + 12 v0.7)
-- v0.7 timeline: 2026-05-17 → 2026-05-18 (2 calendar days)
+- Total milestones shipped: 9 (v0.1 → v0.7.1)
+- Total phases shipped: 36
+- Total plans shipped: 162
+- Total requirements validated: 193 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6 + 12 v0.7 + 22 v0.7.1)
+- v0.7.1 timeline: 2026-05-18 → 2026-05-18 (1 calendar day)
 
 **By Milestone:**
 
@@ -52,11 +54,13 @@ Last activity: 2026-05-19 — Milestone v0.8 started
 | v0.6 (Phases 25-29) | 5 | ✅ Complete (shipped 2026-05-17) |
 | v0.7 (Phases 30-33) | 4 | ✅ Complete (shipped 2026-05-18) |
 | v0.7.1 (Phases 34-36) | 3 | ✅ Complete (shipped 2026-05-18) |
+| v0.8 (Phases 37-39) | 3 | 🔄 In progress |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- v0.8 milestone scaffolded 2026-05-19: 3 phases (37-39), 33 requirements (COV × 7 + INV × 8 + ROUT × 10 + SERV × 4 + MIG × 2 + CI × 2). Closes gh#28 (test coverage deferred from v0.7). Baseline captured in quick-260519-uxn: 35.9% line / 6.8% branch, 96 tests failing on missing seed, 4 rules files at 17.6–82.5%. **3 locked decisions captured at scaffold time:** seed-dependency fix mechanism (TBD discuss-phase: autouse fixture vs test rewrite), coverage-floor enforcement (`fail_under = 85` + per-file `fail_under = 100` in pyproject.toml asserted in CI), migration-safety pattern (throwaway-DB fixture, separate from txn-rollback fixture).
 - v0.7.1 milestone scaffolded 2026-05-18 direct from 260518-kba walkthrough punch list (Route B — no orchestrator): 3 phases (34-36), 22 requirements (LIVE × 6 + ENUM × 4 + SOBER × 8 + POLISH × 4). Patch milestone in v0.2.1 mold — closes the v0.7 contract before v0.8 feature work. **3 locked decisions captured at scaffold time:** SOBER-09 first-paint ledger (vs dual-mode doc update), B-03 two-layer fix (backend ingredient serialization + frontend formatter), LIVE-02 plan-step-0 prod verification gate. **No new architecture-invariant changes expected** — patch milestone closes contract gaps, doesn't restructure.
 - v0.7 milestone shipped 2026-05-18: 4 phases (30-33), 9 plans, 12 requirements (BUG × 2 + NAV × 1 + SOBER × 8 + DX × 1). Closes gh#23/24/25/27/29; defers gh#26 (« Suggérer ») to backlog and gh#28 (test coverage) to v0.8. **No new architecture-invariant evolutions** (D-11 explicitly kept invariants #2 and #7 at root, not duplicated to backend/CLAUDE.md). **CLAUDE.md restructure** — root pruned from 114 → 34 lines of guidance; backend/frontend/.planning scoped files load per-subtree; `frontend/AGENTS.md` deleted per the D-12 override (Claude Code is the only AI assistant in active use today, revisit gate: second AI assistant added).
 - v0.6 milestone shipped 2026-05-17: 5 phases (25-29), 22 plans, 23 requirements (THREAD × 4 + TURN × 4 + CAPTURE × 4 + DETAIL × 5 + LLM × 4 + MIGRATION × 2). Closes gh#20 per ADR-0001. **Architecture invariant #1 evolved further** — all five capture surfaces now flow through one `promote_draft(recipe_id)` entry point dispatching on first turn's `kind`. **Invariant #5 satisfied by `recipe_turns`** going forward; legacy `source_capture` JSONB retired. **Invariant #4** extended with `turn.created` + `turn.updated` semantics.
@@ -69,18 +73,26 @@ Last activity: 2026-05-19 — Milestone v0.8 started
 
 ### Decisions
 
-See PROJECT.md Key Decisions table for the cumulative log. v0.7 decisions archived in `.planning/milestones/v0.7-ROADMAP.md` and the per-phase context files (test-coverage deferral, « Suggérer » deferral, bug-fix shape, bottom-nav variant discriminator, AGENTS.md deletion override D-12, D-04 verification FAIL fallback).
+See PROJECT.md Key Decisions table for the cumulative log. v0.7 and v0.7.1 decisions archived in `.planning/milestones/v0.7-ROADMAP.md` and `.planning/milestones/v0.7.1-ROADMAP.md`.
+
+**v0.8 locked decisions (captured at scaffold time):**
+
+| Decision | Choice | Phase |
+|----------|--------|-------|
+| Seed-dependency fix | TBD during Phase 37 discuss-phase: (a) autouse session-scoped seed fixture OR (b) rewrite 96 tests to insert own data | 37 |
+| Coverage-floor enforcement | `fail_under = 85` (repo) + per-file `fail_under = 100` (4 rules files) in `backend/pyproject.toml`; asserted in CI gate | 39 |
+| Migration safety pattern | Throwaway-DB fixture in `backend/tests/migrations/conftest.py` — separate from connection-scoped txn rollback fixture | 39 |
+| svg_sanitizer_test relocation | Move to `backend/tests/test_svg_sanitizer.py` (proper home) — cleaner than `omit` in pyproject | 37 |
+| CI runtime | GitHub Actions with Postgres 16 service container (not docker compose) — native to GHA; matches Railway prod env | 39 |
 
 ### Open Research
 
-None — v0.7.1 discovery already captured in the 260518-kba punch list (Playwright walk + accessibility-tree snapshots + screenshots). Plan-phase consumes that artifact directly.
+None. Baseline captured in quick-260519-uxn (2026-05-19). Coverage numbers and failing-test root cause fully characterized.
 
 ### Blockers/Concerns
 
-- **None blocking.** v0.7.1 milestone scaffolded; awaiting `/gsd-plan-phase 34`.
-- **LIVE-02 prod verification is plan step 0** for Phase 34 — if the deployed photo-url handler returns 500 on missing storage objects (not 404), scope expands to backend handler hardening before any UI work.
-- **SOBER-09 + LIVE-04 coupling** — if Phase 36 SOBER-09 (first-paint ledger) lands before Phase 34 LIVE-04 (marginalia branch), LIVE-04 is structurally resolved by SOBER-09 and the verification step asserts consistency held; if Phase 34 ships first, LIVE-04 ships the explicit `validéCount === 0` branch guard.
-- **SOBER-15 + POLISH-03 deferred to Phase 36 discuss-phase** — Rejeté row visibility and meta-pill icon harmonization are substantive design calls; operator input gates final implementation shape.
+- **Seed dependency TBD (Phase 37 discuss-phase):** 96 tests fail with missing `test-token-luca` seed. Mechanism — autouse fixture (faster, couples tests to global seed) vs test rewrite (cleaner isolation, N×96 surgery) — decided during Phase 37 discuss-phase before any implementation.
+- **Per-file `fail_under` syntax:** pytest-cov per-file floor enforcement mechanism needs verification against pyproject.toml `[tool.coverage.report]` section syntax before CI gate is written in Phase 39.
 - **HUMAN-UAT backlog carried forward** — Phase 30 (3 items: iPhone PWA self-heal, fresh pictogram render, post-deploy migration heal), Phase 32 (4 items: live Sober Kitchen verification), Phase 29 (4 items: Gemini round-trip, advisory round-trip, defer gate, Playwright suite), Phase 28 (2 items: chip/stepper answer, advisory accept/dismiss), Phase 21 v0.4 era (15 items). All tracked via `/gsd-audit-uat`.
 - **3 acknowledged v0.5 warnings:** WR-01 (idempotent `db.close()` in `retry_promotion`), WR-02 (seed misses Phase 24 fields on 18 of 21 recipes per intended D-16 nudge). WR-03 was structurally resolved by v0.6 Phase 25's `source_capture` drop.
 - **Behavioral validation gate** (≥ 2 weeks daily use by both members, v0.1 definition-of-done) still pending — orthogonal to feature milestones.
@@ -100,7 +112,7 @@ None — v0.7.1 discovery already captured in the 260518-kba punch list (Playwri
 
 ## Deferred Items
 
-Items acknowledged and deferred at v0.7 milestone close on 2026-05-18:
+Items acknowledged and deferred at v0.7.1 milestone close on 2026-05-18:
 
 | Category | Item | Status | Notes |
 |----------|------|--------|-------|
@@ -112,7 +124,7 @@ Items acknowledged and deferred at v0.7 milestone close on 2026-05-18:
 | quick_task | 260507-hbw-module-level-stale-while-revalidate-cach | missing | Pre-v0.7 (May 7), orphaned tracking. |
 | quick_task | 260507-hd0-create-a-beautiful-polished-layout-for-t | missing | Pre-v0.7 (May 7), orphaned tracking. |
 | quick_task | 260507-nmi-catch-up-with-what-has-been-done | missing | Pre-v0.7 (May 7), orphaned tracking. |
-| quick_task | 260508-1ln-fix-audit-gaps-cooking-finalized-handler | missing | Pre-v0.7 (May 8), orphaned tracking. |
+| quick_task | 260508-1ln-fix-audit-gaps-cooking-finalized-handler | missing | Pre-v0.8 (May 8), orphaned tracking. |
 | quick_task | 260512-df0-improve-suggestion-list-layout-slide-smo | missing | Pre-v0.7 (May 12, v0.5/v0.6 era), orphaned tracking. |
 | quick_task | 260512-gpl-ui-cormorant-garamond-font-swap-directio | missing | Pre-v0.7 (May 12), orphaned tracking. |
 | quick_task | 260512-l0l-harmonize-typography-and-spacing-across- | missing | Pre-v0.7 (May 12), orphaned tracking. |
@@ -122,12 +134,14 @@ UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surfac
 
 ## Session Continuity
 
-Last activity: 2026-05-19 — Completed quick task 260519-uxn: pytest-cov wired into backend; baseline 35.9% line / 6.8% branch captured. Rules-files gap surfaced (auth.py 82.5% — easiest; algorithm.py 17.6% — hardest). Next: scaffold v0.8 milestone (backend coverage) using these numbers.
-Stopped at: Baseline coverage captured; ready to scaffold v0.8 milestone via /gsd-new-milestone.
-Next: Run /gsd-new-milestone to scope v0.8 — Backend Coverage Until Done; then plan phases A/B/C per session goal (services-branch tests → endpoint-contract tests → migration safety + CI gate).
+Last activity: 2026-05-19 — Roadmap created for v0.8. 3 phases (37-39) mapped across 33 requirements. Phase 37 (COV-02..07 + SERV-01..04) unblocks the suite; Phase 38 (ROUT-01..10 + INV-01..08 + COV-01) drives to 85%; Phase 39 (MIG-01..02 + CI-01..02) locks the gate.
+Stopped at: Roadmap written; STATE.md and REQUIREMENTS.md updated.
+Next: Run `/gsd:plan-phase 37` to scope Phase 37 — Test Infrastructure + Service Branch Coverage.
 
 ## Operator Next Steps
 
-- Run `/gsd-execute-phase 34` (or `/gsd:execute-plan 34-03`) to land LIVE-03 — Settings renders both household members
-- After Phase 34 closes, advance to `/gsd-plan-phase 35` for the enum sweep
-- Review v0.7 HUMAN-UAT carry-forward via `/gsd-audit-uat` (Phase 30 + Phase 32 items need physical-device validation — orthogonal to v0.7.1 scope)
+- Run `/gsd:plan-phase 37` to define plans for Phase 37 (unblock 96 failing tests + 4 rules files to 100%)
+- Key discuss-phase decision for Phase 37: seed-dependency fix mechanism — autouse fixture (a) or test rewrite (b)
+- After Phase 37 closes, advance to `/gsd:plan-phase 38` for router + invariant coverage
+- After Phase 38 closes, advance to `/gsd:plan-phase 39` for migration safety + CI gate
+- Close gh#28 after Phase 39 ships
