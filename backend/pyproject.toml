@@ -58,3 +58,4 @@ branch = true
 show_missing = true
 skip_empty = true
 precision = 1
+fail_under = 85
