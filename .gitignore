@@ -19,3 +19,10 @@
 # instead so this pattern doesn't need to widen.
 /*.playwright-screenshot.png
 .scratch/
+
+# Graphify knowledge graph artifacts.
+# Rebuilt locally by the post-commit hook (`graphify hook install`).
+# `.planning/graphs/` is the GSD-wrapper destination; `graphify-out/` is the
+# upstream tool's own working directory.
+graphify-out/
+.planning/graphs/
