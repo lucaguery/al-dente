@@ -1,5 +1,7 @@
 # Milestones
 
+_Source-of-truth for milestone outcomes. Cross-references: `.planning/PROJECT.md` for locked decisions per milestone, `.planning/ROADMAP.md` for the rolled-up index._
+
 ## v0.7 Sober Kitchen + Polish (Shipped: 2026-05-18)
 
 **Phases completed:** 4 phases (30–33), 9 plans, 12/12 requirements validated

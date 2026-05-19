@@ -1,5 +1,7 @@
 # Roadmap: Al Dente
 
+_Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrative). Locked decisions per milestone live in `.planning/PROJECT.md`. This file is the rolled-up navigational index only._
+
 ## Completed Milestones
 
 - **v0.1** ✅ (2026-05-05 → 2026-05-08) — Full PWA shipped: infra, onboarding, recipe library, LLM capture, daily shortlist, voting, cooking-log finalization, Web Push, realtime sync. 5 phases, 31 plans, 49 requirements. → [Archive](.planning/milestones/v0.1-ROADMAP.md)
