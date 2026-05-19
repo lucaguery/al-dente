@@ -96,6 +96,7 @@ None — v0.7.1 discovery already captured in the 260518-kba punch list (Playwri
 | 260512-lif | Follow-up sweep: extend page-rhythm tokens into capture/summary components + onboarding sticky-header register | 2026-05-12 | 665f613 | [260512-lif](./quick/260512-lif-harmonize-capture-tab-summary-components/) |
 | fast-19 | Fix Accueil spinner flash on cache hits — `useDelayedFlag(250)` gates both spinner returns in `HomeDecide` | 2026-05-12 | 7a1f39c | gh#19 (closed) |
 | 260518-kba | Playwright MCP walkthrough — observation-only punch list (10 bugs / 7 polish / 8 design-drift) for v0.7 Sober Kitchen triage | 2026-05-18 | e303a6a | [260518-kba](./quick/260518-kba-ui-walkthrough-punch-list/) |
+| 260519-ucl | Align CLAUDE.md Invariant 5 + snake_case example with ADR-0001 (graphify drift fix) | 2026-05-19 | d85ecd9 | [260519-ucl](./quick/260519-ucl-align-claude-md-invariant-5-and-snake-ca/) |
 
 ## Deferred Items
 
