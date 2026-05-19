@@ -57,7 +57,9 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
   1. `backend/tests/migrations/` exists with a throwaway-DB fixture; all 11 current Alembic revisions pass `upgrade <rev>` + `downgrade <prev>` on a clean DB
   2. `.github/workflows/backend-tests.yml` runs on every PR: spins up Postgres 16 service container, applies migrations, runs `pytest --cov`, uploads HTML artifact
   3. CI fails the PR build if `coverage report --fail-under=85` fails OR any of the 4 rules files drops below per-file `fail_under = 100` — demonstrated by an intentional 1-line revert in a draft PR producing a red build
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 39-01-PLAN.md — Migration safety: throwaway-DB fixture + parametrized upgrade/downgrade test for all 11 Alembic revisions (MIG-01, MIG-02)
+  - [ ] 39-02-PLAN.md — CI gate: fail_under=85 in pyproject + per-file rules-files coverage script + GitHub Actions backend-tests workflow + xfail 2 known failures (CI-01, CI-02)
 
 ### Progress Table
 
@@ -65,7 +67,7 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
 |-------|----------------|--------|-----------|
 | 37. Test Infrastructure + Service Branch Coverage | 0/? | Not started | - |
 | 38. Endpoint Contract + Invariant Coverage | 4/4 | Complete   | 2026-05-19 |
-| 39. Migration Safety + CI Gate | 0/? | Not started | - |
+| 39. Migration Safety + CI Gate | 0/2 | Planned | - |
 
 ---
 
