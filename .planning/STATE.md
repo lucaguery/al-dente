@@ -97,6 +97,7 @@ None — v0.7.1 discovery already captured in the 260518-kba punch list (Playwri
 | fast-19 | Fix Accueil spinner flash on cache hits — `useDelayedFlag(250)` gates both spinner returns in `HomeDecide` | 2026-05-12 | 7a1f39c | gh#19 (closed) |
 | 260518-kba | Playwright MCP walkthrough — observation-only punch list (10 bugs / 7 polish / 8 design-drift) for v0.7 Sober Kitchen triage | 2026-05-18 | e303a6a | [260518-kba](./quick/260518-kba-ui-walkthrough-punch-list/) |
 | 260519-ucl | Align CLAUDE.md Invariant 5 + snake_case example with ADR-0001 (graphify drift fix) | 2026-05-19 | d85ecd9 | [260519-ucl](./quick/260519-ucl-align-claude-md-invariant-5-and-snake-ca/) |
+| 260519-uxn | Add pytest-cov + capture backend coverage baseline (35.9% line / 6.8% branch; rules-files gap surfaced) | 2026-05-19 | 4e24da6 | [260519-uxn](./quick/260519-uxn-add-pytest-cov-to-backend-run-baseline-c/) |
 
 ## Deferred Items
 
@@ -122,9 +123,9 @@ UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surfac
 
 ## Session Continuity
 
-Last activity: 2026-05-18 — Plan 34-02 (LIVE-01) shipped. Atomic commit at d73baa1 touched `frontend/app/cooking-logs/page.tsx` (clamp `/api/recipes?limit=500` → `?limit=200`; bind `useTranslations("cooking_logs")`; dev-only `console.error` in catch) + `frontend/lib/i18n/fr.json` (new `cooking_logs.empty_heading` / `empty_body` keys) + `.planning/phases/34-live-bug-sweep/34-02-SUMMARY.md` (root-cause receipt). Phase 34 progress: 4/5 (34-01 LIVE-02, 34-02 LIVE-01, 34-04 LIVE-04, 34-05 LIVE-05+06 all shipped). Only 34-03 LIVE-03 (Settings household members) remains before Phase 34 closes.
-Stopped at: 34-02 LIVE-01 shipped; only Phase 34 plan 34-03 (LIVE-03 Settings members) remains before Phase 34 closes.
-Next: Execute Plan 34-03 (LIVE-03 — Settings renders both household members) to close Phase 34.
+Last activity: 2026-05-19 — Completed quick task 260519-uxn: pytest-cov wired into backend; baseline 35.9% line / 6.8% branch captured. Rules-files gap surfaced (auth.py 82.5% — easiest; algorithm.py 17.6% — hardest). Next: scaffold v0.8 milestone (backend coverage) using these numbers.
+Stopped at: Baseline coverage captured; ready to scaffold v0.8 milestone via /gsd-new-milestone.
+Next: Run /gsd-new-milestone to scope v0.8 — Backend Coverage Until Done; then plan phases A/B/C per session goal (services-branch tests → endpoint-contract tests → migration safety + CI gate).
 
 ## Operator Next Steps
 
