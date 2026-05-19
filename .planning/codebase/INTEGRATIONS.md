@@ -1,167 +1,128 @@
 # External Integrations
 
-**Analysis Date:** 2026-05-05
+**Analysis Date:** 2026-05-19
+Snapshot: 2026-05-19
 
-## Current State
+## APIs & External Services
 
-**No external integrations are wired up in code yet.** The codebase is in W1 pre-skeleton state: frontend is a fresh `create-next-app` scaffold, backend is a one-line Python stub (`print("Hello from backend!")`).
+**AI / LLM:**
+- Google Gemini — recipe extraction, structuring, rewriting across all five capture surfaces (quick, full-form, voice, photo, URL)
+  - SDK: `google-genai >=1.75` (`backend/app/services/llm.py`)
+  - Import: `from google import genai` (NOT the legacy `google-generativeai` package)
+  - Auth: `GEMINI_API_KEY` env var (loaded in `backend/app/config.py`)
+  - Usage: all promotion `BackgroundTask` paths; largest service file at 59 KB
 
-Per SPEC.md §"First concrete action: deploy the skeleton + ping test," infrastructure wiring (Vercel, Railway, Supabase connection) is a prerequisite, but no SDK/client code is currently integrated.
+## Data Storage
 
----
+**Databases:**
+- Supabase Postgres — primary relational store for all app data
+  - Connection: `DATABASE_URL` env var (psycopg2-binary driver)
+  - Client: SQLAlchemy 2.0 ORM (`backend/app/models/`), Alembic migrations (`backend/alembic/versions/`)
+  - Test override: `DATABASE_URL_TEST` env var (set when `ENVIRONMENT=test`)
 
-## Intended Integrations (per SPEC.md, not yet implemented)
+**File Storage:**
+- Supabase Storage — photo uploads; bucket name `recipe-photos`
+  - Client: `supabase >=2.0` Python SDK (`backend/app/services/storage.py`)
+  - Auth: `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` env vars
+  - Upload path: backend-mediated only (no presigned PUT URLs to frontend); service-role key never in frontend bundle
+  - Path pattern: `{household_id}/{recipe_id}/{uuid4}.{ext}`
+  - Signed URL TTL: 86400s (24 h) — covers overnight PWA suspend
+  - Size cap: 8 MiB hard limit enforced in router before storage write
+  - Fallback in test env: Storage not configured; `useSignedPhotoUrl` falls back to `/demo-fixtures/{cuisine}.svg`
 
-### APIs & External Services
+**Caching:**
+- None — no Redis or in-memory cache layer
 
-**Gemini 2.5 Flash (Google AI):**
-- Purpose: LLM-powered recipe extraction from voice transcripts, photos, and URLs; voice modification prompts
-- SDK: `google-generativeai` Python package (not yet in `backend/pyproject.toml`)
-- Auth: Environment variable `GEMINI_API_KEY` (from Google AI Studio)
-- Integration point: `backend/app/services/llm.py` (intended)
-- Surfaces:
-  - `POST /recipes/voice` → prompt `"Extract recipe from transcript: <transcript>"` → return structured JSON
-  - `POST /recipes/photo` → multimodal Gemini call with image blobs → return structured JSON
-  - `POST /recipes/url` → (optional) fetch HTML + feed to Gemini, or placeholder for manual paste
-  - `POST /recipes/{id}/voice-modify` → prompt with original recipe + new transcript → return modifications
+## Authentication & Identity
 
----
+**Auth Approach:**
+- HttpOnly cookie `aldente_auth` — set by FastAPI, read server-side; NOT Bearer tokens in `localStorage`
+  - Rationale: iOS Safari evicts `localStorage` on PWA force-quit
+  - Implementation: `backend/app/routers/auth_session.py`; cookie flows through Next.js API rewrites (`frontend/proxy.ts`) so it is same-origin in production
 
-### Data Storage
+**Invite Codes:**
+- Household join via invite codes — `backend/app/services/invite_codes.py`; no third-party identity provider
 
-**Supabase Postgres:**
-- Connection: Environment variable `DATABASE_URL` (Supabase connection string)
-- Client: `psycopg2-binary` or async driver (e.g., `asyncpg`) + SQLAlchemy 2.0
-- Schema: Defined in SPEC.md §"Data model (Postgres)" with tables:
-  - `households`, `members` (auth + invite codes)
-  - `recipes`, `cooking_logs` (append-only logs with denormalized cook counts)
-  - `daily_shortlists`, `votes` (voting state machine)
-- Migrations: Alembic (`backend/alembic/` directory, not yet scaffolded)
+## Realtime & WebSockets
 
-**Supabase File Storage:**
-- Purpose: Store recipe photos and cooking log photos (≤ 4 per recipe, ≤ 4 per log)
-- Client: Supabase Python SDK or direct HTTP signed URLs
-- Bucket: Intended structure TBD (e.g., `recipe-photos/{recipe_id}/*`, `log-photos/{log_id}/*`)
-- Integration point: `POST /recipes/photo` multipart upload handler
+**WebSocket (backend):**
+- FastAPI native WebSocket router — `backend/app/routers/ws.py`
+- Broadcast helper: `backend/app/services/realtime.broadcast_to_household` — all household-affecting mutations call this
+- Events: `recipe.created`, `recipe.promoted`, `recipe.updated`, `turn.created`, `turn.updated`, `vote.created`, `cooking_log.*`, etc.
 
-**Supabase Realtime (optional):**
-- Purpose: Real-time WebSocket broadcast for recipe creation, status flips, vote updates
-- Alternative: Native FastAPI WebSocket server on `WS /ws`
-- SPEC.md notes "WebSockets via FastAPI native support, OR Supabase Realtime subscriptions" — choice deferred to implementation
+**WebSocket (frontend):**
+- `partysocket ^1.1.18` client — `frontend/components/RealtimeProvider.tsx`
+- WS URL resolved via `frontend/app/ws-config/route.ts`
 
----
+## Web Push Notifications
 
-### Authentication & Identity
+**Provider:** Browser Push API (standard W3C); VAPID self-signed
+- Backend library: `pywebpush >=2.3` + `py-vapid >=1.9` (`backend/app/services/push.py`)
+- Auth: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL` env vars
+- Fan-out: per-household broadcast; stale subscriptions (HTTP 404/410) auto-deleted
+- Frontend subscription management: `frontend/app/settings/page.tsx`
+- Push router: `backend/app/routers/push.py`
 
-**Custom Bearer Token Auth (Invite Code Onboarding):**
-- Approach: Opaque random strings stored in `members.auth_token` column
-- No passwords, no email, no OAuth in v0.1
-- Flow:
-  - Create household: `POST /households` → server generates 6-char invite code + auth tokens for both members
-  - Join household: `POST /households/join` with invite code + name + color → server returns auth token
-  - All requests: `Authorization: Bearer <auth_token>` header
-- Middleware: `backend/app/auth.py` (intended) — `Depends(current_member)` extracts member from token
-- Productize-later: Replace with Supabase Auth (magic links); the `auth_token` column abstracts the source
+## Monitoring & Observability
 
----
-
-### Realtime & WebSockets
-
-**WebSocket Broadcast (Household Events):**
-- Purpose: Sync recipe.created, recipe.promoted, vote.created events between two phones in real time (~200ms SLA)
-- Implementation: Native FastAPI WebSocket at `WS /ws` (per SPEC.md code example) OR Supabase Realtime subscriptions
-- Broadcast helper: `backend/app/services/realtime.py` (intended)
-- Events:
-  - `recipe.created` — new recipe added (all members receive)
-  - `recipe.promoted` — draft → structured status flip (all members receive)
-  - `vote.created` — new vote cast (all members receive; clients update voting state machine)
-- Client-side: `frontend/lib/ws.ts` (intended) with reconnect-with-backoff logic
-- Risk: Railway free tier may restart instances → need `reconnecting-websocket` npm package for resilience
-
----
-
-### Monitoring & Observability
-
-**Error Tracking:** Not detected (productize-later consideration)
+**Error Tracking:**
+- None detected — no Sentry, Datadog, or equivalent SDK present
 
 **Logs:**
-- Approach: Standard Python logging + FastAPI middleware (not yet implemented)
-- Destination: stdout to Railway logs (no external service)
+- Python `logging` stdlib throughout backend (`log = logging.getLogger(__name__)` pattern)
+- Frontend: console only
+
+## CI/CD & Deployment
+
+**Frontend Hosting:**
+- Vercel (free tier)
+- Trigger: push to `main` branch auto-deploys (~60s)
+- Never use: `vercel --prod` or manual Vercel CLI
+
+**Backend Hosting:**
+- Railway (~$5/mo)
+- Trigger: push to `main` branch auto-deploys (~60s)
+- Pre-start hook: `alembic upgrade head` runs before uvicorn restart on each deploy
+- Single uvicorn worker required — APScheduler runs in-process (multi-worker would create duplicate cron jobs)
+- Never use: manual Railway CLI deploys
+
+**CI Pipeline:**
+- None detected — no GitHub Actions, CircleCI, or equivalent configured
+
+## Scheduled Jobs
+
+**APScheduler (in-process):**
+- `AsyncIOScheduler` singleton — `backend/app/main.py` (module-level, started in lifespan)
+- One `CronTrigger` per household at 16:00 household timezone — generates daily shortlist (`backend/app/services/shortlist.py`)
+- New households created post-startup must call `scheduler.add_job(...)` from their POST handler
+
+## Environment Configuration
+
+**Required backend env vars:**
+- `DATABASE_URL` — Supabase Postgres connection string
+- `SUPABASE_URL` — Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` — Supabase service-role key (backend only, never frontend)
+- `GEMINI_API_KEY` — Google Gemini API key
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL` — Web Push VAPID credentials
+
+**Optional backend env vars:**
+- `DATABASE_URL_TEST` — test DB override (used when `ENVIRONMENT=test`)
+- `CORS_ALLOWED_ORIGINS` — comma-separated origins (default: `http://localhost:3000`)
+- `ENVIRONMENT` — `development` / `test` / `production`
+
+**Secrets location:**
+- Backend `.env` file (gitignored); loaded by `pydantic-settings` in `backend/app/config.py`
+- Service-role key lives only in backend environment — never shipped in any frontend bundle
+
+## Webhooks & Callbacks
+
+**Incoming:**
+- None detected — no Stripe, Twilio, or other inbound webhook endpoints
+
+**Outgoing:**
+- Web Push to browser endpoints (VAPID) via `backend/app/services/push.py`
+- Gemini API calls (outbound HTTP) via `backend/app/services/llm.py`
 
 ---
 
-### CI/CD & Deployment
-
-**Hosting:**
-- **Frontend:** Vercel (auto-deploy from GitHub on push to main)
-  - No custom build script needed (Next.js native)
-  - Deploy URL: `al-dente.vercel.app` (per SPEC.md §First concrete action)
-- **Backend:** Railway (or Fly.io / Render alternative)
-  - Container: Dockerfile (not yet scaffolded in `backend/`)
-  - Expected startup: `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-
-**CI Pipeline:** None detected (productize-later). Intended: GitHub Actions for linting + type checking on PR
-
-**Repository:** Single GitHub monorepo with `frontend/` and `backend/` folders (not yet created)
-
----
-
-### Environment Configuration
-
-**Secrets Location:**
-- Development: `.env` file (not committed, in `.gitignore`)
-- Production (Vercel): Environment variables in Vercel project settings
-- Production (Railway): Environment variables in Railway service settings
-
-**Required Environment Variables:**
-
-**Frontend** (set in Vercel project):
-- `NEXT_PUBLIC_API_BASE` — FastAPI backend URL (e.g., `https://al-dente-api.railway.app`)
-- `NEXT_PUBLIC_WS_BASE` — WebSocket server URL (e.g., `wss://al-dente-api.railway.app/ws`)
-
-**Backend** (set in Railway service):
-- `DATABASE_URL` — Supabase Postgres connection string (format: `postgresql://user:password@host/dbname`)
-- `GEMINI_API_KEY` — Google AI Studio API key for Gemini calls
-- `SUPABASE_URL` — Supabase project URL (if using Realtime, unlikely for v0.1)
-- `SUPABASE_KEY` — Supabase anon key (if using Realtime)
-- `HOUSEHOLD_SHORTLIST_TIME` — (optional) APScheduler time for daily shortlist generation (default: "16:00")
-
----
-
-### Webhooks & Callbacks
-
-**Incoming:** None detected (not applicable to v0.1)
-
-**Outgoing:** None detected
-
-**Push Notifications** (intended for W3, not yet integrated):
-- Service: Web Push API (native browser support)
-- Use case: Daily push notification when shortlist is generated
-- Client-side: Service Worker subscription (frontend)
-- Backend: Python web-push library (not yet added)
-
----
-
-## Skeleton Deployment Checklist (per SPEC.md)
-
-**To validate the infrastructure without features:**
-
-1. ✗ GitHub repo created (monorepo with `frontend/` and `backend/`)
-2. ✗ Vercel project connected → auto-deploy frontend
-3. ✗ Railway project created → backend container
-4. ✗ Supabase project created → Postgres + file storage
-5. ✗ Backend: minimal FastAPI app with `POST /pings`, `GET /pings`, `WS /ws`
-6. ✗ Frontend: 2-button page (Add ping / List pings) subscribed to WebSocket
-7. ✗ Both phones: Safari → Install to home screen as PWA
-8. ✗ Test: Phone A "Add ping" → Phone B list updates via WS within ~500ms
-
-**If this works, all infrastructure is validated. If not, culprits are:**
-- Supabase connection (check `DATABASE_URL`)
-- CORS in FastAPI (likely needed for Vercel → Railway cross-origin)
-- WebSocket on Railway free tier (needs reconnect-with-backoff)
-- PWA service worker cache (may need no-cache for API routes)
-
----
-
-*Integration audit: 2026-05-05*
-*Status: Pre-skeleton. No external services currently wired. All integrations are intended per SPEC.md §Stack and build plan.*
+*Integration audit: 2026-05-19*

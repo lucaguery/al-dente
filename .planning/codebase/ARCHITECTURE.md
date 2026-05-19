@@ -1,159 +1,343 @@
 # Architecture
 
-**Analysis Date:** 2026-05-05
+**Analysis Date:** 2026-05-19
 
-**Current State:** W1 / pre-skeleton. Frontend is a fresh `create-next-app` scaffold. Backend is a Python stub with no FastAPI wiring. Only the deployment structure and basic configuration are in place; application logic is not yet implemented.
+Snapshot: 2026-05-19
+
+## System Overview
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│             Frontend (PWA on Vercel)                            │
+│  `frontend/app/`, React 19 + Next.js 16 App Router             │
+│  - Pages: onboarding, home, recipes, cooking-logs, settings     │
+│  - Capture/voting UI via shadcn/ui + Tailwind v4 + framer      │
+└────────────────────────┬────────────────────────────────────────┘
+         │ HTTP (API calls via frontend/proxy.ts rewrites)
+         │ WebSocket (long-lived subscription to /ws via partysocket)
+         │
+┌────────▼─────────────────────────────────────────────────────────┐
+│          Backend (FastAPI on Railway)                            │
+│  `backend/app/`, Python 3.12 + SQLAlchemy 2.0                   │
+│                                                                  │
+│  ┌──────────────────┬──────────────────┬──────────────────┐    │
+│  │   Routers        │   Services       │   Models         │    │
+│  ├──────────────────┼──────────────────┼──────────────────┤    │
+│  │ households       │ llm.py           │ household.py     │    │
+│  │ recipes          │ algorithm.py     │ member.py        │    │
+│  │ votes            │ shortlist.py     │ recipe.py        │    │
+│  │ cooking_logs     │ voting.py        │ recipe_turn.py   │    │
+│  │ shortlist        │ realtime.py      │ vote.py          │    │
+│  │ ws               │ invite_codes.py  │ cooking_log.py   │    │
+│  │ auth_session     │ storage.py       │ daily_shortlist  │    │
+│  │ push             │                  │                  │    │
+│  └──────────────────┴──────────────────┴──────────────────┘    │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Core Infrastructure                                      │  │
+│  ├──────────────────────────────────────────────────────────┤  │
+│  │ - main.py: FastAPI app + lifespan (APScheduler + cron)  │  │
+│  │ - auth.py: cookie/Bearer dual-mode auth + set_auth_cookie │  │
+│  │ - db.py: SQLAlchemy engine + SessionLocal factory         │  │
+│  │ - config.py: settings from env vars (DATABASE_URL, etc)   │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└────────┬─────────────────────────────────────────────────────────┘
+         │
+┌────────▼─────────────────────────────────────────────────────────┐
+│             Database (Postgres on Supabase)                      │
+│  `backend/alembic/versions/` — migrations (SQLAlchemy 2.0)      │
+│  - Canonical store: households, members, recipes, votes,         │
+│    cooking_logs, daily_shortlists, recipe_turns, push_subscr...  │
+│  - Locked enums: recipe_status, vote_value, log_rating           │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## Component Responsibilities
+
+| Component | Responsibility | File |
+|-----------|----------------|------|
+| **Households** | Tenant isolation; onboarding create/join; invite codes | `routers/households.py`, `models/household.py` |
+| **Members** | Per-household identity; color assignment; auth_token generation | `models/member.py`, `routers/auth_session.py` |
+| **Recipes** | Library CRUD; capture surfaces (now thread-based); status lifecycle | `routers/recipes.py`, `models/recipe.py`, `schemas/recipe.py` |
+| **Recipe Turns** | Conversation history (text/voice/photo/url/answers); preserved raw inputs | `models/recipe_turn.py`, `schemas/recipe_turn.py` |
+| **LLM Service** | Gemini 2.5 Flash promotion; structured extraction; thread processing | `services/llm.py` |
+| **Votes** | Per-recipe yes/no voting on daily shortlist; computed vote state | `routers/votes.py`, `services/voting.py` |
+| **Daily Shortlist** | Nightly cron job (16:00 household tz) scores recipes via algorithm | `routers/shortlist.py`, `services/shortlist.py`, `services/algorithm.py` |
+| **Cooking Logs** | Session tracking; last_cooked_at denormalization; cook_count bump | `routers/cooking_logs.py`, `models/cooking_log.py` |
+| **WebSocket Spine** | Household-scoped broadcast registry; realtime event distribution | `routers/ws.py`, `services/realtime.py` |
+| **Auth** | Cookie-first + Bearer fallback; token generation; session mgmt | `auth.py`, `routers/auth_session.py` |
+| **Frontend (PWA)** | Responsive UI; recipe capture (thread composer); voting deck; cooking banner | `frontend/app/`, `components/` |
+| **Realtime (Frontend)** | Singleton WS client; reconnect logic (250ms→5s exp backoff); event subscription | `components/RealtimeProvider.tsx`, `lib/ws.ts` |
 
 ## Pattern Overview
 
-**Overall:** Monorepo with two independently deployable applications
+**Overall:** Monorepo (frontend + backend) with shared Postgres database; **backend owns all mutations**, frontend is read + vote interface.
 
 **Key Characteristics:**
-- **Decoupled frontend and backend:** `frontend/` → Vercel PWA (Next.js), `backend/` → Railway FastAPI server
-- **Shared Postgres database:** Supabase-hosted, accessed by both apps
-- **Single source of truth for data:** Backend owns all mutations; frontend is read + vote interface
-- **Async server-side promotion pipeline:** Recipe capture returns draft immediately; background job promotes to structured (see Capture pipeline below)
-- **Realtime sync via WebSocket:** Recipe and vote mutations broadcast to connected household members
+- **Cross-household isolation:** Every query filters by `member.household_id` (derived from auth token / cookie)
+- **Async server-side promotion:** Recipe capture (voice/photo/url) returns `draft` immediately; BackgroundTask runs Gemini promotion in the background
+- **Realtime sync via WebSocket:** All household-affecting mutations broadcast via `services/realtime.broadcast_to_household`
+- **Computed voting state:** No `state` column stored; state (Validé/Pressenti/Contesté/Rejeté/Sans avis) derived on read from `votes` table rows
+- **Denormalized timestamps:** `recipes.last_cooked_at` and `recipes.cook_count` updated atomically with `cooking_logs` insert (invariant #3)
+- **Raw inputs preserved forever:** `recipe_turns` table stores original transcript/URL/photo_paths; enables re-promotion with better LLM model
+- **Single uvicorn worker:** APScheduler runs in-process (one cron per household); multiple workers would duplicate jobs
 
 ## Layers
 
 **Frontend (PWA):**
-- **Purpose:** Mobile-optimized vote interface + recipe capture surfaces
+- **Purpose:** Mobile-optimized decision + capture interface for two household members
 - **Location:** `frontend/`
-- **Contains:** React Server Components (App Router), Tailwind styling, PWA manifest, Web Speech API integration, camera capture
-- **Depends on:** Backend API endpoints (`POST /recipes/*`, `GET /shortlist`), WebSocket stream for real-time updates
-- **Used by:** Two household members on iPhones (Safari→Add to Home Screen installation)
+- **Contains:** 
+  - App Router pages: `app/onboarding/`, `app/recipes/`, `app/cooking-logs/`, `app/settings/`
+  - React components: `components/HomeDecide.tsx` (voting deck), `RecipeForm.tsx` (capture), `RecipeThread/` (thread UI)
+  - shadcn/ui: `components/ui/` (button, card, dialog, select, etc.)
+  - Utilities: `lib/api.ts` (fetch wrapper), `lib/ws.ts` (WebSocket client), `lib/recipes.ts` (types)
+  - i18n: `next-intl` + `lib/i18n/fr.json`
+- **Depends on:** Backend HTTP endpoints, WebSocket `/ws` for realtime sync
+- **Used by:** Two household members on iPhones (Safari → Add to Home Screen PWA installation)
 
-**Backend (API + Services):**
-- **Purpose:** Recipe lifecycle management, voting state computation, LLM integration, shortlist generation
-- **Location:** `backend/` (not yet wired; only stub in `main.py`)
-- **Contains:** FastAPI routers (`households`, `recipes`, `cooking`, `shortlist`, `ws`), SQLAlchemy models, Gemini LLM service, APScheduler daily job, realtime broadcast helper
-- **Depends on:** Supabase Postgres (via SQLAlchemy ORM + Alembic migrations), Gemini 2.5 Flash API, database transaction isolation
-- **Used by:** Frontend via HTTP + WebSocket; internal services (daily shortlist cron)
+**Backend API Layer (FastAPI):**
+- **Purpose:** HTTP/WebSocket adapter; request validation; auth gate; response serialization
+- **Location:** `backend/app/routers/`
+- **Contains:** 
+  - `households.py`: onboarding POST/join, GET /me (session introspection)
+  - `recipes.py`: CRUD; thread-based capture (POST blank draft, POST turns)
+  - `votes.py`: cast vote (upsert + recompute state)
+  - `cooking_logs.py`: start cooking, active session lookup
+  - `shortlist.py`: GET today, POST regenerate
+  - `ws.py`: WebSocket upgrade + auth + frame fan-out
+  - `auth_session.py`: login, logout, cookie refresh
+  - `push.py`: push subscription register
+- **Depends on:** Database, services
+- **Used by:** Frontend via HTTP + WebSocket
 
-**Database (Postgres on Supabase):**
-- **Purpose:** Canonical store for households, members, recipes, votes, cooking logs, daily shortlists
-- **Location:** Supabase (managed service; migrations live in `backend/`)
-- **Contains:** 8 tables + 3 PostgreSQL enums (see SPEC.md §Data model)
-- **Schema constraints:** Foreign keys, unique invite codes, recipe status states, vote enums
-- **Denormalized fields:** `recipes.last_cooked_at`, `recipes.cook_count` updated in same transaction as `cooking_logs` insert
+**Backend Services Layer (Business Logic):**
+- **Purpose:** Domain logic; orchestration; external API calls; state computation
+- **Location:** `backend/app/services/`
+- **Contains:**
+  - `llm.py`: Gemini 2.5 Flash calls (extraction, multimodal, voice modification, thread processing)
+  - `algorithm.py`: Pure scoring function (no DB access); diversification for top 5
+  - `shortlist.py`: Nightly cron logic; generate_daily_shortlist task
+  - `voting.py`: compute_vote_state (derives final state from vote rows)
+  - `realtime.py`: RealtimeRegistry (in-process household-scoped broadcast)
+  - `invite_codes.py`: Generate/validate 6-char codes
+  - `storage.py`: Supabase Storage upload (photo_paths, extracted_html_path)
+  - `push.py`: Web Push API subscription handling
+- **Depends on:** Database, Gemini SDK, httpx
+- **Used by:** Routers (via BackgroundTasks), cron jobs
+
+**Data Layer (SQLAlchemy 2.0 ORM):**
+- **Purpose:** Postgres interaction; query building; transaction management
+- **Location:** `backend/app/models/`, `backend/app/schemas/`
+- **Contains:**
+  - Models (ORM classes): `household.py`, `member.py`, `recipe.py`, `recipe_turn.py`, `vote.py`, `cooking_log.py`, `daily_shortlist.py`, `push_subscription.py`
+  - Schemas (Pydantic v2): Input/output shapes for every router (validation + serialization)
+  - Enums: `models/enums.py` (locked vocabularies: Cuisine, Mood, Protein, Season, Difficulty)
+- **Depends on:** Postgres (Supabase)
+- **Used by:** Services and routers
+
+**Postgres Database (Supabase):**
+- **Purpose:** Canonical store for all application state
+- **Location:** Supabase (managed Postgres); migrations in `backend/alembic/versions/`
+- **Contains:** 
+  - Tables: households, members, recipes, recipe_turns, votes, daily_shortlists, cooking_logs, push_subscriptions
+  - Enums: recipe_status, vote_value, log_rating
+  - Indexes: (household_id, status), (household_id, last_cooked_at), (shortlist_id), (recipe_id)
+- **Constraints:** Foreign keys (cascade delete on household), unique invite_code, unique (shortlist_id, recipe_id, member_id) on votes
 
 ## Data Flow
 
-**Recipe Capture (Five Surfaces):**
+### Recipe Capture → Promotion → Broadcast
 
-1. Frontend user calls `POST /recipes/<surface>` (one of: `quick`, full-form, `voice`, `photo`, `url`) with raw capture data
-2. Backend creates a `Recipe` row with status `draft` and `source_capture` JSONB (immutable snapshot of input)
-3. Backend returns draft immediately to unblock UI
-4. Backend adds `BackgroundTask` to promote draft → `structured` (for voice/photo surfaces) or `structured` immediately (for full manual form)
-5. Promotion runs Gemini 2.5 Flash with structured output parsing → populates `title`, `ingredients`, `steps`, `cuisine`, `mood`, `main_protein`, `prep_time_minutes`, `servings`
-6. On promotion success, backend broadcasts `recipe.created` event over WebSocket to all connected members in household
-7. Frontend receives event and refreshes recipe list
+1. **Frontend user initiates:** `POST /recipes` (blank draft) or `POST /recipes/{id}/turns` (conversation turn)
+   - File: `frontend/components/RecipeForm.tsx`, `frontend/components/RecipeThread/Composer.tsx`
+2. **Backend creates:** Recipe row with status `draft` (or turns appended to existing draft)
+   - File: `backend/app/routers/recipes.py` (POST /recipes, POST /recipes/{id}/turns)
+   - Returns immediately; frontend gets optimistic UI
+3. **Backend queues BackgroundTask:** `promote_draft(recipe_id)` via `BackgroundTasks.add_task`
+   - File: `backend/app/routers/recipes.py` (lines ~150-170)
+4. **LLM Service runs:** Opens fresh `SessionLocal()`; reads recipe_turns[0]; calls Gemini via `services/llm.promote_draft`
+   - File: `backend/app/services/llm.py` (promote_draft, extract_from_*, process_thread_turn)
+   - Parses structured output; populates title, ingredients, steps, cuisine, mood, prep_time_minutes, etc.
+5. **Database update:** Recipe status → `structured` (on success) or `failed` (on error)
+   - File: `backend/app/services/llm.py` (_apply_success_promotion, _record_failure)
+6. **WebSocket broadcast:** On success, emits `recipe.promoted` frame to all connected household members
+   - File: `backend/app/services/realtime.broadcast_to_household("recipe.promoted", {...})`
+   - Line: ~65 in services/llm.py
+7. **Frontend receives:** React Context listener in `RealtimeProvider.tsx` updates local state
+   - File: `frontend/components/RealtimeProvider.tsx`, `frontend/lib/ws.ts`
+   - Recipe list re-renders, showing promoted fields (ingredients, steps, cuisine, mood, etc.)
 
-**Daily Shortlist + Voting:**
+### Daily Shortlist Generation
 
-1. APScheduler runs at midnight (per household) to compute top 5 recipes via scoring algorithm (`services/algorithm.py`)
-2. Backend inserts row in `daily_shortlists` with ranked `recipe_ids`
-3. Both members see shortlist in "Today's Candidates" screen
-4. Each member casts `POST /votes` (yes/no) for each recipe
-5. Each vote inserts row in `votes` table; broadcasted to household
-6. Vote state (Validé/Pressenti/Contesté/Rejeté/Sans avis) is *computed on read* from vote rows, not stored
-7. Veto window closes on first `POST /cooking_logs` for the day (CookingLog insert updates `recipes.last_cooked_at` and `recipes.cook_count`)
+1. **APScheduler cron fires:** 16:00 per-household timezone
+   - File: `backend/app/main.py` (lifespan: registered in line ~71-78)
+2. **Shortlist service runs:** `generate_daily_shortlist(household_id)`
+   - File: `backend/app/services/shortlist.generate_daily_shortlist`
+3. **Fetch recipe pool:** All recipes with status `structured` or `verified` for the household
+4. **Build scoring context:** Current season, recent cuisines/proteins (last 14 days from cooking_logs)
+5. **Score + diversify:** Call `services/algorithm.score_recipe` and `select_top5_with_diversity`
+   - File: `backend/app/services/algorithm.py`
+6. **Insert DailyShortlist row:** Ranked recipe_ids (≤5), filters (nil unless regenerate)
+7. **Broadcast `shortlist.created`:** WebSocket event to all household members
+   - File: `backend/app/services/realtime.broadcast_to_household("shortlist.created", {...})`
+8. **Frontend subscribes:** `RealtimeProvider` listener; state update triggers re-render
+   - Vote summary, shortlist cards shown on Home tab
+
+### Voting Flow
+
+1. **Frontend user votes:** `POST /shortlists/{shortlist_id}/recipes/{recipe_id}/vote` (yes/no)
+   - File: `frontend/components/ShortlistCard.tsx` (vote button click)
+2. **Backend upserts:** PostgreSQL `INSERT ... ON CONFLICT DO UPDATE` on (shortlist_id, recipe_id, member_id)
+   - File: `backend/app/routers/votes.py` (lines ~55-69)
+3. **Recompute state:** Query all votes for (shortlist, recipe); call `compute_vote_state`
+   - File: `backend/app/services/voting.compute_vote_state` (derives Validé/Pressenti/Contesté/Rejeté/Sans avis)
+4. **Broadcast `vote.created`:** WebSocket frame with updated state
+5. **Frontend updates:** Table-à-manger voting summary (state badges) refresh in real-time
+   - File: `frontend/components/VoteSummary.tsx`
+
+### Cooking Initiated
+
+1. **Frontend user taps "Je cuisine":** `POST /cooking_logs` (start cooking)
+   - File: `frontend/components/CookingBanner.tsx`
+2. **Backend creates:** CookingLog row; atomically updates `recipes.last_cooked_at` + `recipes.cook_count`
+   - File: `backend/app/routers/cooking_logs.py` (POST route)
+3. **Broadcast `cooking.started`:** WebSocket event to all members
+4. **Frontend syncs:** Cooking banner appears; veto window closed (vote affordance disabled)
+   - File: `frontend/components/CookingBanner.tsx`
+
+### Authentication (Cookie-First)
+
+1. **User onboards:** `POST /households` or `POST /households/join`
+   - Returns `auth_token` (opaque base64url); backend sets `aldente_auth` HttpOnly cookie
+   - File: `backend/app/routers/households.py` (create_household, join_household)
+2. **Subsequent requests:** Browser auto-attaches `aldente_auth` cookie (same-origin)
+   - File: `backend/app/auth.py` (_extract_token: cookie wins over Bearer header)
+3. **WebSocket upgrade:** Same cookie auto-attached to WS upgrade request
+   - File: `frontend/lib/ws.ts` (buildWsUrl: no explicit token parameter needed)
+4. **Logout:** `DELETE /api/auth/session` clears cookie server-side; frontend redirects to onboarding
+   - File: `backend/app/routers/auth_session.py` (DELETE /logout)
 
 **State Management:**
-
-- **Frontend:** React state for current page (shortlist, voting, recipe detail), polling/WebSocket subscription for realtime updates
-- **Backend:** Postgres as single source of truth; no in-memory cache (simplicity for v0.1)
-- **Authentication:** Bearer token (invite-code-derived, stored in `members.auth_token`); validated on every request via `Depends(current_member)`
+- **Frontend:** React Context (SessionProvider, RealtimeProvider) holds singleton auth + WebSocket client; useSyncExternalStore prevents double-subscribe
+- **Backend:** Postgres is single source of truth; no in-memory cache
+- **WebSocket:** In-process RealtimeRegistry (Dict[household_id → Set[WebSocket]]); single-worker assumption
 
 ## Key Abstractions
 
 **Household:**
-- Purpose: Isolation boundary for two members and their shared recipe library
-- Examples: `households` table, `members.household_id` foreign key
-- Pattern: All queries filtered by `household_id` to prevent cross-household data leaks
+- **Purpose:** Isolation boundary for two members and their shared recipe library
+- **Examples:** `models/household.py`, `routers/households.py`
+- **Pattern:** Every query filters by `WHERE household_id = :hh_id` derived from `member.household_id`; cross-household leaks prevented by 404 on detail not found (no 403)
 
 **Recipe Lifecycle (Status Enum):**
-- `draft` → `structured` → `verified` (future: user-driven verification)
-- Purpose: Track capture fidelity; avoid promoting partial data
-- Pattern: Mutations update status; frontend filters by status on display
+- **Purpose:** Track capture fidelity; control shortlist eligibility; signal errors
+- **Enum:** `draft` → `structured` → `verified` (future), or `draft` → `failed` (on LLM error)
+- **Pattern:** Only `structured` or `verified` recipes appear in shortlist candidate pool (hard filter in algorithm.py); frontend filters by status when displaying library
 
-**Source Capture (JSONB):**
-- Purpose: Preserve original input so LLM prompts can be re-run or audited
-- Stored as `{ type: 'voice'|'photo'|'url'|'manual', payload: {...} }` in `recipes.source_capture`
-- Pattern: Never discard raw input; allow recipe re-promotion on LLM model upgrade
+**Recipe Turns (Phase 25+):**
+- **Purpose:** Preserve original input verbatim (transcript, URL, photo_paths, structured answers); enable re-promotion with new model; conversation history thread
+- **Examples:** `models/recipe_turn.py`, `routers/recipes.py` (POST /recipes/{id}/turns)
+- **Pattern:** First user turn (position=0) stores immutable capture payload; LLM turns (position≥1) store extracted/processed output; structured answers (answer fields) store user confirmations
 
-**Vote Derivation:**
-- Purpose: Single source of truth is rows in `votes` table; no computed column
-- Pattern: `compute_vote_state(shortlist_id, recipe_id)` queries votes and returns enum (Validé/Pressenti/Contesté/Rejeté/Sans avis)
-- Rationale: Voting state depends on household size + member positions; derivation is cleaner than dual-write
+**Vote Derivation (Never Stored):**
+- **Purpose:** Single source of truth is rows in `votes` table; no dual-write corruption risk
+- **Pattern:** `compute_vote_state(votes_for_recipe, member_count)` queries votes and returns enum (Validé=both yes, Pressenti=one yes one no, Contesté/Rejeté/Sans avis)
+- **Rationale:** Voting state depends on household size and member positions; derivation avoids out-of-sync state
+
+**Denormalized Timestamps:**
+- **Purpose:** Enable efficient "last cooked" sorting without subquery or window function
+- **Pattern:** `recipes.last_cooked_at` and `recipes.cook_count` updated in same transaction as `cooking_logs` INSERT
+- **Constraint:** Must be atomic; never update one without the other (invariant #3)
+
+**Source Capture JSONB:**
+- **Purpose:** Store original user input (transcript, URL, photo paths, manually entered values) so Gemini prompt can be re-run later
+- **Examples:** `{ type: 'voice', payload: { transcript: '...' } }`, `{ type: 'url', payload: { url: '...' } }`
+- **Pattern:** Never discard raw input; production-ready productize-later path includes LLM prompt versioning
 
 ## Entry Points
 
-**Frontend PWA:**
-- **Location:** `frontend/app/page.tsx`
-- **Triggers:** User opens app URL or taps home-screen icon
-- **Responsibilities:** Render root layout + navigation frame; mount shortlist or recipe detail screens
+**Frontend PWA (Next.js):**
+- **Location:** `frontend/app/page.tsx` (Home / Shortlist tab)
+- **Triggers:** User opens app URL in Safari or taps home-screen PWA icon
+- **Responsibilities:** 
+  - Render root layout with fonts, theme colors, viewport config, safe-area insets
+  - Mount RealtimeProvider + SessionProvider (singleton WebSocket + auth context)
+  - Mount OnboardingGuard (redirects to /onboarding if !authenticated)
+  - Render page content within BottomNav (tabbed navigation: Home, Recipes, Cooking, Settings)
 
-**Backend HTTP:**
-- **Location:** `backend/app/main.py` (not yet created; will contain FastAPI app instantiation)
-- **Triggers:** Frontend HTTP requests (`POST /recipes/voice`, `GET /shortlist`, etc.) + external WebSocket connections
-- **Responsibilities:** Route requests to routers (`households`, `recipes`, `cooking`, `shortlist`, `ws`); validate auth token; execute service logic
+**Backend API Root (FastAPI):**
+- **Location:** `backend/app/main.py` (FastAPI app instantiation)
+- **Triggers:** Frontend HTTP requests + WebSocket upgrades
+- **Responsibilities:**
+  - Register routers (households, recipes, votes, cooking_logs, shortlist, ws, etc.)
+  - CORS middleware (allow_origins, allow_credentials for cross-origin cookie)
+  - Lifespan: APScheduler startup (register cron jobs), Supabase Storage bucket ensure_exists
+  - Health check: GET /healthz (unauthenticated, used by Railway)
 
-**Daily Shortlist Cron:**
-- **Location:** `backend/services/shortlist.py` (APScheduler job, not yet wired)
-- **Triggers:** Midnight UTC (or configurable TZ per household)
-- **Responsibilities:** Fetch recipes for household, run scoring algorithm, upsert `daily_shortlists` row, broadcast event
+**Recipe Capture Entry (Multi-Surface):**
+- **Location:** `frontend/components/RecipeForm.tsx` (manual entry), `frontend/components/RecipeThread/Composer.tsx` (thread bubbles)
+- **Triggers:** User submits form, voice input, photo upload, or URL paste
+- **API Contract:** POST /recipes (blank draft), then POST /recipes/{id}/turns (conversational turns), then POST /recipes/{id}/promote (coalescing trigger)
+- **Responsible For:**
+  - Create draft with status `draft`
+  - Append turns (user voice/text/photo/url)
+  - Queue Gemini promotion BackgroundTask
+  - Broadcast realtime updates
+
+**WebSocket Spine (Realtime Sync):**
+- **Location:** `backend/app/routers/ws.py` (WebSocket route handler)
+- **Triggers:** Browser opens WebSocket to `wss://api.aldente.app/ws` or direct Railway URL
+- **Responsibilities:**
+  - Extract member_id from auth cookie/token
+  - Register WebSocket in RealtimeRegistry[household_id]
+  - Fan-out all mutation broadcasts to connected peers
+  - Unregister on close
+
+**Daily Shortlist Cron (APScheduler):**
+- **Location:** `backend/app/services/shortlist.generate_daily_shortlist`
+- **Triggers:** 16:00 per-household timezone (registered in main.py lifespan)
+- **Responsibilities:**
+  - Score all structured/verified recipes
+  - Select top 5 with diversity
+  - Insert DailyShortlist row
+  - Broadcast `shortlist.created` event
+
+## Architectural Constraints
+
+- **Threading:** Single uvicorn worker (APScheduler runs in-process; multiple workers → duplicate cron jobs)
+- **Global state:** Module-level `scheduler` singleton in `main.py`; RealtimeRegistry singleton in `services/realtime.py`; clientSingleton in `frontend/components/RealtimeProvider.tsx`
+- **Circular imports:** Auth module (`app.auth`) imports Member model lazily in `current_member` function to avoid circular dependency during Alembic initialization
+- **Cross-origin WebSocket:** Frontend tries direct Railway URL first (Vercel function timeout workaround), falls back to same-origin Vercel rewrite
+- **Async I/O:** Backend uses sync engine (psycopg2) + sync SQLAlchemy; no asyncio overhead justified for couple-scale workload
+- **Single-process scheduler:** APScheduler in-process; productize-later: switch to external APScheduler daemon or Celery for multi-worker scaling
 
 ## Error Handling
 
-**Strategy:** Explicit error responses; frontend shows user-friendly fallback UI
+**Strategy:** Fail-safe with logging; never crash the process.
 
 **Patterns:**
-- **Missing auth:** `401 Unauthorized` (invalid or expired token)
-- **Household mismatch:** `403 Forbidden` (member token doesn't belong to household in request path)
-- **LLM failure:** Backend logs error, keeps recipe in `draft` status, frontend shows "Retrying..." UI; user can manually fill form to promote to `structured`
-- **Database conflict:** `409 Conflict` on unique constraint (e.g., duplicate invite code); frontend prompts user to regenerate
-- **Validation error:** `422 Unprocessable Entity` (Pydantic validation failure); frontend displays validation message
+- **LLM promotion failure:** Exceptions caught in BackgroundTask; recorded on recipe.promotion_error field; frontend shows error badge; no broadcast
+- **WebSocket dead socket:** Unregistered immediately; broadcast continues for remaining peers (no raise-on-failure)
+- **Auth failure:** 401 Unauthorized on missing/invalid token; frontend redirects to onboarding
+- **Cross-household access:** 404 Not Found (not 403 Forbidden) to avoid leaking existence
+- **Database constraint violations:** 400 Bad Request (e.g., recipe not in shortlist), 409 Conflict (e.g., color taken on join), 422 Unprocessable Entity (household_full)
+- **Startup failures:** Logged as warnings; continue (scheduler may fail to register cron; bucket may not exist; both are productize-later)
 
 ## Cross-Cutting Concerns
 
-**Logging:**
-- Pattern: Backend logs all LLM calls (prompt + tokens used), database transaction markers, WebSocket connect/disconnect events
-- Rationale: Understand model drift and debug realtime sync issues
+**Logging:** Python stdlib logging + FastAPI uvicorn handler; no structured logging in v0.1 (productize-later)
 
-**Validation:**
-- Frontend: React hook form validation before `POST`
-- Backend: Pydantic models (`recipes.VoiceSourceRequest`, `votes.VoteRequest`, etc.) validate all inputs; database triggers enforce enum constraints
+**Validation:** Pydantic v2 models in `schemas/` validate all inputs; FastAPI returns 422 on schema mismatch
 
-**Authentication:**
-- Invite-code-based: User creates household, receives unique 6-char code, shares with partner
-- Partner uses code to join → backend generates unique `auth_token` and returns it
-- Token stored in device secure storage (Safari → Web Storage or local filesystem for PWA)
-- All requests include `Authorization: Bearer <token>` header; middleware validates + loads `member` object
+**Authentication:** Dual-mode (cookie-first, Bearer fallback); validated on every request via `Depends(current_member)` FastAPI dependency
 
-**Localization:**
-- French only in v0.1
-- All strings via `next-intl` from day one (config not yet in place; scaffold structure only)
-- Backend returns enums + structured data; frontend renders translated labels client-side
+**Realtime Sync:** WebSocket broadcast contract (D-05, D-29) locked in phase plans; frame format `{ type: <event_type>, payload: {...} }` immutable
+
+**CORS:** Explicit allowlist (no wildcard); credentials=True for local dev cross-origin (Vercel rewrite makes production same-origin)
+
+**Transactions:** SQLAlchemy autocommit=False; routers explicitly call db.commit(); BackgroundTasks open fresh SessionLocal() to avoid use-after-close
 
 ---
 
-## Intended (per SPEC.md, not yet implemented)
-
-SPEC.md describes the following components that are **not currently wired into code**:
-
-- **FastAPI app** with routers for `households`, `recipes`, `cooking`, `shortlist`, `ws`
-- **SQLAlchemy models** + **Alembic migrations** (schema exists in SPEC.md but no migration files)
-- **Pydantic request/response types** for recipe capture surfaces
-- **`google-generativeai` integration** (`services/llm.py`) for structured data extraction
-- **Scoring algorithm** (`services/algorithm.py`) for recipe ranking
-- **APScheduler cron job** (`services/shortlist.py`) for daily shortlist generation
-- **WebSocket broadcast helper** (`services/realtime.py`) for household sync
-- **next-intl configuration** on frontend
-- **next-pwa plugin** for service worker + manifest
-- **Framer Motion** for voting swipe-deck UX
-
-These are the high-priority scaffolding tasks for W1 gate (skeleton deployment + ping test on Vercel + Railway + Supabase + WebSocket round-trip).
-
-*Architecture analysis: 2026-05-05*
+*Architecture analysis: 2026-05-19*
