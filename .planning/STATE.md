@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-19 — v0.8 Backend Coverage Until Do
 
 ## Current Position
 
-Phase: 39 (Migration Safety + CI Gate) — **in progress**
-Plan: 39-01 shipped (c39b367 — migrations conftest; 95f31e3 — parametrized upgrade+downgrade test)
-Status: MIG-01 + MIG-02 closed. Ready for Plan 39-02 (CI gate: fail_under + GHA workflow).
-Last activity: 2026-05-20 — 39-01 shipped. 11 migration upgrade+downgrade tests: 10 passed, 1 xfailed (0006 intentional asymmetric migration). Throwaway-DB pattern confirmed: zero leaked DBs after test run. Scope fence honored: only backend/tests/migrations/ touched.
+Phase: 39 (Migration Safety + CI Gate) — **complete**
+Plan: 39-02 shipped (06f7975 — floor closure; c164c36 — GHA workflow; 9988b9e — gate script; ba17783 — pyproject fail_under + xfails)
+Status: **v0.8 milestone COMPLETE.** All 33 requirements closed; all 6 user-goal items met. Ready for `/gsd-complete-milestone v0.8`.
+Last activity: 2026-05-20 — Phase 39 closed. 11 migrations (10 clean upgrade+downgrade, 1 by-design xfail per Postgres `ALTER TYPE DROP VALUE` limit). GHA `backend-tests.yml` with Postgres 16 service + `alembic upgrade head` + seed + `pytest --cov` + per-file rules-files gate (`scripts/check_rules_files_coverage.py`). `fail_under = 85` in `backend/pyproject.toml`. Final repo coverage **85.08%** (540 pass / 3 skip / 3 xfail). Closes gh#28.
 
-Progress: [██████████] 100%
+Progress: `[x] [x] [x]` — 3/3 phases complete (33/33 requirements closed)
 
 ## Performance Metrics
 
