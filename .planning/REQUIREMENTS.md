@@ -40,15 +40,15 @@ One named regression test per CLAUDE.md architecture invariant. Each test fails 
 Each router gets a 4-test contract: happy path, 401 on missing/invalid auth, 404 on cross-household access (NOT 403 — invariant), validation failure case.
 
 - [ ] **ROUT-01**: `routers/households` — 4-test contract.
-- [ ] **ROUT-02**: `routers/auth_session` — 4-test contract (401/404 cases adapted to session endpoints).
+- [x] **ROUT-02**: `routers/auth_session` — 4-test contract (401/404 cases adapted to session endpoints).
 - [ ] **ROUT-03**: `routers/recipes` — 4-test contract per HTTP method group (GET, POST capture, PUT, DELETE).
-- [ ] **ROUT-04**: `routers/exports` — 4-test contract.
-- [ ] **ROUT-05**: `routers/photos` — 4-test contract (includes signed-URL retrieval + multipart upload).
+- [x] **ROUT-04**: `routers/exports` — 4-test contract.
+- [x] **ROUT-05**: `routers/photos` — 4-test contract (includes signed-URL retrieval + multipart upload).
 - [ ] **ROUT-06**: `routers/shortlist` — 4-test contract.
 - [ ] **ROUT-07**: `routers/votes` — 4-test contract.
 - [ ] **ROUT-08**: `routers/cooking_logs` — 4-test contract.
-- [ ] **ROUT-09**: `routers/push` — 4-test contract.
-- [ ] **ROUT-10**: `routers/ws` — adapted WebSocket contract: handshake auth happy path, 401 close on missing/invalid auth, 404 close on cross-household subscribe, malformed-frame validation.
+- [x] **ROUT-09**: `routers/push` — 4-test contract.
+- [x] **ROUT-10**: `routers/ws` — adapted WebSocket contract: handshake auth happy path, 401 close on missing/invalid auth, 404 close on cross-household subscribe, malformed-frame validation.
 
 ### Service Branch Coverage (SERV × 4)
 

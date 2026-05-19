@@ -64,7 +64,7 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 37. Test Infrastructure + Service Branch Coverage | 0/? | Not started | - |
-| 38. Endpoint Contract + Invariant Coverage | 0/? | Not started | - |
+| 38. Endpoint Contract + Invariant Coverage | 3/4 | In Progress|  |
 | 39. Migration Safety + CI Gate | 0/? | Not started | - |
 
 ---
