@@ -4,7 +4,7 @@ The sanitizer is the central security surface of Phase 24 — these tests are
 a NON-NEGOTIABLE exit criterion for the plan (per RESEARCH §Security Domain).
 Every D-33 rejection case has an explicit test below.
 
-Run: cd backend && uv run pytest app/services/svg_sanitizer_test.py -v
+Run: cd backend && uv run pytest tests/test_svg_sanitizer.py -v
 """
 
 from __future__ import annotations
