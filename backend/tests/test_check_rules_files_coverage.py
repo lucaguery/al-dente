@@ -58,7 +58,7 @@ class TestCheckRulesFilesCoverage:
         """All 4 rules files at 100% → exit 0."""
         main = _load_main()
         cov = _make_coverage_json(tmp_path)
-        result = main([str(cov)])
+        result = main(["check_rules_files_coverage.py", str(cov)])
         assert result == 0
 
     def test_fail_one_file_below_100(self, tmp_path):
@@ -74,7 +74,7 @@ class TestCheckRulesFilesCoverage:
         }
         cov = tmp_path / "coverage.json"
         cov.write_text(json.dumps(data))
-        result = main([str(cov)])
+        result = main(["check_rules_files_coverage.py", str(cov)])
         assert result == 1
 
     def test_fail_missing_file_key(self, tmp_path):
@@ -90,13 +90,13 @@ class TestCheckRulesFilesCoverage:
         }
         cov = tmp_path / "coverage.json"
         cov.write_text(json.dumps(data))
-        result = main([str(cov)])
+        result = main(["check_rules_files_coverage.py", str(cov)])
         assert result == 1
 
     def test_fail_missing_coverage_json(self, tmp_path):
         """Non-existent coverage.json path → exit 1 (no crash)."""
         main = _load_main()
-        result = main([str(tmp_path / "nonexistent.json")])
+        result = main(["check_rules_files_coverage.py", str(tmp_path / "nonexistent.json")])
         assert result == 1
 
     def test_fail_missing_files_key(self, tmp_path):
@@ -105,7 +105,7 @@ class TestCheckRulesFilesCoverage:
         data = {"totals": {"percent_covered": 90.0}}
         cov = tmp_path / "coverage.json"
         cov.write_text(json.dumps(data))
-        result = main([str(cov)])
+        result = main(["check_rules_files_coverage.py", str(cov)])
         assert result == 1
 
     def test_default_path_arg(self, tmp_path, monkeypatch):
