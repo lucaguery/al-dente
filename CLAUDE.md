@@ -6,11 +6,15 @@ Guidance for Claude Code working in this repo. Keep this file short — it's loa
 
 - **`.planning/PROJECT.md`** — current state, milestone goals, requirements, key decisions. **Read first.** Refreshed via `/gsd-transition`.
 - **`.planning/STATE.md`** — live position: current milestone, phase, plan, progress.
-- **`SPEC.md`** — locked data model, capture pipeline, scoring algorithm, voting state machine, auth scheme, original 4-wave build plan. Read before designing new features. Note: the auth scheme there has been superseded — see invariant 8 below.
+- **`SPEC.md`** — historical v0.1 spec: data model, capture pipeline, scoring algorithm, voting state machine, original 4-wave build plan. Status banners flag superseded sections inline. Read before designing new features. The auth section is superseded by [ADR-0002](docs/adr/0002-httponly-cookie-auth.md); see invariant 8 below.
+- **`CONTEXT.md`** — locked domain vocabulary (capture / turn / thread / advisory / semantic vs manual editing). Read before naming new concepts.
+- **`docs/adr/`** — architectural decision records (Why / Considered alternatives / Consequences). Read when designing in a load-bearing surface; new decisions get their own ADR.
 - **`backend/CLAUDE.md`** — backend-specific rules (ORM/migration conventions, `uv` workflow, Gemini SDK correction, Railway migration deploy contract). Load when working in `backend/`.
 - **`frontend/CLAUDE.md`** — frontend-specific rules (Next.js 16 breaking changes, lint/formatter authority, path alias, webpack build flag, E2E test posture). Load when working in `frontend/`.
 - **`.planning/CLAUDE.md`** — GSD workflow enforcement. Load when working in `.planning/` or running GSD commands.
 - **`docs/design-system.html`** — living design system reference (Sober Kitchen). Locked tokens (terracotta sober + Cormorant + Caveat), patine cards, table-à-manger voting, marginalia register, brand-mark loader, plus locked screens for Accueil / Bibliothèque / Recette with porting checklist. Open in browser before designing new UI; do not duplicate its decisions in ad-hoc CSS.
+- **`RUNBOOK.md`** — operator runbook for the prod-synthetic seed (refresh / verify / teardown).
+- **`TESTING.md`** — local E2E bootstrap (4-command synthetic seed) + D-12 regression canary procedure.
 
 ## Repo layout
 
@@ -50,6 +54,21 @@ Cross-cutting rules that are easy to break by editing one file in isolation:
 - **Push to `main` is the only deploy path.** Both apps auto-deploy in ~60s. **Never run `vercel --prod` or manual Railway deploys.**
 - Hosting: Vercel (frontend, free) + Railway (backend, ~$5/mo) + Supabase (Postgres + Storage, free). Couple-scale workload assumed throughout.
 
+## Doc lifecycle
+
+Who/what updates which doc. Hand-editing a doc inside a tool-managed region wastes work — the refresh will clobber it.
+
+- This file's `<!-- GSD:* -->` blocks — auto-refreshed by `/gsd-docs-update`. Edit source files in `.planning/codebase/*` and `.planning/PROJECT.md` instead, then re-run.
+- `.planning/PROJECT.md` — `/gsd-new-milestone` at scoping, `/gsd-complete-milestone` at close.
+- `.planning/STATE.md` — `/gsd-*` commands at phase / plan transitions.
+- `.planning/MILESTONES.md` (source-of-truth for milestone history) + `.planning/ROADMAP.md` (rolled-up index) — updated at milestone close.
+- `CONTEXT.md` — `/grill-with-docs` when a domain term gets pinned.
+- `docs/adr/*` — `/grill-with-docs` or manual when a decision lands. YAML front-matter `status: accepted | superseded | historical | draft`.
+- `SPEC.md` — historical (v0.1 spec). Inline supersede banners point at ADRs; not rewritten in place.
+- `.planning/codebase/*` — refreshed by `/gsd-map-codebase`. Each file carries a `Snapshot: <date>` line.
+- `graphify-out/` — refreshed by `graphify update .` after code changes (AST-only, no API cost).
+- `README.md`, `RUNBOOK.md`, `TESTING.md` — manual; YAML front-matter `last_verified` field.
+
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
@@ -88,3 +107,13 @@ No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skill
 > Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
