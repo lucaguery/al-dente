@@ -25,6 +25,7 @@ Uses Phase 15 conftest fixtures (``db_session``, ``client``) and the seeded
 Bearer token convention from ``test_cooking_logs.py``. Per-test rolled-back
 transaction means all inserts are undone at teardown — safe to mutate counts.
 """
+
 from __future__ import annotations
 
 import os
@@ -50,8 +51,7 @@ def _seeded_member(db: Session) -> Member:
     """
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 
@@ -181,13 +181,9 @@ def test_join_returns_422_when_household_full(
     db_session.commit()
 
     # Sanity: household is now full.
-    count = db_session.scalar(
-        select(Member.id).where(Member.household_id == household.id)
-    )
+    count = db_session.scalar(select(Member.id).where(Member.household_id == household.id))
     full_count = len(
-        db_session.scalars(
-            select(Member.id).where(Member.household_id == household.id)
-        ).all()
+        db_session.scalars(select(Member.id).where(Member.household_id == household.id)).all()
     )
     assert full_count == len(MEMBER_COLORS), full_count
 

@@ -15,13 +15,13 @@ Provides:
 # pg_advisory_xact_lock(hashtext(recipe_id::text)) when Railway scales beyond
 # one container. No API change needed.
 """
+
 from __future__ import annotations
 
 import asyncio
 import ipaddress
 import logging
 import weakref
-from typing import Optional
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 # under CPython refcounting). Local-var `lock` in the caller keeps it alive
 # for the duration of the `async with` block; once that block exits and the
 # function returns, the weak entry drops.
-_position_locks: "weakref.WeakValueDictionary[UUID, asyncio.Lock]" = weakref.WeakValueDictionary()
+_position_locks: weakref.WeakValueDictionary[UUID, asyncio.Lock] = weakref.WeakValueDictionary()
 
 
 async def acquire_position_lock(recipe_id: UUID) -> asyncio.Lock:
@@ -62,7 +62,7 @@ async def acquire_position_lock(recipe_id: UUID) -> asyncio.Lock:
 # on the URL-turn extraction path (services/llm.extract_and_process_url_turn).
 # Blocks RFC1918 + loopback + link-local IPs and known cloud metadata FQDNs.
 # Reference: RESEARCH §Area 5, Risk R-9.
-def _is_safe_url(url: Optional[str]) -> bool:
+def _is_safe_url(url: str | None) -> bool:
     """Return True if `url` is safe to fetch; False otherwise.
 
     Blocks:

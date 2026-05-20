@@ -18,6 +18,7 @@ Note on households router: the /households/me endpoint is strictly member-scoped
 household ID directly, so we use the /households/by-code/{code} endpoint to test
 cross-household isolation — a code belonging to a foreign household returns 404.
 """
+
 from __future__ import annotations
 
 import os
@@ -25,9 +26,6 @@ import uuid
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-
-from app.models.household import Household
-from app.models.member import Member
 
 SEED_TOKEN = os.environ.get("SEED_AUTH_TOKEN", "test-token-luca")
 AUTH_HEADERS = {"Authorization": f"Bearer {SEED_TOKEN}"}
@@ -54,9 +52,7 @@ def test_households_401_missing_auth(client: TestClient, db_session: Session) ->
     assert resp.status_code == 401, resp.text
 
 
-def test_households_404_cross_household(
-    client: TestClient, db_session: Session
-) -> None:
+def test_households_404_cross_household(client: TestClient, db_session: Session) -> None:
     """ROUT-01 / D-38-02 — by-code lookup for a foreign household returns 404.
 
     Inserts a foreign Household via db_session.flush() (NOT commit — SAVEPOINT

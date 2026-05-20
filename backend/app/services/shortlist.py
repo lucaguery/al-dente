@@ -9,10 +9,11 @@ candidate corpus is empty (zero structured recipes), DO NOT insert a row
 and DO NOT broadcast/push — frontend's empty-state handles "no shortlist
 today" cleanly.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -38,7 +39,7 @@ log = logging.getLogger(__name__)
 def _current_season() -> str:
     """Northern-hemisphere season for v0.1 (Europe/Paris). productize-later:
     derive from household timezone if expanded beyond France."""
-    m = datetime.now(timezone.utc).month
+    m = datetime.now(UTC).month
     if m in (3, 4, 5):
         return "spring"
     if m in (6, 7, 8):
@@ -55,7 +56,7 @@ def _recent_cuisines_and_proteins(
 
     Powers the -0.5 penalty branches in score_recipe.
     """
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = datetime.now(UTC) - timedelta(days=days)
     rows = db.execute(
         select(Recipe.cuisine, Recipe.main_protein)
         .join(CookingLog, CookingLog.recipe_id == Recipe.id)
@@ -107,9 +108,7 @@ async def generate_daily_shortlist(
             return None
 
         corpus_size = len(candidates)
-        recent_cuisines, recent_proteins = _recent_cuisines_and_proteins(
-            household_id, db
-        )
+        recent_cuisines, recent_proteins = _recent_cuisines_and_proteins(household_id, db)
         filters_obj: ShortlistFilters | None = None
         if filters:
             filters_obj = ShortlistFilters(
@@ -134,8 +133,7 @@ async def generate_daily_shortlist(
         picks = select_top_n_with_cold_start(scored, corpus_size)
         if not picks:
             log.info(
-                "shortlist.generate household=%s skipped: no picks "
-                "after filters",
+                "shortlist.generate household=%s skipped: no picks after filters",
                 household_id,
             )
             return None

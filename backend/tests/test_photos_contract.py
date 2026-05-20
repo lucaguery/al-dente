@@ -28,6 +28,7 @@ monkeypatch so the auth + routing + validation contract is exercised without
 external dependencies. The B-02 test in test_photos.py already covers the
 signed-URL storage-miss path.
 """
+
 from __future__ import annotations
 
 import os
@@ -56,8 +57,7 @@ _FAKE_STORAGE_PATH = "fake-household-id/fake-recipe-id/test-photo.jpg"
 def _seeded_member(db: Session) -> Member:
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 
@@ -128,9 +128,7 @@ def test_photos_401_missing_auth(
     assert resp.status_code == 401, resp.text
 
 
-def test_photos_404_cross_household(
-    client: TestClient, db_session: Session
-) -> None:
+def test_photos_404_cross_household(client: TestClient, db_session: Session) -> None:
     """ROUT-05 / D-38-02 — POST to a recipe in a foreign household returns 404.
 
     Creates a foreign Household + Member + Recipe via db_session.flush()

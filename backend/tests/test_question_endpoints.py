@@ -25,24 +25,23 @@ Tests:
   INTEGRATION GATE (D-08):
     - defer endpoint → subsequent _run_thread_llm emits no question turn
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.household import Household
-from app.models.member import Member
 from app.models.recipe import Recipe
 from app.models.recipe_turn import RecipeTurn
-from app.services import llm as llm_module
-from app.services.completeness import FIELD_KEYS, OPTIONS_MAP, _FIELD_PROMPTS_FR
 from app.schemas.recipe_turn import _VALID_CUISINES, _VALID_MOODS
-from tests.test_turns import _make_recipe, _make_turn, AUTH_HEADERS, _seeded_member
-
+from app.services import llm as llm_module
+from app.services.completeness import _FIELD_PROMPTS_FR
+from tests.test_turns import AUTH_HEADERS, _make_recipe, _seeded_member
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -116,8 +115,8 @@ def test_trigger_skips_ingredients_steps(
     _fill_recipe(
         recipe,
         ingredients=[],  # missing
-        steps=[],         # missing
-        cuisine=None,     # missing (also None for the ORM)
+        steps=[],  # missing
+        cuisine=None,  # missing (also None for the ORM)
     )
     db_session.commit()
 
@@ -178,7 +177,13 @@ def test_trigger_de_dups_existing_open_question(
         position=0,
         sender="system",
         kind="question",
-        payload={"field": "description", "prompt": "En une phrase ?", "input_type": "text", "options": [], "multi": False},
+        payload={
+            "field": "description",
+            "prompt": "En une phrase ?",
+            "input_type": "text",
+            "options": [],
+            "multi": False,
+        },
     )
     db_session.add(question_turn)
     db_session.commit()
@@ -208,7 +213,13 @@ def test_trigger_de_dups_and_falls_through_to_next_field(
         position=0,
         sender="system",
         kind="question",
-        payload={"field": "description", "prompt": "En une phrase ?", "input_type": "text", "options": [], "multi": False},
+        payload={
+            "field": "description",
+            "prompt": "En une phrase ?",
+            "input_type": "text",
+            "options": [],
+            "multi": False,
+        },
     )
     db_session.add(question_turn)
     db_session.commit()
@@ -289,9 +300,7 @@ def test_trigger_cross_household_returns_404(
     foreign_recipe = _make_recipe(db_session, foreign_hh.id, member.id)
     db_session.commit()
 
-    resp = client.post(
-        f"/recipes/{foreign_recipe.id}/questions/trigger", headers=AUTH_HEADERS
-    )
+    resp = client.post(f"/recipes/{foreign_recipe.id}/questions/trigger", headers=AUTH_HEADERS)
     assert resp.status_code == 404
 
 
@@ -318,14 +327,16 @@ def test_trigger_position_continues_existing_turns(
     recipe.title = "Risotto"  # 10 missing fields
     # Insert 3 turns at positions 0, 1, 2
     for pos in range(3):
-        db_session.add(RecipeTurn(
-            id=uuid.uuid4(),
-            recipe_id=recipe.id,
-            position=pos,
-            sender="user",
-            kind="text",
-            payload={"text": f"turn {pos}"},
-        ))
+        db_session.add(
+            RecipeTurn(
+                id=uuid.uuid4(),
+                recipe_id=recipe.id,
+                position=pos,
+                sender="user",
+                kind="text",
+                payload={"text": f"turn {pos}"},
+            )
+        )
     db_session.commit()
 
     resp = client.post(f"/recipes/{recipe.id}/questions/trigger", headers=AUTH_HEADERS)
@@ -351,6 +362,7 @@ def test_trigger_broadcasts_turn_created(
         broadcast_calls.append({"event": event, "payload": payload})
 
     import app.routers.recipes as recipes_module
+
     monkeypatch.setattr(recipes_module, "broadcast_to_household", fake_broadcast)
 
     resp = client.post(f"/recipes/{recipe.id}/questions/trigger", headers=AUTH_HEADERS)
@@ -375,9 +387,9 @@ def test_defer_sets_questions_deferred_until_24h(
     recipe = _make_recipe(db_session, member.household_id, member.id)
     db_session.commit()
 
-    before = datetime.now(tz=timezone.utc)
+    before = datetime.now(tz=UTC)
     resp = client.post(f"/recipes/{recipe.id}/questions/defer", headers=AUTH_HEADERS)
-    after = datetime.now(tz=timezone.utc)
+    after = datetime.now(tz=UTC)
 
     assert resp.status_code == 204
     assert resp.content == b""
@@ -401,10 +413,10 @@ def test_defer_idempotent_overwrites_prior_value(
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
     # Pre-set to 1 hour ago (already expired)
-    recipe.questions_deferred_until = datetime.now(tz=timezone.utc) - timedelta(hours=1)
+    recipe.questions_deferred_until = datetime.now(tz=UTC) - timedelta(hours=1)
     db_session.commit()
 
-    before = datetime.now(tz=timezone.utc)
+    before = datetime.now(tz=UTC)
     resp = client.post(f"/recipes/{recipe.id}/questions/defer", headers=AUTH_HEADERS)
 
     assert resp.status_code == 204
@@ -432,6 +444,7 @@ def test_defer_broadcasts_recipe_updated(
         broadcast_calls.append({"event": event, "payload": payload})
 
     import app.routers.recipes as recipes_module
+
     monkeypatch.setattr(recipes_module, "broadcast_to_household", fake_broadcast)
 
     resp = client.post(f"/recipes/{recipe.id}/questions/defer", headers=AUTH_HEADERS)
@@ -456,9 +469,7 @@ def test_defer_cross_household_returns_404(
     foreign_recipe = _make_recipe(db_session, foreign_hh.id, member.id)
     db_session.commit()
 
-    resp = client.post(
-        f"/recipes/{foreign_recipe.id}/questions/defer", headers=AUTH_HEADERS
-    )
+    resp = client.post(f"/recipes/{foreign_recipe.id}/questions/defer", headers=AUTH_HEADERS)
     assert resp.status_code == 404
 
 
@@ -494,6 +505,7 @@ async def test_defer_suppresses_question_in_run_thread_llm(
     Step 4: Assert no question turn was emitted (defer gate held).
     Step 5: Clear the deferral flag → _run_thread_llm now emits a question turn.
     """
+
     # Stub broadcast so async handler doesn't hit the realtime path
     async def fake_broadcast(*a, **kw):
         pass
@@ -511,7 +523,7 @@ async def test_defer_suppresses_question_in_run_thread_llm(
     assert resp.status_code == 204
     db_session.refresh(recipe)
     assert recipe.questions_deferred_until is not None
-    assert recipe.questions_deferred_until > datetime.now(tz=timezone.utc)
+    assert recipe.questions_deferred_until > datetime.now(tz=UTC)
 
     # Step 3: simulate a refinement text turn that triggers _run_thread_llm
     text_turn = RecipeTurn(
@@ -546,9 +558,7 @@ async def test_defer_suppresses_question_in_run_thread_llm(
             RecipeTurn.kind == "summary",
         )
     ).all()
-    assert len(summary_turns) == 1, (
-        f"expected 1 summary turn, got {len(summary_turns)}"
-    )
+    assert len(summary_turns) == 1, f"expected 1 summary turn, got {len(summary_turns)}"
 
     # Step 5: clear deferral → _run_thread_llm now emits a question turn
     recipe.questions_deferred_until = None

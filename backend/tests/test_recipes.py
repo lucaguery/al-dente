@@ -25,11 +25,11 @@ back transaction) and `client` (TestClient with `get_db` overridden to the
 rolled-back session). Authentication uses the seeded Bearer token convention
 established in test_cooking_logs.py.
 """
+
 from __future__ import annotations
 
 import os
 import uuid
-from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -56,8 +56,7 @@ def _seeded_member(db: Session) -> Member:
     """
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 
@@ -98,14 +97,16 @@ def test_promotion_failure_sets_failed_state(
     )
     db_session.add(draft)
     db_session.flush()  # need draft.id for turn FK
-    db_session.add(RecipeTurn(
-        id=uuid.uuid4(),
-        recipe_id=draft.id,
-        position=0,
-        sender="user",
-        kind="voice",
-        payload={"transcript": "test"},
-    ))
+    db_session.add(
+        RecipeTurn(
+            id=uuid.uuid4(),
+            recipe_id=draft.id,
+            position=0,
+            sender="user",
+            kind="voice",
+            payload={"transcript": "test"},
+        )
+    )
     db_session.commit()
     db_session.refresh(draft)
 
@@ -116,9 +117,7 @@ def test_promotion_failure_sets_failed_state(
 
     # Drive the failure path. The exception text is short — no truncation
     # needed — so we can assert on the full message.
-    llm_service._record_failure(
-        db_session, draft, RuntimeError("forced test failure")
-    )
+    llm_service._record_failure(db_session, draft, RuntimeError("forced test failure"))
 
     # Re-read the row (the function commits internally).
     db_session.expire_all()
@@ -170,14 +169,16 @@ def test_retry_promotion_resets_failed_to_draft(
     )
     db_session.add(failed)
     db_session.flush()  # need failed.id for turn FK
-    db_session.add(RecipeTurn(
-        id=uuid.uuid4(),
-        recipe_id=failed.id,
-        position=0,
-        sender="user",
-        kind="voice",
-        payload={"transcript": "test"},
-    ))
+    db_session.add(
+        RecipeTurn(
+            id=uuid.uuid4(),
+            recipe_id=failed.id,
+            position=0,
+            sender="user",
+            kind="voice",
+            payload={"transcript": "test"},
+        )
+    )
     db_session.commit()
     db_session.refresh(failed)
 
@@ -254,9 +255,7 @@ def _make_recipe_with_pins(
 class TestRecipeResponsePinSet:
     """Phase 28 DETAIL-05 — RecipeResponse serializes manually_edited_fields."""
 
-    def test_recipe_response_serializes_manually_edited_fields(
-        self, db_session: Session
-    ) -> None:
+    def test_recipe_response_serializes_manually_edited_fields(self, db_session: Session) -> None:
         """Non-empty pin set is preserved through model_validate → model_dump."""
         member = _seeded_member(db_session)
         r = _make_recipe_with_pins(db_session, member, ["cuisine", "title"])
@@ -268,9 +267,7 @@ class TestRecipeResponsePinSet:
         assert "manually_edited_fields" in data
         assert data["manually_edited_fields"] == ["cuisine", "title"]
 
-    def test_recipe_response_default_empty_pin_set(
-        self, db_session: Session
-    ) -> None:
+    def test_recipe_response_default_empty_pin_set(self, db_session: Session) -> None:
         """Empty pin set serializes as [] not null."""
         member = _seeded_member(db_session)
         r = _make_recipe_with_pins(db_session, member, [])
@@ -317,9 +314,7 @@ class TestPutPinning:
             **field_overrides,
         )
 
-    def test_put_pin_on_changed_cuisine(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_put_pin_on_changed_cuisine(self, client: TestClient, db_session: Session) -> None:
         """T-28-01: changing cuisine pins it."""
         member = _seeded_member(db_session)
         recipe = self._make_pinned_recipe(db_session, member, cuisine="italian")
@@ -336,9 +331,7 @@ class TestPutPinning:
         assert recipe.cuisine == "french"
         assert "cuisine" in recipe.manually_edited_fields
 
-    def test_put_no_pin_on_same_value(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_put_no_pin_on_same_value(self, client: TestClient, db_session: Session) -> None:
         """T-28-02: re-saving the same cuisine value is a no-op — no spurious pin."""
         member = _seeded_member(db_session)
         recipe = self._make_pinned_recipe(db_session, member, cuisine="italian")
@@ -354,9 +347,7 @@ class TestPutPinning:
         db_session.refresh(recipe)
         assert recipe.manually_edited_fields == []
 
-    def test_put_unpin_on_blank_description(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_put_unpin_on_blank_description(self, client: TestClient, db_session: Session) -> None:
         """T-28-03: clearing description to "" unpins it.
 
         Note: title has min_length=1 so clearing title to "" returns 422.
@@ -403,9 +394,7 @@ class TestPutPinning:
         assert "ingredients" not in recipe.manually_edited_fields
         assert recipe.ingredients == []
 
-    def test_put_unpin_on_null_prep_time(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_put_unpin_on_null_prep_time(self, client: TestClient, db_session: Session) -> None:
         """T-28-05: clearing prep_time_minutes to null unpins it."""
         member = _seeded_member(db_session)
         recipe = self._make_pinned_recipe(
@@ -456,9 +445,7 @@ class TestPutPinning:
         assert "prep_time_minutes" in recipe.manually_edited_fields
         assert recipe.prep_time_minutes == 0
 
-    def test_put_status_change_does_not_pin(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_put_status_change_does_not_pin(self, client: TestClient, db_session: Session) -> None:
         """T-28-07: `status` is not an AnswerField — changing it never pins."""
         member = _seeded_member(db_session)
         recipe = self._make_pinned_recipe(db_session, member)
@@ -489,9 +476,7 @@ class TestPutPinning:
             if event == "recipe.updated":
                 captured_payloads.append(payload)
 
-        monkeypatch.setattr(
-            "app.routers.recipes.broadcast_to_household", mock_broadcast
-        )
+        monkeypatch.setattr("app.routers.recipes.broadcast_to_household", mock_broadcast)
 
         resp = client.put(
             f"/recipes/{recipe.id}",
@@ -503,9 +488,7 @@ class TestPutPinning:
         assert "manually_edited_fields" in captured_payloads[0]
         assert "cuisine" in captured_payloads[0]["manually_edited_fields"]
 
-    def test_put_pin_on_mood_set_change(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_put_pin_on_mood_set_change(self, client: TestClient, db_session: Session) -> None:
         """T-28-09: adding a mood value to the set pins mood."""
         member = _seeded_member(db_session)
         recipe = self._make_pinned_recipe(db_session, member, mood=["comfort"])
@@ -521,14 +504,10 @@ class TestPutPinning:
         db_session.refresh(recipe)
         assert "mood" in recipe.manually_edited_fields
 
-    def test_put_no_pin_on_mood_reorder(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_put_no_pin_on_mood_reorder(self, client: TestClient, db_session: Session) -> None:
         """T-28-10: same mood set in different order is NOT a genuine change (sort-before-compare)."""
         member = _seeded_member(db_session)
-        recipe = self._make_pinned_recipe(
-            db_session, member, mood=["comfort", "light"]
-        )
+        recipe = self._make_pinned_recipe(db_session, member, mood=["comfort", "light"])
         db_session.commit()
 
         resp = client.put(

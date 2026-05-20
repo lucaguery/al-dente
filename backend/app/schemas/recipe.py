@@ -30,12 +30,12 @@ POST /recipes/{id}/turns/photo, POST /recipes/{id}/promote.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.models.enums import Cuisine, Difficulty, Mood, Protein, Season
+from app.models.enums import Cuisine, Mood, Protein, Season
 
 # Phase 24 RID-02 — DifficultyLiteral matches the Difficulty enum wire values.
 # Mirrors the CuisineLiteral / ProteinLiteral pattern in services/llm.py for
@@ -55,8 +55,8 @@ class IngredientItem(BaseModel):
     """
 
     name: str = Field(min_length=1, max_length=200)
-    quantity: Optional[float] = None
-    unit: Optional[str] = Field(default=None, max_length=40)
+    quantity: float | None = None
+    unit: str | None = Field(default=None, max_length=40)
 
 
 # --- Create requests --------------------------------------------------------
@@ -88,21 +88,21 @@ class RecipeUpdate(BaseModel):
     BackgroundTask lands. Threat T-01-08-08 documents this as accepted.
     """
 
-    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
-    status: Optional[Literal["draft", "structured", "verified"]] = None
-    ingredients: Optional[List[IngredientItem]] = None
-    steps: Optional[List[str]] = None
-    prep_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    status: Literal["draft", "structured", "verified"] | None = None
+    ingredients: list[IngredientItem] | None = None
+    steps: list[str] | None = None
+    prep_time_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
     # Phase 24 RID-02 — three optional recipe-identity fields (D-12).
-    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
-    difficulty: Optional[DifficultyLiteral] = None
-    description: Optional[str] = None
-    servings: Optional[int] = Field(default=None, ge=1, le=99)
-    cuisine: Optional[Cuisine] = None
-    mood: Optional[List[Mood]] = None
-    main_protein: Optional[Protein] = None
-    seasonality: Optional[List[Season]] = None
-    tags: Optional[List[str]] = None
+    cook_time_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
+    difficulty: DifficultyLiteral | None = None
+    description: str | None = None
+    servings: int | None = Field(default=None, ge=1, le=99)
+    cuisine: Cuisine | None = None
+    mood: list[Mood] | None = None
+    main_protein: Protein | None = None
+    seasonality: list[Season] | None = None
+    tags: list[str] | None = None
 
 
 # --- Response shape ---------------------------------------------------------
@@ -127,48 +127,48 @@ class RecipeResponse(BaseModel):
     # variant logic in place of the legacy capture-type field.
     # None for the rare case of a recipe with no first user turn
     # (should not happen post-migration).
-    initial_turn_kind: Optional[str] = None
+    initial_turn_kind: str | None = None
     title: str
-    photo_paths: List[str]
-    ingredients: Optional[List[IngredientItem]] = None
-    steps: Optional[List[str]] = None
-    prep_time_minutes: Optional[int] = None
+    photo_paths: list[str]
+    ingredients: list[IngredientItem] | None = None
+    steps: list[str] | None = None
+    prep_time_minutes: int | None = None
     # Phase 24 RID-02 — three optional recipe-identity fields (D-12).
-    cook_time_minutes: Optional[int] = None
-    difficulty: Optional[str] = None
-    description: Optional[str] = None
+    cook_time_minutes: int | None = None
+    difficulty: str | None = None
+    description: str | None = None
     # Phase 24 RID-05 D-39 — sanitized SVG illustration. NULL when not
     # yet generated or rejected by the sanitizer. Frontend renders via
     # dangerouslySetInnerHTML with the trust boundary documented at the
     # call site (per D-38).
-    illustration_svg: Optional[str] = None
-    servings: Optional[int] = None
-    cuisine: Optional[str] = None
-    main_protein: Optional[str] = None
-    mood: List[str]
-    seasonality: List[str]
-    tags: List[str]
+    illustration_svg: str | None = None
+    servings: int | None = None
+    cuisine: str | None = None
+    main_protein: str | None = None
+    mood: list[str]
+    seasonality: list[str]
+    tags: list[str]
     # Phase 28 DETAIL-05 — carries the pin set so the `recipe.updated` WS broadcast
     # and every HTTP read surface deliver pin state to the frontend. Mutated by
     # `_apply_answer_turn`, `_apply_proposal_accepted`, and `_apply_put_pinning`.
     # Sorted on the write side for deterministic test assertions.
-    manually_edited_fields: List[str] = Field(default_factory=list)
-    last_cooked_at: Optional[datetime] = None
+    manually_edited_fields: list[str] = Field(default_factory=list)
+    last_cooked_at: datetime | None = None
     # Phase 29 D-21 / D-22 — drives the SystemBubble.tsx summary CTA collapse:
     # when set to a future timestamp, the frontend renders the summary bubble's
     # CTAs as dimmed/collapsed (questions are deferred). Mutated by
     # POST /recipes/{id}/questions/defer; cleared structurally by the column
     # being NULLable (no explicit "un-defer" endpoint — auto-expires after 24h).
-    questions_deferred_until: Optional[datetime] = None
+    questions_deferred_until: datetime | None = None
     cook_count: int
     # Phase 4 (D-05): path of the most recent cooking-log photo. Set in same
     # tx as last_cooked_at + cook_count by PUT /cooking-logs/{id}. NULL =
     # never cooked OR most recent log had no photos.
-    last_cooked_photo_path: Optional[str] = None
+    last_cooked_photo_path: str | None = None
     # Phase 2 (CONTEXT.md D-09 / Plan 02-05): surface promotion telemetry on the
     # wire so RecipeDraftCard can pick processing vs failed variants. Defaults
     # mean older callers (without the migrated columns) still validate.
-    promotion_error: Optional[str] = None
+    promotion_error: str | None = None
     promotion_attempts: int = 0
     created_at: datetime
     updated_at: datetime

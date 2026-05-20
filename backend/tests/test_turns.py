@@ -20,11 +20,11 @@ Test mode (settings.environment='test') makes the suite hermetic:
   - canned_url_extract returns deterministic markdown without httpx/trafilatura
   - broadcast_to_household runs but has no connected WS peers (no-op fan-out)
 """
+
 from __future__ import annotations
 
 import os
 import uuid
-from typing import Optional
 
 import pytest
 from fastapi.testclient import TestClient
@@ -44,8 +44,7 @@ AUTH_HEADERS = {"Authorization": f"Bearer {SEED_TOKEN}"}
 def _seeded_member(db: Session) -> Member:
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 
@@ -74,7 +73,7 @@ def _make_turn(
     position: int,
     kind: str,
     sender: str = "user",
-    payload: Optional[dict] = None,
+    payload: dict | None = None,
 ) -> RecipeTurn:
     """Insert a turn directly (bypasses the API; for arranging test state)."""
     t = RecipeTurn(
@@ -184,9 +183,7 @@ def test_answer_turn_applies_value_and_pins_without_llm(
 
     # Replace the BackgroundTask body for the duration of this test.
     monkeypatch.setattr(llm_service, "process_thread_turn", _spy)
-    monkeypatch.setattr(
-        "app.routers.recipes.process_thread_turn", _spy, raising=True
-    )
+    monkeypatch.setattr("app.routers.recipes.process_thread_turn", _spy, raising=True)
 
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
@@ -239,7 +236,11 @@ def test_answer_turn_rejects_non_whitelisted_field(
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
     question = _make_turn(
-        db_session, recipe.id, 0, "question", sender="system",
+        db_session,
+        recipe.id,
+        0,
+        "question",
+        sender="system",
         payload={"field": "title", "input_type": "text"},
     )
     db_session.commit()
@@ -516,7 +517,10 @@ def test_record_turn_enrichment_failure_preserves_recipe_status(
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
     turn = _make_turn(
-        db_session, recipe.id, 0, "url",
+        db_session,
+        recipe.id,
+        0,
+        "url",
         payload={"url": "http://10.0.0.1/internal"},
     )
     db_session.flush()
@@ -524,7 +528,10 @@ def test_record_turn_enrichment_failure_preserves_recipe_status(
     original_promotion_error = recipe.promotion_error
 
     llm_service._record_turn_enrichment_failure(
-        db_session, recipe, turn, ValueError("SSRF: blocked URL"),
+        db_session,
+        recipe,
+        turn,
+        ValueError("SSRF: blocked URL"),
     )
 
     db_session.refresh(recipe)
@@ -548,7 +555,11 @@ def test_answer_turn_rejects_out_of_range_value(
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
     question = _make_turn(
-        db_session, recipe.id, 0, "question", sender="system",
+        db_session,
+        recipe.id,
+        0,
+        "question",
+        sender="system",
         payload={"field": "servings", "input_type": "stepper"},
     )
     db_session.commit()
@@ -576,7 +587,11 @@ def test_answer_turn_rejects_invalid_difficulty_value(
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
     question = _make_turn(
-        db_session, recipe.id, 0, "question", sender="system",
+        db_session,
+        recipe.id,
+        0,
+        "question",
+        sender="system",
         payload={"field": "difficulty", "input_type": "chip"},
     )
     db_session.commit()
@@ -606,7 +621,11 @@ def test_answer_cross_recipe_question_ref_returns_422(
     recipe_a = _make_recipe(db_session, member.household_id, member.id)
     recipe_b = _make_recipe(db_session, member.household_id, member.id)
     q_in_b = _make_turn(
-        db_session, recipe_b.id, 0, "question", sender="system",
+        db_session,
+        recipe_b.id,
+        0,
+        "question",
+        sender="system",
         payload={"field": "difficulty", "input_type": "chip"},
     )
     db_session.commit()
@@ -661,7 +680,11 @@ def test_proposal_accepted_rejects_malformed_advisory_proposed_value(
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
     advisory = _make_turn(
-        db_session, recipe.id, 0, "advisory", sender="system",
+        db_session,
+        recipe.id,
+        0,
+        "advisory",
+        sender="system",
         payload={
             "field": "tags",
             "current_value": [],

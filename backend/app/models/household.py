@@ -6,7 +6,6 @@ SPEC.md §"Data model":
 
 from __future__ import annotations
 
-from datetime import datetime
 from uuid import UUID as PyUUID
 
 from sqlalchemy import String, func, text
@@ -35,7 +34,7 @@ class Household(Base, TimestampMixin):
         server_default=text("'Europe/Paris'"),
     )
 
-    members: Mapped[list["Member"]] = relationship(  # noqa: F821 — forward ref resolved at mapping time
+    members: Mapped[list[Member]] = relationship(  # noqa: F821 — forward ref resolved at mapping time
         back_populates="household",
         cascade="all, delete-orphan",
     )

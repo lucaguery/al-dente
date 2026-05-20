@@ -45,7 +45,7 @@ export function RecipeIllustration({
         aria-hidden
         style={{ width: size, height: size }}
         className={className}
-        // eslint-disable-next-line react/no-danger -- SVG is server-sanitized per D-38
+         
         dangerouslySetInnerHTML={{ __html: svg }}
       />
     );

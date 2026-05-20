@@ -22,6 +22,7 @@ Threat model (T-10-01):
 Anti-drift (TEST-01 explicit): imports Enum classes directly from
 app.models.enums - no duplicated literal values.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,7 +30,7 @@ import os
 import secrets
 import sys
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy import delete, func, select, text
@@ -60,7 +61,7 @@ _SEED_ILLUSTRATION_SVG = (
     '<svg viewBox="0 0 160 160" fill="none" stroke="currentColor" '
     'xmlns="http://www.w3.org/2000/svg">'
     '<path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z"/>'
-    '</svg>'
+    "</svg>"
 )
 
 
@@ -89,9 +90,16 @@ SYNTHETIC_LOCK_KEY: int = SYNTHETIC_HOUSEHOLD_ID.int & ((1 << 63) - 1)
 
 # D-07 6-table allowlist (informational — used by reviewers and by
 # `_assert_synthetic_household` introspection).
-SYNTHETIC_ALLOWED_TABLES: frozenset[str] = frozenset({
-    "households", "members", "recipes", "cooking_logs", "votes", "daily_shortlists",
-})
+SYNTHETIC_ALLOWED_TABLES: frozenset[str] = frozenset(
+    {
+        "households",
+        "members",
+        "recipes",
+        "cooking_logs",
+        "votes",
+        "daily_shortlists",
+    }
+)
 
 
 def _assert_synthetic_household(row, expected_id: uuid.UUID) -> None:
@@ -142,9 +150,7 @@ def _guard_environment() -> None:
             "or unset ALDENTE_PROD_SEED to run the test seed."
         )
     if settings.environment != "test":
-        sys.exit(
-            f"REFUSING to seed: ENVIRONMENT={settings.environment!r}, expected 'test'."
-        )
+        sys.exit(f"REFUSING to seed: ENVIRONMENT={settings.environment!r}, expected 'test'.")
     if "aldente_test" not in settings.database_url:
         sys.exit(
             f"REFUSING to seed: database_url does not contain 'aldente_test'. "
@@ -182,6 +188,7 @@ def _guard_prod_environment() -> None:
 # editing other fields updates in-place.
 # ---------------------------------------------------------------------------
 
+
 def _recipe_specs() -> list[dict]:
     """Return >=20 recipe dicts spanning all 4 locked vocabularies.
 
@@ -193,185 +200,328 @@ def _recipe_specs() -> list[dict]:
     """
     return [
         # 1. Italian / poultry / quick / spring-summer
-        {"slug": "poulet-citron", "title": "Poulet au citron", "cuisine": Cuisine.italian.value,
-         "mood": [Mood.quick.value], "main_protein": Protein.poultry.value,
-         "seasonality": [Season.spring.value, Season.summer.value],
-         "prep_time_minutes": 25, "cook_time_minutes": 20,
-         "difficulty": Difficulty.easy.value,
-         "description": "Un classique estival parfumé au citron et aux herbes.",
-         "servings": 4,
-         "ingredients": [{"name": "poulet", "quantity": 600, "unit": "g"},
-                         {"name": "citron", "quantity": 2, "unit": None}],
-         "steps": ["Mariner le poulet.", "Cuire a la poele."],
-         "illustration_svg": _SEED_ILLUSTRATION_SVG},
+        {
+            "slug": "poulet-citron",
+            "title": "Poulet au citron",
+            "cuisine": Cuisine.italian.value,
+            "mood": [Mood.quick.value],
+            "main_protein": Protein.poultry.value,
+            "seasonality": [Season.spring.value, Season.summer.value],
+            "prep_time_minutes": 25,
+            "cook_time_minutes": 20,
+            "difficulty": Difficulty.easy.value,
+            "description": "Un classique estival parfumé au citron et aux herbes.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "poulet", "quantity": 600, "unit": "g"},
+                {"name": "citron", "quantity": 2, "unit": None},
+            ],
+            "steps": ["Mariner le poulet.", "Cuire a la poele."],
+            "illustration_svg": _SEED_ILLUSTRATION_SVG,
+        },
         # 2. Italian / red_meat / comfort / autumn-winter
-        {"slug": "ragu-bolognese", "title": "Ragu bolognese",
-         "cuisine": Cuisine.italian.value, "mood": [Mood.comfort.value],
-         "main_protein": Protein.red_meat.value,
-         "seasonality": [Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 90, "servings": 6,
-         "ingredients": [{"name": "boeuf hache", "quantity": 500, "unit": "g"}],
-         "steps": ["Faire revenir.", "Mijoter 1h."]},
+        {
+            "slug": "ragu-bolognese",
+            "title": "Ragu bolognese",
+            "cuisine": Cuisine.italian.value,
+            "mood": [Mood.comfort.value],
+            "main_protein": Protein.red_meat.value,
+            "seasonality": [Season.autumn.value, Season.winter.value],
+            "prep_time_minutes": 90,
+            "servings": 6,
+            "ingredients": [{"name": "boeuf hache", "quantity": 500, "unit": "g"}],
+            "steps": ["Faire revenir.", "Mijoter 1h."],
+        },
         # 3. Italian / none / comfort / autumn-winter - parity with canned_voice_recipe
-        {"slug": "risotto-champignons", "title": "Risotto aux champignons",
-         "cuisine": Cuisine.italian.value, "mood": [Mood.comfort.value],
-         "main_protein": Protein.none.value,
-         "seasonality": [Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 35, "cook_time_minutes": 25,
-         "difficulty": Difficulty.medium.value,
-         "description": "Un risotto crémeux aux champignons des bois, parfait pour l'automne.",
-         "servings": 2,
-         "ingredients": [{"name": "riz arborio", "quantity": 300, "unit": "g"}],
-         "steps": ["Nacrer le riz.", "Mouiller au bouillon."],
-         "illustration_svg": _SEED_ILLUSTRATION_SVG},
+        {
+            "slug": "risotto-champignons",
+            "title": "Risotto aux champignons",
+            "cuisine": Cuisine.italian.value,
+            "mood": [Mood.comfort.value],
+            "main_protein": Protein.none.value,
+            "seasonality": [Season.autumn.value, Season.winter.value],
+            "prep_time_minutes": 35,
+            "cook_time_minutes": 25,
+            "difficulty": Difficulty.medium.value,
+            "description": "Un risotto crémeux aux champignons des bois, parfait pour l'automne.",
+            "servings": 2,
+            "ingredients": [{"name": "riz arborio", "quantity": 300, "unit": "g"}],
+            "steps": ["Nacrer le riz.", "Mouiller au bouillon."],
+            "illustration_svg": _SEED_ILLUSTRATION_SVG,
+        },
         # 4. French / poultry / celebratory / autumn
-        {"slug": "coq-au-vin", "title": "Coq au vin", "cuisine": Cuisine.french.value,
-         "mood": [Mood.celebratory.value, Mood.comfort.value],
-         "main_protein": Protein.poultry.value, "seasonality": [Season.autumn.value],
-         "prep_time_minutes": 120, "servings": 4,
-         "ingredients": [{"name": "coq", "quantity": 1.5, "unit": "kg"}],
-         "steps": ["Mariner.", "Mijoter."]},
+        {
+            "slug": "coq-au-vin",
+            "title": "Coq au vin",
+            "cuisine": Cuisine.french.value,
+            "mood": [Mood.celebratory.value, Mood.comfort.value],
+            "main_protein": Protein.poultry.value,
+            "seasonality": [Season.autumn.value],
+            "prep_time_minutes": 120,
+            "servings": 4,
+            "ingredients": [{"name": "coq", "quantity": 1.5, "unit": "kg"}],
+            "steps": ["Mariner.", "Mijoter."],
+        },
         # 5. French / fish / light / summer
-        {"slug": "loup-grille", "title": "Loup grille", "cuisine": Cuisine.french.value,
-         "mood": [Mood.light.value], "main_protein": Protein.fish.value,
-         "seasonality": [Season.summer.value], "prep_time_minutes": 20, "servings": 2,
-         "ingredients": [{"name": "loup", "quantity": 1, "unit": "kg"}],
-         "steps": ["Griller au four."]},
+        {
+            "slug": "loup-grille",
+            "title": "Loup grille",
+            "cuisine": Cuisine.french.value,
+            "mood": [Mood.light.value],
+            "main_protein": Protein.fish.value,
+            "seasonality": [Season.summer.value],
+            "prep_time_minutes": 20,
+            "servings": 2,
+            "ingredients": [{"name": "loup", "quantity": 1, "unit": "kg"}],
+            "steps": ["Griller au four."],
+        },
         # 6. French / none / celebratory / autumn - matches canned_photo_recipe
-        {"slug": "tarte-tatin", "title": "Tarte Tatin", "cuisine": Cuisine.french.value,
-         "mood": [Mood.celebratory.value, Mood.comfort.value],
-         "main_protein": Protein.none.value, "seasonality": [Season.autumn.value],
-         "prep_time_minutes": 60, "cook_time_minutes": 30,
-         "difficulty": Difficulty.hard.value,
-         "description": "La tarte tatin classique aux pommes caramélisées, renversée à la sortie du four.",
-         "servings": 6,
-         "ingredients": [{"name": "pommes", "quantity": 6, "unit": None}],
-         "steps": ["Carameliser.", "Cuire 30 min."],
-         "illustration_svg": _SEED_ILLUSTRATION_SVG},
+        {
+            "slug": "tarte-tatin",
+            "title": "Tarte Tatin",
+            "cuisine": Cuisine.french.value,
+            "mood": [Mood.celebratory.value, Mood.comfort.value],
+            "main_protein": Protein.none.value,
+            "seasonality": [Season.autumn.value],
+            "prep_time_minutes": 60,
+            "cook_time_minutes": 30,
+            "difficulty": Difficulty.hard.value,
+            "description": "La tarte tatin classique aux pommes caramélisées, renversée à la sortie du four.",
+            "servings": 6,
+            "ingredients": [{"name": "pommes", "quantity": 6, "unit": None}],
+            "steps": ["Carameliser.", "Cuire 30 min."],
+            "illustration_svg": _SEED_ILLUSTRATION_SVG,
+        },
         # 7. Asian / poultry / quick / all-seasons
-        {"slug": "poulet-teriyaki", "title": "Poulet teriyaki",
-         "cuisine": Cuisine.asian.value, "mood": [Mood.quick.value],
-         "main_protein": Protein.poultry.value,
-         "seasonality": [Season.spring.value, Season.summer.value,
-                         Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 30, "servings": 2,
-         "ingredients": [{"name": "poulet", "quantity": 400, "unit": "g"}],
-         "steps": ["Mariner.", "Sauter."]},
+        {
+            "slug": "poulet-teriyaki",
+            "title": "Poulet teriyaki",
+            "cuisine": Cuisine.asian.value,
+            "mood": [Mood.quick.value],
+            "main_protein": Protein.poultry.value,
+            "seasonality": [
+                Season.spring.value,
+                Season.summer.value,
+                Season.autumn.value,
+                Season.winter.value,
+            ],
+            "prep_time_minutes": 30,
+            "servings": 2,
+            "ingredients": [{"name": "poulet", "quantity": 400, "unit": "g"}],
+            "steps": ["Mariner.", "Sauter."],
+        },
         # 8. Asian / seafood / light / summer
-        {"slug": "sushi-saumon", "title": "Sushi saumon", "cuisine": Cuisine.asian.value,
-         "mood": [Mood.light.value], "main_protein": Protein.seafood.value,
-         "seasonality": [Season.summer.value], "prep_time_minutes": 45, "servings": 2,
-         "ingredients": [{"name": "saumon", "quantity": 200, "unit": "g"}],
-         "steps": ["Preparer le riz.", "Rouler les makis."]},
+        {
+            "slug": "sushi-saumon",
+            "title": "Sushi saumon",
+            "cuisine": Cuisine.asian.value,
+            "mood": [Mood.light.value],
+            "main_protein": Protein.seafood.value,
+            "seasonality": [Season.summer.value],
+            "prep_time_minutes": 45,
+            "servings": 2,
+            "ingredients": [{"name": "saumon", "quantity": 200, "unit": "g"}],
+            "steps": ["Preparer le riz.", "Rouler les makis."],
+        },
         # 9. Asian / legume / light / spring
-        {"slug": "pad-thai-tofu", "title": "Pad thai tofu", "cuisine": Cuisine.asian.value,
-         "mood": [Mood.quick.value, Mood.light.value], "main_protein": Protein.legume.value,
-         "seasonality": [Season.spring.value, Season.summer.value],
-         "prep_time_minutes": 25, "servings": 2,
-         "ingredients": [{"name": "tofu", "quantity": 200, "unit": "g"}],
-         "steps": ["Sauter.", "Ajouter les nouilles."]},
+        {
+            "slug": "pad-thai-tofu",
+            "title": "Pad thai tofu",
+            "cuisine": Cuisine.asian.value,
+            "mood": [Mood.quick.value, Mood.light.value],
+            "main_protein": Protein.legume.value,
+            "seasonality": [Season.spring.value, Season.summer.value],
+            "prep_time_minutes": 25,
+            "servings": 2,
+            "ingredients": [{"name": "tofu", "quantity": 200, "unit": "g"}],
+            "steps": ["Sauter.", "Ajouter les nouilles."],
+        },
         # 10. Mediterranean / fish / light / summer
-        {"slug": "branzino-citron", "title": "Branzino au citron",
-         "cuisine": Cuisine.mediterranean.value, "mood": [Mood.light.value],
-         "main_protein": Protein.fish.value, "seasonality": [Season.summer.value],
-         "prep_time_minutes": 30, "servings": 2,
-         "ingredients": [{"name": "branzino", "quantity": 1, "unit": "kg"}],
-         "steps": ["Cuire au four."]},
+        {
+            "slug": "branzino-citron",
+            "title": "Branzino au citron",
+            "cuisine": Cuisine.mediterranean.value,
+            "mood": [Mood.light.value],
+            "main_protein": Protein.fish.value,
+            "seasonality": [Season.summer.value],
+            "prep_time_minutes": 30,
+            "servings": 2,
+            "ingredients": [{"name": "branzino", "quantity": 1, "unit": "kg"}],
+            "steps": ["Cuire au four."],
+        },
         # 11. Mediterranean / legume / light / summer
-        {"slug": "salade-grecque", "title": "Salade grecque",
-         "cuisine": Cuisine.mediterranean.value,
-         "mood": [Mood.light.value, Mood.quick.value],
-         "main_protein": Protein.legume.value, "seasonality": [Season.summer.value],
-         "prep_time_minutes": 10, "servings": 4,
-         "ingredients": [{"name": "tomates", "quantity": 4, "unit": None}],
-         "steps": ["Couper.", "Melanger."]},
+        {
+            "slug": "salade-grecque",
+            "title": "Salade grecque",
+            "cuisine": Cuisine.mediterranean.value,
+            "mood": [Mood.light.value, Mood.quick.value],
+            "main_protein": Protein.legume.value,
+            "seasonality": [Season.summer.value],
+            "prep_time_minutes": 10,
+            "servings": 4,
+            "ingredients": [{"name": "tomates", "quantity": 4, "unit": None}],
+            "steps": ["Couper.", "Melanger."],
+        },
         # 12. Middle Eastern / red_meat / adventurous / all-seasons
-        {"slug": "shawarma", "title": "Shawarma",
-         "cuisine": Cuisine.middle_eastern.value,
-         "mood": [Mood.adventurous.value], "main_protein": Protein.red_meat.value,
-         "seasonality": [Season.spring.value, Season.summer.value,
-                         Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 60, "servings": 4,
-         "ingredients": [{"name": "agneau", "quantity": 800, "unit": "g"}],
-         "steps": ["Mariner 4h.", "Griller."]},
+        {
+            "slug": "shawarma",
+            "title": "Shawarma",
+            "cuisine": Cuisine.middle_eastern.value,
+            "mood": [Mood.adventurous.value],
+            "main_protein": Protein.red_meat.value,
+            "seasonality": [
+                Season.spring.value,
+                Season.summer.value,
+                Season.autumn.value,
+                Season.winter.value,
+            ],
+            "prep_time_minutes": 60,
+            "servings": 4,
+            "ingredients": [{"name": "agneau", "quantity": 800, "unit": "g"}],
+            "steps": ["Mariner 4h.", "Griller."],
+        },
         # 13. Middle Eastern / legume / quick / winter
-        {"slug": "houmous-maison", "title": "Houmous maison",
-         "cuisine": Cuisine.middle_eastern.value, "mood": [Mood.quick.value],
-         "main_protein": Protein.legume.value, "seasonality": [Season.winter.value],
-         "prep_time_minutes": 15, "servings": 4,
-         "ingredients": [{"name": "pois chiches", "quantity": 400, "unit": "g"}],
-         "steps": ["Mixer."]},
+        {
+            "slug": "houmous-maison",
+            "title": "Houmous maison",
+            "cuisine": Cuisine.middle_eastern.value,
+            "mood": [Mood.quick.value],
+            "main_protein": Protein.legume.value,
+            "seasonality": [Season.winter.value],
+            "prep_time_minutes": 15,
+            "servings": 4,
+            "ingredients": [{"name": "pois chiches", "quantity": 400, "unit": "g"}],
+            "steps": ["Mixer."],
+        },
         # 14. Indian / legume / adventurous / autumn-winter
-        {"slug": "dal-makhani", "title": "Dal makhani", "cuisine": Cuisine.indian.value,
-         "mood": [Mood.adventurous.value, Mood.comfort.value],
-         "main_protein": Protein.legume.value,
-         "seasonality": [Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 90, "servings": 4,
-         "ingredients": [{"name": "lentilles noires", "quantity": 250, "unit": "g"}],
-         "steps": ["Tremper.", "Mijoter."]},
+        {
+            "slug": "dal-makhani",
+            "title": "Dal makhani",
+            "cuisine": Cuisine.indian.value,
+            "mood": [Mood.adventurous.value, Mood.comfort.value],
+            "main_protein": Protein.legume.value,
+            "seasonality": [Season.autumn.value, Season.winter.value],
+            "prep_time_minutes": 90,
+            "servings": 4,
+            "ingredients": [{"name": "lentilles noires", "quantity": 250, "unit": "g"}],
+            "steps": ["Tremper.", "Mijoter."],
+        },
         # 15. Indian / poultry / adventurous / all-seasons
-        {"slug": "butter-chicken", "title": "Butter chicken",
-         "cuisine": Cuisine.indian.value,
-         "mood": [Mood.adventurous.value], "main_protein": Protein.poultry.value,
-         "seasonality": [Season.spring.value, Season.summer.value,
-                         Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 50, "servings": 4,
-         "ingredients": [{"name": "poulet", "quantity": 600, "unit": "g"}],
-         "steps": ["Mariner.", "Cuire a la sauce."]},
+        {
+            "slug": "butter-chicken",
+            "title": "Butter chicken",
+            "cuisine": Cuisine.indian.value,
+            "mood": [Mood.adventurous.value],
+            "main_protein": Protein.poultry.value,
+            "seasonality": [
+                Season.spring.value,
+                Season.summer.value,
+                Season.autumn.value,
+                Season.winter.value,
+            ],
+            "prep_time_minutes": 50,
+            "servings": 4,
+            "ingredients": [{"name": "poulet", "quantity": 600, "unit": "g"}],
+            "steps": ["Mariner.", "Cuire a la sauce."],
+        },
         # 16. Mexican / red_meat / comfort / all-seasons
-        {"slug": "tacos-boeuf", "title": "Tacos au boeuf",
-         "cuisine": Cuisine.mexican.value,
-         "mood": [Mood.comfort.value, Mood.quick.value],
-         "main_protein": Protein.red_meat.value,
-         "seasonality": [Season.spring.value, Season.summer.value,
-                         Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 25, "servings": 4,
-         "ingredients": [{"name": "boeuf hache", "quantity": 500, "unit": "g"}],
-         "steps": ["Cuire le boeuf.", "Garnir les tortillas."]},
+        {
+            "slug": "tacos-boeuf",
+            "title": "Tacos au boeuf",
+            "cuisine": Cuisine.mexican.value,
+            "mood": [Mood.comfort.value, Mood.quick.value],
+            "main_protein": Protein.red_meat.value,
+            "seasonality": [
+                Season.spring.value,
+                Season.summer.value,
+                Season.autumn.value,
+                Season.winter.value,
+            ],
+            "prep_time_minutes": 25,
+            "servings": 4,
+            "ingredients": [{"name": "boeuf hache", "quantity": 500, "unit": "g"}],
+            "steps": ["Cuire le boeuf.", "Garnir les tortillas."],
+        },
         # 17. Mexican / egg / quick / all-seasons
-        {"slug": "huevos-rancheros", "title": "Huevos rancheros",
-         "cuisine": Cuisine.mexican.value, "mood": [Mood.quick.value],
-         "main_protein": Protein.egg.value,
-         "seasonality": [Season.spring.value, Season.summer.value,
-                         Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 15, "servings": 2,
-         "ingredients": [{"name": "oeufs", "quantity": 4, "unit": None}],
-         "steps": ["Cuire les oeufs.", "Servir sur tortilla."]},
+        {
+            "slug": "huevos-rancheros",
+            "title": "Huevos rancheros",
+            "cuisine": Cuisine.mexican.value,
+            "mood": [Mood.quick.value],
+            "main_protein": Protein.egg.value,
+            "seasonality": [
+                Season.spring.value,
+                Season.summer.value,
+                Season.autumn.value,
+                Season.winter.value,
+            ],
+            "prep_time_minutes": 15,
+            "servings": 2,
+            "ingredients": [{"name": "oeufs", "quantity": 4, "unit": None}],
+            "steps": ["Cuire les oeufs.", "Servir sur tortilla."],
+        },
         # 18. North African / red_meat / adventurous / autumn-winter
-        {"slug": "tajine-agneau", "title": "Tajine d'agneau",
-         "cuisine": Cuisine.north_african.value,
-         "mood": [Mood.adventurous.value, Mood.celebratory.value],
-         "main_protein": Protein.red_meat.value,
-         "seasonality": [Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 120, "servings": 6,
-         "ingredients": [{"name": "agneau", "quantity": 1, "unit": "kg"}],
-         "steps": ["Mijoter avec epices."]},
+        {
+            "slug": "tajine-agneau",
+            "title": "Tajine d'agneau",
+            "cuisine": Cuisine.north_african.value,
+            "mood": [Mood.adventurous.value, Mood.celebratory.value],
+            "main_protein": Protein.red_meat.value,
+            "seasonality": [Season.autumn.value, Season.winter.value],
+            "prep_time_minutes": 120,
+            "servings": 6,
+            "ingredients": [{"name": "agneau", "quantity": 1, "unit": "kg"}],
+            "steps": ["Mijoter avec epices."],
+        },
         # 19. American / red_meat / comfort / all-seasons
-        {"slug": "burger-classique", "title": "Burger classique",
-         "cuisine": Cuisine.american.value,
-         "mood": [Mood.comfort.value, Mood.quick.value],
-         "main_protein": Protein.red_meat.value,
-         "seasonality": [Season.spring.value, Season.summer.value,
-                         Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 20, "servings": 2,
-         "ingredients": [{"name": "boeuf hache", "quantity": 300, "unit": "g"}],
-         "steps": ["Former les steaks.", "Griller."]},
+        {
+            "slug": "burger-classique",
+            "title": "Burger classique",
+            "cuisine": Cuisine.american.value,
+            "mood": [Mood.comfort.value, Mood.quick.value],
+            "main_protein": Protein.red_meat.value,
+            "seasonality": [
+                Season.spring.value,
+                Season.summer.value,
+                Season.autumn.value,
+                Season.winter.value,
+            ],
+            "prep_time_minutes": 20,
+            "servings": 2,
+            "ingredients": [{"name": "boeuf hache", "quantity": 300, "unit": "g"}],
+            "steps": ["Former les steaks.", "Griller."],
+        },
         # 20. Other / egg / quick / all-seasons
-        {"slug": "omelette-herbes", "title": "Omelette aux herbes",
-         "cuisine": Cuisine.other.value, "mood": [Mood.quick.value],
-         "main_protein": Protein.egg.value,
-         "seasonality": [Season.spring.value, Season.summer.value,
-                         Season.autumn.value, Season.winter.value],
-         "prep_time_minutes": 10, "servings": 2,
-         "ingredients": [{"name": "oeufs", "quantity": 4, "unit": None}],
-         "steps": ["Battre.", "Cuire a la poele."]},
+        {
+            "slug": "omelette-herbes",
+            "title": "Omelette aux herbes",
+            "cuisine": Cuisine.other.value,
+            "mood": [Mood.quick.value],
+            "main_protein": Protein.egg.value,
+            "seasonality": [
+                Season.spring.value,
+                Season.summer.value,
+                Season.autumn.value,
+                Season.winter.value,
+            ],
+            "prep_time_minutes": 10,
+            "servings": 2,
+            "ingredients": [{"name": "oeufs", "quantity": 4, "unit": None}],
+            "steps": ["Battre.", "Cuire a la poele."],
+        },
         # 21. American / fish / light / summer (extra to push past 20)
-        {"slug": "saumon-grille", "title": "Saumon grille",
-         "cuisine": Cuisine.american.value, "mood": [Mood.light.value],
-         "main_protein": Protein.fish.value, "seasonality": [Season.summer.value],
-         "prep_time_minutes": 20, "servings": 2,
-         "ingredients": [{"name": "saumon", "quantity": 400, "unit": "g"}],
-         "steps": ["Griller 8 min."]},
+        {
+            "slug": "saumon-grille",
+            "title": "Saumon grille",
+            "cuisine": Cuisine.american.value,
+            "mood": [Mood.light.value],
+            "main_protein": Protein.fish.value,
+            "seasonality": [Season.summer.value],
+            "prep_time_minutes": 20,
+            "servings": 2,
+            "ingredients": [{"name": "saumon", "quantity": 400, "unit": "g"}],
+            "steps": ["Griller 8 min."],
+        },
     ]
 
 
@@ -384,13 +534,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--prod-synthetic",
         action="store_true",
         help="Target prod Supabase (REQUIRES ALDENTE_PROD_SEED=1 in env). "
-             "Without this flag, seed targets the local test DB.",
+        "Without this flag, seed targets the local test DB.",
     )
     parser.add_argument(
         "--teardown",
         action="store_true",
         help="Delete the synthetic household and all scoped storage objects. "
-             "Only valid with --prod-synthetic.",
+        "Only valid with --prod-synthetic.",
     )
     return parser.parse_args(argv)
 
@@ -400,32 +550,38 @@ def run_test_seed() -> None:
     auth_token_partner = os.environ.get("SEED_AUTH_TOKEN_PARTNER", "test-token-partner")
 
     today = date.today()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     with SessionLocal() as db:
         # ---- 1. Household ----
-        household = db.merge(Household(
-            id=_id("household", "luca"),
-            name="Foyer Test",
-            invite_code="TEST01",
-            timezone="Europe/Paris",
-        ))
+        household = db.merge(
+            Household(
+                id=_id("household", "luca"),
+                name="Foyer Test",
+                invite_code="TEST01",
+                timezone="Europe/Paris",
+            )
+        )
 
         # ---- 2. Members ----
-        member_luca = db.merge(Member(
-            id=_id("member", "luca"),
-            household_id=household.id,
-            name="Luca",
-            color_hex="#F43F5E",
-            auth_token=auth_token_luca,
-        ))
-        member_partner = db.merge(Member(
-            id=_id("member", "partner"),
-            household_id=household.id,
-            name="Partner",
-            color_hex="#10B981",
-            auth_token=auth_token_partner,
-        ))
+        member_luca = db.merge(
+            Member(
+                id=_id("member", "luca"),
+                household_id=household.id,
+                name="Luca",
+                color_hex="#F43F5E",
+                auth_token=auth_token_luca,
+            )
+        )
+        member_partner = db.merge(
+            Member(
+                id=_id("member", "partner"),
+                household_id=household.id,
+                name="Partner",
+                color_hex="#10B981",
+                auth_token=auth_token_partner,
+            )
+        )
 
         # Flush so recipes' FK to created_by_member_id resolves on first run.
         # Without this, SQLAlchemy may batch the recipes INSERT before the
@@ -471,7 +627,11 @@ def run_test_seed() -> None:
         # (ShortlistCard.tsx catch handler), so an unconfigured test env
         # still renders cleanly — just without photos.
         shortlist_slugs_with_photos = {
-            "ragu-bolognese", "coq-au-vin", "butter-chicken", "shawarma", "tacos-boeuf",
+            "ragu-bolognese",
+            "coq-au-vin",
+            "butter-chicken",
+            "shawarma",
+            "tacos-boeuf",
         }
         recipes_by_slug: dict[str, Recipe] = {}
         for spec in _recipe_specs():
@@ -480,40 +640,40 @@ def run_test_seed() -> None:
                 # Stable uuid5 photo filename — re-running the seed never
                 # changes the path, so signed-URL authz is stable across runs.
                 photo_uuid = _id("photo", spec["slug"])
-                recipe_photo_paths = [
-                    f"{household.id}/{recipe_id}/{photo_uuid}.jpg"
-                ]
+                recipe_photo_paths = [f"{household.id}/{recipe_id}/{photo_uuid}.jpg"]
             else:
                 recipe_photo_paths = []
-            r = db.merge(Recipe(
-                id=recipe_id,
-                household_id=household.id,
-                created_by_member_id=member_luca.id,
-                status="structured",
-                title=spec["title"],
-                photo_paths=recipe_photo_paths,
-                ingredients=spec["ingredients"],
-                steps=spec["steps"],
-                prep_time_minutes=spec["prep_time_minutes"],
-                # Phase 24 RID-02 — three new optional recipe-identity fields.
-                cook_time_minutes=spec.get("cook_time_minutes"),
-                difficulty=spec.get("difficulty"),
-                description=spec.get("description"),
-                # Phase 24 RID-05 — canned illustration for 3 seed recipes;
-                # others stay NULL → BrandIcon fallback in dev/test.
-                illustration_svg=spec.get("illustration_svg"),
-                servings=spec["servings"],
-                cuisine=spec["cuisine"],
-                mood=spec["mood"],
-                main_protein=spec["main_protein"],
-                seasonality=spec["seasonality"],
-                tags=[],
-                cook_count=0,
-                last_cooked_at=None,
-                last_cooked_photo_path=None,
-                promotion_error=None,
-                promotion_attempts=0,
-            ))
+            r = db.merge(
+                Recipe(
+                    id=recipe_id,
+                    household_id=household.id,
+                    created_by_member_id=member_luca.id,
+                    status="structured",
+                    title=spec["title"],
+                    photo_paths=recipe_photo_paths,
+                    ingredients=spec["ingredients"],
+                    steps=spec["steps"],
+                    prep_time_minutes=spec["prep_time_minutes"],
+                    # Phase 24 RID-02 — three new optional recipe-identity fields.
+                    cook_time_minutes=spec.get("cook_time_minutes"),
+                    difficulty=spec.get("difficulty"),
+                    description=spec.get("description"),
+                    # Phase 24 RID-05 — canned illustration for 3 seed recipes;
+                    # others stay NULL → BrandIcon fallback in dev/test.
+                    illustration_svg=spec.get("illustration_svg"),
+                    servings=spec["servings"],
+                    cuisine=spec["cuisine"],
+                    mood=spec["mood"],
+                    main_protein=spec["main_protein"],
+                    seasonality=spec["seasonality"],
+                    tags=[],
+                    cook_count=0,
+                    last_cooked_at=None,
+                    last_cooked_photo_path=None,
+                    promotion_error=None,
+                    promotion_attempts=0,
+                )
+            )
             recipes_by_slug[spec["slug"]] = r
 
         # Flush so recipe IDs are visible to the cooking-log denorm queries below.
@@ -556,24 +716,29 @@ def run_test_seed() -> None:
         ]
         for slug, rating, notes, cooked_at in log_specs:
             recipe = recipes_by_slug[slug]
-            db.merge(CookingLog(
-                id=_id("cooking_log", slug),  # SEED-01 (D-19-14): NO DATE in key — cross-day idempotent. Mirrors run_prod_synthetic_seed line 782.
-                recipe_id=recipe.id,
-                household_id=household.id,
-                cooked_by_member_id=member_luca.id,
-                cooked_at=cooked_at,
-                photo_paths=[],
-                rating=rating,
-                notes=notes,
-            ))
+            db.merge(
+                CookingLog(
+                    id=_id(
+                        "cooking_log", slug
+                    ),  # SEED-01 (D-19-14): NO DATE in key — cross-day idempotent. Mirrors run_prod_synthetic_seed line 782.
+                    recipe_id=recipe.id,
+                    household_id=household.id,
+                    cooked_by_member_id=member_luca.id,
+                    cooked_at=cooked_at,
+                    photo_paths=[],
+                    rating=rating,
+                    notes=notes,
+                )
+            )
             # Denormalization: last_cooked_at = max, cook_count = count of logs.
             # Recompute count from rows so re-runs converge to the right value.
             db.flush()  # ensure the merged log is visible to the COUNT below
-            log_count = db.scalar(
-                select(func.count(CookingLog.id)).where(
-                    CookingLog.recipe_id == recipe.id
+            log_count = (
+                db.scalar(
+                    select(func.count(CookingLog.id)).where(CookingLog.recipe_id == recipe.id)
                 )
-            ) or 0
+                or 0
+            )
             recipe.cook_count = int(log_count)
             recipe.last_cooked_at = (
                 cooked_at
@@ -608,16 +773,24 @@ def run_test_seed() -> None:
         # ---- 5. Daily shortlist for today ----
         # 5 recipes spanning cuisine diversity for the shortlist-vote spec.
         shortlist_recipe_slugs = [
-            "ragu-bolognese", "coq-au-vin", "butter-chicken", "shawarma", "tacos-boeuf",
+            "ragu-bolognese",
+            "coq-au-vin",
+            "butter-chicken",
+            "shawarma",
+            "tacos-boeuf",
         ]
-        shortlist = db.merge(DailyShortlist(
-            id=_id("shortlist", "today"),  # SEED-01 (D-19-15): NO DATE in key — cross-day idempotent. Mirrors run_prod_synthetic_seed line 813.
-            household_id=household.id,
-            date=today,
-            generation=1,
-            recipe_ids=[recipes_by_slug[s].id for s in shortlist_recipe_slugs],
-            filters=None,
-        ))
+        shortlist = db.merge(
+            DailyShortlist(
+                id=_id(
+                    "shortlist", "today"
+                ),  # SEED-01 (D-19-15): NO DATE in key — cross-day idempotent. Mirrors run_prod_synthetic_seed line 813.
+                household_id=household.id,
+                date=today,
+                generation=1,
+                recipe_ids=[recipes_by_slug[s].id for s in shortlist_recipe_slugs],
+                filters=None,
+            )
+        )
 
         db.flush()  # ensure shortlist.id is materialized before vote upsert
 
@@ -630,11 +803,11 @@ def run_test_seed() -> None:
         #   (None, None)        -> Sans avis (no vote rows at all)
         vote_specs = [
             # (slug, luca_vote, partner_vote)
-            ("ragu-bolognese", "yes", "yes"),       # Valide
-            ("coq-au-vin",     "yes", None),        # Pressenti
-            ("butter-chicken", "yes", "no"),        # Conteste
-            ("shawarma",       "no",  "no"),        # Rejete
-            ("tacos-boeuf",    None,  None),        # Sans avis (no rows inserted)
+            ("ragu-bolognese", "yes", "yes"),  # Valide
+            ("coq-au-vin", "yes", None),  # Pressenti
+            ("butter-chicken", "yes", "no"),  # Conteste
+            ("shawarma", "no", "no"),  # Rejete
+            ("tacos-boeuf", None, None),  # Sans avis (no rows inserted)
         ]
         for slug, luca_vote, partner_vote in vote_specs:
             recipe_id = recipes_by_slug[slug].id
@@ -655,7 +828,9 @@ def run_test_seed() -> None:
                     )
                     .on_conflict_do_update(
                         index_elements=[
-                            "shortlist_id", "recipe_id", "member_id",
+                            "shortlist_id",
+                            "recipe_id",
+                            "member_id",
                         ],
                         set_={"vote": vote_value},
                     )
@@ -679,33 +854,44 @@ def _gather_synthetic_counts(db) -> dict[str, int]:
     """
     from app.services.storage import list_synthetic_storage_count
 
-    recipes_count = db.scalar(
-        select(func.count(Recipe.id)).where(
-            Recipe.household_id == SYNTHETIC_HOUSEHOLD_ID
+    recipes_count = (
+        db.scalar(
+            select(func.count(Recipe.id)).where(Recipe.household_id == SYNTHETIC_HOUSEHOLD_ID)
         )
-    ) or 0
-    members_count = db.scalar(
-        select(func.count(Member.id)).where(
-            Member.household_id == SYNTHETIC_HOUSEHOLD_ID
+        or 0
+    )
+    members_count = (
+        db.scalar(
+            select(func.count(Member.id)).where(Member.household_id == SYNTHETIC_HOUSEHOLD_ID)
         )
-    ) or 0
-    cooking_logs_count = db.scalar(
-        select(func.count(CookingLog.id)).where(
-            CookingLog.household_id == SYNTHETIC_HOUSEHOLD_ID
+        or 0
+    )
+    cooking_logs_count = (
+        db.scalar(
+            select(func.count(CookingLog.id)).where(
+                CookingLog.household_id == SYNTHETIC_HOUSEHOLD_ID
+            )
         )
-    ) or 0
-    shortlists_count = db.scalar(
-        select(func.count(DailyShortlist.id)).where(
-            DailyShortlist.household_id == SYNTHETIC_HOUSEHOLD_ID
+        or 0
+    )
+    shortlists_count = (
+        db.scalar(
+            select(func.count(DailyShortlist.id)).where(
+                DailyShortlist.household_id == SYNTHETIC_HOUSEHOLD_ID
+            )
         )
-    ) or 0
+        or 0
+    )
     # Vote scope is via shortlist_id -> daily_shortlists.household_id
     # (Vote has no household_id column).
-    votes_count = db.scalar(
-        select(func.count(Vote.id))
-        .join(DailyShortlist, Vote.shortlist_id == DailyShortlist.id)
-        .where(DailyShortlist.household_id == SYNTHETIC_HOUSEHOLD_ID)
-    ) or 0
+    votes_count = (
+        db.scalar(
+            select(func.count(Vote.id))
+            .join(DailyShortlist, Vote.shortlist_id == DailyShortlist.id)
+            .where(DailyShortlist.household_id == SYNTHETIC_HOUSEHOLD_ID)
+        )
+        or 0
+    )
     storage_count = list_synthetic_storage_count()
     return {
         "recipes": int(recipes_count),
@@ -801,7 +987,8 @@ def run_prod_synthetic_seed() -> None:
     # Pre-flight: every spec slug must have a committed photo on disk.
     # Plan 03 commits the 21 JPGs; without them the seed cannot satisfy D-20.
     missing = [
-        spec["slug"] for spec in _recipe_specs()
+        spec["slug"]
+        for spec in _recipe_specs()
         if not (SYNTHETIC_PHOTOS_DIR / f"{spec['slug']}.jpg").exists()
     ]
     if missing:
@@ -812,7 +999,7 @@ def run_prod_synthetic_seed() -> None:
         )
 
     today = date.today()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     with SessionLocal() as db:
         # D-24 — serialize concurrent seed runs. Releases on commit/rollback.
@@ -826,28 +1013,37 @@ def run_prod_synthetic_seed() -> None:
         )
 
         # ---- 1. Household (D-05 label, D-14 fixed invite code) ----
-        household = _merge_synthetic(db, Household(
-            id=SYNTHETIC_HOUSEHOLD_ID,
-            name="[SYNTHETIC] Démo Al Dente",
-            invite_code="DEMO01",
-            timezone="Europe/Paris",
-        ))
+        _merge_synthetic(
+            db,
+            Household(
+                id=SYNTHETIC_HOUSEHOLD_ID,
+                name="[SYNTHETIC] Démo Al Dente",
+                invite_code="DEMO01",
+                timezone="Europe/Paris",
+            ),
+        )
 
         # ---- 2. Members (D-18 — fresh tokens per run, NEVER printed) ----
-        member_luca = _merge_synthetic(db, Member(
-            id=_id_synth("member", "luca"),
-            household_id=SYNTHETIC_HOUSEHOLD_ID,
-            name="Luca",
-            color_hex="#F43F5E",
-            auth_token=secrets.token_urlsafe(32),
-        ))
-        member_partner = _merge_synthetic(db, Member(
-            id=_id_synth("member", "partner"),
-            household_id=SYNTHETIC_HOUSEHOLD_ID,
-            name="Partner",
-            color_hex="#10B981",
-            auth_token=secrets.token_urlsafe(32),
-        ))
+        member_luca = _merge_synthetic(
+            db,
+            Member(
+                id=_id_synth("member", "luca"),
+                household_id=SYNTHETIC_HOUSEHOLD_ID,
+                name="Luca",
+                color_hex="#F43F5E",
+                auth_token=secrets.token_urlsafe(32),
+            ),
+        )
+        member_partner = _merge_synthetic(
+            db,
+            Member(
+                id=_id_synth("member", "partner"),
+                household_id=SYNTHETIC_HOUSEHOLD_ID,
+                name="Partner",
+                color_hex="#10B981",
+                auth_token=secrets.token_urlsafe(32),
+            ),
+        )
 
         # Pitfall 4 — flush so recipes' FK to created_by_member_id resolves.
         db.flush()
@@ -858,38 +1054,42 @@ def run_prod_synthetic_seed() -> None:
         for spec in _recipe_specs():
             jpeg_bytes = (SYNTHETIC_PHOTOS_DIR / f"{spec['slug']}.jpg").read_bytes()
             photo_path = upload_synthetic_photo_idempotent(
-                slug=spec["slug"], content=jpeg_bytes,
+                slug=spec["slug"],
+                content=jpeg_bytes,
             )
             # Pitfall 5 — set every NOT NULL column explicitly.
-            r = _merge_synthetic(db, Recipe(
-                id=_id_synth("recipe", spec["slug"]),
-                household_id=SYNTHETIC_HOUSEHOLD_ID,
-                created_by_member_id=member_luca.id,
-                status="structured",
-                title=spec["title"],
-                photo_paths=[photo_path],  # CRITICAL — Pitfall 2
-                ingredients=spec["ingredients"],
-                steps=spec["steps"],
-                prep_time_minutes=spec["prep_time_minutes"],
-                # Phase 24 RID-02 — three new optional recipe-identity fields.
-                cook_time_minutes=spec.get("cook_time_minutes"),
-                difficulty=spec.get("difficulty"),
-                description=spec.get("description"),
-                # Phase 24 RID-05 — canned illustration for 3 seed recipes;
-                # others stay NULL → BrandIcon fallback for DEMO01 household.
-                illustration_svg=spec.get("illustration_svg"),
-                servings=spec["servings"],
-                cuisine=spec["cuisine"],
-                mood=spec["mood"],
-                main_protein=spec["main_protein"],
-                seasonality=spec["seasonality"],
-                tags=[],
-                cook_count=0,
-                last_cooked_at=None,
-                last_cooked_photo_path=None,
-                promotion_error=None,
-                promotion_attempts=0,
-            ))
+            r = _merge_synthetic(
+                db,
+                Recipe(
+                    id=_id_synth("recipe", spec["slug"]),
+                    household_id=SYNTHETIC_HOUSEHOLD_ID,
+                    created_by_member_id=member_luca.id,
+                    status="structured",
+                    title=spec["title"],
+                    photo_paths=[photo_path],  # CRITICAL — Pitfall 2
+                    ingredients=spec["ingredients"],
+                    steps=spec["steps"],
+                    prep_time_minutes=spec["prep_time_minutes"],
+                    # Phase 24 RID-02 — three new optional recipe-identity fields.
+                    cook_time_minutes=spec.get("cook_time_minutes"),
+                    difficulty=spec.get("difficulty"),
+                    description=spec.get("description"),
+                    # Phase 24 RID-05 — canned illustration for 3 seed recipes;
+                    # others stay NULL → BrandIcon fallback for DEMO01 household.
+                    illustration_svg=spec.get("illustration_svg"),
+                    servings=spec["servings"],
+                    cuisine=spec["cuisine"],
+                    mood=spec["mood"],
+                    main_protein=spec["main_protein"],
+                    seasonality=spec["seasonality"],
+                    tags=[],
+                    cook_count=0,
+                    last_cooked_at=None,
+                    last_cooked_photo_path=None,
+                    promotion_error=None,
+                    promotion_attempts=0,
+                ),
+            )
             recipes_by_slug[spec["slug"]] = r
 
         # Flush so recipe IDs are visible to the cooking-log denorm queries.
@@ -933,24 +1133,28 @@ def run_prod_synthetic_seed() -> None:
         ]
         for slug, rating, notes, cooked_at in log_specs:
             recipe = recipes_by_slug[slug]
-            _merge_synthetic(db, CookingLog(
-                id=_id_synth("cooking_log", slug),  # NO DATE in key — D-10
-                recipe_id=recipe.id,
-                household_id=SYNTHETIC_HOUSEHOLD_ID,
-                cooked_by_member_id=member_luca.id,
-                cooked_at=cooked_at,
-                photo_paths=[],
-                rating=rating,
-                notes=notes,
-            ))
+            _merge_synthetic(
+                db,
+                CookingLog(
+                    id=_id_synth("cooking_log", slug),  # NO DATE in key — D-10
+                    recipe_id=recipe.id,
+                    household_id=SYNTHETIC_HOUSEHOLD_ID,
+                    cooked_by_member_id=member_luca.id,
+                    cooked_at=cooked_at,
+                    photo_paths=[],
+                    rating=rating,
+                    notes=notes,
+                ),
+            )
             # Architecture invariant #3 — same-tx denorm of recipes.last_cooked_at +
             # cook_count. Recompute count from rows so re-runs converge correctly.
             db.flush()
-            log_count = db.scalar(
-                select(func.count(CookingLog.id)).where(
-                    CookingLog.recipe_id == recipe.id
+            log_count = (
+                db.scalar(
+                    select(func.count(CookingLog.id)).where(CookingLog.recipe_id == recipe.id)
                 )
-            ) or 0
+                or 0
+            )
             recipe.cook_count = int(log_count)
             recipe.last_cooked_at = (
                 cooked_at
@@ -962,16 +1166,23 @@ def run_prod_synthetic_seed() -> None:
         # _id key is ("shortlist", "today") — NO date in the key.
         # `date` field UPDATEs to today on every re-run.
         shortlist_recipe_slugs = [
-            "ragu-bolognese", "coq-au-vin", "butter-chicken", "shawarma", "tacos-boeuf",
+            "ragu-bolognese",
+            "coq-au-vin",
+            "butter-chicken",
+            "shawarma",
+            "tacos-boeuf",
         ]
-        shortlist = _merge_synthetic(db, DailyShortlist(
-            id=_id_synth("shortlist", "today"),  # NO DATE in key — D-11
-            household_id=SYNTHETIC_HOUSEHOLD_ID,
-            date=today,
-            generation=1,
-            recipe_ids=[recipes_by_slug[s].id for s in shortlist_recipe_slugs],
-            filters=None,
-        ))
+        shortlist = _merge_synthetic(
+            db,
+            DailyShortlist(
+                id=_id_synth("shortlist", "today"),  # NO DATE in key — D-11
+                household_id=SYNTHETIC_HOUSEHOLD_ID,
+                date=today,
+                generation=1,
+                recipe_ids=[recipes_by_slug[s].id for s in shortlist_recipe_slugs],
+                filters=None,
+            ),
+        )
 
         db.flush()
 
@@ -984,11 +1195,11 @@ def run_prod_synthetic_seed() -> None:
         #   (None, None)   -> Sans avis (0 rows — no rows inserted)
         # Total: 2 + 1 + 2 + 2 + 0 = 7 vote rows producing all 5 computed states.
         vote_specs = [
-            ("ragu-bolognese", "yes", "yes"),       # Validé
-            ("coq-au-vin",     "yes", None),        # Pressenti
-            ("butter-chicken", "yes", "no"),        # Contesté
-            ("shawarma",       "no",  "no"),        # Rejeté
-            ("tacos-boeuf",    None,  None),        # Sans avis
+            ("ragu-bolognese", "yes", "yes"),  # Validé
+            ("coq-au-vin", "yes", None),  # Pressenti
+            ("butter-chicken", "yes", "no"),  # Contesté
+            ("shawarma", "no", "no"),  # Rejeté
+            ("tacos-boeuf", None, None),  # Sans avis
         ]
         for slug, luca_vote, partner_vote in vote_specs:
             # Vote has no household_id column. Verify the parent recipe is in

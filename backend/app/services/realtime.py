@@ -27,7 +27,7 @@ import asyncio
 import json
 import logging
 from collections import defaultdict
-from typing import Any, DefaultDict, Set
+from typing import Any
 from uuid import UUID
 
 from fastapi import WebSocket
@@ -45,7 +45,7 @@ class RealtimeRegistry:
     """
 
     def __init__(self) -> None:
-        self._channels: DefaultDict[UUID, Set[WebSocket]] = defaultdict(set)
+        self._channels: defaultdict[UUID, set[WebSocket]] = defaultdict(set)
         self._lock = asyncio.Lock()
 
     async def register(self, household_id: UUID, ws: WebSocket) -> None:
@@ -83,9 +83,7 @@ class RealtimeRegistry:
                     continue
                 await ws.send_text(frame)
             except Exception as exc:  # noqa: BLE001 — broad-catch is intentional
-                log.warning(
-                    "ws.send failed household=%s err=%s", household_id, exc
-                )
+                log.warning("ws.send failed household=%s err=%s", household_id, exc)
                 await self.unregister(household_id, ws)
 
 

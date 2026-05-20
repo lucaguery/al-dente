@@ -10,14 +10,13 @@ from __future__ import annotations
 
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
-
-from app.config import settings
-from app.db import Base
 
 # Make sure every model is imported so its table is attached to Base.metadata.
 import app.models  # noqa: F401  — side-effect import for Alembic autogenerate
+from alembic import context
+from app.config import settings
+from app.db import Base
 
 # Alembic Config object provides access to alembic.ini values.
 config = context.config

@@ -78,9 +78,7 @@ async def upload_photo(
         )
     )
     if recipe is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
 
     # 2. 4-photo cap — SPEC.md ≤ 4. UI copy: "Maximum 4 photos par recette."
     current_paths = list(recipe.photo_paths or [])
@@ -99,9 +97,7 @@ async def upload_photo(
             detail=f"file exceeds {MAX_BYTES} bytes",
         )
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="empty upload"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="empty upload")
 
     # 4. Validate magic bytes + upload. ValueError ⇒ specific HTTP code.
     try:
@@ -132,9 +128,7 @@ async def upload_photo(
 
     # 6. Broadcast — partner's phone re-renders the gallery.
     payload = RecipeResponse.model_validate(recipe).model_dump(mode="json")
-    await broadcast_to_household(
-        member.household_id, "recipe.updated", payload
-    )
+    await broadcast_to_household(member.household_id, "recipe.updated", payload)
     return RecipeResponse.model_validate(recipe)
 
 
@@ -171,15 +165,11 @@ def signed_photo_url(
         )
     )
     if recipe is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
     if path not in (recipe.photo_paths or []):
         # Same 404 shape as a missing recipe — no probe of "is this path on
         # some other recipe in my household?" answerable.
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="path not on recipe"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="path not on recipe")
     try:
         url = create_signed_photo_url(path)
     except StorageObjectNotFound:

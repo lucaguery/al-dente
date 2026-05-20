@@ -29,6 +29,7 @@ client fixture's `finally` defends against leakage between tests
 # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html
 #   §joining-a-session-into-an-external-transaction-such-as-for-test-suites
 """
+
 from __future__ import annotations
 
 import os
@@ -48,9 +49,7 @@ TEST_DATABASE_URL = os.environ.get(
 )
 
 _engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True, future=True)
-_TestSessionLocal = sessionmaker(
-    bind=_engine, autoflush=False, autocommit=False, future=True
-)
+_TestSessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False, future=True)
 
 
 @pytest.fixture(scope="function")

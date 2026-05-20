@@ -9,6 +9,7 @@ Two layers:
 Invariant #8 (CLAUDE.md): cookie wins over Bearer header when both are present.
 Tests pin this contract so a refactor cannot silently flip the ordering.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -60,6 +61,7 @@ class TestGenerateAuthToken:
     def test_only_urlsafe_chars(self) -> None:
         """Token must contain only URL-safe base64 characters (A-Z a-z 0-9 - _)."""
         import re
+
         token = generate_auth_token()
         assert re.fullmatch(r"[A-Za-z0-9_\-]+", token), (
             f"Token contains non-URL-safe character: {token!r}"
@@ -208,9 +210,7 @@ class TestCurrentMemberIntegration:
 
     def test_bearer_auth_happy_path(self, client) -> None:
         """Valid Bearer header → 200 with member token in response."""
-        resp = client.get(
-            AUTH_ROUTE, headers={"Authorization": f"Bearer {SEED_TOKEN}"}
-        )
+        resp = client.get(AUTH_ROUTE, headers={"Authorization": f"Bearer {SEED_TOKEN}"})
         assert resp.status_code == 200
         assert resp.json()["token"] == SEED_TOKEN
 

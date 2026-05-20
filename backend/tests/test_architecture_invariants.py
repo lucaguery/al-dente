@@ -17,15 +17,14 @@ INV-XX → CLAUDE.md invariant mapping:
 
 D-38-03: break-observe-revert ritual completed for all 8. Evidence in 38-04-SUMMARY.md.
 """
+
 from __future__ import annotations
 
 import ast
 import re
-import textwrap
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
@@ -44,6 +43,7 @@ REPO_ROOT = Path(__file__).parent.parent  # backend/
 # ===========================================================================
 # INV-01 — CLAUDE.md #1
 # ===========================================================================
+
 
 def test_invariant_01_promote_endpoint_schedules_promote_draft(client: TestClient, db_session):
     """INV-01: POST /recipes/{id}/promote schedules promote_draft as a BackgroundTask.
@@ -123,8 +123,10 @@ def test_invariant_01_promote_source_code_dispatches_promote_draft():
     )
 
     # Must contain background_tasks.add_task(promote_draft, ...)
-    assert "background_tasks.add_task(promote_draft," in source or \
-           "background_tasks.add_task(promote_draft ," in source, (
+    assert (
+        "background_tasks.add_task(promote_draft," in source
+        or "background_tasks.add_task(promote_draft ," in source
+    ), (
         "INV-01 violated — routers/recipes.py does not call "
         "background_tasks.add_task(promote_draft, ...). CLAUDE.md invariant #1."
     )
@@ -133,6 +135,7 @@ def test_invariant_01_promote_source_code_dispatches_promote_draft():
 # ===========================================================================
 # INV-02 — CLAUDE.md #2
 # ===========================================================================
+
 
 def test_invariant_02_votes_table_has_no_state_column():
     """INV-02: The `votes` table has no `state` column.
@@ -154,15 +157,16 @@ def test_invariant_02_votes_table_has_no_state_column():
 
     # Also verify compute_vote_state exists in services/voting.py
     from app.services import voting
+
     assert hasattr(voting, "compute_vote_state"), (
-        "INV-02 violated — services/voting.compute_vote_state is missing. "
-        "CLAUDE.md invariant #2."
+        "INV-02 violated — services/voting.compute_vote_state is missing. CLAUDE.md invariant #2."
     )
 
 
 # ===========================================================================
 # INV-03 — CLAUDE.md #3
 # ===========================================================================
+
 
 def test_invariant_03_cooking_log_atomically_updates_last_cooked_at(client: TestClient, db_session):
     """INV-03: Finalizing a CookingLog updates last_cooked_at and cook_count atomically.
@@ -174,8 +178,8 @@ def test_invariant_03_cooking_log_atomically_updates_last_cooked_at(client: Test
       b) The update is visible in the same session immediately after commit.
     """
     from sqlalchemy import select
+
     from app.models.recipe import Recipe
-    from app.models.cooking_log import CookingLog
 
     # Get a seeded structured recipe for the test household
     recipe = db_session.scalar(
@@ -210,15 +214,11 @@ def test_invariant_03_cooking_log_atomically_updates_last_cooked_at(client: Test
         json={"rating": "liked", "photo_paths": [], "notes": "INV-03 test"},
         cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
     )
-    assert r_finalize.status_code == 200, (
-        f"INV-03: finalize failed: {r_finalize.text}"
-    )
+    assert r_finalize.status_code == 200, f"INV-03: finalize failed: {r_finalize.text}"
 
     # Verify last_cooked_at and cook_count were updated
     db_session.expire_all()
-    recipe_after = db_session.scalar(
-        select(Recipe).where(Recipe.id == recipe.id)
-    )
+    recipe_after = db_session.scalar(select(Recipe).where(Recipe.id == recipe.id))
     assert recipe_after.last_cooked_at is not None, (
         "INV-03 violated — last_cooked_at was not set after cooking log finalization. "
         "CLAUDE.md invariant #3: last_cooked_at MUST update atomically with cooking_logs."
@@ -248,8 +248,7 @@ def test_invariant_03_same_transaction_source_code():
 
     # Filter to non-comment, non-blank lines only
     active_lines = [
-        line for line in source.splitlines()
-        if line.strip() and not line.strip().startswith("#")
+        line for line in source.splitlines() if line.strip() and not line.strip().startswith("#")
     ]
     active_source = "\n".join(active_lines)
 
@@ -268,6 +267,7 @@ def test_invariant_03_same_transaction_source_code():
 # INV-04 — CLAUDE.md #4
 # ===========================================================================
 
+
 def test_invariant_04_household_mutations_broadcast(client: TestClient, db_session):
     """INV-04: Household-affecting mutations broadcast via broadcast_to_household.
 
@@ -281,9 +281,10 @@ def test_invariant_04_household_mutations_broadcast(client: TestClient, db_sessi
         captured_calls.append((household_id, event_type, payload))
 
     # Monkeypatch at BOTH the module-level export and the named import in recipes router
-    with patch("app.services.realtime.broadcast_to_household", side_effect=_spy), \
-         patch("app.routers.recipes.broadcast_to_household", side_effect=_spy):
-
+    with (
+        patch("app.services.realtime.broadcast_to_household", side_effect=_spy),
+        patch("app.routers.recipes.broadcast_to_household", side_effect=_spy),
+    ):
         r = client.post(
             "/recipes",
             json={},
@@ -308,11 +309,10 @@ def test_invariant_04_household_mutations_broadcast(client: TestClient, db_sessi
 def test_invariant_04_cooking_started_broadcast(client: TestClient, db_session):
     """INV-04 (cooking.started): POST /recipes/{id}/cook broadcasts cooking.started."""
     from sqlalchemy import select
+
     from app.models.recipe import Recipe
 
-    recipe = db_session.scalar(
-        select(Recipe).where(Recipe.status == "structured")
-    )
+    recipe = db_session.scalar(select(Recipe).where(Recipe.status == "structured"))
     assert recipe is not None, "INV-04: no structured recipe in seed"
     recipe_id = str(recipe.id)
 
@@ -321,17 +321,16 @@ def test_invariant_04_cooking_started_broadcast(client: TestClient, db_session):
     async def _spy(household_id, event_type, payload):
         captured_calls.append((household_id, event_type, payload))
 
-    with patch("app.services.realtime.broadcast_to_household", side_effect=_spy), \
-         patch("app.routers.cooking_logs.broadcast_to_household", side_effect=_spy):
-
+    with (
+        patch("app.services.realtime.broadcast_to_household", side_effect=_spy),
+        patch("app.routers.cooking_logs.broadcast_to_household", side_effect=_spy),
+    ):
         r = client.post(
             f"/recipes/{recipe_id}/cook",
             cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
         )
         # 201 on first cook today, 409 if already active
-        assert r.status_code in (201, 409), (
-            f"INV-04: unexpected status {r.status_code}: {r.text}"
-        )
+        assert r.status_code in (201, 409), f"INV-04: unexpected status {r.status_code}: {r.text}"
 
     if r.status_code == 201:
         broadcast_event_types = [et for _, et, _ in captured_calls]
@@ -344,6 +343,7 @@ def test_invariant_04_cooking_started_broadcast(client: TestClient, db_session):
 # ===========================================================================
 # INV-05 — CLAUDE.md #5
 # ===========================================================================
+
 
 def test_invariant_05_source_capture_column_absent():
     """INV-05: Recipe model has no `source_capture` column.
@@ -369,6 +369,7 @@ def test_invariant_05_first_user_turn_position_zero(client: TestClient, db_sessi
     stores the original capture payload verbatim so prompts can be re-run.
     """
     from sqlalchemy import select
+
     from app.models.recipe_turn import RecipeTurn
 
     # Create a new blank recipe and post a first user turn
@@ -392,6 +393,7 @@ def test_invariant_05_first_user_turn_position_zero(client: TestClient, db_sessi
     # Verify the turn was stored with position=0 and payload verbatim
     db_session.expire_all()
     import uuid
+
     turn = db_session.scalar(
         select(RecipeTurn).where(
             RecipeTurn.recipe_id == uuid.UUID(recipe_id),
@@ -436,6 +438,7 @@ def test_invariant_05_no_position_zero_update_api():
 # INV-06 — CLAUDE.md #7
 # ===========================================================================
 
+
 def test_invariant_06_apscheduler_in_process_singleton():
     """INV-06: APScheduler is the module-level singleton in app.main.
 
@@ -447,9 +450,10 @@ def test_invariant_06_apscheduler_in_process_singleton():
       a) `app.main.scheduler` is an AsyncIOScheduler instance.
       b) It is the same object on repeated imports (singleton, not factory).
     """
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
     from app.main import scheduler as sched_a
     from app.main import scheduler as sched_b
-    from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
     assert isinstance(sched_a, AsyncIOScheduler), (
         "INV-06 violated — app.main.scheduler is not an AsyncIOScheduler instance. "
@@ -499,6 +503,7 @@ def test_invariant_06_single_worker_documented():
 # ===========================================================================
 # INV-07 — CLAUDE.md #8
 # ===========================================================================
+
 
 def test_invariant_07_cookie_wins_over_bearer(client: TestClient, db_session):
     """INV-07: The aldente_auth HttpOnly cookie wins over Bearer-header fallback.
@@ -563,12 +568,10 @@ def test_invariant_07_extract_token_cookie_first_source():
     cookie_pos = source.find("if aldente_auth")
     bearer_pos = source.find('lower().startswith("bearer ')
     assert cookie_pos != -1, (
-        "INV-07 violated — cookie check missing from _extract_token. "
-        "CLAUDE.md invariant #8."
+        "INV-07 violated — cookie check missing from _extract_token. CLAUDE.md invariant #8."
     )
     assert bearer_pos != -1, (
-        "INV-07 violated — bearer check missing from _extract_token. "
-        "CLAUDE.md invariant #8."
+        "INV-07 violated — bearer check missing from _extract_token. CLAUDE.md invariant #8."
     )
     assert cookie_pos < bearer_pos, (
         "INV-07 violated — Bearer check appears BEFORE cookie check in _extract_token. "
@@ -710,9 +713,7 @@ def test_invariant_08_httpexception_details_are_internal_codes():
                     continue
 
                 if not _is_acceptable_detail(detail):
-                    violations.append(
-                        f"{router_file.name}: HTTPException(detail={detail!r})"
-                    )
+                    violations.append(f"{router_file.name}: HTTPException(detail={detail!r})")
 
     assert not violations, (
         "INV-08 violated — raw English prose found in HTTPException details. "

@@ -21,6 +21,7 @@ Architecture invariant #2: voting state is COMPUTED, never stored.
   This contract test drives the HTTP layer only; VoteState derivation
   is covered by test_voting_unit.py.
 """
+
 from __future__ import annotations
 
 import os
@@ -44,8 +45,7 @@ def _seeded_member(db: Session) -> Member:
     """Resolve the seeded test member (auth_token == SEED_TOKEN)."""
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 
@@ -60,9 +60,7 @@ def _make_shortlist_with_recipe(db: Session, member: Member) -> tuple[DailyShort
     Returns (shortlist, recipe) — both flushed into the current SAVEPOINT.
     """
     # Pick or create a recipe for this household.
-    recipe = db.scalar(
-        select(Recipe).where(Recipe.household_id == member.household_id).limit(1)
-    )
+    recipe = db.scalar(select(Recipe).where(Recipe.household_id == member.household_id).limit(1))
     if recipe is None:
         recipe = Recipe(
             household_id=member.household_id,
@@ -185,9 +183,7 @@ def test_votes_404_cross_household(client: TestClient, db_session: Session) -> N
     assert resp.status_code == 404, resp.text
 
 
-def test_votes_400_recipe_not_in_shortlist(
-    client: TestClient, db_session: Session
-) -> None:
+def test_votes_400_recipe_not_in_shortlist(client: TestClient, db_session: Session) -> None:
     """ROUT-07 — POST vote with a recipe not in shortlist.recipe_ids returns 400.
 
     The router raises HTTPException(400, "recipe not in this shortlist") — NOT 422.

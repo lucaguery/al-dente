@@ -24,6 +24,7 @@ Tests (adapted 4-test shape):
      https://" (per push.py:54, explicit HTTPException(400, ...)).
      Note: the router uses HTTPException(400), not 422, for this guard.
 """
+
 from __future__ import annotations
 
 import os
@@ -73,9 +74,7 @@ def test_push_401_missing_auth(client: TestClient, db_session: Session) -> None:
     assert resp.status_code == 401, resp.text
 
 
-def test_push_vapid_public_key_401_missing_auth(
-    client: TestClient, db_session: Session
-) -> None:
+def test_push_vapid_public_key_401_missing_auth(client: TestClient, db_session: Session) -> None:
     """ROUT-09 cross-household substitution — GET /push/vapid-public-key without
     auth returns 401.
 
@@ -89,9 +88,7 @@ def test_push_vapid_public_key_401_missing_auth(
     assert resp.status_code == 401, resp.text
 
 
-def test_push_400_endpoint_must_be_https(
-    client: TestClient, db_session: Session
-) -> None:
+def test_push_400_endpoint_must_be_https(client: TestClient, db_session: Session) -> None:
     """ROUT-09 validation — POST /push/subscribe with http:// endpoint returns 400.
 
     push.py:54: raise HTTPException(400, "endpoint must be https://")

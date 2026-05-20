@@ -53,6 +53,7 @@ class StorageObjectNotFound(Exception):
         super().__init__(f"storage object not found: {path}")
         self.path = path
 
+
 # Phase 26 D-26 — URL extracted-markdown bucket (separate from recipe-photos
 # so bucket-level MIME enforcement stays clean: photos vs text/markdown).
 URL_BUCKET = "recipe-urls"
@@ -102,9 +103,7 @@ def _supabase() -> Client:
                 "Supabase URL / service-role key not configured "
                 "(set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in backend env)"
             )
-        _client = create_client(
-            settings.supabase_url, settings.supabase_service_role_key
-        )
+        _client = create_client(settings.supabase_url, settings.supabase_service_role_key)
     return _client
 
 
@@ -164,7 +163,9 @@ def upload_recipe_photo(
     except Exception as exc:  # noqa: BLE001 — broad catch is intentional
         # T-01-09-09: log internal detail, surface generic 500 upstream.
         log.exception(
-            "supabase upload failed path=%s err=%s", path, exc,
+            "supabase upload failed path=%s err=%s",
+            path,
+            exc,
         )
         raise
     log.info(
@@ -228,7 +229,11 @@ def upload_recipe_url_extract(
         raise
     log.info(
         "url_extract.uploaded household=%s recipe=%s turn=%s path=%s bytes=%d",
-        household_id, recipe_id, turn_id, path, len(content),
+        household_id,
+        recipe_id,
+        turn_id,
+        path,
+        len(content),
     )
     return path
 
@@ -330,7 +335,9 @@ def upload_cooking_log_photo(
         )
     except Exception as exc:  # noqa: BLE001 — broad catch is intentional
         log.exception(
-            "supabase upload failed (cooking_log) path=%s err=%s", path, exc,
+            "supabase upload failed (cooking_log) path=%s err=%s",
+            path,
+            exc,
         )
         raise
     log.info(
@@ -384,9 +391,7 @@ def create_signed_photo_url(path: str) -> str:
     """
     client = _supabase()
     try:
-        result = client.storage.from_(BUCKET).create_signed_url(
-            path, SIGNED_URL_TTL_SECONDS
-        )
+        result = client.storage.from_(BUCKET).create_signed_url(path, SIGNED_URL_TTL_SECONDS)
     except StorageObjectNotFound:
         raise
     except Exception as exc:  # noqa: BLE001 — narrow via heuristic below
@@ -440,9 +445,7 @@ def _assert_synthetic_storage_path(path: str) -> None:
     touching real-user photo objects.
     """
     if not path.startswith(SYNTHETIC_PREFIX):
-        raise AssertionError(
-            f"refusing storage operation outside synthetic/ scope: {path!r}"
-        )
+        raise AssertionError(f"refusing storage operation outside synthetic/ scope: {path!r}")
 
 
 def upload_synthetic_photo_idempotent(*, slug: str, content: bytes) -> str:

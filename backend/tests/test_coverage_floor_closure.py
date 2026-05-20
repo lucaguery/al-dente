@@ -7,12 +7,11 @@ solidly over the floor.
 
 Out of scope: anything that requires app/ source modification.
 """
+
 from __future__ import annotations
 
 import asyncio
 from uuid import uuid4
-
-import pytest
 
 from app.services.completeness import is_conflict
 from app.services.realtime import RealtimeRegistry

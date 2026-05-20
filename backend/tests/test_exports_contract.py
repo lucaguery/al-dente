@@ -18,6 +18,7 @@ Tests (standard 4-test shape):
   4. 422_validation — malformed (non-UUID) household_id in path returns 422
      from FastAPI's path-param coercion.
 """
+
 from __future__ import annotations
 
 import os
@@ -37,8 +38,7 @@ AUTH_HEADERS = {"Authorization": f"Bearer {SEED_TOKEN}"}
 def _seeded_member(db: Session) -> Member:
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 

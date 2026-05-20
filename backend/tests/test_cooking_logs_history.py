@@ -13,12 +13,13 @@ Per 17-CONTEXT.md D-17-12, the TZ boundary tests create a log at a UTC
 moment that's "tomorrow" in household-tz and assert the active-log
 lookup correctly identifies it under the household-tz boundary.
 """
+
 from __future__ import annotations
 
 import logging
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
@@ -44,17 +45,13 @@ def _seed_actors(db: Session) -> tuple[Member, Household, Recipe]:
     Raises with a clear message if the seed hasn't run — points the operator
     at `uv run seed`.
     """
-    member = db.scalar(
-        select(Member).where(Member.auth_token == SEED_TOKEN).limit(1)
-    )
+    member = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert member is not None, (
         f"seed has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`"
     )
     household = db.get(Household, member.household_id)
     assert household is not None
-    recipe = db.scalar(
-        select(Recipe).where(Recipe.household_id == household.id).limit(1)
-    )
+    recipe = db.scalar(select(Recipe).where(Recipe.household_id == household.id).limit(1))
     assert recipe is not None
     return member, household, recipe
 
@@ -101,16 +98,14 @@ def test_list_returns_recent_logs(client: TestClient, db_session: Session) -> No
     assert timestamps == sorted(timestamps, reverse=True)
 
 
-def test_list_filters_by_days_window(
-    client: TestClient, db_session: Session
-) -> None:
+def test_list_filters_by_days_window(client: TestClient, db_session: Session) -> None:
     member, household, recipe = _seed_actors(db_session)
     old = CookingLog(
         id=uuid.uuid4(),
         recipe_id=recipe.id,
         household_id=household.id,
         cooked_by_member_id=member.id,
-        cooked_at=datetime.now(timezone.utc) - timedelta(days=45),
+        cooked_at=datetime.now(UTC) - timedelta(days=45),
         photo_paths=[],
         rating=LogRating.liked,
         notes="ancient",
@@ -125,9 +120,7 @@ def test_list_filters_by_days_window(
     assert str(old.id) in old_ids_60
 
 
-def test_list_excludes_unfinalized(
-    client: TestClient, db_session: Session
-) -> None:
+def test_list_excludes_unfinalized(client: TestClient, db_session: Session) -> None:
     member, household, recipe = _seed_actors(db_session)
     _drain_active_logs(db_session, household.id)
     unfin = CookingLog(
@@ -135,7 +128,7 @@ def test_list_excludes_unfinalized(
         recipe_id=recipe.id,
         household_id=household.id,
         cooked_by_member_id=member.id,
-        cooked_at=datetime.now(timezone.utc),
+        cooked_at=datetime.now(UTC),
         photo_paths=[],
         rating=None,
     )
@@ -146,18 +139,12 @@ def test_list_excludes_unfinalized(
 
 
 def test_list_days_param_clamped(client: TestClient) -> None:
-    assert (
-        client.get("/cooking-logs?days=0", headers=AUTH_HEADERS).status_code == 422
-    )
-    assert (
-        client.get("/cooking-logs?days=400", headers=AUTH_HEADERS).status_code == 422
-    )
+    assert client.get("/cooking-logs?days=0", headers=AUTH_HEADERS).status_code == 422
+    assert client.get("/cooking-logs?days=400", headers=AUTH_HEADERS).status_code == 422
     assert client.get("/cooking-logs", headers=AUTH_HEADERS).status_code == 200
 
 
-def test_list_cross_household_isolated(
-    client: TestClient, db_session: Session
-) -> None:
+def test_list_cross_household_isolated(client: TestClient, db_session: Session) -> None:
     # Build a second household + member + recipe + log so we can assert the
     # filter excludes it from the seeded household's response (T-04-01-03).
     other_h = Household(id=uuid.uuid4(), name="Other", timezone="Europe/Paris")
@@ -190,33 +177,30 @@ def test_list_cross_household_isolated(
     )
     db_session.add(other_recipe)
     db_session.flush()  # need other_recipe.id for turn FK
-    db_session.add(RecipeTurn(
-        id=uuid.uuid4(),
-        recipe_id=other_recipe.id,
-        position=0,
-        sender="user",
-        kind="text",
-        payload={"text": "Other recipe"},
-    ))
+    db_session.add(
+        RecipeTurn(
+            id=uuid.uuid4(),
+            recipe_id=other_recipe.id,
+            position=0,
+            sender="user",
+            kind="text",
+            payload={"text": "Other recipe"},
+        )
+    )
     db_session.flush()
     other_log = CookingLog(
         id=uuid.uuid4(),
         recipe_id=other_recipe.id,
         household_id=other_h.id,
         cooked_by_member_id=other_m.id,
-        cooked_at=datetime.now(timezone.utc),
+        cooked_at=datetime.now(UTC),
         photo_paths=[],
         rating=LogRating.liked,
     )
     db_session.add(other_log)
     db_session.commit()
     # Requesting member is the seeded household — must NOT see other_log.
-    ids = [
-        r["id"]
-        for r in client.get(
-            "/cooking-logs?days=365", headers=AUTH_HEADERS
-        ).json()
-    ]
+    ids = [r["id"] for r in client.get("/cooking-logs?days=365", headers=AUTH_HEADERS).json()]
     assert str(other_log.id) not in ids
 
 
@@ -225,9 +209,7 @@ def test_list_cross_household_isolated(
 # ---------------------------------------------------------------------------
 
 
-def test_detail_returns_household_scoped_log(
-    client: TestClient, db_session: Session
-) -> None:
+def test_detail_returns_household_scoped_log(client: TestClient, db_session: Session) -> None:
     member, household, _ = _seed_actors(db_session)
     log = db_session.scalar(
         select(CookingLog).where(CookingLog.household_id == household.id).limit(1)
@@ -298,7 +280,7 @@ def test_active_cooking_log_late_evening_household_tz(
         recipe_id=recipe.id,
         household_id=household.id,
         cooked_by_member_id=member.id,
-        cooked_at=day_d.astimezone(timezone.utc),
+        cooked_at=day_d.astimezone(UTC),
         photo_paths=[],
         rating=None,
     )
@@ -336,14 +318,12 @@ def test_active_cooking_log_invalid_household_tz_falls_back_to_utc(
     with caplog.at_level(logging.WARNING, logger="app.routers.cooking_logs"):
         resp = client.get("/cooking-logs/active", headers=AUTH_HEADERS)
     assert resp.status_code == 200, resp.text
-    assert any(
-        "household_invalid_timezone" in r.message for r in caplog.records
-    ), [r.message for r in caplog.records]
+    assert any("household_invalid_timezone" in r.message for r in caplog.records), [
+        r.message for r in caplog.records
+    ]
 
 
-def test_start_cooking_409_uses_household_tz(
-    client: TestClient, db_session: Session
-) -> None:
+def test_start_cooking_409_uses_household_tz(client: TestClient, db_session: Session) -> None:
     """FIX-01 — the 409 guard in start_cooking shares the same household-tz
     boundary as /cooking-logs/active (D-17-09): same-day conflict, next-day
     free path.
@@ -360,7 +340,7 @@ def test_start_cooking_409_uses_household_tz(
         recipe_id=recipe.id,
         household_id=household.id,
         cooked_by_member_id=member.id,
-        cooked_at=day_d_late.astimezone(timezone.utc),
+        cooked_at=day_d_late.astimezone(UTC),
         photo_paths=[],
         rating=None,
     )

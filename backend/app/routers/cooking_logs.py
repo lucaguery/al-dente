@@ -36,10 +36,12 @@ mints short-lived signed URLs scoped to the log.
 
 Per Pattern 7: 409 Conflict if an unfinalized log already exists today.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import date as DateType, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from datetime import date as DateType
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -165,7 +167,7 @@ async def start_cooking(
         recipe_id=recipe_id,
         household_id=member.household_id,
         cooked_by_member_id=member.id,
-        cooked_at=datetime.now(timezone.utc),
+        cooked_at=datetime.now(UTC),
     )
     db.add(log_row)
     db.commit()
@@ -239,7 +241,7 @@ def list_cooking_logs(
     this endpoint does NOT use _household_today_in_tz / FIX-01's
     machinery.
     """
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = datetime.now(UTC) - timedelta(days=days)
     rows = db.scalars(
         select(CookingLog)
         .where(
@@ -457,9 +459,7 @@ async def upload_cooking_log_photo_endpoint(
             detail=f"file exceeds {MAX_BYTES} bytes",
         )
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="empty upload"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="empty upload")
 
     try:
         path = upload_cooking_log_photo(

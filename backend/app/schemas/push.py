@@ -7,9 +7,8 @@ Wire shape mirrors PushSubscription.toJSON() output from the browser:
   "expirationTime": null | number
 }
 """
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
@@ -24,7 +23,7 @@ class PushSubscriptionRequest(BaseModel):
 
     endpoint: str = Field(..., min_length=10, max_length=2048)
     keys: PushSubscriptionKeys
-    expirationTime: Optional[int] = None  # browser API uses camelCase here
+    expirationTime: int | None = None  # browser API uses camelCase here
 
 
 class PushSubscribeResponse(BaseModel):

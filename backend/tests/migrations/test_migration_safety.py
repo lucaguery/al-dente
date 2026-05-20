@@ -31,12 +31,12 @@ Known non-downgradeable revisions:
   still verified; the downgrade case is marked ``xfail`` so CI passes but the
   test exists in the suite for future awareness.
 """
+
 from __future__ import annotations
 
 import importlib.util
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest

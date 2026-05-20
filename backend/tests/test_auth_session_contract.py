@@ -19,6 +19,7 @@ Note: auth_session has no household-scoped resource lookup so there is no
 cross-household 404 case. The 4-test contract is adapted accordingly per
 Plan 38-03 "ROUT-02 auth_session" locked description.
 """
+
 from __future__ import annotations
 
 import os
@@ -49,9 +50,7 @@ def test_delete_session_unauthenticated_returns_200(
     assert resp2.json() == {"ok": True}
 
 
-def test_ws_token_with_bearer_returns_token(
-    client: TestClient, db_session: Session
-) -> None:
+def test_ws_token_with_bearer_returns_token(client: TestClient, db_session: Session) -> None:
     """ROUT-02 — GET /auth/ws-token with valid Bearer returns 200 + token.
 
     The returned token MUST match the seed member's auth_token (SEED_TOKEN),
@@ -66,9 +65,7 @@ def test_ws_token_with_bearer_returns_token(
     )
 
 
-def test_ws_token_without_auth_returns_401(
-    client: TestClient, db_session: Session
-) -> None:
+def test_ws_token_without_auth_returns_401(client: TestClient, db_session: Session) -> None:
     """ROUT-02 — GET /auth/ws-token with no Authorization header returns 401.
 
     current_member dependency raises 401 on missing credentials.

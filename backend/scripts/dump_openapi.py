@@ -15,7 +15,7 @@ any contributor can commit router changes without a full `.env` configured.
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -57,6 +57,7 @@ def _check_env() -> None:
 def _import_app():
     try:
         from app.main import app  # noqa: PLC0415
+
         return app
     except Exception as exc:
         print(f"[dump_openapi] FATAL: failed to import app.main: {exc}", file=sys.stderr)
@@ -76,9 +77,7 @@ def _deterministic_schema(schema: dict) -> dict:
         schema["tags"] = sorted(schema["tags"], key=lambda t: t.get("name", ""))
 
     if "components" in schema and "schemas" in schema["components"]:
-        schema["components"]["schemas"] = dict(
-            sorted(schema["components"]["schemas"].items())
-        )
+        schema["components"]["schemas"] = dict(sorted(schema["components"]["schemas"].items()))
 
     return schema
 
@@ -96,6 +95,7 @@ def _atomic_write(path: Path, content: str) -> None:
 # The heuristic errs on the side of marking routes as auth-required, which is
 # the safer default for this codebase. Routes explicitly in /auth/ are
 # session-management endpoints that are intentionally auth-free.
+
 
 def _is_auth_required(path: str, operation: dict) -> bool:  # noqa: ARG001
     if path == "/healthz":
@@ -122,12 +122,7 @@ def _generated_at_iso() -> str:
     within the same minute (e.g. CI race) without losing meaningful freshness
     info. If you want second-resolution, drop the ``replace(second=0)``.
     """
-    return (
-        datetime.now(timezone.utc)
-        .replace(second=0, microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(UTC).replace(second=0, microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _generate_markdown(schema: dict) -> str:

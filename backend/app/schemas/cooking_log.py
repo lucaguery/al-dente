@@ -1,8 +1,8 @@
 """Cooking-log schemas — Phase 3 (active log) + Phase 4 (finalization)."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -19,8 +19,8 @@ class CookingLogResponse(BaseModel):
     cooked_by_member_id: UUID
     cooked_at: datetime
     photo_paths: list[str] = Field(default_factory=list)
-    rating: Optional[LogRating] = None
-    notes: Optional[str] = None
+    rating: LogRating | None = None
+    notes: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -39,4 +39,4 @@ class CookingLogFinalizeRequest(BaseModel):
 
     photo_paths: list[str] = Field(default_factory=list, max_length=4)
     rating: LogRating  # required — Pydantic 422s on missing/null
-    notes: Optional[str] = Field(default=None, max_length=4000)
+    notes: str | None = Field(default=None, max_length=4000)

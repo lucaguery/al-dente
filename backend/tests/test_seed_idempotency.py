@@ -14,9 +14,10 @@ Requires the test DB stack to be up on port 5433 AND the env vars the seed's
 Without those, the seed sys.exits — that's the seed's own safety guard, NOT
 a test bug. CI / local dev should source `.env.test` before invoking pytest.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
@@ -30,31 +31,38 @@ from app.models.daily_shortlist import DailyShortlist
 from app.models.recipe import Recipe
 from app.models.vote import Vote
 
-
 TEST_HOUSEHOLD_ID: UUID = _id("household", "luca")
 
 
 def _snapshot_counts(db) -> dict[str, int]:
     """Per-table row counts scoped to the test household."""
-    recipes = db.scalar(
-        select(func.count(Recipe.id)).where(Recipe.household_id == TEST_HOUSEHOLD_ID)
-    ) or 0
-    cooking_logs = db.scalar(
-        select(func.count(CookingLog.id)).where(
-            CookingLog.household_id == TEST_HOUSEHOLD_ID
+    recipes = (
+        db.scalar(select(func.count(Recipe.id)).where(Recipe.household_id == TEST_HOUSEHOLD_ID))
+        or 0
+    )
+    cooking_logs = (
+        db.scalar(
+            select(func.count(CookingLog.id)).where(CookingLog.household_id == TEST_HOUSEHOLD_ID)
         )
-    ) or 0
-    shortlists = db.scalar(
-        select(func.count(DailyShortlist.id)).where(
-            DailyShortlist.household_id == TEST_HOUSEHOLD_ID
+        or 0
+    )
+    shortlists = (
+        db.scalar(
+            select(func.count(DailyShortlist.id)).where(
+                DailyShortlist.household_id == TEST_HOUSEHOLD_ID
+            )
         )
-    ) or 0
+        or 0
+    )
     # Vote has no household_id column; scope via shortlist_id -> daily_shortlists.
-    votes = db.scalar(
-        select(func.count(Vote.id))
-        .join(DailyShortlist, Vote.shortlist_id == DailyShortlist.id)
-        .where(DailyShortlist.household_id == TEST_HOUSEHOLD_ID)
-    ) or 0
+    votes = (
+        db.scalar(
+            select(func.count(Vote.id))
+            .join(DailyShortlist, Vote.shortlist_id == DailyShortlist.id)
+            .where(DailyShortlist.household_id == TEST_HOUSEHOLD_ID)
+        )
+        or 0
+    )
     return {
         "recipes": int(recipes),
         "cooking_logs": int(cooking_logs),
@@ -130,7 +138,7 @@ def test_seed_cross_day_no_duplicates(monkeypatch: pytest.MonkeyPatch) -> None:
     today for both runs, and the UUID no longer depends on it.
     """
     # ---- 1st run: day D ----
-    day_d = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+    day_d = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC)
 
     class _FrozenDateTime(datetime):
         @classmethod

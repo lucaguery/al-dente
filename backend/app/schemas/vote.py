@@ -3,6 +3,7 @@
 Critical: `member_id` is NEVER accepted from the request body — always
 derived server-side from `Depends(current_member)`. T-03-02-04 mitigation.
 """
+
 from __future__ import annotations
 
 from typing import Literal

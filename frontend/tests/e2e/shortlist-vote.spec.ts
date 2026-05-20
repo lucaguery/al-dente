@@ -44,7 +44,7 @@ test.describe('shortlist-vote', () => {
     ).toBeVisible();
   });
 
-  // eslint-disable-next-line playwright/no-skipped-test -- HomeDecide doesn't render all 5 chips simultaneously
+  // SKIP: HomeDecide doesn't render all 5 chips simultaneously
   test.fixme(
     'all 5 French vote-state labels render from seeded data',
     async ({ page }) => {
@@ -119,7 +119,7 @@ test.describe('shortlist-vote', () => {
     expect(SEEDED_MEMBER_LUCA).toBe('Luca');
   });
 
-  // eslint-disable-next-line playwright/no-skipped-test -- HomeDecide summary filters Rejeté out (intentional UX)
+  // SKIP: HomeDecide summary filters Rejeté out (intentional UX)
   test.fixme('seeded Rejeté state surfaces with Shawarma', async ({ page }) => {
     // The HomeDecide summary section intentionally filters out Rejeté
     // recipes (they're "off the table for tonight"). Shawarma + the

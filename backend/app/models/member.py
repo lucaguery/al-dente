@@ -41,4 +41,4 @@ class Member(Base):
         nullable=False,
     )
 
-    household: Mapped["Household"] = relationship(back_populates="members")  # noqa: F821
+    household: Mapped[Household] = relationship(back_populates="members")  # noqa: F821

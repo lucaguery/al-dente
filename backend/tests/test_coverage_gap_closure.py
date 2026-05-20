@@ -12,6 +12,7 @@ Focuses on the highest-statement-count uncovered gaps:
   - routers/recipes.py (various recipe detail/update/turn paths, photo-capture-turn)
   - app/db.py (get_db generator)
 """
+
 from __future__ import annotations
 
 import io
@@ -32,12 +33,14 @@ AUTH_COOKIE_NAME = "aldente_auth"
 # app/services/invite_codes.py
 # ===========================================================================
 
+
 class TestInviteCodes:
     """Covers _make_code (direct) and collision-retry RuntimeError path."""
 
     def test_make_code_format(self):
         """_make_code returns 6-char uppercase alphanumeric string."""
-        from app.services.invite_codes import _make_code, INVITE_CODE_ALPHABET, INVITE_CODE_LENGTH
+        from app.services.invite_codes import INVITE_CODE_ALPHABET, INVITE_CODE_LENGTH, _make_code
+
         code = _make_code()
         assert len(code) == INVITE_CODE_LENGTH
         assert all(c in INVITE_CODE_ALPHABET for c in code)
@@ -45,16 +48,21 @@ class TestInviteCodes:
     def test_generate_unique_invite_code_collision_raises(self, db_session: Session):
         """RuntimeError raised when all max_attempts codes collide."""
         from app.services.invite_codes import generate_unique_invite_code
+
         # Force every code to appear to already exist by making scalar always return a UUID
-        with patch("app.services.invite_codes._make_code", return_value="AAAAAA"), \
-             patch("app.services.invite_codes.db") if False else \
-             patch.object(db_session, "scalar", return_value=uuid.uuid4()):
+        with (
+            patch("app.services.invite_codes._make_code", return_value="AAAAAA"),
+            patch("app.services.invite_codes.db")
+            if False
+            else patch.object(db_session, "scalar", return_value=uuid.uuid4()),
+        ):
             with pytest.raises(RuntimeError, match="invite-code collision retries exhausted"):
                 generate_unique_invite_code(db_session, max_attempts=3)
 
     def test_generate_unique_invite_code_success(self, db_session: Session):
         """Returns a code when no collision."""
         from app.services.invite_codes import generate_unique_invite_code
+
         code = generate_unique_invite_code(db_session)
         assert len(code) == 6
         assert code.isupper() or code.isalnum()
@@ -64,12 +72,14 @@ class TestInviteCodes:
 # app/schemas/recipe_turn.py — AnswerTurnPayload validators
 # ===========================================================================
 
+
 class TestAnswerTurnPayloadValidation:
     """Covers the _validate_value_for_field branches in AnswerTurnPayload."""
 
     def _make_answer(self, field: str, value):
         """Build a raw dict for AnswerTurnPayload construction."""
         from app.schemas.recipe_turn import AnswerTurnPayload
+
         return AnswerTurnPayload(
             kind="answer",
             in_reply_to_turn_id=uuid.uuid4(),
@@ -80,6 +90,7 @@ class TestAnswerTurnPayloadValidation:
     def _raises(self, field: str, value):
         """Assert ValidationError raised for invalid input."""
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             self._make_answer(field, value)
 
@@ -197,6 +208,7 @@ class TestAnswerTurnPayloadValidation:
 # routers/households.py — gap-closure
 # ===========================================================================
 
+
 class TestHouseholdsRouterGaps:
     """Targets the uncovered branches in households.py."""
 
@@ -223,11 +235,14 @@ class TestHouseholdsRouterGaps:
 
         Uses a valid color_hex from the locked palette to avoid Pydantic 422.
         """
-        r = client.post("/households/join", json={
-            "invite_code": "BADCOD",
-            "member_name": "Ghost",
-            "color_hex": "#F43F5E",  # valid locked-palette color
-        })
+        r = client.post(
+            "/households/join",
+            json={
+                "invite_code": "BADCOD",
+                "member_name": "Ghost",
+                "color_hex": "#F43F5E",  # valid locked-palette color
+            },
+        )
         assert r.status_code == 404
 
     def test_get_me(self, client: TestClient):
@@ -243,11 +258,14 @@ class TestHouseholdsRouterGaps:
     def test_idempotent_rejoin(self, client: TestClient):
         """POST /households/join with existing member name returns existing auth token."""
         # "Luca" is the seeded member name for SEED_TOKEN
-        r = client.post("/households/join", json={
-            "invite_code": "TEST01",
-            "member_name": "Luca",
-            "color_hex": "#F43F5E",
-        })
+        r = client.post(
+            "/households/join",
+            json={
+                "invite_code": "TEST01",
+                "member_name": "Luca",
+                "color_hex": "#F43F5E",
+            },
+        )
         assert r.status_code == 201
         data = r.json()
         assert data["auth_token"] == SEED_TOKEN
@@ -256,6 +274,7 @@ class TestHouseholdsRouterGaps:
 # ===========================================================================
 # routers/shortlist.py — regenerate and delegate
 # ===========================================================================
+
 
 class TestShortlistRouterGaps:
     """Covers the regenerate and delegate endpoints."""
@@ -282,6 +301,7 @@ class TestShortlistRouterGaps:
     def test_delegate_all_votes(self, client: TestClient, db_session: Session):
         """POST /shortlists/{id}/delegate bulk-casts yes for all recipes."""
         from sqlalchemy import select
+
         from app.models.daily_shortlist import DailyShortlist
 
         shortlist = db_session.scalar(select(DailyShortlist))
@@ -316,6 +336,7 @@ class TestShortlistRouterGaps:
 # routers/cooking_logs.py — photo upload and photo-url
 # ===========================================================================
 
+
 class TestCookingLogsGaps:
     """Covers photo-related cooking log endpoints and history endpoints."""
 
@@ -347,7 +368,9 @@ class TestCookingLogsGaps:
     def test_get_cooking_log_cross_household(self, client: TestClient, db_session: Session):
         """GET /cooking-logs/{id} returns 404 for cross-household log."""
         from sqlalchemy import select
+
         from app.models.cooking_log import CookingLog
+
         # Get a cooking log id (any from seed)
         log = db_session.scalar(select(CookingLog))
         if log is None:
@@ -381,7 +404,9 @@ class TestCookingLogsGaps:
     def test_upload_cooking_log_photo_empty_file(self, client: TestClient, db_session: Session):
         """POST /cooking-logs/{id}/photos returns 400 for empty upload."""
         from sqlalchemy import select
+
         from app.models.cooking_log import CookingLog
+
         log = db_session.scalar(select(CookingLog))
         if log is None:
             pytest.skip("No cooking log in seed")
@@ -405,13 +430,16 @@ class TestCookingLogsGaps:
 # routers/recipes.py — detail/update/turn paths
 # ===========================================================================
 
+
 class TestRecipesRouterGaps:
     """Covers recipe detail, update, voice-modify, and turn endpoints."""
 
     def test_get_recipe_detail(self, client: TestClient, db_session: Session):
         """GET /recipes/{id} returns recipe detail."""
         from sqlalchemy import select
+
         from app.models.recipe import Recipe
+
         recipe = db_session.scalar(select(Recipe).where(Recipe.status == "structured"))
         if recipe is None:
             pytest.skip("No structured recipe in seed")
@@ -449,7 +477,8 @@ class TestRecipesRouterGaps:
     def test_get_recipe_turns_empty(self, client: TestClient):
         """GET /recipes/{id}/turns returns empty list for new recipe."""
         r_create = client.post(
-            "/recipes", json={},
+            "/recipes",
+            json={},
             cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
         )
         assert r_create.status_code == 201
@@ -464,7 +493,9 @@ class TestRecipesRouterGaps:
     def test_update_recipe(self, client: TestClient, db_session: Session):
         """PUT /recipes/{id} updates a recipe."""
         from sqlalchemy import select
+
         from app.models.recipe import Recipe
+
         recipe = db_session.scalar(select(Recipe).where(Recipe.status == "structured"))
         if recipe is None:
             pytest.skip("No structured recipe in seed")
@@ -479,7 +510,8 @@ class TestRecipesRouterGaps:
         """DELETE /recipes/{id} removes the recipe."""
         # Create a new blank recipe to delete
         r_create = client.post(
-            "/recipes", json={},
+            "/recipes",
+            json={},
             cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
         )
         assert r_create.status_code == 201
@@ -493,7 +525,8 @@ class TestRecipesRouterGaps:
     def test_promote_recipe_no_turn_422(self, client: TestClient):
         """POST /recipes/{id}/promote returns 422 if no position-0 user turn."""
         r_create = client.post(
-            "/recipes", json={},
+            "/recipes",
+            json={},
             cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
         )
         assert r_create.status_code == 201
@@ -507,7 +540,8 @@ class TestRecipesRouterGaps:
     def test_get_turns_for_recipe(self, client: TestClient):
         """GET /recipes/{id}/turns returns turns after posting one."""
         r_create = client.post(
-            "/recipes", json={},
+            "/recipes",
+            json={},
             cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
         )
         recipe_id = r_create.json()["id"]
@@ -535,7 +569,8 @@ class TestRecipesRouterGaps:
     def test_create_voice_turn(self, client: TestClient):
         """POST /recipes/{id}/turns with kind=voice creates a voice turn."""
         r_create = client.post(
-            "/recipes", json={},
+            "/recipes",
+            json={},
             cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
         )
         recipe_id = r_create.json()["id"]
@@ -550,7 +585,8 @@ class TestRecipesRouterGaps:
     def test_create_url_turn(self, client: TestClient):
         """POST /recipes/{id}/turns with kind=url creates a url turn."""
         r_create = client.post(
-            "/recipes", json={},
+            "/recipes",
+            json={},
             cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
         )
         recipe_id = r_create.json()["id"]
@@ -564,7 +600,8 @@ class TestRecipesRouterGaps:
     def test_photo_turn_rejects_via_turns_endpoint(self, client: TestClient):
         """POST /recipes/{id}/turns with kind=photo returns 422 (use /turns/photo)."""
         r_create = client.post(
-            "/recipes", json={},
+            "/recipes",
+            json={},
             cookies={AUTH_COOKIE_NAME: SEED_TOKEN},
         )
         recipe_id = r_create.json()["id"]
@@ -580,9 +617,11 @@ class TestRecipesRouterGaps:
 # app/db.py — get_db generator
 # ===========================================================================
 
+
 def test_get_db_yields_session():
     """get_db yields a Session and closes it."""
-    from app.db import get_db, SessionLocal
+    from app.db import get_db
+
     gen = get_db()
     session = next(gen)
     assert session is not None
@@ -596,16 +635,20 @@ def test_get_db_yields_session():
 # app/schemas/household.py — schema validation
 # ===========================================================================
 
+
 class TestHouseholdSchemas:
     """Covers HouseholdPublic, HouseholdPreview schema edges."""
 
     def test_join_request_invalid_color(self, client: TestClient):
         """POST /households/join with invalid color returns 422 (Pydantic validation)."""
-        r = client.post("/households/join", json={
-            "invite_code": "TEST01",
-            "member_name": "Nouveau",
-            "color_hex": "#FFFFFF",  # not in locked palette
-        })
+        r = client.post(
+            "/households/join",
+            json={
+                "invite_code": "TEST01",
+                "member_name": "Nouveau",
+                "color_hex": "#FFFFFF",  # not in locked palette
+            },
+        )
         # 422 from Pydantic color validation OR 409 color taken
         assert r.status_code in (409, 422)
 
@@ -614,12 +657,15 @@ class TestHouseholdSchemas:
 # app/services/realtime.py — registry operations
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_realtime_registry_register_unregister():
     """RealtimeRegistry register/unregister cycle."""
-    from app.services.realtime import RealtimeRegistry
     from unittest.mock import MagicMock
+
     from starlette.websockets import WebSocketState
+
+    from app.services.realtime import RealtimeRegistry
 
     registry = RealtimeRegistry()
     hh_id = uuid.uuid4()
@@ -638,6 +684,7 @@ async def test_realtime_registry_register_unregister():
 async def test_realtime_broadcast_no_connected_peers():
     """broadcast_to_household with no peers is a no-op."""
     from app.services.realtime import broadcast_to_household
+
     # Should not raise even with no registered peers
     await broadcast_to_household(uuid.uuid4(), "test.event", {"x": 1})
 
@@ -645,6 +692,7 @@ async def test_realtime_broadcast_no_connected_peers():
 # ===========================================================================
 # app/main.py — healthz endpoint
 # ===========================================================================
+
 
 def test_healthz(client: TestClient):
     """GET /healthz returns 200 with status: ok."""
@@ -657,57 +705,67 @@ def test_healthz(client: TestClient):
 # app/services/storage.py — detect_mime_and_ext (pure Python, no Supabase)
 # ===========================================================================
 
+
 class TestDetectMimeAndExt:
     """Covers the detect_mime_and_ext function (magic byte sniffing)."""
 
     def test_jpeg_detection(self):
         from app.services.storage import detect_mime_and_ext
+
         content = b"\xff\xd8\xff" + b"\x00" * 100
         result = detect_mime_and_ext(content)
         assert result == ("image/jpeg", "jpg")
 
     def test_png_detection(self):
         from app.services.storage import detect_mime_and_ext
+
         content = b"\x89PNG\r\n\x1a\n" + b"\x00" * 100
         result = detect_mime_and_ext(content)
         assert result == ("image/png", "png")
 
     def test_webp_detection(self):
         from app.services.storage import detect_mime_and_ext
+
         content = b"RIFF" + b"\x00\x00\x00\x00" + b"WEBP" + b"\x00" * 100
         result = detect_mime_and_ext(content)
         assert result == ("image/webp", "webp")
 
     def test_heic_detection(self):
         from app.services.storage import detect_mime_and_ext
+
         content = b"\x00\x00\x00\x00" + b"ftyp" + b"heic" + b"\x00" * 100
         result = detect_mime_and_ext(content)
         assert result == ("image/heic", "heic")
 
     def test_avif_detection(self):
         from app.services.storage import detect_mime_and_ext
+
         content = b"\x00\x00\x00\x00" + b"ftyp" + b"avif" + b"\x00" * 100
         result = detect_mime_and_ext(content)
         assert result == ("image/avif", "avif")
 
     def test_empty_content_returns_none(self):
         from app.services.storage import detect_mime_and_ext
+
         result = detect_mime_and_ext(b"")
         assert result is None
 
     def test_unknown_content_returns_none(self):
         from app.services.storage import detect_mime_and_ext
+
         result = detect_mime_and_ext(b"unknown format bytes here")
         assert result is None
 
     def test_heif_variant_detection(self):
         from app.services.storage import detect_mime_and_ext
+
         content = b"\x00\x00\x00\x00" + b"ftyp" + b"mif1" + b"\x00" * 100
         result = detect_mime_and_ext(content)
         assert result == ("image/heic", "heic")
 
     def test_storage_object_not_found_exception(self):
         from app.services.storage import StorageObjectNotFound
+
         exc = StorageObjectNotFound("some/path")
         assert exc.path == "some/path"
         assert "some/path" in str(exc)
@@ -717,16 +775,20 @@ class TestDetectMimeAndExt:
 # app/routers/households.py — create and join success paths
 # ===========================================================================
 
+
 class TestHouseholdsCreateAndJoin:
     """Covers the create household and join success paths."""
 
     def test_create_household(self, client: TestClient):
         """POST /households creates a new household + member."""
-        r = client.post("/households", json={
-            "household_name": "Foyer Test Gap",
-            "member_name": "Alice",
-            "color_hex": "#F43F5E",
-        })
+        r = client.post(
+            "/households",
+            json={
+                "household_name": "Foyer Test Gap",
+                "member_name": "Alice",
+                "color_hex": "#F43F5E",
+            },
+        )
         assert r.status_code == 201
         data = r.json()
         assert "household_id" in data
@@ -736,20 +798,26 @@ class TestHouseholdsCreateAndJoin:
     def test_join_household_success(self, client: TestClient):
         """POST /households/join creates a new member in an existing household."""
         # Create a fresh household first
-        r_create = client.post("/households", json={
-            "household_name": "Foyer Join Test",
-            "member_name": "Bob",
-            "color_hex": "#F43F5E",
-        })
+        r_create = client.post(
+            "/households",
+            json={
+                "household_name": "Foyer Join Test",
+                "member_name": "Bob",
+                "color_hex": "#F43F5E",
+            },
+        )
         assert r_create.status_code == 201
         invite_code = r_create.json()["invite_code"]
 
         # Join with a different color
-        r_join = client.post("/households/join", json={
-            "invite_code": invite_code,
-            "member_name": "Carol",
-            "color_hex": "#F59E0B",
-        })
+        r_join = client.post(
+            "/households/join",
+            json={
+                "invite_code": invite_code,
+                "member_name": "Carol",
+                "color_hex": "#F59E0B",
+            },
+        )
         assert r_join.status_code == 201
         data = r_join.json()
         assert "auth_token" in data
@@ -757,19 +825,25 @@ class TestHouseholdsCreateAndJoin:
     def test_join_color_already_taken(self, client: TestClient):
         """POST /households/join returns 409 when color is taken."""
         # Create household with a member using #F43F5E
-        r_create = client.post("/households", json={
-            "household_name": "Foyer Color Test",
-            "member_name": "Dave",
-            "color_hex": "#F43F5E",
-        })
+        r_create = client.post(
+            "/households",
+            json={
+                "household_name": "Foyer Color Test",
+                "member_name": "Dave",
+                "color_hex": "#F43F5E",
+            },
+        )
         invite_code = r_create.json()["invite_code"]
 
         # Try to join with the same color
-        r_join = client.post("/households/join", json={
-            "invite_code": invite_code,
-            "member_name": "Eve",
-            "color_hex": "#F43F5E",  # same as Dave
-        })
+        r_join = client.post(
+            "/households/join",
+            json={
+                "invite_code": invite_code,
+                "member_name": "Eve",
+                "color_hex": "#F43F5E",  # same as Dave
+            },
+        )
         assert r_join.status_code == 409
 
     def test_patch_member_name(self, client: TestClient):
@@ -787,12 +861,15 @@ class TestHouseholdsCreateAndJoin:
 # app/services/realtime.py — broadcast failure paths (dead socket cleanup)
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_realtime_broadcast_dead_socket():
     """broadcast_to_household silently removes dead sockets on send failure."""
-    from app.services.realtime import RealtimeRegistry
     from unittest.mock import AsyncMock, MagicMock
+
     from starlette.websockets import WebSocketState
+
+    from app.services.realtime import RealtimeRegistry
 
     registry = RealtimeRegistry()
     hh_id = uuid.uuid4()
@@ -812,9 +889,11 @@ async def test_realtime_broadcast_dead_socket():
 @pytest.mark.asyncio
 async def test_realtime_broadcast_disconnected_socket():
     """broadcast_to_household skips and unregisters non-CONNECTED sockets."""
-    from app.services.realtime import RealtimeRegistry
     from unittest.mock import MagicMock
+
     from starlette.websockets import WebSocketState
+
+    from app.services.realtime import RealtimeRegistry
 
     registry = RealtimeRegistry()
     hh_id = uuid.uuid4()
@@ -832,13 +911,16 @@ async def test_realtime_broadcast_disconnected_socket():
 # app/routers/cooking_logs.py — photo upload error paths
 # ===========================================================================
 
+
 class TestCookingLogsPhotoErrors:
     """Additional cooking log photo upload error paths."""
 
     def test_cooking_log_photo_url_path_not_found(self, client: TestClient, db_session: Session):
         """GET /cooking-logs/{id}/photo-url returns 404 when path not in log."""
         from sqlalchemy import select
+
         from app.models.cooking_log import CookingLog
+
         log = db_session.scalar(select(CookingLog))
         if log is None:
             pytest.skip("No cooking log in seed")
@@ -852,11 +934,11 @@ class TestCookingLogsPhotoErrors:
     def test_finalize_already_finalized_log(self, client: TestClient, db_session: Session):
         """PUT /cooking-logs/{id} on already-finalized log returns 200 (idempotent)."""
         from sqlalchemy import select
+
         from app.models.cooking_log import CookingLog
+
         # Find a finalized log (rating is not None)
-        log = db_session.scalar(
-            select(CookingLog).where(CookingLog.rating.is_not(None))
-        )
+        log = db_session.scalar(select(CookingLog).where(CookingLog.rating.is_not(None)))
         if log is None:
             pytest.skip("No finalized log in seed")
         r = client.put(
@@ -878,6 +960,7 @@ class TestCookingLogsPhotoErrors:
 # ===========================================================================
 # app/routers/recipes.py — photo upload + voice-modify error paths
 # ===========================================================================
+
 
 class TestRecipesPhotoAndVoice:
     """Covers recipe photo upload + voice-modify error paths."""
@@ -914,19 +997,23 @@ class TestRecipesPhotoAndVoice:
 # app/services/llm.py — stub/error path coverage via test fixtures
 # ===========================================================================
 
+
 class TestLLMServicePaths:
     """Covers llm.py paths reachable without live Gemini API."""
 
     def test_promote_draft_missing_recipe(self, db_session: Session):
         """promote_draft no-ops gracefully when recipe doesn't exist."""
         from app.services.llm import promote_draft
+
         # Call with a non-existent recipe_id — should not raise
         promote_draft(uuid.uuid4())
 
     def test_retry_promotion_non_failed_recipe(self, client: TestClient, db_session: Session):
         """POST /recipes/{id}/retry-promotion on structured recipe is 202 no-op."""
         from sqlalchemy import select
+
         from app.models.recipe import Recipe
+
         recipe = db_session.scalar(select(Recipe).where(Recipe.status == "structured"))
         if recipe is None:
             pytest.skip("No structured recipe in seed")
@@ -943,6 +1030,7 @@ class TestLLMServicePaths:
 #                          + _supabase() error path
 #                          + upload_recipe_photo non-test (oversize / unsupported)
 # ===========================================================================
+
 
 class TestStorageService:
     """Coverage for services/storage.py branches not exercised in test-mode short-circuits."""
@@ -1071,9 +1159,7 @@ class TestStorageService:
         from app.services.storage import StorageObjectNotFound, create_signed_photo_url
 
         mock_client = MagicMock()
-        mock_client.storage.from_().create_signed_url.return_value = {
-            "error": "Object not found"
-        }
+        mock_client.storage.from_().create_signed_url.return_value = {"error": "Object not found"}
         with patch("app.services.storage._supabase", return_value=mock_client):
             with pytest.raises(StorageObjectNotFound):
                 create_signed_photo_url("missing/path.jpg")
@@ -1172,7 +1258,7 @@ class TestStorageService:
     def test_upload_recipe_photo_success_mocked(self):
         """upload_recipe_photo uploads via Supabase client in prod-mode and returns path."""
         import app.services.storage as storage_mod
-        from app.services.storage import BUCKET, upload_recipe_photo
+        from app.services.storage import upload_recipe_photo
 
         original_env = storage_mod.settings.environment
         hh_id = uuid.uuid4()
@@ -1197,6 +1283,7 @@ class TestStorageService:
     def test_ensure_url_bucket_exists_test_mode_noop(self):
         """ensure_url_bucket_exists returns early in test mode (no Supabase call)."""
         from app.services.storage import ensure_url_bucket_exists
+
         # In ENVIRONMENT=test this is a no-op; should not raise
         ensure_url_bucket_exists()
 
@@ -1291,13 +1378,14 @@ class TestStorageService:
 # app/services/push.py — fan-out with mocked webpush
 # ===========================================================================
 
+
 class TestPushService:
     """Coverage for services/push.py send_push_to_household fan-out paths."""
 
     def test_send_push_no_vapid_config_skips(self, db_session):
         """send_push_to_household skips when VAPID env vars are missing."""
-        from app.services.push import send_push_to_household
         import app.services.push as push_mod
+        from app.services.push import send_push_to_household
 
         original_pk = push_mod.settings.vapid_private_key
         original_email = push_mod.settings.vapid_email
@@ -1312,8 +1400,8 @@ class TestPushService:
 
     def test_send_push_no_subscriptions_skips(self, db_session):
         """send_push_to_household logs and returns when no subscriptions exist."""
-        from app.services.push import send_push_to_household
         import app.services.push as push_mod
+        from app.services.push import send_push_to_household
 
         original_pk = push_mod.settings.vapid_private_key
         original_email = push_mod.settings.vapid_email
@@ -1329,11 +1417,12 @@ class TestPushService:
 
     def test_send_push_delivered_success(self, db_session):
         """send_push_to_household delivers when webpush succeeds."""
-        from app.services.push import send_push_to_household
-        from app.models.push_subscription import PushSubscription
-        from app.models.member import Member
         from sqlalchemy import select
+
         import app.services.push as push_mod
+        from app.models.member import Member
+        from app.models.push_subscription import PushSubscription
+        from app.services.push import send_push_to_household
 
         member = db_session.scalar(select(Member))
         if member is None:
@@ -1369,11 +1458,12 @@ class TestPushService:
 
     def test_send_push_404_cleans_subscription(self, db_session):
         """send_push_to_household deletes sub on 404/410 WebPushException."""
-        from app.services.push import send_push_to_household
-        from app.models.push_subscription import PushSubscription
-        from app.models.member import Member
         from sqlalchemy import select
+
         import app.services.push as push_mod
+        from app.models.member import Member
+        from app.models.push_subscription import PushSubscription
+        from app.services.push import send_push_to_household
 
         member = db_session.scalar(select(Member))
         if member is None:
@@ -1396,6 +1486,7 @@ class TestPushService:
             push_mod.settings.vapid_email = "test@example.com"
 
             from pywebpush import WebPushException  # type: ignore[import-not-found]
+
             exc = WebPushException("410 gone")
             mock_response = MagicMock()
             mock_response.status_code = 410
@@ -1418,11 +1509,12 @@ class TestPushService:
 
     def test_send_push_unexpected_exception_swallowed(self, db_session):
         """send_push_to_household swallows unexpected exceptions per-subscription."""
-        from app.services.push import send_push_to_household
-        from app.models.push_subscription import PushSubscription
-        from app.models.member import Member
         from sqlalchemy import select
+
         import app.services.push as push_mod
+        from app.models.member import Member
+        from app.models.push_subscription import PushSubscription
+        from app.services.push import send_push_to_household
 
         member = db_session.scalar(select(Member))
         if member is None:
@@ -1457,11 +1549,12 @@ class TestPushService:
 
     def test_send_test_to_member_no_vapid(self, db_session):
         """send_test_to_member returns (0,0) when VAPID env vars missing."""
-        from app.services.push import send_test_to_member
-        import app.services.push as push_mod
-
-        from app.models.member import Member
         from sqlalchemy import select
+
+        import app.services.push as push_mod
+        from app.models.member import Member
+        from app.services.push import send_test_to_member
+
         member = db_session.scalar(select(Member))
         if member is None:
             pytest.skip("No member in seed")
@@ -1479,8 +1572,8 @@ class TestPushService:
 
     def test_send_test_to_member_no_subs(self, db_session):
         """send_test_to_member returns (0,0) when member has no subscriptions."""
-        from app.services.push import send_test_to_member
         import app.services.push as push_mod
+        from app.services.push import send_test_to_member
 
         original_pk = push_mod.settings.vapid_private_key
         original_email = push_mod.settings.vapid_email
@@ -1498,20 +1591,18 @@ class TestPushService:
 # app/routers/cooking_logs.py — photo_paths subset check (line 295-296)
 # ===========================================================================
 
+
 class TestCookingLogFinalizationSubsetCheck:
     """PUT /cooking-logs/{id} photo_paths subset validation."""
 
-    def test_finalize_photo_paths_not_subset_returns_422(
-        self, client: TestClient, db_session
-    ):
+    def test_finalize_photo_paths_not_subset_returns_422(self, client: TestClient, db_session):
         """PUT /cooking-logs/{id} returns 422 when photo_paths has a path not uploaded to this log."""
         from sqlalchemy import select
+
         from app.models.cooking_log import CookingLog
 
         # Find an unfinalized log (rating IS NULL)
-        log_row = db_session.scalar(
-            select(CookingLog).where(CookingLog.rating.is_(None))
-        )
+        log_row = db_session.scalar(select(CookingLog).where(CookingLog.rating.is_(None)))
         if log_row is None:
             pytest.skip("No unfinalized log in seed")
 
@@ -1532,17 +1623,17 @@ class TestCookingLogFinalizationSubsetCheck:
 # app/routers/cooking_logs.py — photo upload (lines 464-488)
 # ===========================================================================
 
+
 class TestCookingLogPhotoUpload:
     """POST /cooking-logs/{id}/photos endpoint coverage."""
 
     def test_upload_photo_to_active_log(self, client: TestClient, db_session):
         """POST /cooking-logs/{id}/photos uploads a photo and returns updated log."""
         from sqlalchemy import select
+
         from app.models.cooking_log import CookingLog
 
-        log_row = db_session.scalar(
-            select(CookingLog).where(CookingLog.rating.is_(None))
-        )
+        log_row = db_session.scalar(select(CookingLog).where(CookingLog.rating.is_(None)))
         if log_row is None:
             pytest.skip("No unfinalized log in seed")
 
@@ -1558,11 +1649,10 @@ class TestCookingLogPhotoUpload:
     def test_upload_photo_empty_file_returns_400(self, client: TestClient, db_session):
         """POST /cooking-logs/{id}/photos with empty file returns 400."""
         from sqlalchemy import select
+
         from app.models.cooking_log import CookingLog
 
-        log_row = db_session.scalar(
-            select(CookingLog).where(CookingLog.rating.is_(None))
-        )
+        log_row = db_session.scalar(select(CookingLog).where(CookingLog.rating.is_(None)))
         if log_row is None:
             pytest.skip("No unfinalized log in seed")
 
@@ -1587,6 +1677,7 @@ class TestCookingLogPhotoUpload:
 # ===========================================================================
 # app/routers/recipes.py lines 213-219 — list_recipes filter branches
 # ===========================================================================
+
 
 class TestListRecipesFilters:
     """GET /recipes filter parameter branches."""
@@ -1633,6 +1724,7 @@ class TestListRecipesFilters:
 # app/routers/recipes.py lines 406, 458-472 — update recipe branches
 # ===========================================================================
 
+
 class TestRecipeUpdate:
     """PUT /recipes/{id} update endpoint branches."""
 
@@ -1648,6 +1740,7 @@ class TestRecipeUpdate:
     def test_update_recipe_cuisine_field(self, client: TestClient, db_session):
         """PUT /recipes/{id} with cuisine field updates successfully."""
         from sqlalchemy import select
+
         from app.models.recipe import Recipe
 
         recipe = db_session.scalar(select(Recipe))
@@ -1664,6 +1757,7 @@ class TestRecipeUpdate:
     def test_update_recipe_invalid_cuisine_422(self, client: TestClient, db_session):
         """PUT /recipes/{id} with invalid cuisine returns 422."""
         from sqlalchemy import select
+
         from app.models.recipe import Recipe
 
         recipe = db_session.scalar(select(Recipe))
@@ -1682,6 +1776,7 @@ class TestRecipeUpdate:
 # app/routers/recipes.py line 679, 691-692 — defer questions endpoint
 # ===========================================================================
 
+
 class TestRecipeDeferQuestions:
     """POST /recipes/{id}/questions/defer endpoint."""
 
@@ -1696,6 +1791,7 @@ class TestRecipeDeferQuestions:
     def test_defer_questions_success(self, client: TestClient, db_session):
         """POST /recipes/{id}/questions/defer returns 204 for own recipe."""
         from sqlalchemy import select
+
         from app.models.recipe import Recipe
 
         recipe = db_session.scalar(select(Recipe))
@@ -1713,6 +1809,7 @@ class TestRecipeDeferQuestions:
 # app/routers/recipes.py line 813 — promote 400 no-turns case
 # ===========================================================================
 
+
 class TestRecipePromotionNoCaptureDetails:
     """POST /recipes/{id}/promote 400 when first turn is an 'answer' kind."""
 
@@ -1727,6 +1824,7 @@ class TestRecipePromotionNoCaptureDetails:
     def test_promote_already_structured_recipe(self, client: TestClient, db_session):
         """POST /recipes/{id}/promote on structured recipe returns 202."""
         from sqlalchemy import select
+
         from app.models.recipe import Recipe
 
         recipe = db_session.scalar(select(Recipe).where(Recipe.status == "structured"))
@@ -1754,6 +1852,7 @@ class TestRecipePromotionNoCaptureDetails:
     def test_get_recipe_by_id(self, client: TestClient, db_session):
         """GET /recipes/{id} returns recipe detail for own household."""
         from sqlalchemy import select
+
         from app.models.recipe import Recipe
 
         recipe = db_session.scalar(select(Recipe))
@@ -1778,13 +1877,15 @@ class TestRecipePromotionNoCaptureDetails:
 # app/services/llm_fixtures.py — fixture branches
 # ===========================================================================
 
+
 class TestLLMFixturesService:
     """Coverage for services/llm_fixtures.py branches."""
 
     def test_canned_thread_extract_returns_recipe(self):
         """canned_thread_extract returns a GeminiExtractedRecipe for normal turns."""
-        from app.services.llm_fixtures import canned_thread_extract
         from unittest.mock import MagicMock
+
+        from app.services.llm_fixtures import canned_thread_extract
 
         turn = MagicMock()
         turn.kind = "text"
@@ -1795,8 +1896,9 @@ class TestLLMFixturesService:
 
     def test_canned_thread_extract_force_fail_text(self):
         """canned_thread_extract raises on __TEST_FORCE_FAIL__ prefix in text turn."""
-        from app.services.llm_fixtures import canned_thread_extract, _FORCE_FAIL_PREFIX
         from unittest.mock import MagicMock
+
+        from app.services.llm_fixtures import _FORCE_FAIL_PREFIX, canned_thread_extract
 
         turn = MagicMock()
         turn.kind = "text"
@@ -1806,8 +1908,9 @@ class TestLLMFixturesService:
 
     def test_canned_thread_extract_force_fail_voice(self):
         """canned_thread_extract raises on __TEST_FORCE_FAIL__ prefix in voice turn."""
-        from app.services.llm_fixtures import canned_thread_extract, _FORCE_FAIL_PREFIX
         from unittest.mock import MagicMock
+
+        from app.services.llm_fixtures import _FORCE_FAIL_PREFIX, canned_thread_extract
 
         turn = MagicMock()
         turn.kind = "voice"
@@ -1824,7 +1927,7 @@ class TestLLMFixturesService:
 
     def test_canned_rewritten_title_force_fail(self):
         """canned_rewritten_title raises on __TEST_FORCE_FAIL__ prefix."""
-        from app.services.llm_fixtures import canned_rewritten_title, _FORCE_FAIL_PREFIX
+        from app.services.llm_fixtures import _FORCE_FAIL_PREFIX, canned_rewritten_title
 
         with pytest.raises(RuntimeError):
             canned_rewritten_title(f"{_FORCE_FAIL_PREFIX} force fail")
@@ -1852,7 +1955,7 @@ class TestLLMFixturesService:
 
     def test_canned_url_extract_force_fail(self):
         """canned_url_extract raises on __TEST_FORCE_FAIL_URL__ prefix."""
-        from app.services.llm_fixtures import canned_url_extract, _FORCE_FAIL_URL_PREFIX
+        from app.services.llm_fixtures import _FORCE_FAIL_URL_PREFIX, canned_url_extract
 
         with pytest.raises(RuntimeError):
             canned_url_extract(f"{_FORCE_FAIL_URL_PREFIX}/recipe")

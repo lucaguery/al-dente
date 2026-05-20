@@ -160,6 +160,8 @@ export default function RecipesPage() {
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem("aldente.library.view");
+      // TODO(productize): refactor to lazy-init useState to avoid effect-driven render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored === "list" || stored === "patina") setView(stored);
     } catch {
       /* localStorage may throw in private-mode Safari; degrade silently */

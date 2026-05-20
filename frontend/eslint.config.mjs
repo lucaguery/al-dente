@@ -18,7 +18,23 @@ const eslintConfig = defineConfig([
     "public/workbox-*.js",
     "public/fallback-*.js",
     "public/swe-worker-*.js",
+    "public/worker-*.js",
   ]),
+  {
+    // Honor the `_`-prefix convention: identifiers starting with `_` are
+    // intentionally unused (destructured-but-skipped, partially-applied props).
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

@@ -60,6 +60,4 @@ class Vote(Base):
         nullable=False,
     )
 
-    __table_args__ = (
-        Index("idx_votes_shortlist", "shortlist_id"),
-    )
+    __table_args__ = (Index("idx_votes_shortlist", "shortlist_id"),)

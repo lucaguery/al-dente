@@ -20,7 +20,7 @@ test.describe('capture-url', () => {
     expect(typeof draft.id).toBe('string');
   });
 
-  // eslint-disable-next-line playwright/no-skipped-test -- backend promotion deferred per TODO(productize)
+  // SKIP: backend promotion deferred per TODO(productize)
   test.fixme(
     'url draft promotes to structured via canned LLM stub',
     async () => {

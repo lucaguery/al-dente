@@ -31,7 +31,6 @@ from app.models.member import Member
 from app.schemas.household import (
     CreateHouseholdRequest,
     HouseholdPreview,
-    HouseholdPublic,
     JoinHouseholdRequest,
     OnboardingResponse,
     SessionResponse,
@@ -98,17 +97,13 @@ def household_preview(
     schema deliberately omits member names).
     """
     normalized = code.strip().upper()
-    household = db.scalar(
-        select(Household).where(Household.invite_code == normalized)
-    )
+    household = db.scalar(select(Household).where(Household.invite_code == normalized))
     if household is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="invite_code not found",
         )
-    members = db.scalars(
-        select(Member).where(Member.household_id == household.id)
-    ).all()
+    members = db.scalars(select(Member).where(Member.household_id == household.id)).all()
     return HouseholdPreview(
         household_name=household.name,
         taken_colors=[m.color_hex for m in members],
@@ -139,9 +134,7 @@ def join_household(
     transaction as the insert, so two simultaneous joins-with-the-same-color
     are serialized at the row level (rare at couple-scale, but free correctness).
     """
-    household = db.scalar(
-        select(Household).where(Household.invite_code == body.invite_code)
-    )
+    household = db.scalar(select(Household).where(Household.invite_code == body.invite_code))
     if household is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -190,9 +183,7 @@ def join_household(
 
     # Net-new member path — color uniqueness still applies.
     existing_colors = set(
-        db.scalars(
-            select(Member.color_hex).where(Member.household_id == household.id)
-        ).all()
+        db.scalars(select(Member.color_hex).where(Member.household_id == household.id)).all()
     )
     if body.color_hex in existing_colors:
         raise HTTPException(
@@ -238,9 +229,7 @@ def household_me(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="household not found",
         )
-    members = db.scalars(
-        select(Member).where(Member.household_id == member.household_id)
-    ).all()
+    members = db.scalars(select(Member).where(Member.household_id == member.household_id)).all()
     return SessionResponse(
         household_id=household.id,
         household_name=household.name,

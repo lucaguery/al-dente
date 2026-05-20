@@ -12,29 +12,26 @@ Tests cover:
 - Integration test for process_thread_turn (LLM-01)
 - Deletion confirmation for orphaned extractors (Pitfall 4)
 """
+
 from __future__ import annotations
 
 import inspect
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-from unittest.mock import AsyncMock, patch
+from datetime import UTC, datetime, timedelta
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.recipe import Recipe
 from app.models.recipe_turn import RecipeTurn
 from app.services import llm as llm_module
-from app.services.completeness import FIELD_KEYS, INPUT_TYPE_MAP, _FIELD_PROMPTS_FR
+from app.services.completeness import INPUT_TYPE_MAP
 
 # These imports drive the RED state — they will fail until Task 2 GREEN adds them.
 from app.services.llm import (
     GeminiExtractedRecipe,
-    GeminiIngredient,
     _build_thread_prompt,
     _extract_reason_from_thread,
     _extraction_hash,
@@ -48,8 +45,7 @@ from app.services.llm import (
 from app.services.llm_fixtures import canned_thread_extract
 
 # Reuse seeded-member lookup and token from test_turns.
-from tests.test_turns import AUTH_HEADERS, _make_recipe, _seeded_member
-
+from tests.test_turns import _make_recipe, _seeded_member
 
 # ---------------------------------------------------------------------------
 # Helpers — direct DB turn insertion (bypasses router / avoids TestClient round-trip)
@@ -61,7 +57,7 @@ def _make_user_turn(
     recipe_id: uuid.UUID,
     position: int,
     kind: str,
-    payload: Optional[dict] = None,
+    payload: dict | None = None,
 ) -> RecipeTurn:
     """Insert a user-sender turn directly."""
     t = RecipeTurn(
@@ -81,7 +77,7 @@ def _make_system_turn(
     recipe_id: uuid.UUID,
     position: int,
     kind: str,
-    payload: Optional[dict] = None,
+    payload: dict | None = None,
 ) -> RecipeTurn:
     """Insert a system-sender turn directly."""
     t = RecipeTurn(
@@ -189,9 +185,7 @@ def test_build_thread_prompt_text_only(db_session: Session) -> None:
     """Thread with one text turn → prose contains USER (text): ...; photo_parts empty."""
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
-    turn = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "une recette de couscous"}
-    )
+    turn = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "une recette de couscous"})
     db_session.commit()
 
     thread = [turn]
@@ -205,9 +199,7 @@ def test_build_thread_prompt_mixed_kinds(db_session: Session) -> None:
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
     t0 = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "risotto"})
-    t1 = _make_user_turn(
-        db_session, recipe.id, 1, "voice", {"transcript": "version plus légère"}
-    )
+    t1 = _make_user_turn(db_session, recipe.id, 1, "voice", {"transcript": "version plus légère"})
     t2 = _make_user_turn(
         db_session, recipe.id, 2, "answer", {"field": "cuisine", "value": "italian"}
     )
@@ -233,9 +225,7 @@ def test_build_thread_prompt_photo_caps_at_4(db_session: Session, monkeypatch) -
     """5 photo turns with 2 paths each → photo_parts capped at 4 (Pitfall 6)."""
     import app.services.storage as storage_module
 
-    monkeypatch.setattr(
-        storage_module, "download_recipe_photo", lambda path: b"\xff\xd8\xff"
-    )
+    monkeypatch.setattr(storage_module, "download_recipe_photo", lambda path: b"\xff\xd8\xff")
 
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
@@ -641,9 +631,7 @@ def test_should_emit_question_none_when_complete() -> None:
 
 
 @pytest.mark.asyncio
-async def test_questions_skipped_when_deferred(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_questions_skipped_when_deferred(db_session: Session, monkeypatch) -> None:
     """recipe.questions_deferred_until > now() → no question turn emitted."""
     broadcasts = []
 
@@ -656,10 +644,8 @@ async def test_questions_skipped_when_deferred(
     recipe = _make_recipe(db_session, member.household_id, member.id)
     # Recipe is missing description (will be missing after applying canned extract
     # because canned_thread_extract fills many fields but we'll check after)
-    recipe.questions_deferred_until = datetime.now(tz=timezone.utc) + timedelta(hours=1)
-    trigger = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "une recette de risotto"}
-    )
+    recipe.questions_deferred_until = datetime.now(tz=UTC) + timedelta(hours=1)
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "une recette de risotto"})
     db_session.commit()
 
     await _run_thread_llm(db_session, recipe, trigger.id)
@@ -676,9 +662,7 @@ async def test_questions_skipped_when_deferred(
 
 
 @pytest.mark.asyncio
-async def test_questions_emitted_when_deferral_expired(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_questions_emitted_when_deferral_expired(db_session: Session, monkeypatch) -> None:
     """recipe.questions_deferred_until in the past → questions emitted normally."""
     broadcasts = []
 
@@ -690,13 +674,11 @@ async def test_questions_emitted_when_deferral_expired(
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
     # Set deferral to 1 hour ago (expired)
-    recipe.questions_deferred_until = datetime.now(tz=timezone.utc) - timedelta(hours=1)
+    recipe.questions_deferred_until = datetime.now(tz=UTC) - timedelta(hours=1)
     # Remove a field the canned extract would fill so completeness detects missing
     recipe.title = "Risotto test"
     recipe.description = None  # missing field to trigger question
-    trigger = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "test"}
-    )
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "test"})
     db_session.commit()
 
     await _run_thread_llm(db_session, recipe, trigger.id)
@@ -720,9 +702,7 @@ async def test_questions_emitted_when_deferral_expired(
 
 
 @pytest.mark.asyncio
-async def test_summary_emitted_on_first_run(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_summary_emitted_on_first_run(db_session: Session, monkeypatch) -> None:
     """Fresh thread → _run_thread_llm emits one summary turn with extraction_hash + body + chips."""
     broadcasts = []
 
@@ -733,9 +713,7 @@ async def test_summary_emitted_on_first_run(
 
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
-    trigger = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "risotto aux champignons"}
-    )
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "risotto aux champignons"})
     db_session.commit()
 
     await _run_thread_llm(db_session, recipe, trigger.id)
@@ -756,9 +734,7 @@ async def test_summary_emitted_on_first_run(
 
 
 @pytest.mark.asyncio
-async def test_summary_skipped_on_identical_rerun(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_summary_skipped_on_identical_rerun(db_session: Session, monkeypatch) -> None:
     """Same canned extract twice → second run emits no new summary (hash matches, SC-1)."""
     broadcasts = []
 
@@ -769,9 +745,7 @@ async def test_summary_skipped_on_identical_rerun(
 
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
-    trigger = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "risotto"}
-    )
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "risotto"})
     db_session.commit()
 
     # First run
@@ -782,9 +756,7 @@ async def test_summary_skipped_on_identical_rerun(
 
     # Second run — same canned extract → same hash → should skip
     # We need to add a second trigger turn at a new position to avoid unique constraint
-    trigger2 = _make_user_turn(
-        db_session, recipe.id, 99, "text", {"text": "même recette"}
-    )
+    trigger2 = _make_user_turn(db_session, recipe.id, 99, "text", {"text": "même recette"})
     db_session.commit()
 
     # Count summaries before second run
@@ -811,9 +783,7 @@ async def test_summary_skipped_on_identical_rerun(
 
 
 @pytest.mark.asyncio
-async def test_summary_reemitted_on_changed_extraction(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_summary_reemitted_on_changed_extraction(db_session: Session, monkeypatch) -> None:
     """Different extraction → second run emits a new summary with a new hash."""
     broadcasts = []
 
@@ -825,9 +795,7 @@ async def test_summary_reemitted_on_changed_extraction(
     # First extraction: canned_thread_extract (default risotto shape)
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
-    trigger1 = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "risotto"}
-    )
+    trigger1 = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "risotto"})
     db_session.commit()
 
     await _run_thread_llm(db_session, recipe, trigger1.id)
@@ -851,12 +819,11 @@ async def test_summary_reemitted_on_changed_extraction(
 
     # Patch canned_thread_extract in the llm module for this run
     import app.services.llm_fixtures as llm_fixtures_module
+
     original = llm_fixtures_module.canned_thread_extract
     llm_fixtures_module.canned_thread_extract = different_extract
     try:
-        trigger2 = _make_user_turn(
-            db_session, recipe.id, 99, "text", {"text": "tarte"}
-        )
+        trigger2 = _make_user_turn(db_session, recipe.id, 99, "text", {"text": "tarte"})
         db_session.commit()
         await _run_thread_llm(db_session, recipe, trigger2.id)
     finally:
@@ -881,9 +848,7 @@ async def test_summary_reemitted_on_changed_extraction(
 
 
 @pytest.mark.asyncio
-async def test_advisory_emitted_for_pinned_conflict(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_advisory_emitted_for_pinned_conflict(db_session: Session, monkeypatch) -> None:
     """Pinned cuisine='italian', canned extract returns cuisine='italian'... wait.
 
     canned_thread_extract returns cuisine='italian'. So we need to monkeypatch
@@ -942,9 +907,7 @@ async def test_advisory_emitted_for_pinned_conflict(
 
 
 @pytest.mark.asyncio
-async def test_no_advisory_when_pinned_value_matches(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_no_advisory_when_pinned_value_matches(db_session: Session, monkeypatch) -> None:
     """Pinned cuisine='italian', extraction returns cuisine='italian' → no advisory."""
     broadcasts = []
 
@@ -958,9 +921,7 @@ async def test_no_advisory_when_pinned_value_matches(
     recipe.cuisine = "italian"  # same as canned_thread_extract
     recipe.manually_edited_fields = ["cuisine"]
     db_session.flush()
-    trigger = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "même recette"}
-    )
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "même recette"})
     db_session.commit()
 
     await _run_thread_llm(db_session, recipe, trigger.id)
@@ -977,9 +938,7 @@ async def test_no_advisory_when_pinned_value_matches(
 
 
 @pytest.mark.asyncio
-async def test_no_advisory_when_field_not_pinned(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_no_advisory_when_field_not_pinned(db_session: Session, monkeypatch) -> None:
     """cuisine NOT pinned, extraction returns a different cuisine → no advisory, field updated."""
     broadcasts = []
 
@@ -993,9 +952,7 @@ async def test_no_advisory_when_field_not_pinned(
     recipe.cuisine = "french"  # different from canned (italian)
     recipe.manually_edited_fields = []  # NOT pinned
     db_session.flush()
-    trigger = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "recette italienne"}
-    )
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "recette italienne"})
     db_session.commit()
 
     await _run_thread_llm(db_session, recipe, trigger.id)
@@ -1006,9 +963,7 @@ async def test_no_advisory_when_field_not_pinned(
             RecipeTurn.kind == "advisory",
         )
     ).all()
-    assert len(advisory_turns) == 0, (
-        f"No advisory for non-pinned field. Got {len(advisory_turns)}"
-    )
+    assert len(advisory_turns) == 0, f"No advisory for non-pinned field. Got {len(advisory_turns)}"
 
     # Field should be updated (non-pinned, so extraction overwrites)
     db_session.expire_all()
@@ -1038,9 +993,7 @@ async def test_process_thread_turn_emits_summary_and_question(
 
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
-    trigger = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "ajoute du basilic"}
-    )
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "ajoute du basilic"})
     db_session.commit()
 
     await process_thread_turn(recipe.id, trigger.id)
@@ -1104,9 +1057,7 @@ async def test_process_thread_turn_failure_records_on_turn_payload(
         "recipe.status must not change on process_thread_turn failure"
     )
 
-    refreshed_turn = db_session.scalar(
-        select(RecipeTurn).where(RecipeTurn.id == trigger.id)
-    )
+    refreshed_turn = db_session.scalar(select(RecipeTurn).where(RecipeTurn.id == trigger.id))
     assert refreshed_turn.payload.get("extraction_error"), (
         "turn.payload.extraction_error must be set on failure"
     )
@@ -1117,9 +1068,7 @@ async def test_process_thread_turn_failure_records_on_turn_payload(
 # ---------------------------------------------------------------------------
 
 
-def test_promote_draft_text_emits_summary(
-    db_session: Session, monkeypatch
-) -> None:
+def test_promote_draft_text_emits_summary(db_session: Session, monkeypatch) -> None:
     """Text-initial recipe → after promote_draft, exactly one summary turn exists."""
     from app.services.llm import promote_draft
 
@@ -1203,9 +1152,7 @@ def test_promote_draft_voice_emits_summary_and_applies_fields(
 
 
 @pytest.mark.asyncio
-async def test_summary_turn_emits_structured_chips(
-    db_session: Session, monkeypatch
-) -> None:
+async def test_summary_turn_emits_structured_chips(db_session: Session, monkeypatch) -> None:
     """SummaryTurnPayload.chips is `list[ChipPayload]` (B-03 two-layer fix).
 
     End-to-end wire-level contract (resilient to suite-wide
@@ -1244,9 +1191,7 @@ async def test_summary_turn_emits_structured_chips(
     recipe.ingredients = None
     db_session.flush()
 
-    trigger = _make_user_turn(
-        db_session, recipe.id, 0, "text", {"text": "risotto aux champignons"}
-    )
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "risotto aux champignons"})
     db_session.commit()
 
     await _run_thread_llm(db_session, recipe, trigger.id)
@@ -1260,9 +1205,7 @@ async def test_summary_turn_emits_structured_chips(
     assert len(summary_turns) == 1, "expected exactly one summary turn"
     payload = summary_turns[0].payload
     chips = payload["chips"]
-    assert isinstance(chips, list) and len(chips) > 0, (
-        "summary turn must emit at least one chip"
-    )
+    assert isinstance(chips, list) and len(chips) > 0, "summary turn must emit at least one chip"
 
     # Structural: every chip is a dict with exactly {field, value} keys
     # (no other keys; no string fallback from the old shape).
@@ -1273,9 +1216,7 @@ async def test_summary_turn_emits_structured_chips(
         )
         assert isinstance(chip["field"], str)
         # Must not be the legacy sentinel — fresh emission, never coerced.
-        assert chip["field"] != "_legacy", (
-            "fresh chip emission must never produce _legacy sentinel"
-        )
+        assert chip["field"] != "_legacy", "fresh chip emission must never produce _legacy sentinel"
 
     # B-03 regression guard: the JSON-encoded payload must NEVER contain a
     # Python dict repr substring like "{'name'" — this is the exact leak

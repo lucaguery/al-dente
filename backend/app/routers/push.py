@@ -8,6 +8,7 @@ GET /push/vapid-public-key — defense-in-depth runtime fetch for the
 public key. Frontend prefers `process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY`
 (build-time embed); this endpoint is the fallback / verification path.
 """
+
 from __future__ import annotations
 
 import logging

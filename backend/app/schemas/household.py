@@ -7,7 +7,6 @@ the router layer. T-01-04-04 mitigation lives in ``_validate_color`` below.
 
 from __future__ import annotations
 
-from typing import List
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -73,7 +72,7 @@ class HouseholdPublic(BaseModel):
     id: UUID
     name: str
     invite_code: str
-    members: List[MemberPublic]
+    members: list[MemberPublic]
 
     model_config = {"from_attributes": True}
 
@@ -90,7 +89,7 @@ class SessionResponse(BaseModel):
     household_name: str
     invite_code: str
     me: MemberPublic
-    members: List[MemberPublic]
+    members: list[MemberPublic]
 
     model_config = {"from_attributes": True}
 
@@ -121,4 +120,4 @@ class HouseholdPreview(BaseModel):
     """
 
     household_name: str
-    taken_colors: List[str]
+    taken_colors: list[str]

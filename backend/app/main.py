@@ -62,8 +62,7 @@ async def lifespan(app: FastAPI):
                     tz = ZoneInfo(tz_name)
                 except Exception:  # noqa: BLE001 — fall back on bad tz
                     log.warning(
-                        "household=%s bad timezone=%r — falling back to "
-                        "Europe/Paris",
+                        "household=%s bad timezone=%r — falling back to Europe/Paris",
                         hh.id,
                         tz_name,
                     )
@@ -83,6 +82,7 @@ async def lifespan(app: FastAPI):
     # RESEARCH §Area 9: chose startup helper over Alembic SQL to avoid
     # storage.buckets permission ambiguity on non-superuser Supabase connections.
     from app.services import storage as storage_service
+
     try:
         storage_service.ensure_url_bucket_exists()
     except Exception as exc:  # noqa: BLE001 — startup must succeed

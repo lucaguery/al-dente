@@ -2,10 +2,10 @@
 
 Wire shapes consumed by frontend lib/shortlist.ts (Plan 03).
 """
+
 from __future__ import annotations
 
 from datetime import date as DateType
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -20,9 +20,9 @@ class RegenerateRequest(BaseModel):
     nullable/optional — empty body regenerates with no filters.
     """
 
-    cuisine: Optional[str] = None
-    max_prep_time: Optional[int] = Field(default=None, ge=1, le=999)
-    exclude_protein: Optional[str] = None
+    cuisine: str | None = None
+    max_prep_time: int | None = Field(default=None, ge=1, le=999)
+    exclude_protein: str | None = None
     required_moods: list[str] = Field(default_factory=list)
 
 

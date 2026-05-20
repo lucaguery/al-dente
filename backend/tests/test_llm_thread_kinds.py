@@ -21,22 +21,22 @@ return canned JPEG bytes (b"\\xff\\xd8\\xff") — no Supabase bucket access.
 
 All helpers are local (no cross-test-file imports per scope_fence — D-37-03).
 """
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import app.services.storage as storage_module
 from app.models.member import Member
 from app.models.recipe import Recipe
 from app.models.recipe_turn import RecipeTurn
-from app.services.llm import process_thread_turn
 from app.services import llm as llm_module
-import app.services.storage as storage_module
+from app.services.llm import process_thread_turn
 
 SEED_TOKEN = "test-token-luca"
 
@@ -84,7 +84,7 @@ def _make_user_turn(
     recipe_id: uuid.UUID,
     position: int,
     kind: str,
-    payload: Optional[dict] = None,
+    payload: dict | None = None,
 ) -> RecipeTurn:
     """Insert a user-sender turn directly — mirrors test_llm_thread._make_user_turn."""
     t = RecipeTurn(
@@ -105,10 +105,10 @@ def _make_user_turn(
 
 # (kind, payload) pairs for all 5 user-emitted TurnKinds
 _TURN_KIND_CASES = [
-    ("text",   {"text": "risotto aux champignons"}),
-    ("voice",  {"transcript": "version légère avec moins de crème"}),
-    ("photo",  {"photo_paths": ["path/photo_test.jpg"]}),
-    ("url",    {"url": "https://example.com/recette-risotto"}),
+    ("text", {"text": "risotto aux champignons"}),
+    ("voice", {"transcript": "version légère avec moins de crème"}),
+    ("photo", {"photo_paths": ["path/photo_test.jpg"]}),
+    ("url", {"url": "https://example.com/recette-risotto"}),
     ("answer", {"field": "cuisine", "value": "italian"}),
 ]
 
@@ -182,9 +182,7 @@ async def test_process_thread_turn_kind(
     assert "extraction_hash" in s.payload, (
         f"summary turn for kind={kind!r} must have extraction_hash in payload"
     )
-    assert s.payload["extraction_hash"], (
-        f"extraction_hash for kind={kind!r} must be non-empty"
-    )
+    assert s.payload["extraction_hash"], f"extraction_hash for kind={kind!r} must be non-empty"
 
     # Verify broadcast was called (turn.created for the summary + recipe.updated)
     turn_created_events = [b for b in broadcasts if b[1] == "turn.created"]

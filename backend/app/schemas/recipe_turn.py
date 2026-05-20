@@ -14,10 +14,11 @@ Pydantic v2 raises PydanticUserError for unannotated class attributes.
 No imports from app.services.llm — this file is dependency-free of services
 (vocabulary lists are duplicated here per locked-vocabulary discipline in CLAUDE.md).
 """
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, List, Literal, Optional, Union
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -45,22 +46,47 @@ AnswerField = Literal[
 # Module-level frozensets; class-level attrs would raise PydanticUserError (R-6).
 # Values mirror services/llm.py:73-103 and models/enums.py — drift is a bug category per CLAUDE.md.
 _VALID_DIFFICULTIES: frozenset[str] = frozenset({"easy", "medium", "hard"})
-_VALID_CUISINES: frozenset[str] = frozenset({
-    "italian", "french", "asian", "mediterranean", "middleEastern",
-    "indian", "mexican", "northAfrican", "american", "other",
-})
-_VALID_PROTEINS: frozenset[str] = frozenset({
-    "poultry", "redMeat", "fish", "seafood", "egg", "legume", "none",
-})
-_VALID_MOODS: frozenset[str] = frozenset({
-    "comfort", "light", "quick", "celebratory", "adventurous",
-})
+_VALID_CUISINES: frozenset[str] = frozenset(
+    {
+        "italian",
+        "french",
+        "asian",
+        "mediterranean",
+        "middleEastern",
+        "indian",
+        "mexican",
+        "northAfrican",
+        "american",
+        "other",
+    }
+)
+_VALID_PROTEINS: frozenset[str] = frozenset(
+    {
+        "poultry",
+        "redMeat",
+        "fish",
+        "seafood",
+        "egg",
+        "legume",
+        "none",
+    }
+)
+_VALID_MOODS: frozenset[str] = frozenset(
+    {
+        "comfort",
+        "light",
+        "quick",
+        "celebratory",
+        "adventurous",
+    }
+)
 _VALID_SEASONS: frozenset[str] = frozenset({"spring", "summer", "autumn", "winter"})
 
 
 # ---------------------------------------------------------------------------
 # User-turn payloads
 # ---------------------------------------------------------------------------
+
 
 class TextTurnPayload(BaseModel):
     kind: Literal["text"]
@@ -74,7 +100,7 @@ class VoiceTurnPayload(BaseModel):
 
 class PhotoTurnPayload(BaseModel):
     kind: Literal["photo"]
-    photo_paths: List[str] = Field(default_factory=list)
+    photo_paths: list[str] = Field(default_factory=list)
 
 
 # Phase 26 D-25 — extends Phase 25 stub additively with optional extracted_html_path.
@@ -83,7 +109,7 @@ class PhotoTurnPayload(BaseModel):
 class UrlTurnPayload(BaseModel):
     kind: Literal["url"]
     url: str
-    extracted_html_path: Optional[str] = None
+    extracted_html_path: str | None = None
 
 
 class AnswerTurnPayload(BaseModel):
@@ -107,7 +133,7 @@ class AnswerTurnPayload(BaseModel):
     value: Any
 
     @model_validator(mode="after")
-    def _validate_value_for_field(self) -> "AnswerTurnPayload":
+    def _validate_value_for_field(self) -> AnswerTurnPayload:
         f, v = self.field, self.value
         # String fields
         if f == "title":
@@ -173,6 +199,7 @@ class AnswerTurnPayload(BaseModel):
 # Proposal handler payloads (D-15 / D-16)
 # ---------------------------------------------------------------------------
 
+
 class ProposalAcceptedPayload(BaseModel):
     """Phase 26 D-16 — user taps 'Mettre a jour' on an advisory bubble.
 
@@ -200,6 +227,7 @@ class ProposalDismissedPayload(BaseModel):
 # ---------------------------------------------------------------------------
 # System-turn payloads — Phase 29 owns summary/question; Phase 26 graduates advisory (D-17).
 # ---------------------------------------------------------------------------
+
 
 class ChipPayload(BaseModel):
     """Phase 35 ENUM-01 (B-03 two-layer fix) — structured chip payload for
@@ -249,8 +277,8 @@ class SummaryTurnPayload(BaseModel):
     """
 
     kind: Literal["summary"]
-    body: Optional[str] = Field(default=None, max_length=240)
-    chips: List[ChipPayload] = Field(default_factory=list)
+    body: str | None = Field(default=None, max_length=240)
+    chips: list[ChipPayload] = Field(default_factory=list)
     extraction_hash: str
 
     # TODO(productize): pre-Phase-35 summary turns have `chips: list[str]`.
@@ -302,7 +330,7 @@ class QuestionTurnPayload(BaseModel):
     field: AnswerField
     prompt: str
     input_type: Literal["chip", "stepper", "text"]
-    options: List[str] = Field(default_factory=list)
+    options: list[str] = Field(default_factory=list)
     multi: bool = False
 
 
@@ -327,18 +355,16 @@ class AdvisoryTurnPayload(BaseModel):
 # ---------------------------------------------------------------------------
 
 TurnPayload = Annotated[
-    Union[
-        TextTurnPayload,
-        VoiceTurnPayload,
-        PhotoTurnPayload,
-        UrlTurnPayload,
-        AnswerTurnPayload,
-        ProposalAcceptedPayload,
-        ProposalDismissedPayload,
-        SummaryTurnPayload,
-        QuestionTurnPayload,
-        AdvisoryTurnPayload,
-    ],
+    TextTurnPayload
+    | VoiceTurnPayload
+    | PhotoTurnPayload
+    | UrlTurnPayload
+    | AnswerTurnPayload
+    | ProposalAcceptedPayload
+    | ProposalDismissedPayload
+    | SummaryTurnPayload
+    | QuestionTurnPayload
+    | AdvisoryTurnPayload,
     Field(discriminator="kind"),
 ]
 

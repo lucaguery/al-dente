@@ -26,9 +26,7 @@ INVITE_CODE_LENGTH = 6
 
 def _make_code() -> str:
     """Return a fresh random 6-char uppercase alphanumeric code."""
-    return "".join(
-        secrets.choice(INVITE_CODE_ALPHABET) for _ in range(INVITE_CODE_LENGTH)
-    )
+    return "".join(secrets.choice(INVITE_CODE_ALPHABET) for _ in range(INVITE_CODE_LENGTH))
 
 
 def generate_unique_invite_code(db: Session, *, max_attempts: int = 10) -> str:
@@ -41,9 +39,7 @@ def generate_unique_invite_code(db: Session, *, max_attempts: int = 10) -> str:
     """
     for _ in range(max_attempts):
         code = _make_code()
-        existing = db.scalar(
-            select(Household.id).where(Household.invite_code == code)
-        )
+        existing = db.scalar(select(Household.id).where(Household.invite_code == code))
         if existing is None:
             return code
     raise RuntimeError("invite-code collision retries exhausted")

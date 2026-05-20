@@ -12,11 +12,12 @@ Cross-household pattern: insert a foreign Household + Member + CookingLog via
   db_session.flush() (NOT commit — per 38-01 SAVEPOINT contract). Then hit
   GET /cooking-logs/{foreign_log_id} with SEED_TOKEN auth → 404.
 """
+
 from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -35,8 +36,7 @@ def _seeded_member(db: Session) -> Member:
     """Resolve the seeded test member (auth_token == SEED_TOKEN)."""
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 
@@ -59,9 +59,7 @@ def test_cooking_logs_401_missing_auth(client: TestClient, db_session: Session) 
     assert resp.status_code == 401, resp.text
 
 
-def test_cooking_logs_404_cross_household(
-    client: TestClient, db_session: Session
-) -> None:
+def test_cooking_logs_404_cross_household(client: TestClient, db_session: Session) -> None:
     """ROUT-08 / D-38-02 — GET /cooking-logs/{id} for a foreign household's log
     returns 404 (not 403 — no existence leak per T-04-01-03).
 
@@ -109,7 +107,7 @@ def test_cooking_logs_404_cross_household(
         recipe_id=foreign_recipe.id,
         household_id=foreign_hh.id,
         cooked_by_member_id=foreign_member.id,
-        cooked_at=datetime.now(timezone.utc),
+        cooked_at=datetime.now(UTC),
     )
     db_session.add(foreign_log)
     db_session.flush()

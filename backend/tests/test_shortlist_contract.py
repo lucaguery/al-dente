@@ -19,6 +19,7 @@ Auth convention: SEED_TOKEN Bearer header.
 Cross-household pattern: insert a foreign Household + DailyShortlist via
   db_session.flush() (NOT commit — 38-01 SAVEPOINT contract).
 """
+
 from __future__ import annotations
 
 import os

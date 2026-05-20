@@ -19,7 +19,6 @@ from app.services.llm import (
     GeminiIngredient,
 )
 
-
 # Phase 16 D-16-13: test-only force-failure prefix. When the transcript
 # starts with this token, canned_thread_extract raises so the BackgroundTask
 # hits _record_failure / _record_turn_enrichment_failure deterministically.
@@ -169,26 +168,20 @@ def canned_recipe_illustration(recipe_title: str) -> str:
     but does NOT affect recipe.status).
     """
     if recipe_title.startswith("__TEST_FORCE_FAIL_ILLUSTRATION__"):
-        raise RuntimeError(
-            "Illustration forcée à échouer pour les tests (RID-05 D-36)."
-        )
+        raise RuntimeError("Illustration forcée à échouer pour les tests (RID-05 D-36).")
     return (
         '<svg viewBox="0 0 160 160" fill="none" stroke="currentColor" '
         'xmlns="http://www.w3.org/2000/svg">'
         '<path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z"/>'
-        '</svg>'
+        "</svg>"
     )
 
 
-def canned_modified_recipe(
-    recipe_json: dict[str, Any], transcript: str
-) -> GeminiExtractedRecipe:
+def canned_modified_recipe(recipe_json: dict[str, Any], transcript: str) -> GeminiExtractedRecipe:
     """Echo the input recipe but mark prep_time_minutes as +10 to simulate a modification."""
     return GeminiExtractedRecipe(
         title=recipe_json.get("title", "Recette modifiée (test)"),
-        ingredients=[
-            GeminiIngredient(**i) for i in (recipe_json.get("ingredients") or [])
-        ] or None,
+        ingredients=[GeminiIngredient(**i) for i in (recipe_json.get("ingredients") or [])] or None,
         steps=recipe_json.get("steps"),
         prep_time_minutes=(recipe_json.get("prep_time_minutes") or 30) + 10,
         servings=recipe_json.get("servings"),

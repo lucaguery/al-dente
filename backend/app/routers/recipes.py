@@ -42,8 +42,8 @@ A member of A cannot read/edit/list recipes of B. Detail endpoint returns 404
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional, get_args
+from datetime import UTC, datetime, timedelta
+from typing import get_args
 from uuid import UUID
 
 from fastapi import (
@@ -57,7 +57,8 @@ from fastapi import (
     UploadFile,
     status,
 )
-from sqlalchemy import Text, cast, delete as sa_delete, func, or_, select
+from sqlalchemy import Text, cast, func, or_, select
+from sqlalchemy import delete as sa_delete
 from sqlalchemy.orm import Session
 
 from app.auth import current_member
@@ -74,34 +75,34 @@ from app.schemas.recipe import (
     RecipeUpdate,
     VoiceModifyRequest,
 )
-from app.services import storage as storage_service
 from app.schemas.recipe_turn import (
+    AdvisoryTurnPayload,
     AnswerField,
-    TurnPayload,
-    TurnResponse,
     AnswerTurnPayload,
     ProposalAcceptedPayload,
     ProposalDismissedPayload,
-    AdvisoryTurnPayload,
     QuestionTurnPayload,
+    TurnPayload,
+    TurnResponse,
 )
-from app.services.llm import (
-    apply_voice_modification,
-    extract_and_process_url_turn,  # Phase 26 D-22 url dispatch
-    process_thread_turn,            # Phase 26 D-21/D-22 text/voice/photo dispatch
-    promote_draft,
-    retry_promotion,
-    _should_emit_question,
-)
+from app.services import storage as storage_service
 from app.services.completeness import (
-    compute_completeness,
+    _FIELD_PROMPTS_FR,
     INPUT_TYPE_MAP,
     OPTIONS_MAP,
-    _FIELD_PROMPTS_FR,
+    compute_completeness,
 )
-from app.services.thread import acquire_position_lock
+from app.services.llm import (
+    _should_emit_question,
+    apply_voice_modification,
+    extract_and_process_url_turn,  # Phase 26 D-22 url dispatch
+    process_thread_turn,  # Phase 26 D-21/D-22 text/voice/photo dispatch
+    promote_draft,
+    retry_promotion,
+)
 from app.services.realtime import broadcast_to_household
 from app.services.storage import MAX_BYTES, upload_recipe_photo
+from app.services.thread import acquire_position_lock
 
 log = logging.getLogger(__name__)
 
@@ -112,16 +113,18 @@ router = APIRouter(prefix="/recipes", tags=["recipes"])
 # RecipeUpdate doesn't define these. Order: Phase 28 DETAIL-05 (manually_edited_fields),
 # 01-09-owned (photo_paths), W3-owned (cook_count/last_cooked_at), and the
 # write-once relationship/identity columns.
-_UPDATE_FORBIDDEN_FIELDS = frozenset({
-    "manually_edited_fields",  # Phase 28 DETAIL-05 owns the write path
-    "photo_paths",
-    "cook_count",
-    "last_cooked_at",
-    "household_id",
-    "created_by_member_id",
-    "id",
-    "created_at",
-})
+_UPDATE_FORBIDDEN_FIELDS = frozenset(
+    {
+        "manually_edited_fields",  # Phase 28 DETAIL-05 owns the write path
+        "photo_paths",
+        "cook_count",
+        "last_cooked_at",
+        "household_id",
+        "created_by_member_id",
+        "id",
+        "created_at",
+    }
+)
 
 # Phase 28 DETAIL-05 — the 13 AnswerField keys eligible for auto-pin/unpin on
 # PUT /recipes/{id}. Single source: backend/app/schemas/recipe_turn.py AnswerField.
@@ -216,9 +219,7 @@ def _cleanup_partial_uploads(paths: list[str]) -> None:
         bucket = storage_service._supabase().storage.from_(storage_service.BUCKET)
         bucket.remove(paths)
     except Exception:  # noqa: BLE001 — cleanup is best-effort
-        log.warning(
-            "partial-upload cleanup failed for paths=%s", paths, exc_info=True
-        )
+        log.warning("partial-upload cleanup failed for paths=%s", paths, exc_info=True)
 
 
 @router.post(
@@ -277,10 +278,10 @@ async def create_blank(
     return _to_response(recipe, initial_turn_kind=None)
 
 
-@router.get("", response_model=List[RecipeResponse])
+@router.get("", response_model=list[RecipeResponse])
 def list_recipes(
-    q: Optional[str] = Query(default=None, max_length=200),
-    status_filter: Optional[str] = Query(
+    q: str | None = Query(default=None, max_length=200),
+    status_filter: str | None = Query(
         default=None,
         alias="status",
         # Phase 16 CAP-01: accepts the new 'failed' terminal state added in
@@ -292,7 +293,7 @@ def list_recipes(
     offset: int = Query(default=0, ge=0),
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
-) -> List[RecipeResponse]:
+) -> list[RecipeResponse]:
     """RECIPE-03 (search) + RECIPE-06 (drafts inbox).
 
     ``?status=draft`` is the query backing the bottom-nav ``À compléter (N)``
@@ -327,17 +328,12 @@ def list_recipes(
             )
             .subquery()
         )
-        kind_rows = db.execute(
-            select(first_turn_subq.c.recipe_id, first_turn_subq.c.kind)
-        ).all()
+        kind_rows = db.execute(select(first_turn_subq.c.recipe_id, first_turn_subq.c.kind)).all()
         kind_by_recipe_id = {str(row.recipe_id): row.kind for row in kind_rows}
     else:
         kind_by_recipe_id = {}
 
-    return [
-        _to_response(r, initial_turn_kind=kind_by_recipe_id.get(str(r.id)))
-        for r in rows
-    ]
+    return [_to_response(r, initial_turn_kind=kind_by_recipe_id.get(str(r.id))) for r in rows]
 
 
 @router.get("/{recipe_id}", response_model=RecipeResponse)
@@ -360,9 +356,7 @@ def get_recipe(
         )
     )
     if r is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
     kind = _first_turn_kind(db, r.id)
     return _to_response(r, initial_turn_kind=kind)
 
@@ -388,9 +382,7 @@ async def update_recipe(
         )
     )
     if r is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
 
     # Phase 28 DETAIL-05 — snapshot AnswerField values BEFORE setattr mutates them.
     # _apply_put_pinning diffs the body against this snapshot to detect pins/unpins.
@@ -409,12 +401,10 @@ async def update_recipe(
         elif key in ("mood", "seasonality") and value is not None:
             value = [_coerce_enum_value(v) for v in value]
         elif key == "ingredients" and value is not None:
-            value = [
-                (i.model_dump() if hasattr(i, "model_dump") else i) for i in value
-            ]
+            value = [(i.model_dump() if hasattr(i, "model_dump") else i) for i in value]
         setattr(r, key, value)
 
-    r.updated_at = datetime.now(tz=timezone.utc)
+    r.updated_at = datetime.now(tz=UTC)
     db.commit()
     db.refresh(r)
 
@@ -449,9 +439,7 @@ def voice_modify(
         )
     )
     if recipe is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
 
     # Pass the existing recipe as JSON to Gemini. Use the response wire
     # shape so Gemini sees the same fields the FE renders.
@@ -503,9 +491,7 @@ async def retry_promote(
         )
     )
     if recipe is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
 
     # Phase 16 D-16-04 / D-16-06: reset failed → draft so the FE inbox row
     # flips from the failed variant to the in-flight/spinner variant.
@@ -598,9 +584,7 @@ async def delete_recipe(
         )
     )
     if recipe is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
 
     # Delete FK-constrained rows first (no ondelete=CASCADE on these FKs).
     db.execute(sa_delete(Vote).where(Vote.recipe_id == recipe_id))
@@ -608,9 +592,7 @@ async def delete_recipe(
     db.delete(recipe)
     db.commit()
 
-    await broadcast_to_household(
-        member.household_id, "recipe.deleted", {"id": str(recipe_id)}
-    )
+    await broadcast_to_household(member.household_id, "recipe.deleted", {"id": str(recipe_id)})
 
 
 # ===========================================================================
@@ -623,9 +605,7 @@ async def delete_recipe(
 # ---------------------------------------------------------------------------
 
 
-def _apply_answer_turn(
-    db: Session, recipe: Recipe, payload: AnswerTurnPayload
-) -> None:
+def _apply_answer_turn(db: Session, recipe: Recipe, payload: AnswerTurnPayload) -> None:
     """Phase 26 D-10/D-12 — atomic field-apply + pin.
 
     Validates that in_reply_to_turn_id points to a `question` turn in the
@@ -656,9 +636,7 @@ def _apply_answer_turn(
     recipe.manually_edited_fields = sorted(current)
 
 
-def _apply_proposal_accepted(
-    db: Session, recipe: Recipe, payload: ProposalAcceptedPayload
-) -> None:
+def _apply_proposal_accepted(db: Session, recipe: Recipe, payload: ProposalAcceptedPayload) -> None:
     """Phase 26 D-16 — apply advisory's proposed_value + REMOVE the field pin.
 
     Reads the referenced advisory turn (must be in same recipe), validates
@@ -771,10 +749,7 @@ def _apply_put_pinning(
             coerced_new = sorted([_coerce_enum_value(v) for v in new_value])
             old_value = sorted(list(old_value or []))
         elif field_name == "ingredients" and new_value is not None:
-            coerced_new = [
-                (i.model_dump() if hasattr(i, "model_dump") else i)
-                for i in new_value
-            ]
+            coerced_new = [(i.model_dump() if hasattr(i, "model_dump") else i) for i in new_value]
         else:
             coerced_new = new_value
 
@@ -974,8 +949,7 @@ async def create_turn_photo(
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=(
-                    "combined photo size exceeds Gemini 18 MB cap; "
-                    "use fewer or smaller photos"
+                    "combined photo size exceeds Gemini 18 MB cap; use fewer or smaller photos"
                 ),
             )
         contents.append(data)
@@ -1059,13 +1033,13 @@ async def create_turn_photo(
 
 @router.get(
     "/{recipe_id}/turns",
-    response_model=List[TurnResponse],
+    response_model=list[TurnResponse],
 )
 def list_turns(
     recipe_id: UUID,
     member: Member = Depends(current_member),
     db: Session = Depends(get_db),
-) -> List[TurnResponse]:
+) -> list[TurnResponse]:
     """Phase 26 TURN-01 — flat list ordered by position ASC.
 
     No pagination — couple-scale corpus is 5-50 turns per recipe (D-02).
@@ -1140,9 +1114,7 @@ async def trigger_next_question(
         )
     )
     if recipe is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
 
     # Pick the highest-priority eligible missing field (D-11 + D-12).
     # Thread read and de-dup check happen INSIDE the position lock to prevent a
@@ -1246,12 +1218,10 @@ async def defer_questions(
         )
     )
     if recipe is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="recipe not found")
 
-    recipe.questions_deferred_until = datetime.now(tz=timezone.utc) + timedelta(hours=24)
-    recipe.updated_at = datetime.now(tz=timezone.utc)
+    recipe.questions_deferred_until = datetime.now(tz=UTC) + timedelta(hours=24)
+    recipe.updated_at = datetime.now(tz=UTC)
     db.commit()
     db.refresh(recipe)
 

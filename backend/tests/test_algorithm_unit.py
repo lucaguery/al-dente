@@ -19,15 +19,13 @@ for all score_recipe tests so jitter doesn't affect float assertions.
 SERV-02 acceptance: every hard-filter branch, every soft-scoring branch,
 and every cold-start corpus-size branch is demonstrably covered.
 """
+
 from __future__ import annotations
 
 import types
-from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 import pytest
 
-import app.services.algorithm as algorithm
 from app.services.algorithm import (
     ShortlistContext,
     ShortlistFilters,
@@ -37,19 +35,19 @@ from app.services.algorithm import (
     select_top_n_with_cold_start,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helper — build a SimpleNamespace stand-in with sensible defaults for scoring
 # ---------------------------------------------------------------------------
 
+
 def _make_recipe(
     *,
     status: str = "structured",
-    cuisine: Optional[str] = "italian",
-    prep_time_minutes: Optional[int] = 30,
-    main_protein: Optional[str] = "poultry",
-    mood: Optional[list[str]] = None,
-    seasonality: Optional[list[str]] = None,
+    cuisine: str | None = "italian",
+    prep_time_minutes: int | None = 30,
+    main_protein: str | None = "poultry",
+    mood: list[str] | None = None,
+    seasonality: list[str] | None = None,
     days_since_cooked: int = 999,  # default: never cooked → max recency
 ) -> types.SimpleNamespace:
     """Return a SimpleNamespace stand-in whose scoring-relevant attributes are set.
@@ -65,7 +63,9 @@ def _make_recipe(
         prep_time_minutes=prep_time_minutes,
         main_protein=main_protein,
         mood=mood if mood is not None else ["comfort"],
-        seasonality=seasonality if seasonality is not None else ["spring", "summer", "autumn", "winter"],
+        seasonality=seasonality
+        if seasonality is not None
+        else ["spring", "summer", "autumn", "winter"],
     )
     r.days_since_cooked = lambda: days_since_cooked
     return r
@@ -74,9 +74,9 @@ def _make_recipe(
 def _ctx(
     *,
     current_season: str = "spring",
-    recent_cuisines: Optional[set[str]] = None,
-    recent_proteins: Optional[set[str]] = None,
-    filters: Optional[ShortlistFilters] = None,
+    recent_cuisines: set[str] | None = None,
+    recent_proteins: set[str] | None = None,
+    filters: ShortlistFilters | None = None,
 ) -> ShortlistContext:
     return ShortlistContext(
         current_season=current_season,
@@ -89,6 +89,7 @@ def _ctx(
 # ---------------------------------------------------------------------------
 # Class 1: Hard-filter branches (all should return None)
 # ---------------------------------------------------------------------------
+
 
 class TestScoreRecipeHardFilters:
     """score_recipe returns None for every hard-filter rejection branch."""
@@ -144,6 +145,7 @@ class TestScoreRecipeHardFilters:
 # ---------------------------------------------------------------------------
 # Class 2: Soft-scoring branches (all should return a float, not None)
 # ---------------------------------------------------------------------------
+
 
 class TestScoreRecipeSoftScoring:
     """score_recipe returns the expected float for each soft-scoring branch."""
@@ -253,6 +255,7 @@ class TestScoreRecipeSoftScoring:
 # Class 3: select_top5_with_diversity
 # ---------------------------------------------------------------------------
 
+
 class TestSelectTop5WithDiversity:
     """select_top5_with_diversity (lines 87-104): two-pass selection."""
 
@@ -264,10 +267,7 @@ class TestSelectTop5WithDiversity:
         """5 recipes each with unique (cuisine, protein) → all 5 picked in pass 1."""
         cuisines = ["italian", "french", "asian", "mediterranean", "indian"]
         proteins = ["poultry", "redMeat", "fish", "seafood", "egg"]
-        recipes = [
-            _make_recipe(cuisine=c, main_protein=p)
-            for c, p in zip(cuisines, proteins)
-        ]
+        recipes = [_make_recipe(cuisine=c, main_protein=p) for c, p in zip(cuisines, proteins)]
         ranked = self._ranked(recipes)
         picks = select_top5_with_diversity(ranked)
         assert len(picks) == 5
@@ -314,9 +314,13 @@ class TestSelectTop5WithDiversity:
         recipes = [
             _make_recipe(cuisine=c, main_protein=p)
             for c, p in [
-                ("italian", "poultry"), ("french", "redMeat"), ("asian", "fish"),
-                ("mediterranean", "seafood"), ("indian", "egg"),
-                ("mexican", "legume"), ("american", "none"),
+                ("italian", "poultry"),
+                ("french", "redMeat"),
+                ("asian", "fish"),
+                ("mediterranean", "seafood"),
+                ("indian", "egg"),
+                ("mexican", "legume"),
+                ("american", "none"),
             ]
         ]
         ranked = self._ranked(recipes)
@@ -325,10 +329,7 @@ class TestSelectTop5WithDiversity:
 
     def test_pass_two_breaks_at_five(self) -> None:
         """All same cuisine/protein → pass 1 picks 1, pass 2 tops up to 5 from 7."""
-        recipes = [
-            _make_recipe(cuisine="italian", main_protein="poultry")
-            for _ in range(7)
-        ]
+        recipes = [_make_recipe(cuisine="italian", main_protein="poultry") for _ in range(7)]
         ranked = self._ranked(recipes)
         picks = select_top5_with_diversity(ranked)
         assert len(picks) == 5
@@ -337,6 +338,7 @@ class TestSelectTop5WithDiversity:
 # ---------------------------------------------------------------------------
 # Class 4: select_top5_soft_diversity
 # ---------------------------------------------------------------------------
+
 
 class TestSelectTop5SoftDiversity:
     """select_top5_soft_diversity (lines 114-124): simple top-5 from ranked list."""
@@ -370,6 +372,7 @@ class TestSelectTop5SoftDiversity:
 # Class 5: select_top_n_with_cold_start — corpus-size branches
 # ---------------------------------------------------------------------------
 
+
 class TestColdStart:
     """select_top_n_with_cold_start (lines 142-146): corpus-size dispatch."""
 
@@ -377,12 +380,34 @@ class TestColdStart:
         return [(r, float(100 - i)) for i, r in enumerate(recipes)]
 
     def _many_recipes(self, n: int) -> list[Recipe]:
-        cuisines = ["italian", "french", "asian", "mediterranean", "indian",
-                    "mexican", "american", "northAfrican", "other", "mediterranean"]
-        proteins = ["poultry", "redMeat", "fish", "seafood", "egg",
-                    "legume", "none", "poultry", "redMeat", "fish"]
+        cuisines = [
+            "italian",
+            "french",
+            "asian",
+            "mediterranean",
+            "indian",
+            "mexican",
+            "american",
+            "northAfrican",
+            "other",
+            "mediterranean",
+        ]
+        proteins = [
+            "poultry",
+            "redMeat",
+            "fish",
+            "seafood",
+            "egg",
+            "legume",
+            "none",
+            "poultry",
+            "redMeat",
+            "fish",
+        ]
         return [
-            _make_recipe(cuisine=cuisines[i % len(cuisines)], main_protein=proteins[i % len(proteins)])
+            _make_recipe(
+                cuisine=cuisines[i % len(cuisines)], main_protein=proteins[i % len(proteins)]
+            )
             for i in range(n)
         ]
 

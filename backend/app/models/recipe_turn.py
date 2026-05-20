@@ -4,6 +4,7 @@ Phase 25 THREAD-01 (migration 0009). One row per turn; position is
 0-indexed and unique per recipe (D-16). sender/kind are TEXT + CHECK
 per D-13 (matches Phase 24 RID-02 difficulty precedent).
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -42,17 +43,13 @@ class RecipeTurn(Base):
     position: Mapped[int] = mapped_column(Integer, nullable=False)
     sender: Mapped[str] = mapped_column(Text, nullable=False)
     kind: Mapped[str] = mapped_column(Text, nullable=False)
-    payload: Mapped[dict] = mapped_column(
-        JSONB, nullable=False, server_default=text("'{}'::jsonb")
-    )
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "recipe_id", "position", name="uq_recipe_turns_recipe_position"
-        ),
+        UniqueConstraint("recipe_id", "position", name="uq_recipe_turns_recipe_position"),
         Index("idx_recipe_turns_recipe_position", "recipe_id", "position"),
         CheckConstraint(
             "sender IN ('user','system')",

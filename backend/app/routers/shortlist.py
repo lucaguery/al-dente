@@ -4,6 +4,7 @@ POST /shortlists/{shortlist_id}/delegate.
 All endpoints use cookie-first auth via Depends(current_member). Cross-
 household IDs return 404 (not 403) — T-01-08-04 mitigation pattern.
 """
+
 from __future__ import annotations
 
 import logging
@@ -35,16 +36,12 @@ log = logging.getLogger(__name__)
 router = APIRouter(prefix="/shortlists", tags=["shortlists"])
 
 
-def _serialize_shortlist(
-    shortlist: DailyShortlist, db: Session
-) -> ShortlistResponse:
+def _serialize_shortlist(shortlist: DailyShortlist, db: Session) -> ShortlistResponse:
     """Build ShortlistResponse from a DailyShortlist row."""
     # Fetch recipes (preserving the order in shortlist.recipe_ids)
     if shortlist.recipe_ids:
         recipes_unordered = list(
-            db.scalars(
-                select(Recipe).where(Recipe.id.in_(shortlist.recipe_ids))
-            ).all()
+            db.scalars(select(Recipe).where(Recipe.id.in_(shortlist.recipe_ids))).all()
         )
         by_id = {r.id: r for r in recipes_unordered}
         recipes = [by_id[rid] for rid in shortlist.recipe_ids if rid in by_id]
@@ -52,9 +49,7 @@ def _serialize_shortlist(
         recipes = []
 
     # Fetch all votes for this shortlist
-    votes = list(
-        db.scalars(select(Vote).where(Vote.shortlist_id == shortlist.id)).all()
-    )
+    votes = list(db.scalars(select(Vote).where(Vote.shortlist_id == shortlist.id)).all())
 
     return ShortlistResponse(
         shortlist_id=shortlist.id,
@@ -151,9 +146,13 @@ async def delegate(
         }
         for rid in shortlist.recipe_ids
     ]
-    stmt = pg_insert(Vote).values(rows).on_conflict_do_update(
-        index_elements=["shortlist_id", "recipe_id", "member_id"],
-        set_={"vote": "yes", "created_at": func.now()},
+    stmt = (
+        pg_insert(Vote)
+        .values(rows)
+        .on_conflict_do_update(
+            index_elements=["shortlist_id", "recipe_id", "member_id"],
+            set_={"vote": "yes", "created_at": func.now()},
+        )
     )
     db.execute(stmt)
     db.commit()
@@ -161,19 +160,13 @@ async def delegate(
     # Fan out 5 individual vote.created events so the existing frontend
     # vote.created handler stays uniform (Pattern 6 recommendation).
     member_count = (
-        db.scalar(
-            select(func.count(Member.id)).where(
-                Member.household_id == member.household_id
-            )
-        )
+        db.scalar(select(func.count(Member.id)).where(Member.household_id == member.household_id))
         or 2
     )
     for rid in shortlist.recipe_ids:
         votes_for_recipe = list(
             db.scalars(
-                select(Vote).where(
-                    Vote.shortlist_id == shortlist_id, Vote.recipe_id == rid
-                )
+                select(Vote).where(Vote.shortlist_id == shortlist_id, Vote.recipe_id == rid)
             ).all()
         )
         state = compute_vote_state(votes_for_recipe, member_count)

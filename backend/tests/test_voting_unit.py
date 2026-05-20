@@ -12,6 +12,7 @@ stand-ins that expose the only attribute the function reads.
 SERV-01 acceptance: all 5 VoteState values appear at least once across
 the parametrized cases, and member_count ∈ {1, 2} is covered.
 """
+
 from __future__ import annotations
 
 import types
@@ -20,10 +21,10 @@ import pytest
 
 from app.services.voting import VoteState, compute_vote_state
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _yes() -> types.SimpleNamespace:
     """Minimal stand-in for a Vote row with vote == 'yes'."""
@@ -85,6 +86,7 @@ def test_compute_vote_state_parametrized(
 # order must be identical to frontend mirror at frontend/lib/votes.ts).
 # ---------------------------------------------------------------------------
 
+
 def test_valide_wins_over_conteste() -> None:
     """With member_count=2 and two yes votes, valide is returned before conteste.
 
@@ -117,6 +119,7 @@ def test_pressenti_requires_single_yes_single_voted() -> None:
 # If these string literals change server-side without matching frontend update,
 # the UI shows the wrong label (CLAUDE.md §Locked vocabularies).
 # ---------------------------------------------------------------------------
+
 
 def test_vote_state_enum_values_are_locked_strings() -> None:
     """String values must be identical to frontend/lib/votes.ts (drift gate)."""

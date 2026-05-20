@@ -25,7 +25,6 @@ import {
 import { Cuisine, Difficulty, Mood, Protein, Season } from "@/lib/enums";
 import { useEnumLabels } from "@/lib/enum-labels";
 import { PhotoUploader } from "@/components/PhotoUploader";
-import type { FieldKey } from "@/lib/recipe-completeness";
 import type { Recipe } from "@/lib/recipes";
 import { PinLabel } from "@/components/RecipeThread/PinLabel";
 import type { AnswerField } from "@/lib/enums";

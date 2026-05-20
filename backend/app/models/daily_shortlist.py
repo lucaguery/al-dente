@@ -45,5 +45,7 @@ class DailyShortlist(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("household_id", "date", "generation", name="uq_daily_shortlists_hh_date_gen"),
+        UniqueConstraint(
+            "household_id", "date", "generation", name="uq_daily_shortlists_hh_date_gen"
+        ),
     )

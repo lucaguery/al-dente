@@ -50,5 +50,8 @@
     "lint-staged": "^17.0.5",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs}": "eslint --fix --max-warnings=0"
   }
 }

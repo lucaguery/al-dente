@@ -12,9 +12,10 @@ Single source for:
   - _FIELD_LABELS_FR per field — D-06 chip-label French labels
   - OPTIONS_MAP per chip field — imports _VALID_* frozensets from schemas/recipe_turn.py (drift-free)
 """
+
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from app.models.recipe import Recipe
 from app.schemas.recipe_turn import (
@@ -96,7 +97,7 @@ def compute_completeness(recipe: Recipe) -> tuple[int, list[FieldKey]]:
 # stepper: prep_time_minutes, cook_time_minutes, servings
 # text: title, description
 # SKIP: ingredients, steps — list fields with no good chat affordance
-INPUT_TYPE_MAP: dict[FieldKey, Optional[Literal["chip", "stepper", "text"]]] = {
+INPUT_TYPE_MAP: dict[FieldKey, Literal["chip", "stepper", "text"] | None] = {
     "title": "text",
     "description": "text",
     "ingredients": None,

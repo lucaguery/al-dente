@@ -12,7 +12,7 @@ SPEC.md §"Data model" recipes table (Phase 25 migration 0009 updates):
 from __future__ import annotations
 
 import enum
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID as PyUUID
 
 from sqlalchemy import (
@@ -178,9 +178,10 @@ class Recipe(Base):
         score += 1.5 * min(days / 14.0, 1.0). Capped semantics intentional —
         a recipe never cooked is "fully fresh" but capped (any > 14 maps to 1.0).
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         if self.last_cooked_at is None:
             return 999
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         delta = now - self.last_cooked_at
         return delta.days

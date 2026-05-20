@@ -18,6 +18,7 @@ package.
 
 See: .planning/phases/39-migration-safety-ci-gate/39-CONTEXT.md D-39-02
 """
+
 from __future__ import annotations
 
 import logging

@@ -5,6 +5,7 @@
   open a WebSocket directly to Railway without routing through Vercel's proxy.
   Requires a valid cookie (same-origin fetch from the PWA).
 """
+
 from fastapi import APIRouter, Depends, Response, status
 
 from app.auth import clear_auth_cookie, current_member

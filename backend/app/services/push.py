@@ -8,6 +8,7 @@ subscription cannot block the others. On 404 / 410 responses (the only
 canonical "this endpoint is permanently dead" signals per RFC 8030), the
 subscription row is deleted so the next fan-out doesn't keep trying.
 """
+
 from __future__ import annotations
 
 import json
@@ -49,9 +50,7 @@ def send_push_to_household(
         log.warning("pywebpush not installed; skipping push fan-out")
         return
     if not settings.vapid_private_key or not settings.vapid_email:
-        log.warning(
-            "VAPID env vars missing (private_key or email); skipping push"
-        )
+        log.warning("VAPID env vars missing (private_key or email); skipping push")
         return
 
     subs = list(
@@ -62,9 +61,7 @@ def send_push_to_household(
         ).all()
     )
     if not subs:
-        log.info(
-            "push.fanout household=%s no subscriptions", household_id
-        )
+        log.info("push.fanout household=%s no subscriptions", household_id)
         return
 
     # Trim payload to canonical shape — service worker expects { title, body, url }.
@@ -87,9 +84,7 @@ def send_push_to_household(
             )
             delivered += 1
         except WebPushException as exc:  # type: ignore[misc]
-            status = (
-                getattr(exc, "response", None) and exc.response.status_code
-            )
+            status = getattr(exc, "response", None) and exc.response.status_code
             # T-03-05-04 mitigation: never log the full subscription endpoint
             # (token-grade secret per RFC 8030). Log only the row id + status.
             if status in (404, 410):
@@ -144,9 +139,7 @@ def send_test_to_member(
         return (0, 0)
 
     subs = list(
-        db.scalars(
-            select(PushSubscription).where(PushSubscription.member_id == member_id)
-        ).all()
+        db.scalars(select(PushSubscription).where(PushSubscription.member_id == member_id)).all()
     )
     if not subs:
         log.info("push.test member=%s no subscriptions", member_id)
@@ -173,9 +166,7 @@ def send_test_to_member(
             )
             delivered += 1
         except WebPushException as exc:  # type: ignore[misc]
-            status = (
-                getattr(exc, "response", None) and exc.response.status_code
-            )
+            status = getattr(exc, "response", None) and exc.response.status_code
             if status in (404, 410):
                 db.delete(sub)
                 cleaned += 1

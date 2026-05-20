@@ -9,10 +9,7 @@ Exercises:
 """
 
 import json
-import sys
 from pathlib import Path
-
-import pytest
 
 # The script lives at scripts/ (repo root), 2 levels above backend/
 SCRIPT_DIR = Path(__file__).parent.parent.parent / "scripts"

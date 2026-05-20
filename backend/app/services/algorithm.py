@@ -11,11 +11,11 @@ cooked context, then calling these functions with plain Python objects.
 Cold-start tuning (SPEC.md): <10 → no diversification; 10–29 → tie-break
 diversification; 30+ → full SPEC.md select_top5_with_diversity.
 """
+
 from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Any
 
 from app.models.recipe import Recipe
 
@@ -26,6 +26,7 @@ class ShortlistFilters:
 
     Wire shape: matches schemas/shortlist.py::RegenerateRequest (Plan 02).
     """
+
     cuisine: str | None = None
     max_prep_time: int | None = None
     exclude_protein: str | None = None
@@ -35,6 +36,7 @@ class ShortlistFilters:
 @dataclass
 class ShortlistContext:
     """Runtime context for one scoring pass."""
+
     current_season: str  # one of "spring","summer","autumn","winter"
     recent_cuisines: set[str]  # cuisines cooked in the last 14 days
     recent_proteins: set[str]

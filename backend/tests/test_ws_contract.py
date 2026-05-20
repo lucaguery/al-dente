@@ -31,6 +31,7 @@ standard "hit with a foreign household ID" cross-household pattern does not
 apply. The 1008-on-invalid-token test (test 3) covers the analogous isolation
 boundary: an unrecognized token gets no channel registration.
 """
+
 from __future__ import annotations
 
 import os
@@ -92,9 +93,7 @@ def test_ws_close_on_invalid_token(client: TestClient, db_session: Session) -> N
     )
 
 
-def test_ws_handles_malformed_frame_silently(
-    client: TestClient, db_session: Session
-) -> None:
+def test_ws_handles_malformed_frame_silently(client: TestClient, db_session: Session) -> None:
     """ROUT-10 — malformed frame is silently discarded; connection stays open.
 
     ws.py:76-79:

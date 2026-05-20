@@ -14,10 +14,11 @@ Usage:
     )
     state = compute_vote_state(votes_for_recipe, member_count)
 """
+
 from __future__ import annotations
 
 import enum
-from typing import Iterable
+from collections.abc import Iterable
 
 from app.models.vote import Vote
 
@@ -25,11 +26,11 @@ from app.models.vote import Vote
 class VoteState(str, enum.Enum):
     """5-state voting machine. SPEC.md §Voting verbatim."""
 
-    valide = "valide"          # both yes
-    pressenti = "pressenti"    # one yes, partner unvoted
-    conteste = "conteste"      # one yes, one no
-    rejete = "rejete"          # both no
-    sans_avis = "sans_avis"    # neither voted
+    valide = "valide"  # both yes
+    pressenti = "pressenti"  # one yes, partner unvoted
+    conteste = "conteste"  # one yes, one no
+    rejete = "rejete"  # both no
+    sans_avis = "sans_avis"  # neither voted
 
 
 def compute_vote_state(

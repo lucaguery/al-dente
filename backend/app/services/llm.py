@@ -42,18 +42,18 @@ import asyncio
 import hashlib
 import json as _json
 import logging
-from datetime import datetime, timezone
-from typing import Any, Literal, Optional
+from datetime import UTC, datetime
+from typing import Any, Literal
 from uuid import UUID
 
+import httpx  # Phase 26 D-24 (already in pyproject.toml per pre-research)
+import trafilatura  # Phase 26 D-23 (already in pyproject.toml per pre-research)
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-import httpx  # Phase 26 D-24 (already in pyproject.toml per pre-research)
-import trafilatura  # Phase 26 D-23 (already in pyproject.toml per pre-research)
+from sqlalchemy.orm.attributes import flag_modified  # Phase 26 D-28 — JSONB sub-key mutation
 
 from app.config import settings
 from app.db import SessionLocal
@@ -65,7 +65,6 @@ from app.services import storage as storage_service
 from app.services.realtime import broadcast_to_household
 from app.services.svg_sanitizer import sanitize_recipe_svg
 from app.services.thread import _is_safe_url  # Phase 26 SSRF defense
-from sqlalchemy.orm.attributes import flag_modified  # Phase 26 D-28 — JSONB sub-key mutation
 
 log = logging.getLogger(__name__)
 
@@ -124,8 +123,8 @@ class GeminiIngredient(BaseModel):
     """
 
     name: str
-    quantity: Optional[float] = None
-    unit: Optional[str] = None
+    quantity: float | None = None
+    unit: str | None = None
 
 
 class GeminiExtractedRecipe(BaseModel):
@@ -142,23 +141,23 @@ class GeminiExtractedRecipe(BaseModel):
     """
 
     title: str
-    ingredients: Optional[list[GeminiIngredient]] = None
-    steps: Optional[list[str]] = None
-    prep_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+    ingredients: list[GeminiIngredient] | None = None
+    steps: list[str] | None = None
+    prep_time_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
     # Phase 24 RID-02 — three new optional fields (D-13).
-    cook_time_minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
-    difficulty: Optional[DifficultyLiteral] = None
-    description: Optional[str] = None
-    servings: Optional[int] = Field(default=None, ge=1, le=99)
-    cuisine: Optional[CuisineLiteral] = None
+    cook_time_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
+    difficulty: DifficultyLiteral | None = None
+    description: str | None = None
+    servings: int | None = Field(default=None, ge=1, le=99)
+    cuisine: CuisineLiteral | None = None
     mood: list[MoodLiteral] = Field(default_factory=list)
-    main_protein: Optional[ProteinLiteral] = None
+    main_protein: ProteinLiteral | None = None
     seasonality: list[SeasonLiteral] = Field(default_factory=list)
     # Phase 29 D-05 — Gemini-generated 1-2 sentence French recap of what was
     # extracted/modified. Optional because apply_voice_modification reuses this
     # schema and its prompt does NOT request summary_body (Pitfall 2).
     # _run_thread_llm uses a server fallback when None.
-    summary_body: Optional[str] = Field(default=None, max_length=240)
+    summary_body: str | None = Field(default=None, max_length=240)
 
 
 # ---------------------------------------------------------------------------
@@ -254,9 +253,7 @@ _GEMINI_MODEL = "gemini-2.5-flash"
 # apply_voice_modification is preserved — still called by POST /recipes/{id}/voice-modify.
 
 
-def apply_voice_modification(
-    recipe_json: dict[str, Any], transcript: str
-) -> GeminiExtractedRecipe:
+def apply_voice_modification(recipe_json: dict[str, Any], transcript: str) -> GeminiExtractedRecipe:
     """Existing recipe + modification instruction -> modified structured recipe.
 
     Read-only — does NOT persist. Caller (router for
@@ -270,6 +267,7 @@ def apply_voice_modification(
     # D-04 — deterministic test mode: skip Gemini, return canned data.
     if settings.environment == "test":
         from app.services.llm_fixtures import canned_modified_recipe
+
         return canned_modified_recipe(recipe_json, transcript)
 
     response = _gemini().models.generate_content(
@@ -316,6 +314,7 @@ def rewrite_title(original_title: str, recipe_context: dict[str, Any]) -> str:
     # D-25 test-mode shortcut: deterministic output for Playwright fixtures.
     if settings.environment == "test":
         from app.services.llm_fixtures import canned_rewritten_title
+
         return canned_rewritten_title(original_title)
 
     response = _gemini().models.generate_content(
@@ -362,6 +361,7 @@ def generate_recipe_illustration(recipe_title: str, recipe_context: dict[str, An
     # D-04 test-mode shortcut: deterministic canned SVG for Playwright fixtures.
     if settings.environment == "test":
         from app.services.llm_fixtures import canned_recipe_illustration
+
         return canned_recipe_illustration(recipe_title)
 
     response = _gemini().models.generate_content(
@@ -392,9 +392,7 @@ def _apply_extracted(recipe: Recipe, extracted: GeminiExtractedRecipe) -> None:
         raise ValueError("Gemini returned empty title")
     recipe.title = extracted.title
     recipe.ingredients = (
-        [i.model_dump() for i in extracted.ingredients]
-        if extracted.ingredients
-        else None
+        [i.model_dump() for i in extracted.ingredients] if extracted.ingredients else None
     )
     recipe.steps = extracted.steps
     recipe.prep_time_minutes = extracted.prep_time_minutes
@@ -527,20 +525,18 @@ def _record_turn_enrichment_failure(
 
 from sqlalchemy import func  # noqa: E402 — placed here to co-locate with phase 29 helpers
 
-from app.services.completeness import (  # noqa: E402
-    FIELD_KEYS,
-    INPUT_TYPE_MAP,
-    OPTIONS_MAP,
-    _FIELD_PROMPTS_FR,
-    compute_completeness,
-    is_conflict,
-)
 from app.schemas.recipe_turn import (  # noqa: E402
     AdvisoryTurnPayload,
-    AnswerField,
     ChipPayload,
     QuestionTurnPayload,
     SummaryTurnPayload,
+)
+from app.services.completeness import (  # noqa: E402
+    _FIELD_PROMPTS_FR,
+    INPUT_TYPE_MAP,
+    OPTIONS_MAP,
+    compute_completeness,
+    is_conflict,
 )
 
 
@@ -550,15 +546,11 @@ def _extraction_hash(extracted: GeminiExtractedRecipe) -> str:
     Pitfall 1: Pydantic v2 has NO model_dump_json(sort_keys=True). Use
     json.dumps(model_dump(), sort_keys=True, ensure_ascii=False) instead.
     """
-    canonical = _json.dumps(
-        extracted.model_dump(), sort_keys=True, ensure_ascii=False
-    )
+    canonical = _json.dumps(extracted.model_dump(), sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def _extract_reason_from_thread(
-    turns: list[RecipeTurn], trigger_position: int
-) -> str:
+def _extract_reason_from_thread(turns: list[RecipeTurn], trigger_position: int) -> str:
     """Phase 29 D-17 — quote the most recent user turn ≤ trigger_position.
 
     Returns the literal user text wrapped in « », newlines stripped, ≤120 chars
@@ -589,9 +581,7 @@ def _extract_reason_from_thread(
     return "«  »"
 
 
-def _should_emit_advisory(
-    turns: list[RecipeTurn], field: str, proposed_value: Any
-) -> bool:
+def _should_emit_advisory(turns: list[RecipeTurn], field: str, proposed_value: Any) -> bool:
     """Phase 29 D-18 — suppress duplicate advisories.
 
     Walk turns backward looking for the most recent advisory turn for this field.
@@ -600,7 +590,7 @@ def _should_emit_advisory(
     Otherwise (no prior advisory OR resolved-with-different-proposal) → EMIT.
     """
     # Find most recent advisory for this field
-    most_recent_advisory: Optional[RecipeTurn] = None
+    most_recent_advisory: RecipeTurn | None = None
     for turn in reversed(turns):
         if turn.kind == "advisory" and (turn.payload or {}).get("field") == field:
             most_recent_advisory = turn
@@ -627,15 +617,13 @@ def _should_emit_advisory(
     return True  # different proposal → emit
 
 
-def _should_emit_question(
-    turns: list[RecipeTurn], field: str
-) -> bool:
+def _should_emit_question(turns: list[RecipeTurn], field: str) -> bool:
     """Phase 29 D-12 — suppress when an unanswered question for the field exists.
 
     Unanswered question = a `question` turn for this field with no later
     `answer` turn whose payload.in_reply_to_turn_id matches the question's id.
     """
-    most_recent_question: Optional[RecipeTurn] = None
+    most_recent_question: RecipeTurn | None = None
     for turn in reversed(turns):
         if turn.kind == "question" and (turn.payload or {}).get("field") == field:
             most_recent_question = turn
@@ -682,7 +670,7 @@ def _build_thread_prompt(
             elif kind == "url":
                 lines.append(f"USER (url): {payload.get('url', '')}")
             elif kind == "photo":
-                for path in (payload.get("photo_paths") or []):
+                for path in payload.get("photo_paths") or []:
                     if photo_count >= _MAX_PHOTO_PARTS:
                         break
                     try:
@@ -766,6 +754,7 @@ async def _run_thread_llm(
     # Call Gemini (single call per LLM-triggering turn — PROJECT.md invariant)
     if settings.environment == "test":
         from app.services.llm_fixtures import canned_thread_extract
+
         extracted = canned_thread_extract(thread, pinned)
     else:
         contents: list[Any] = [prose, *photo_parts] if photo_parts else [prose]
@@ -784,7 +773,7 @@ async def _run_thread_llm(
 
     # D-03 — idempotency check: skip all emission if hash unchanged
     new_hash = _extraction_hash(extracted)
-    most_recent_summary: Optional[RecipeTurn] = None
+    most_recent_summary: RecipeTurn | None = None
     for turn in reversed(thread):
         if turn.kind == "summary":
             most_recent_summary = turn
@@ -802,9 +791,7 @@ async def _run_thread_llm(
         "title": extracted.title,
         "description": extracted.description,
         "ingredients": (
-            [i.model_dump() for i in extracted.ingredients]
-            if extracted.ingredients
-            else None
+            [i.model_dump() for i in extracted.ingredients] if extracted.ingredients else None
         ),
         "steps": extracted.steps,
         "prep_time_minutes": extracted.prep_time_minutes,
@@ -821,8 +808,7 @@ async def _run_thread_llm(
     # Get the trigger turn's position for reason extraction
     trigger_turn = next((t for t in thread if t.id == trigger_turn_id), None)
     trigger_position = (
-        trigger_turn.position if trigger_turn
-        else max((t.position for t in thread), default=0)
+        trigger_turn.position if trigger_turn else max((t.position for t in thread), default=0)
     )
 
     advisory_payloads: list[dict] = []
@@ -836,13 +822,15 @@ async def _run_thread_llm(
                 continue  # no conflict → skip advisory
             if not _should_emit_advisory(thread, field, proposed):
                 continue  # D-18 de-dup → suppress
-            advisory_payloads.append({
-                "kind": "advisory",
-                "field": field,
-                "current_value": current,
-                "proposed_value": proposed,
-                "reason_excerpt": _extract_reason_from_thread(thread, trigger_position),
-            })
+            advisory_payloads.append(
+                {
+                    "kind": "advisory",
+                    "field": field,
+                    "current_value": current,
+                    "proposed_value": proposed,
+                    "reason_excerpt": _extract_reason_from_thread(thread, trigger_position),
+                }
+            )
         else:
             # Non-pinned: track fields that changed (for chips)
             if proposed is not None and is_conflict(field, current, proposed):
@@ -855,9 +843,9 @@ async def _run_thread_llm(
         f = adv["field"]
         # Revert to current value so _apply_extracted doesn't overwrite user's pin.
         if f == "ingredients" and recipe.ingredients is not None:
-            safe_extracted.ingredients = (
-                [GeminiIngredient(**i) for i in (recipe.ingredients or [])] or None
-            )
+            safe_extracted.ingredients = [
+                GeminiIngredient(**i) for i in (recipe.ingredients or [])
+            ] or None
         elif hasattr(safe_extracted, f):
             setattr(safe_extracted, f, getattr(recipe, f, None))
     # _apply_extracted requires a non-empty title (its precondition).
@@ -873,9 +861,7 @@ async def _run_thread_llm(
 
     # Emit advisory turns (one per conflicting pinned field)
     for adv_payload in advisory_payloads:
-        validated = AdvisoryTurnPayload(**adv_payload).model_dump(
-            mode="json", exclude={"kind"}
-        )
+        validated = AdvisoryTurnPayload(**adv_payload).model_dump(mode="json", exclude={"kind"})
         adv_turn = RecipeTurn(
             recipe_id=recipe.id,
             position=next_pos,
@@ -891,12 +877,12 @@ async def _run_thread_llm(
     # D-08/Pitfall 9 — gate on questions_deferred_until (tz-aware comparison).
     questions_deferred = (
         recipe.questions_deferred_until is not None
-        and recipe.questions_deferred_until > datetime.now(tz=timezone.utc)
+        and recipe.questions_deferred_until > datetime.now(tz=UTC)
     )
     if not questions_deferred:
         # Recompute completeness AFTER _apply_extracted has run
         _, missing = compute_completeness(recipe)
-        chosen_field: Optional[str] = None
+        chosen_field: str | None = None
         for field in missing:
             if INPUT_TYPE_MAP.get(field) is None:
                 continue  # D-10 SKIP (ingredients/steps)
@@ -1059,17 +1045,13 @@ def promote_draft(recipe_id: UUID) -> None:
                     # already typed a title). Promote anyway with status=structured
                     # and surface the error via promotion_error. _record_rewrite_failure
                     # commits and broadcasts recipe.promoted — never re-raises.
-                    recipe.illustration_svg = _generate_and_sanitize_illustration(
-                        recipe.title
-                    )
+                    recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
                     _record_rewrite_failure(db, recipe, rewrite_exc)
                     return
                 recipe.title = new_title
                 # Phase 24 RID-05 D-36 — illustration after title rewrite.
                 # Failure NEVER affects recipe.status (BrandIcon fallback for NULL svg).
-                recipe.illustration_svg = _generate_and_sanitize_illustration(
-                    recipe.title
-                )
+                recipe.illustration_svg = _generate_and_sanitize_illustration(recipe.title)
                 recipe.status = "structured"
                 recipe.promotion_error = None
                 recipe.promotion_attempts = (recipe.promotion_attempts or 0) + 1
@@ -1137,9 +1119,7 @@ def promote_draft(recipe_id: UUID) -> None:
                 _broadcast_promoted(recipe)
 
             else:
-                raise ValueError(
-                    f"promote_draft: unknown turn kind {kind!r}"
-                )
+                raise ValueError(f"promote_draft: unknown turn kind {kind!r}")
 
         except Exception as exc:  # noqa: BLE001
             _record_failure(db, recipe, exc)
@@ -1219,11 +1199,11 @@ async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
       * Supabase upload failure
     """
     db = SessionLocal()
-    recipe: Optional[Recipe] = None
+    recipe: Recipe | None = None
     # WR-01 — defensive init so the except block can safely reference `turn`
     # (CR-01 fix uses it). Any failure between `recipe` lookup and `turn`
     # assignment would otherwise NameError on the except path.
-    turn: Optional[RecipeTurn] = None
+    turn: RecipeTurn | None = None
     try:
         recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
         if recipe is None:
@@ -1237,6 +1217,7 @@ async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
         # D-30 — test-mode bypass uses canned markdown; skip httpx + trafilatura.
         if settings.environment == "test":
             from app.services.llm_fixtures import canned_url_extract
+
             extracted_markdown = canned_url_extract(turn.payload.get("url") or "")
         else:
             # IN-04 — `.get("url") or ""` makes the None-vs-empty conflation
@@ -1340,6 +1321,10 @@ async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
             # legacy recipe-level failure marker (preserves prior behavior).
             _record_failure(db, recipe, exc)
         else:
-            log.exception("extract_and_process_url_turn: pre-recipe failure recipe=%s turn=%s", recipe_id, turn_id)
+            log.exception(
+                "extract_and_process_url_turn: pre-recipe failure recipe=%s turn=%s",
+                recipe_id,
+                turn_id,
+            )
     finally:
         db.close()

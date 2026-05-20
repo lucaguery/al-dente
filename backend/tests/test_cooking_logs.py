@@ -10,19 +10,19 @@ Per 15-RESEARCH §Pitfall 2: DO NOT assert on WebSocket broadcast ordering.
 The race observable is the DB state — cook_count == start + 1, both
 responses identical. Broadcast-tap inspection is out of scope.
 """
+
 from __future__ import annotations
 
 import asyncio
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
+import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-import pytest
 
 from app.db import get_db
 from app.main import app
@@ -45,18 +45,13 @@ def _make_unfinalized_log(db: Session) -> tuple[UUID, UUID, int]:
     create a new log on it. The `db_session` fixture rolls back at
     teardown so this insert is undone.
     """
-    member = db.scalar(
-        select(Member).where(Member.auth_token == SEED_TOKEN).limit(1)
-    )
+    member = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert member is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     # Pick a recipe that belongs to this household. cook_count snapshot
     # captures the pre-test value so the assertion is N+1 rather than ==1.
-    recipe = db.scalar(
-        select(Recipe).where(Recipe.household_id == member.household_id).limit(1)
-    )
+    recipe = db.scalar(select(Recipe).where(Recipe.household_id == member.household_id).limit(1))
     assert recipe is not None, "seed Postgres has no recipes — run `uv run seed`?"
     start_cook_count = recipe.cook_count
 
@@ -79,7 +74,7 @@ def _make_unfinalized_log(db: Session) -> tuple[UUID, UUID, int]:
         recipe_id=recipe.id,
         household_id=member.household_id,
         cooked_by_member_id=member.id,
-        cooked_at=datetime.now(timezone.utc),
+        cooked_at=datetime.now(UTC),
         photo_paths=[],
     )
     db.add(log)
@@ -166,9 +161,7 @@ async def test_finalize_first_time_increments_cook_count(
         transport=ASGITransport(app=app_with_db_override),
         base_url="http://test",
     ) as ac:
-        resp = await ac.put(
-            f"/cooking-logs/{log_id}", json=body, headers=AUTH_HEADERS
-        )
+        resp = await ac.put(f"/cooking-logs/{log_id}", json=body, headers=AUTH_HEADERS)
 
     assert resp.status_code == 200, resp.text
     db_session.expire_all()

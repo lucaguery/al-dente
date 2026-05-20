@@ -11,11 +11,10 @@ RED state: module app.services.completeness does NOT exist yet.
 All tests will fail with ModuleNotFoundError on collection. That is the
 expected RED state for the TDD cycle.
 """
+
 from __future__ import annotations
 
 from uuid import uuid4
-
-import pytest
 
 from app.models.recipe import Recipe
 from app.schemas.recipe_turn import (
@@ -24,7 +23,6 @@ from app.schemas.recipe_turn import (
     _VALID_MOODS,
     _VALID_PROTEINS,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -98,16 +96,14 @@ TITLE_ONLY_KWARGS = dict(
 # ---------------------------------------------------------------------------
 
 from app.services.completeness import (  # noqa: E402  (intentional — RED state)
+    _FIELD_LABELS_FR,
+    _FIELD_PROMPTS_FR,
     FIELD_KEYS,
     INPUT_TYPE_MAP,
     OPTIONS_MAP,
-    _FIELD_LABELS_FR,
-    _FIELD_PROMPTS_FR,
     compute_completeness,
     is_conflict,
-    is_field_filled,
 )
-
 
 # ---------------------------------------------------------------------------
 # 1. FIELD_KEYS ordering (byte-for-byte parity with TS)
@@ -169,7 +165,13 @@ def test_compute_completeness_empty_recipe():
 
 def test_compute_completeness_partial_5_of_11():
     """5/11 filled → percent=45 (round(5/11*100) = round(45.45) = 45)."""
-    kwargs = {**TITLE_ONLY_KWARGS, "description": "Desc", "ingredients": [{"name": "sel"}], "steps": ["Cuire"], "prep_time_minutes": 5}
+    kwargs = {
+        **TITLE_ONLY_KWARGS,
+        "description": "Desc",
+        "ingredients": [{"name": "sel"}],
+        "steps": ["Cuire"],
+        "prep_time_minutes": 5,
+    }
     recipe = _make_recipe(**kwargs)
     percent, missing = compute_completeness(recipe)
     assert percent == 45
@@ -177,7 +179,14 @@ def test_compute_completeness_partial_5_of_11():
 
 def test_compute_completeness_partial_6_of_11():
     """6/11 filled → percent=55 (round(6/11*100) = round(54.54) = 55)."""
-    kwargs = {**TITLE_ONLY_KWARGS, "description": "Desc", "ingredients": [{"name": "sel"}], "steps": ["Cuire"], "prep_time_minutes": 5, "cook_time_minutes": 10}
+    kwargs = {
+        **TITLE_ONLY_KWARGS,
+        "description": "Desc",
+        "ingredients": [{"name": "sel"}],
+        "steps": ["Cuire"],
+        "prep_time_minutes": 5,
+        "cook_time_minutes": 10,
+    }
     recipe = _make_recipe(**kwargs)
     percent, missing = compute_completeness(recipe)
     assert percent == 55
@@ -481,11 +490,14 @@ def test_is_conflict_ordered_lists_ingredients_identical():
 
 def test_is_conflict_ordered_lists_ingredients_different():
     """Different ingredient dicts → conflict."""
-    assert is_conflict(
-        "ingredients",
-        [{"name": "riz"}],
-        [{"name": "pâtes"}],
-    ) is True
+    assert (
+        is_conflict(
+            "ingredients",
+            [{"name": "riz"}],
+            [{"name": "pâtes"}],
+        )
+        is True
+    )
 
 
 def test_is_conflict_steps_same():

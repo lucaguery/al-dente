@@ -19,11 +19,11 @@ Architecture notes:
 - New households/recipes for isolated tests are created in db_session; they roll back after each test.
 - The seeded household is used for the full-pool test (21 structured recipes + autouse seed fixture).
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -31,7 +31,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.cooking_log import CookingLog
-from app.models.daily_shortlist import DailyShortlist
 from app.models.household import Household
 from app.models.member import Member
 from app.models.recipe import Recipe
@@ -58,7 +57,9 @@ def _seeded_member(db: Session) -> Member:
     return m
 
 
-def _make_household(db: Session, *, name: str = "Test HH", invite_code: Optional[str] = None) -> Household:
+def _make_household(
+    db: Session, *, name: str = "Test HH", invite_code: str | None = None
+) -> Household:
     """Create a fresh Household within the current session's transaction."""
     code = invite_code or f"TST{uuid.uuid4().hex[:3].upper()}"
     hh = Household(
@@ -149,8 +150,12 @@ class TestGenerateDailyShortlist:
 
         hh = _make_household(db_session)
         member = _make_member(db_session, household_id=hh.id)
-        _make_recipe(db_session, household_id=hh.id, member_id=member.id, cuisine="italian", title="Recipe A")
-        _make_recipe(db_session, household_id=hh.id, member_id=member.id, cuisine="french", title="Recipe B")
+        _make_recipe(
+            db_session, household_id=hh.id, member_id=member.id, cuisine="italian", title="Recipe A"
+        )
+        _make_recipe(
+            db_session, household_id=hh.id, member_id=member.id, cuisine="french", title="Recipe B"
+        )
         db_session.commit()
 
         result = await generate_daily_shortlist(hh.id, db=db_session)
@@ -176,7 +181,16 @@ class TestGenerateDailyShortlist:
 
         hh = _make_household(db_session)
         member = _make_member(db_session, household_id=hh.id)
-        cuisines = ["italian", "french", "asian", "mediterranean", "indian", "mexican", "american", "northAfrican"]
+        cuisines = [
+            "italian",
+            "french",
+            "asian",
+            "mediterranean",
+            "indian",
+            "mexican",
+            "american",
+            "northAfrican",
+        ]
         proteins = ["poultry", "redMeat", "fish", "seafood", "egg", "legume", "none", "poultry"]
         for i in range(8):
             _make_recipe(
@@ -196,9 +210,7 @@ class TestGenerateDailyShortlist:
 
         # broadcast_to_household called with "shortlist.created"
         broadcast_calls = [call for call in broadcast_mock.call_args_list]
-        shortlist_events = [
-            call for call in broadcast_calls if call.args[1] == "shortlist.created"
-        ]
+        shortlist_events = [call for call in broadcast_calls if call.args[1] == "shortlist.created"]
         assert len(shortlist_events) == 1, (
             f"Expected exactly 1 shortlist.created broadcast, got {len(shortlist_events)}"
         )
@@ -220,9 +232,7 @@ class TestGenerateDailyShortlist:
         # Must NOT raise even though push fails
         result = await generate_daily_shortlist(hh.id, db=db_session)
 
-        assert result is not None, (
-            "DailyShortlist must be returned even when push fan-out fails"
-        )
+        assert result is not None, "DailyShortlist must be returned even when push fan-out fails"
 
     @pytest.mark.asyncio
     async def test_idempotent_rerun_same_picks(self, db_session: Session, monkeypatch) -> None:
@@ -269,8 +279,12 @@ class TestGenerateDailyShortlist:
 
         hh = _make_household(db_session)
         member = _make_member(db_session, household_id=hh.id)
-        italian = _make_recipe(db_session, household_id=hh.id, member_id=member.id, cuisine="italian")
-        _make_recipe(db_session, household_id=hh.id, member_id=member.id, cuisine="french", title="French")
+        italian = _make_recipe(
+            db_session, household_id=hh.id, member_id=member.id, cuisine="italian"
+        )
+        _make_recipe(
+            db_session, household_id=hh.id, member_id=member.id, cuisine="french", title="French"
+        )
         db_session.commit()
 
         result = await generate_daily_shortlist(
@@ -296,9 +310,7 @@ class TestGenerateDailyShortlist:
         _make_recipe(db_session, household_id=hh.id, member_id=member.id, cuisine="french")
         db_session.commit()
 
-        result = await generate_daily_shortlist(
-            hh.id, db=db_session, filters={"cuisine": "asian"}
-        )
+        result = await generate_daily_shortlist(hh.id, db=db_session, filters={"cuisine": "asian"})
 
         assert result is None, "All-filtered-out corpus must return None"
         broadcast_mock.assert_not_called()
@@ -320,7 +332,9 @@ class TestGenerateDailyShortlist:
 
         hh = _make_household(db_session)
         member = _make_member(db_session, household_id=hh.id)
-        _make_recipe(db_session, household_id=hh.id, member_id=member.id, title="Own Session Recipe")
+        _make_recipe(
+            db_session, household_id=hh.id, member_id=member.id, title="Own Session Recipe"
+        )
         db_session.commit()
 
         # Monkeypatch SessionLocal to return a session that records close() calls
@@ -353,20 +367,23 @@ class TestGenerateDailyShortlist:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("month,expected_season", [
-    (3, "spring"),
-    (4, "spring"),
-    (5, "spring"),
-    (6, "summer"),
-    (7, "summer"),
-    (8, "summer"),
-    (9, "autumn"),
-    (10, "autumn"),
-    (11, "autumn"),
-    (12, "winter"),
-    (1, "winter"),
-    (2, "winter"),
-])
+@pytest.mark.parametrize(
+    "month,expected_season",
+    [
+        (3, "spring"),
+        (4, "spring"),
+        (5, "spring"),
+        (6, "summer"),
+        (7, "summer"),
+        (8, "summer"),
+        (9, "autumn"),
+        (10, "autumn"),
+        (11, "autumn"),
+        (12, "winter"),
+        (1, "winter"),
+        (2, "winter"),
+    ],
+)
 def test_current_season_month_mapping(month: int, expected_season: str, monkeypatch) -> None:
     """_current_season() maps all 12 calendar months to the correct Northern-hemisphere season."""
     import app.services.shortlist as shortlist_module
@@ -375,7 +392,7 @@ def test_current_season_month_mapping(month: int, expected_season: str, monkeypa
     class _FakeDatetime:
         @staticmethod
         def now(tz=None):
-            return datetime(2026, month, 15, 12, 0, 0, tzinfo=timezone.utc)
+            return datetime(2026, month, 15, 12, 0, 0, tzinfo=UTC)
 
     monkeypatch.setattr(shortlist_module, "datetime", _FakeDatetime)
 
@@ -418,7 +435,7 @@ class TestRecentCuisinesAndProteins:
             household_id=hh.id,
             recipe_id=recipe.id,
             cooked_by_member_id=member.id,
-            cooked_at=datetime.now(timezone.utc) - timedelta(days=3),
+            cooked_at=datetime.now(UTC) - timedelta(days=3),
         )
         db_session.add(log)
         db_session.commit()
@@ -442,7 +459,7 @@ class TestRecentCuisinesAndProteins:
             household_id=hh.id,
             recipe_id=recipe.id,
             cooked_by_member_id=member.id,
-            cooked_at=datetime.now(timezone.utc) - timedelta(days=30),
+            cooked_at=datetime.now(UTC) - timedelta(days=30),
         )
         db_session.add(log)
         db_session.commit()
@@ -456,21 +473,37 @@ class TestRecentCuisinesAndProteins:
         hh = _make_household(db_session)
         member = _make_member(db_session, household_id=hh.id)
         r1 = _make_recipe(
-            db_session, household_id=hh.id, member_id=member.id,
-            cuisine="indian", main_protein="legume", title="R1"
+            db_session,
+            household_id=hh.id,
+            member_id=member.id,
+            cuisine="indian",
+            main_protein="legume",
+            title="R1",
         )
         r2 = _make_recipe(
-            db_session, household_id=hh.id, member_id=member.id,
-            cuisine="french", main_protein="poultry", title="R2"
+            db_session,
+            household_id=hh.id,
+            member_id=member.id,
+            cuisine="french",
+            main_protein="poultry",
+            title="R2",
         )
-        db_session.add(CookingLog(
-            household_id=hh.id, recipe_id=r1.id, cooked_by_member_id=member.id,
-            cooked_at=datetime.now(timezone.utc) - timedelta(days=5),
-        ))
-        db_session.add(CookingLog(
-            household_id=hh.id, recipe_id=r2.id, cooked_by_member_id=member.id,
-            cooked_at=datetime.now(timezone.utc) - timedelta(days=10),
-        ))
+        db_session.add(
+            CookingLog(
+                household_id=hh.id,
+                recipe_id=r1.id,
+                cooked_by_member_id=member.id,
+                cooked_at=datetime.now(UTC) - timedelta(days=5),
+            )
+        )
+        db_session.add(
+            CookingLog(
+                household_id=hh.id,
+                recipe_id=r2.id,
+                cooked_by_member_id=member.id,
+                cooked_at=datetime.now(UTC) - timedelta(days=10),
+            )
+        )
         db_session.commit()
 
         cuisines, proteins = _recent_cuisines_and_proteins(hh.id, db_session, days=7)

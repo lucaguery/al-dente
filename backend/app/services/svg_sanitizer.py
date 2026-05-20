@@ -40,7 +40,6 @@ from __future__ import annotations
 import logging
 import re
 import xml.etree.ElementTree as ET
-from typing import Optional
 
 # Phase 30 BUG-02 D-07 — bind the empty prefix to the SVG namespace at module
 # import time so ET.tostring emits <svg xmlns="…"> instead of inventing an
@@ -55,12 +54,27 @@ ET.register_namespace("", _SVG_NAMESPACE_URI)
 log = logging.getLogger(__name__)
 
 _ALLOWED_TAGS = frozenset({"svg", "path"})
-_ALLOWED_SVG_ATTRS = frozenset({
-    "viewBox", "xmlns", "fill", "stroke", "stroke-linecap", "width", "height",
-})
-_ALLOWED_PATH_ATTRS = frozenset({
-    "d", "stroke", "fill", "stroke-width", "stroke-linecap", "stroke-linejoin",
-})
+_ALLOWED_SVG_ATTRS = frozenset(
+    {
+        "viewBox",
+        "xmlns",
+        "fill",
+        "stroke",
+        "stroke-linecap",
+        "width",
+        "height",
+    }
+)
+_ALLOWED_PATH_ATTRS = frozenset(
+    {
+        "d",
+        "stroke",
+        "fill",
+        "stroke-width",
+        "stroke-linecap",
+        "stroke-linejoin",
+    }
+)
 _MAX_BYTES = 4096
 
 # Pre-parse rejection markers — these characters/sequences in the raw text
@@ -77,7 +91,7 @@ def _strip_namespace(tag: str) -> str:
     return tag
 
 
-def sanitize_recipe_svg(raw: str) -> Optional[str]:
+def sanitize_recipe_svg(raw: str) -> str | None:
     """Return a sanitized SVG string, or None if ANY allowlist violation found.
 
     The returned string is safe to render via dangerouslySetInnerHTML AT THE
@@ -185,7 +199,9 @@ def sanitize_recipe_svg(raw: str) -> Optional[str]:
     # 7. Final size sanity check on the SERIALIZED form (in case normalization
     # somehow inflated past the cap).
     if len(serialized.encode("utf-8")) > _MAX_BYTES:
-        log.warning("svg_sanitizer: serialized SVG exceeded cap (%d bytes)", len(serialized.encode("utf-8")))
+        log.warning(
+            "svg_sanitizer: serialized SVG exceeded cap (%d bytes)", len(serialized.encode("utf-8"))
+        )
         return None
 
     return serialized

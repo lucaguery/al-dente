@@ -15,14 +15,13 @@ import pytest
 
 from app.services.svg_sanitizer import sanitize_recipe_svg
 
-
 # --- Happy path -----------------------------------------------------------
 
 CLEAN_SVG = (
     '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" '
     'fill="none" stroke="currentColor">'
     '<path d="M10 10 L 90 90" stroke-width="2"/>'
-    '</svg>'
+    "</svg>"
 )
 
 
@@ -31,18 +30,18 @@ def test_accepts_clean_line_art_svg():
     assert result is not None
     # Phase 30 BUG-02 — sanitizer emits a bare <svg> root with the SVG
     # namespace as the default; no ns0 / nsN prefixes anywhere.
-    assert result.startswith('<svg'), repr(result)
-    assert '<path' in result, repr(result)
+    assert result.startswith("<svg"), repr(result)
+    assert "<path" in result, repr(result)
     # viewBox normalization (D-34).
-    assert '0 0 160 160' in result
+    assert "0 0 160 160" in result
 
 
 def test_normalizes_viewBox_on_accept():
     raw = '<svg viewBox="50 50 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 0 L10 10"/></svg>'
     result = sanitize_recipe_svg(raw)
     assert result is not None
-    assert '0 0 160 160' in result
-    assert '50 50 100 100' not in result
+    assert "0 0 160 160" in result
+    assert "50 50 100 100" not in result
 
 
 def test_injects_default_stroke_and_fill_when_missing():
@@ -61,29 +60,37 @@ def test_accepts_svg_with_explicit_namespace():
 
 # --- Disallowed tags (D-33) -----------------------------------------------
 
-@pytest.mark.parametrize("malicious", [
-    '<svg><script>alert(1)</script></svg>',
-    '<svg><foreignObject><div>hack</div></foreignObject></svg>',
-    '<svg><text x="0" y="20">leak</text></svg>',
-    '<svg><image href="data:image/png;base64,AAAA"/></svg>',
-    '<svg><use href="#x"/></svg>',
-    '<svg><a href="javascript:alert(1)"><path d="M0 0"/></a></svg>',
-    '<svg><style>.x { background: url(javascript:alert(1)); }</style></svg>',
-    '<svg><defs><filter id="f"/></defs></svg>',
-    '<svg><g><path d="M0 0"/></g></svg>',
-])
+
+@pytest.mark.parametrize(
+    "malicious",
+    [
+        "<svg><script>alert(1)</script></svg>",
+        "<svg><foreignObject><div>hack</div></foreignObject></svg>",
+        '<svg><text x="0" y="20">leak</text></svg>',
+        '<svg><image href="data:image/png;base64,AAAA"/></svg>',
+        '<svg><use href="#x"/></svg>',
+        '<svg><a href="javascript:alert(1)"><path d="M0 0"/></a></svg>',
+        "<svg><style>.x { background: url(javascript:alert(1)); }</style></svg>",
+        '<svg><defs><filter id="f"/></defs></svg>',
+        '<svg><g><path d="M0 0"/></g></svg>',
+    ],
+)
 def test_rejects_disallowed_tag(malicious):
     assert sanitize_recipe_svg(malicious) is None
 
 
 # --- Disallowed attributes (D-33) -----------------------------------------
 
-@pytest.mark.parametrize("malicious", [
-    '<svg onclick="alert(1)"><path d="M0 0"/></svg>',
-    '<svg onload="alert(1)"><path d="M0 0"/></svg>',
-    '<svg><path d="M0 0" onerror="alert(1)"/></svg>',
-    '<svg><path d="M0 0" onmouseover="alert(1)"/></svg>',
-])
+
+@pytest.mark.parametrize(
+    "malicious",
+    [
+        '<svg onclick="alert(1)"><path d="M0 0"/></svg>',
+        '<svg onload="alert(1)"><path d="M0 0"/></svg>',
+        '<svg><path d="M0 0" onerror="alert(1)"/></svg>',
+        '<svg><path d="M0 0" onmouseover="alert(1)"/></svg>',
+    ],
+)
 def test_rejects_event_handler_attribute(malicious):
     assert sanitize_recipe_svg(malicious) is None
 
@@ -98,15 +105,19 @@ def test_rejects_path_style_attribute():
     assert sanitize_recipe_svg(raw) is None
 
 
-@pytest.mark.parametrize("malicious", [
-    '<svg xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M0 0" xlink:href="data:image/png;base64,AAAA"/></svg>',
-    '<svg><path d="M0 0" href="javascript:alert(1)"/></svg>',
-])
+@pytest.mark.parametrize(
+    "malicious",
+    [
+        '<svg xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M0 0" xlink:href="data:image/png;base64,AAAA"/></svg>',
+        '<svg><path d="M0 0" href="javascript:alert(1)"/></svg>',
+    ],
+)
 def test_rejects_href_attribute(malicious):
     assert sanitize_recipe_svg(malicious) is None
 
 
 # --- Structural rejections (CDATA / comments / PIs / XXE) -----------------
+
 
 def test_rejects_cdata_section():
     raw = '<svg><![CDATA[<script>alert(1)</script>]]><path d="M0 0"/></svg>'
@@ -126,14 +137,12 @@ def test_rejects_processing_instruction():
 def test_rejects_xxe_entity_expansion():
     # stdlib ET in Python 3.12 raises ParseError on undefined entity expansion.
     # RESEARCH §Target 1 confirmed empirically.
-    raw = (
-        '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
-        '<svg><path d="&xxe;"/></svg>'
-    )
+    raw = '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><svg><path d="&xxe;"/></svg>'
     assert sanitize_recipe_svg(raw) is None
 
 
 # --- Size + malformed -----------------------------------------------------
+
 
 def test_rejects_oversized_svg():
     # 4097 bytes — one over the cap.
@@ -145,11 +154,12 @@ def test_rejects_oversized_svg():
 
 def test_rejects_malformed_xml():
     assert sanitize_recipe_svg('<svg><path d="M0 0"></svg>') is None  # missing close
-    assert sanitize_recipe_svg('not xml at all') is None
-    assert sanitize_recipe_svg('') is None
+    assert sanitize_recipe_svg("not xml at all") is None
+    assert sanitize_recipe_svg("") is None
 
 
 # --- Negative cases that look like positives but aren't --------------------
+
 
 def test_rejects_when_root_is_not_svg():
     raw = '<div><svg><path d="M0 0"/></svg></div>'
@@ -158,6 +168,7 @@ def test_rejects_when_root_is_not_svg():
 
 
 # --- Phase 30 BUG-02 — no-namespace-prefix contract -----------------------
+
 
 def test_serialized_svg_has_no_ns0_prefix():
     """Phase 30 BUG-02 D-08 — sanitizer output must never contain 'ns0:'.

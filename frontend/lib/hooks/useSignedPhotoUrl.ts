@@ -30,6 +30,10 @@ export function useSignedPhotoUrl(
   // Per-mount retry budget — one attempt total (D-04).
   const retriedRef = useRef(false);
 
+  // TODO(productize): hook drives the fetch off `path` change — the setSrc(null)
+  // resets inside the effect are the documented reset signal between mounts.
+  // Refactor to a fetch-key abstraction to satisfy React 19's effect contract.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // No path → nothing to fetch; let the consumer's empty-state render.
     if (!path) {
@@ -79,3 +83,4 @@ export function useSignedPhotoUrl(
 
   return { src, onError };
 }
+/* eslint-enable react-hooks/set-state-in-effect */

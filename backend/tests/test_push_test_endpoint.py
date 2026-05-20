@@ -7,6 +7,7 @@ The endpoint is a member-scoped fire-test. Two assertions matter:
      carve-out from CLAUDE.md invariant #4 (D-19-11). Admin tool, not
      product event.
 """
+
 from __future__ import annotations
 
 import json
@@ -105,9 +106,7 @@ def test_push_test_endpoint_fires(
     def _track_broadcast(*args, **kwargs):
         broadcast_calls.append((args, kwargs))
 
-    monkeypatch.setattr(
-        "app.services.realtime.broadcast_to_household", _track_broadcast
-    )
+    monkeypatch.setattr("app.services.realtime.broadcast_to_household", _track_broadcast)
 
     # Hit the endpoint via the aldente_auth cookie path.
     client.cookies.set("aldente_auth", seeded_member_with_subs["auth_token"])

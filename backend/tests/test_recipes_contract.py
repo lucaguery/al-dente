@@ -21,6 +21,7 @@ Auth convention: SEED_TOKEN Bearer header.
 Cross-household pattern: insert a foreign Household + Recipe via db_session.flush()
   (NOT commit — 38-01 SAVEPOINT contract).
 """
+
 from __future__ import annotations
 
 import os
@@ -42,17 +43,14 @@ def _seeded_member(db: Session) -> Member:
     """Resolve the seeded test member (auth_token == SEED_TOKEN)."""
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 
 
 def _seeded_recipe(db: Session, member: Member) -> Recipe:
     """Return any recipe in the seeded household, or create one if none exist."""
-    recipe = db.scalar(
-        select(Recipe).where(Recipe.household_id == member.household_id).limit(1)
-    )
+    recipe = db.scalar(select(Recipe).where(Recipe.household_id == member.household_id).limit(1))
     if recipe is None:
         recipe = Recipe(
             household_id=member.household_id,
@@ -129,18 +127,14 @@ class TestRecipesReadContract:
         assert "title" in body
         assert "status" in body
 
-    def test_recipes_401_missing_auth(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_401_missing_auth(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group A — GET /recipes/{id} with no auth returns 401."""
         member = _seeded_member(db_session)
         recipe = _seeded_recipe(db_session, member)
         resp = client.get(f"/recipes/{recipe.id}")
         assert resp.status_code == 401, resp.text
 
-    def test_recipes_404_cross_household(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_404_cross_household(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group A / D-38-02 — GET /recipes/{id} for a foreign household's
         recipe returns 404 (not 403 — T-01-08-04, CLAUDE.md cross-household pattern).
 
@@ -151,9 +145,7 @@ class TestRecipesReadContract:
         # D-38-02: 404-not-403 enforcement
         assert resp.status_code == 404, resp.text
 
-    def test_recipes_422_validation(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_422_validation(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group A — GET /recipes/{bad-uuid} with malformed UUID returns 422.
 
         FastAPI validates UUID path params before the handler runs.
@@ -187,16 +179,12 @@ class TestRecipesCaptureContract:
         assert body["status"] == "draft"
         assert "id" in body
 
-    def test_recipes_401_missing_auth(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_401_missing_auth(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group B — POST /recipes with no auth returns 401."""
         resp = client.post("/recipes", json={})
         assert resp.status_code == 401, resp.text
 
-    def test_recipes_404_n_a_substitute_422(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_404_n_a_substitute_422(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group B — POST /recipes with invalid status field returns 422.
 
         POST /recipes is a create endpoint: there is no cross-household resource
@@ -216,9 +204,7 @@ class TestRecipesCaptureContract:
         resp = client.post(f"/recipes/{fake_id}/promote", headers=AUTH_HEADERS)
         assert resp.status_code == 404, resp.text
 
-    def test_recipes_422_validation(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_422_validation(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group B — POST /recipes/{id}/turns with missing required field
         returns 422.
 
@@ -263,18 +249,14 @@ class TestRecipesEditContract:
         body = resp.json()
         assert body["title"] == new_title
 
-    def test_recipes_401_missing_auth(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_401_missing_auth(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group C — PUT /recipes/{id} with no auth returns 401."""
         member = _seeded_member(db_session)
         recipe = _seeded_recipe(db_session, member)
         resp = client.put(f"/recipes/{recipe.id}", json={"title": "should fail"})
         assert resp.status_code == 401, resp.text
 
-    def test_recipes_404_cross_household(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_404_cross_household(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group C / D-38-02 — PUT /recipes/{id} for a foreign household's
         recipe returns 404 (not 403 — T-01-08-04).
 
@@ -289,9 +271,7 @@ class TestRecipesEditContract:
         # D-38-02: 404-not-403 enforcement
         assert resp.status_code == 404, resp.text
 
-    def test_recipes_422_validation(
-        self, client: TestClient, db_session: Session
-    ) -> None:
+    def test_recipes_422_validation(self, client: TestClient, db_session: Session) -> None:
         """ROUT-03 Group C — PUT /recipes/{id} with out-of-range value returns 422.
 
         RecipeUpdate.prep_time_minutes has ge=0, le=24*60 (1440 minutes).

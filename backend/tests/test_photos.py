@@ -38,8 +38,7 @@ AUTH_HEADERS = {"Authorization": f"Bearer {SEED_TOKEN}"}
 def _seeded_member(db: Session) -> Member:
     m = db.scalar(select(Member).where(Member.auth_token == SEED_TOKEN).limit(1))
     assert m is not None, (
-        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — "
-        f"run `uv run seed`?"
+        f"seed Postgres has no member with auth_token={SEED_TOKEN!r} — run `uv run seed`?"
     )
     return m
 
@@ -50,9 +49,7 @@ def _seed_recipe_with_phantom_path(db: Session, member: Member) -> tuple[Recipe,
     local seed inserts ``recipes.photo_paths`` rows without uploading the
     matching bytes, so every photo-url read hit the unhardened handler's 500.
     """
-    phantom_path = (
-        f"{member.household_id}/00000000-0000-0000-0000-000000000000/missing.jpg"
-    )
+    phantom_path = f"{member.household_id}/00000000-0000-0000-0000-000000000000/missing.jpg"
     recipe = Recipe(
         household_id=member.household_id,
         created_by_member_id=member.id,
@@ -104,7 +101,7 @@ def test_signed_photo_url_returns_404_on_storage_miss(
 def test_signed_photo_url_logs_warning_on_storage_miss(
     client: TestClient,
     db_session: Session,
-    caplog: "pytest.LogCaptureFixture",  # type: ignore[name-defined]
+    caplog: pytest.LogCaptureFixture,  # type: ignore[name-defined]
 ) -> None:
     """B-02 — the 404 conversion emits a structured warn carrying the
     recipe id + storage path. ``log.warning`` (not ``log.error``) is the
@@ -129,7 +126,8 @@ def test_signed_photo_url_logs_warning_on_storage_miss(
 
     # Exactly one warn record carrying both the recipe id and storage path.
     matching = [
-        rec for rec in caplog.records
+        rec
+        for rec in caplog.records
         if rec.levelno == logging.WARNING
         and "signed_photo_url.storage_object_missing" in rec.getMessage()
     ]
@@ -197,9 +195,7 @@ def test_signed_photo_url_returns_404_when_sdk_returns_unexpected_shape(
         fake = _FakeClient(payload)
         # Patch the lazy-singleton accessor used by create_signed_photo_url
         # so the real normalization branch runs against `payload`.
-        with mock.patch(
-            "app.services.storage._supabase", return_value=fake
-        ):
+        with mock.patch("app.services.storage._supabase", return_value=fake):
             resp = client.get(
                 f"/recipes/{recipe.id}/photo-url",
                 params={"path": phantom_path},

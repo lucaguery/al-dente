@@ -9,6 +9,7 @@ exists, late `no` votes are accepted as v0.2-weighting signal but cannot
 un-cook. The UI affordance closes via the cooking banner; the endpoint
 itself is unconditional. (Pitfall 4.)
 """
+
 from __future__ import annotations
 
 from uuid import UUID
@@ -71,17 +72,11 @@ async def cast_vote(
     # Recompute state from ALL votes for this (shortlist, recipe) pair.
     votes_for_recipe = list(
         db.scalars(
-            select(Vote).where(
-                Vote.shortlist_id == shortlist_id, Vote.recipe_id == recipe_id
-            )
+            select(Vote).where(Vote.shortlist_id == shortlist_id, Vote.recipe_id == recipe_id)
         ).all()
     )
     member_count = (
-        db.scalar(
-            select(func.count(Member.id)).where(
-                Member.household_id == member.household_id
-            )
-        )
+        db.scalar(select(func.count(Member.id)).where(Member.household_id == member.household_id))
         or 2
     )
     state = compute_vote_state(votes_for_recipe, member_count)

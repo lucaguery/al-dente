@@ -44,19 +44,13 @@ def export_recipes(
     """Return the household's recipe library as a JSON attachment."""
 
     if household_id != member.household_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="household not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="household not found")
 
-    rows = db.scalars(
-        select(Recipe).where(Recipe.household_id == member.household_id)
-    ).all()
+    rows = db.scalars(select(Recipe).where(Recipe.household_id == member.household_id)).all()
 
     # Same RecipeResponse shape the API serves on every read endpoint.
     data = [RecipeResponse.model_validate(r).model_dump(mode="json") for r in rows]
-    body = json.dumps(
-        {"recipes": data}, ensure_ascii=False, indent=2
-    ).encode("utf-8")
+    body = json.dumps({"recipes": data}, ensure_ascii=False, indent=2).encode("utf-8")
 
     filename = f"al-dente-recipes-{household_id}.json"
     return Response(

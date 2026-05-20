@@ -4,12 +4,16 @@ Stored as JSONB matching the wire shape returned by browser
 PushSubscription.toJSON() — { endpoint, keys: { p256dh, auth }, expirationTime? }.
 UNIQUE(member_id) lets POST /push/subscribe upsert on re-subscription.
 """
+
 from __future__ import annotations
+
 from datetime import datetime
 from uuid import UUID as PyUUID
+
 from sqlalchemy import DateTime, ForeignKey, Index, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.models.base import Base
 
 
@@ -32,6 +36,4 @@ class PushSubscription(Base):
         server_default=func.now(),
         nullable=False,
     )
-    __table_args__ = (
-        Index("idx_push_subs_member", "member_id"),
-    )
+    __table_args__ = (Index("idx_push_subs_member", "member_id"),)
