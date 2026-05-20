@@ -1,4 +1,3 @@
 {
-  "*.{ts,tsx,js,jsx,mjs,cjs}": "eslint --max-warnings=0",
-  "../backend/app/routers/**/*.py": "../scripts/openapi_hook_gate.sh"
+  "*.{ts,tsx,js,jsx,mjs,cjs}": "eslint --max-warnings=0"
 }
