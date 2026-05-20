@@ -14,7 +14,6 @@ import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { ShortlistCard, ShortlistThumbButtons } from "@/components/ShortlistCard";
 import { ShortlistProgress } from "@/components/ShortlistProgress";
-import { Marginalia } from "@/components/Marginalia";
 import { postVote, type ShortlistVote } from "@/lib/votes";
 import type { Recipe } from "@/lib/recipes";
 
@@ -39,36 +38,30 @@ export function ShortlistDeck({
 }: ShortlistDeckProps) {
   const tShortlist = useTranslations("home.shortlist");
 
-  const [rawIndex, setIndex] = useState(0);
   const [committedDirection, setCommittedDirection] = useState<
     "left" | "right" | null
   >(null);
   const [voteInFlight, setVoteInFlight] = useState(false);
-  // Quick-260520-hpz — per-position vote history (drives the progress strip's
-  // voted-yes vs voted-no dot color). The strip is decorative; we don't need
-  // to reconcile this with `votes` because the server propagates back on
-  // vote.created and we'd already have advanced the index optimistically.
+  // Quick-260520-hpz — per-position vote history. Drives BOTH the progress
+  // strip's voted-yes/voted-no dot coloring AND the "remaining = total -
+  // voteHistory.length" math.
   const [voteHistory, setVoteHistory] = useState<Array<"yes" | "no">>([]);
   // Snap-back hint flag — true for ~1.4s after the card shakes, then clears.
   const [snapbackHint, setSnapbackHint] = useState(false);
   // Total dots on the progress strip — captured on first render with a
   // non-zero queue via lazy useState initializer; doesn't shrink as the
-  // user advances. Using state (not ref) because React 19's react-hooks/refs
-  // rule forbids reading/writing refs during render.
+  // user advances. React 19 lint forbids reading/writing refs during render.
   const [total] = useState<number>(() => unvotedByMe.length);
 
-  // Clamp index against unvotedByMe.length on every render — no effect needed.
-  // (e.g. partner's vote rejected the front card before we voted, shrinking
-  // the queue.) This avoids the react-hooks/set-state-in-effect lint rule and
-  // mirrors the pattern in React's "you might not need an effect" guide:
-  // derive on render rather than syncing state.
-  const index =
-    rawIndex >= unvotedByMe.length && unvotedByMe.length > 0
-      ? 0
-      : rawIndex;
-
-  const front = unvotedByMe[index];
-  const peek = unvotedByMe[index + 1];
+  // UAT round 3 — front is ALWAYS unvotedByMe[0]. The parent removes the
+  // voted recipe from the array (via onVoteApplied propagating into votes
+  // state → myVotes Set → filter), so the next-to-vote naturally shifts to
+  // position 0. Previously we ALSO advanced an internal index, which made
+  // us skip every other card and reset the progress counter after 3 votes
+  // (rawIndex overflow → clamp to 0 → "5 restantes" again). Single source
+  // of truth: parent owns the queue, deck just reads the head.
+  const front = unvotedByMe[0];
+  const peek = unvotedByMe[1];
 
   function getPartnerVote(recipeId: string): "yes" | "no" | "unvoted" {
     const v = votes.find(
@@ -100,7 +93,8 @@ export function ShortlistDeck({
     };
     onVoteApplied(optimistic);
     setVoteHistory((h) => [...h, value]);
-    setIndex((i) => i + 1);
+    // No index advance — parent's unvotedByMe shrinks via onVoteApplied; the
+    // next recipe is at position 0 automatically.
 
     try {
       const result = await postVote(shortlistId, recipeId, value);
@@ -109,11 +103,8 @@ export function ShortlistDeck({
         onVoteApplied({ ...optimistic, member_id: result.member_id });
       }
     } catch {
-      // Rare path: surface a soft revert. The toast component is owned
-      // by the parent (HomeDecide already surfaces vote errors), so here
-      // we just roll back the local optimistic state.
+      // Rare path: roll back local optimistic state. Parent surfaces toast.
       setVoteHistory((h) => h.slice(0, -1));
-      setIndex((i) => Math.max(0, i - 1));
       setCommittedDirection(null);
     } finally {
       setVoteInFlight(false);
@@ -156,12 +147,18 @@ export function ShortlistDeck({
     // thumb buttons within thumb's-reach of the card edge.
     <div className="flex flex-col gap-2 px-(--spacing-page-x) pb-6">
       {/* Progress strip — sits above the deck so the user always knows where
-          they are in the 5-card walk. */}
+          they are in the 5-card walk. UAT round 3: index is now derived from
+          voteHistory.length (single source of truth — see handleVote rewrite).
+          The strip also doubles as the snap-back hint surface: when snapbackHint
+          is true, the caption swaps to "encore un peu" for ~1.4s, then reverts.
+          Doing it here instead of below the deck stops the hint from overlapping
+          the thumb buttons. */}
       <ShortlistProgress
         total={total}
-        index={index}
+        index={voteHistory.length}
         yesCount={yesCount}
         voteHistory={voteHistory}
+        transientCaption={snapbackHint ? tShortlist("snapback_hint") : null}
       />
 
       {/* Card stack — viewport-clamped so the thumb buttons stay above the
@@ -205,20 +202,9 @@ export function ShortlistDeck({
         </AnimatePresence>
       </div>
 
-      {/* Snap-back hint — transient marginalia caption ~1.4s after a
-          release-without-commit shake. quick-260520-hpz UAT round 2:
-          absolute-positioned so it does NOT reserve vertical space when
-          empty (previously the min-h-[1.5rem] container pushed the thumbs
-          further from the card). */}
-      <div className="relative h-0">
-        {snapbackHint && (
-          <div className="absolute left-0 right-0 top-1 flex justify-center pointer-events-none">
-            <Marginalia size="sm" slant>
-              {tShortlist("snapback_hint")}
-            </Marginalia>
-          </div>
-        )}
-      </div>
+      {/* Snap-back hint moved into ShortlistProgress's caption slot (UAT
+          round 3) — see transientCaption prop above. Removed the spacer that
+          previously caused the hint to overlap the thumb buttons. */}
 
       {/* Thumb buttons below the stack — wrapped to also dispatch the
           `shortlist:thumb-vote` CustomEvent so the card flashes the ring. */}

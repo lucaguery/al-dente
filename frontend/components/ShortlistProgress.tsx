@@ -22,12 +22,19 @@ import { Marginalia } from "@/components/Marginalia";
 export type ShortlistProgressProps = {
   /** Total dots to render (typically 5 = the shortlist size). */
   total: number;
-  /** Zero-based index of the current card; dots 0..index-1 are voted, dot index is current. */
+  /** Zero-based count of votes recorded; dots 0..index-1 are voted, dot index is current. */
   index: number;
   /** Number of yes-votes accumulated so far (drives caption text). */
   yesCount: number;
   /** Per-position vote outcome ("yes" | "no" | undefined) for dots already voted. */
   voteHistory?: ReadonlyArray<"yes" | "no">;
+  /**
+   * Transient caption override (UAT-260520-hpz round 3). When non-null, replaces
+   * the progress caption for the duration of a transient event — e.g. the
+   * snap-back hint after a release-without-commit. Reverts to the derived
+   * caption when the parent clears the prop.
+   */
+  transientCaption?: string | null;
 };
 
 export function ShortlistProgress({
@@ -35,16 +42,18 @@ export function ShortlistProgress({
   index,
   yesCount,
   voteHistory = [],
+  transientCaption = null,
 }: ShortlistProgressProps) {
   const tShortlist = useTranslations("home.shortlist");
 
   const remaining = Math.max(0, total - index);
 
-  // Caption — initial (no votes yet) vs partial (mid-flight).
-  const caption =
+  // Caption — initial (no votes yet) vs partial (mid-flight) vs transient.
+  const derivedCaption =
     index === 0 && yesCount === 0
       ? tShortlist("progress_initial")
       : tShortlist("progress_partial", { remaining, yes: yesCount });
+  const caption = transientCaption ?? derivedCaption;
 
   // Render `total` dots; we render at least 1 even if total === 0 to avoid
   // an empty flex row collapsing the layout.

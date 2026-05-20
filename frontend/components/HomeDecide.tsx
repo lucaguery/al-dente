@@ -518,17 +518,10 @@ export function HomeDecide() {
   // path (line ~400) and the "shortlist exists but is empty" path.
   const shortlistIsEmpty = shortlist.recipes.length === 0;
 
-  // Phase 7 / DECIDE-01 — display-serif date header above the deck.
-  // Locale-aware via the standard browser Intl API (no new i18n key per
-  // 07-UI-SPEC §"Surface 1" point 3). Lowercase per French convention.
-  // No year — too granular for daily-decide. Example: "vendredi 8 mai".
-  // Computed at render time (NOT module scope) so the date stays current
-  // across a midnight boundary if the app stays open overnight.
-  const formattedDate = new Intl.DateTimeFormat("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
+  // Date display removed in quick-260520-hpz UAT round 3 — the daily-decide
+  // screen is contextually "today," so the date adds no functional value
+  // (Phase 7 / DECIDE-01 superseded). Keep a code-archeology pointer in case
+  // we want to restore it for an "Older shortlists" history view later.
 
   return (
     <div className="flex flex-col flex-1">
@@ -552,9 +545,10 @@ export function HomeDecide() {
           bottom-nav "Accueil" tab); H1 now sits higher and the date+regen
           row aligns to the right. */}
       <header className="px-(--spacing-page-x) pt-6 pb-2">
-        {/* H1 + date + regen icon on ONE row — quick-260520-hpz UAT round 2:
-            the standalone date row was visually heavy; date now sits inline
-            with the H1 as a small caption, regen icon on the far right. */}
+        {/* H1 + regen icon on ONE row — quick-260520-hpz UAT round 3:
+            date removed (the date adds no functional value on the daily-decide
+            screen; user knows what day it is). Regen icon promoted to a
+            larger affordance (40px hit target, 18px glyph). */}
         <div className="flex items-end justify-between gap-3">
           <h1
             className="text-display text-foreground flex-1 min-w-0"
@@ -562,20 +556,15 @@ export function HomeDecide() {
           >
             {tHome("hero_question")}
           </h1>
-          <div className="flex items-center gap-2 pb-1 shrink-0">
-            <small className="text-caption capitalize text-foreground-muted">
-              {formattedDate}
-            </small>
-            <button
-              type="button"
-              aria-label={tSummary("regenerate_cta")}
-              onClick={() => setRegenOpen(true)}
-              className="inline-flex items-center justify-center rounded-full text-foreground-muted hover:text-foreground active:scale-95 transition-all duration-fast ease-craft"
-              style={{ width: "28px", height: "28px" }}
-            >
-              <RotateCw size={14} aria-hidden />
-            </button>
-          </div>
+          <button
+            type="button"
+            aria-label={tSummary("regenerate_cta")}
+            onClick={() => setRegenOpen(true)}
+            className="inline-flex items-center justify-center rounded-full text-foreground-muted hover:text-foreground hover:bg-foreground/5 active:scale-95 transition-all duration-fast ease-craft shrink-0 mb-1"
+            style={{ width: "40px", height: "40px" }}
+          >
+            <RotateCw size={18} aria-hidden />
+          </button>
         </div>
         {/* State-derived Caveat slant subhead (D-13 + UI-SPEC §9.1 step 3) */}
         <Marginalia size="sm" slant className="mt-[-4px]">

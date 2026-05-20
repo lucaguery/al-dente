@@ -398,11 +398,12 @@ export function ShortlistCard({
             aria-hidden
             style={{
               opacity: yesOpacity,
-              // quick-260520-hpz UAT round 2: Tailwind v4 `ring-[var(...)]`
-              // didn't reliably paint the threshold ring during drag — switch
-              // to an inline inset box-shadow which resolves the CSS var
-              // deterministically and matches the sketch's reference pattern.
-              boxShadow: "inset 0 0 0 3px var(--color-valide-foreground)",
+              // quick-260520-hpz UAT round 3: thickened from 3px → 5px and
+              // added a soft tint so the threshold feedback is unmistakable.
+              // Doubled-up box-shadow: solid 5px inset border + 12px
+              // wash (low-alpha) ramps the affordance gradually.
+              boxShadow:
+                "inset 0 0 0 5px var(--color-valide-foreground), inset 0 0 30px 0 color-mix(in srgb, var(--color-valide-foreground) 20%, transparent)",
             }}
             className="absolute inset-0 rounded-2xl pointer-events-none"
           />
@@ -410,7 +411,8 @@ export function ShortlistCard({
             aria-hidden
             style={{
               opacity: noOpacity,
-              boxShadow: "inset 0 0 0 3px var(--color-destructive)",
+              boxShadow:
+                "inset 0 0 0 5px var(--color-destructive), inset 0 0 30px 0 color-mix(in srgb, var(--color-destructive) 20%, transparent)",
             }}
             className="absolute inset-0 rounded-2xl pointer-events-none"
           />
