@@ -1,0 +1,12 @@
+{
+  "name": "al-dente",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Repo-root package — exists solely to host husky for the monorepo. Frontend code lives under frontend/.",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

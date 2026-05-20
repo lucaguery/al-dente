@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+# Run ESLint via lint-staged on staged TS/JS files
+cd frontend && npx lint-staged
+
+# Run OpenAPI regen gate if any backend router file is staged.
+# This runs AFTER lint-staged (outside its stash cycle) so that
+# the git add inside the gate script sticks into the commit index.
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+STAGED_ROUTERS=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^backend/app/routers/.*\.py$' || true)
+if [ -n "$STAGED_ROUTERS" ]; then
+  sh "$REPO_ROOT/scripts/openapi_hook_gate.sh"
+fi

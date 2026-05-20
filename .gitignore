@@ -3,6 +3,13 @@
 .vercel
 .planning/.next-call-count
 
+# Root-level node_modules — created by `npm install` at the repo root
+# for husky's `prepare` script. The pre-commit hook lives at .husky/
+# at the repo root (monorepo coverage), so husky needs to be a root
+# devDependency, not a frontend-only one.
+/node_modules
+/package-lock.json.lock
+
 # Phase 10 — test env files (T-10-02 / T-10-03 mitigation)
 .env.test
 .env.test.local
