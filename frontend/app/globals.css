@@ -189,21 +189,18 @@
   --surface-rose-50: oklch(0.97 0.022 35);
   --surface-rose-100: oklch(0.94 0.045 35);
 
-  /* Phase 3 — Validé tint (light). Faint emerald wash, unchanged. */
-  --valide-tint: oklch(0.93 0.07 145);
+  /* Phase 3 — Validé tint (light). Mono-terracotta wash (h≈35). */
+  --valide-tint: oklch(0.91 0.045 35);
 
-  /* Phase 20 TOK-01 — emerald-replacement tokens (semantic, not literal).
-     Emerald is reserved for the "Validé" winning state and the cooking-success
-     accent per the Phase 7 voting-state color story. Sibling tokens to
-     `--color-valide-tint` (which holds the faint wash for the winning row /
-     cooking banner background). DECIDE-03 invariant lock applies: emerald
-     hue h≈145 is reserved for this semantic role; do not reuse for unrelated
-     accents. */
-  --color-valide-foreground: #10B981;     /* emerald-500 — primary accent */
-  --color-valide-emphasis: #047857;       /* emerald-700 — darker accent text */
-  --color-valide-border: #10B98180;       /* emerald-500/50 — Heart button border */
-  --color-valide-border-faint: #10B9814D; /* emerald-500/30 — row borders */
-  --color-cooking-foreground: #047857;    /* emerald-700 — cooking-banner icon */
+  /* mono-terracotta — Validé differentiates from primary by saturation+lightness
+     on the terracotta hue alone, see ADR-0003. Member-color tokens
+     (`--color-member-emerald-*`) are EXEMPT — they are member-slot identity,
+     not a Validé semantic, and keep their independent emerald hexes. */
+  --color-valide-foreground: #A8412E;     /* terracotta-600 — primary accent */
+  --color-valide-emphasis: #8B331F;       /* terracotta-700 — darker accent text */
+  --color-valide-border: #A8412E80;       /* terracotta-600/50 — Heart button border */
+  --color-valide-border-faint: #A8412E4D; /* terracotta-600/30 — row borders */
+  --color-cooking-foreground: #8B331F;    /* terracotta-700 — cooking-banner icon */
 
   /* Phase 20 TOK-02 — member-color tokens (5 slots × bg/fg pairs).
      `--color-member-{slot}-bg` is the chip background; `-foreground` is the
@@ -270,19 +267,17 @@
   --surface-rose-50: oklch(0.22 0.025 35);
   --surface-rose-100: oklch(0.27 0.045 35);
 
-  /* Phase 3 — Validé tint (dark). Deeper emerald, unchanged. */
-  --valide-tint: oklch(0.30 0.06 145);
+  /* Phase 3 — Validé tint (dark). Mono-terracotta dark wash (h≈35). */
+  --valide-tint: oklch(0.30 0.05 35);
 
-  /* Phase 20 TOK-01 dark — emerald-replacement tokens (lighter foreground
-     shades against the deeper background). `emerald-300` (#6EE7B7) reads
-     comfortably against the dark terracotta-neighborhood surface; the alpha
-     border tints stay anchored to the same lightened hex so the border-on-
-     dark-card contrast matches the light-mode wash. */
-  --color-valide-foreground: #6EE7B7;     /* emerald-300 — lighter accent */
-  --color-valide-emphasis: #A7F3D0;       /* emerald-200 — lighter emphasis */
-  --color-valide-border: #6EE7B780;       /* emerald-300/50 */
-  --color-valide-border-faint: #6EE7B74D; /* emerald-300/30 */
-  --color-cooking-foreground: #A7F3D0;    /* emerald-200 — banner icon */
+  /* mono-terracotta dark — lighter, desaturated terracotta on dark surface.
+     See ADR-0003. Member-color tokens (`--color-member-emerald-*`) keep their
+     independent emerald hexes — they are member-slot identity, not Validé semantic. */
+  --color-valide-foreground: #E9A893;     /* light terracotta — readable on dark surface */
+  --color-valide-emphasis: #F2C7B6;       /* lighter terracotta — emphasis text */
+  --color-valide-border: #E9A89380;       /* light terracotta/50 */
+  --color-valide-border-faint: #E9A8934D; /* light terracotta/30 */
+  --color-cooking-foreground: #F2C7B6;    /* lighter terracotta — banner icon */
 
   /* Phase 20 TOK-02 dark — member chip hexes stay identical (the bg IS the
      chip; foreground readability is encoded in the fg token). Amber's dark
