@@ -1057,16 +1057,6 @@ async def test_process_thread_turn_emits_summary_and_question(
     assert len(created_events) >= 1, "turn.created broadcast must be emitted for system turns"
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason=(
-        "Known issue D-39-05 / 37-01-SUMMARY Category B — "
-        "DetachedInstanceError on async SessionLocal monkeypatch: "
-        "process_thread_turn detaches the session during execution; "
-        "expire_all() + attribute reload fails. Fix requires restructuring "
-        "to a real session with explicit lifecycle (> 30 min)."
-    ),
-)
 @pytest.mark.asyncio
 async def test_process_thread_turn_failure_records_on_turn_payload(
     db_session: Session, monkeypatch
@@ -1078,7 +1068,21 @@ async def test_process_thread_turn_failure_records_on_turn_payload(
         broadcasts.append((hh_id, event, payload))
 
     monkeypatch.setattr(llm_module, "broadcast_to_household", fake_broadcast)
-    monkeypatch.setattr(llm_module, "SessionLocal", lambda: db_session)
+
+    # Category B fix (D-39-05): process_thread_turn calls db.close() in its finally
+    # block. Wrapping db_session so close() is a no-op prevents the test's session
+    # from being closed mid-test — all commit()/scalar()/etc. still delegate to the
+    # real db_session so writes land in the SAVEPOINT and stay visible after expire_all.
+    class _NoCloseWrapper:
+        """Duck-typed adapter: delegates everything to db_session; close() is a no-op."""
+
+        def close(self) -> None:
+            pass  # intentional no-op — keeps test session alive past process_thread_turn's finally
+
+        def __getattr__(self, name: str):
+            return getattr(db_session, name)
+
+    monkeypatch.setattr(llm_module, "SessionLocal", lambda: _NoCloseWrapper())
 
     member = _seeded_member(db_session)
     recipe = _make_recipe(db_session, member.household_id, member.id)
