@@ -104,17 +104,18 @@ is the path the caller will usually ask for ("use Rejoindre un foyer").
 
 ### Endpoint cheat sheet (avoid endpoint-guessing)
 
-Verify these before you go invent paths:
+The canonical endpoint reference is `docs/api/endpoints.md` — regenerated
+automatically by the pre-commit hook (`scripts/openapi_hook_gate.sh`)
+whenever a backend router changes. Read that file first; the table below
+is a fallback for the endpoints UAT touches most often.
 
-| Need | Path | Method |
-|---|---|---|
-| Health | `/api/healthz` (via proxy) or `/healthz` (direct) | GET |
-| Preview a household by code | `/api/households/by-code/{code}` | GET (auth-free) |
-| Join / idempotent rejoin | `/api/households/join` | POST (sets cookie) |
-| Logout | `/api/auth/session` | DELETE (clears cookie) |
-| WS handshake helper | `/api/auth/ws-token` | GET |
-| Current member | `/api/households/me` | GET |
-| Today's shortlist | `/api/shortlists/today` (**plural**) | GET |
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/healthz` | Liveness probe (no auth) — sanity check before any UAT scenario |
+| GET | `/api/households/by-code/{code}` | Resolve invite code → household preview (onboarding join flow) |
+| POST | `/api/households/join` | Join household with invite code + chosen color |
+| DELETE | `/api/auth/session` | Sign out — clears `aldente_auth` HttpOnly cookie |
+| GET | `/api/shortlists/today` | Daily shortlist for the current household (primary deck surface) |
 
 **There is NO `POST /api/auth/session` endpoint.** If a caller's prompt
 tells you to use one, ignore it and follow the `<auth_setup>` recipe.
