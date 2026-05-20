@@ -10,7 +10,9 @@
     "enum-leak-check": "bash ../scripts/check-enum-leak.sh",
     "test:e2e": "playwright test --project=seeded && playwright test --project=fresh",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:reset": "docker compose -f ../docker-compose.test.yml down -v"
+    "test:e2e:reset": "docker compose -f ../docker-compose.test.yml down -v",
+    "prepare": "cd .. && husky frontend/.husky",
+    "openapi-dump": "cd .. && bash scripts/openapi_hook_gate.sh"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
@@ -46,6 +48,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
