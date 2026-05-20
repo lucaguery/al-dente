@@ -9,8 +9,9 @@
 //
 // 03-UI-SPEC.md §Surface 6 + §Surface 7 + §"Interaction Patterns > Swipe deck"
 
-import { useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import {
+  animate,
   motion,
   useMotionValue,
   useTransform,
@@ -116,14 +117,46 @@ export function ShortlistCard({
     [-SWIPE_OVERLAY_INPUT_PX, 0],
     [1, 0],
   );
-
   function handleDragEnd(_: unknown, info: PanInfo) {
     const swiped =
       Math.abs(info.offset.x) > SWIPE_THRESHOLD_PX ||
       Math.abs(info.velocity.x) > SWIPE_VELOCITY_PX_S;
-    if (!swiped) return; // dragSnapToOrigin returns the card to center
+    if (!swiped) {
+      // dragSnapToOrigin returns the card to center; layer a brief shake on
+      // top so the user feels the "almost worked" signal. Reduced-motion
+      // path: emit the event but skip the shake.
+      if (!reducedMotion) {
+        animate(x, [0, -6, 6, -3, 0], {
+          duration: 0.3,
+          ease: easeCraft,
+        });
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("shortlist:snapback"));
+      }
+      return;
+    }
     onVote(info.offset.x > 0 ? "yes" : "no");
   }
+
+  // Quick-260520-hpz — thumb-button ring flash. When the deck dispatches
+  // `shortlist:thumb-vote`, briefly set the matching ring's MotionValue
+  // to 1 then 0 so the card flashes the same threshold ring the swipe
+  // pathway would. Reduced-motion path: skip the flash.
+  useEffect(() => {
+    if (!isFront) return;
+    function onThumbVote(e: Event) {
+      const detail = (e as CustomEvent<{ value: VoteValue }>).detail;
+      if (!detail) return;
+      if (reducedMotion) return;
+      const target = detail.value === "yes" ? yesOpacity : noOpacity;
+      target.set(1);
+      window.setTimeout(() => target.set(0), 200);
+    }
+    window.addEventListener("shortlist:thumb-vote", onThumbVote);
+    return () =>
+      window.removeEventListener("shortlist:thumb-vote", onThumbVote);
+  }, [isFront, reducedMotion, yesOpacity, noOpacity]);
 
   const dragEnabled = isFront && !reducedMotion;
   const cuisine = recipe.cuisine;
