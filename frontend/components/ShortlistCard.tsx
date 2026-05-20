@@ -400,12 +400,16 @@ export function ShortlistCard({
               opacity: yesOpacity,
               // quick-260520-hpz UAT round 3: thickened from 3px → 5px and
               // added a soft tint so the threshold feedback is unmistakable.
-              // Doubled-up box-shadow: solid 5px inset border + 12px
+              // Doubled-up box-shadow: solid 5px inset border + 30px
               // wash (low-alpha) ramps the affordance gradually.
+              // UAT round 4: `!absolute !inset-0` — `.paper-grain > *`
+              // in globals.css forces position:relative on direct children
+              // by specificity (W-05), collapsing the ring divs to h:0.
+              // Same defeat-the-cascade pattern the front card uses at line 335.
               boxShadow:
                 "inset 0 0 0 5px var(--color-valide-foreground), inset 0 0 30px 0 color-mix(in srgb, var(--color-valide-foreground) 20%, transparent)",
             }}
-            className="absolute inset-0 rounded-2xl pointer-events-none"
+            className="!absolute !inset-0 rounded-2xl pointer-events-none"
           />
           <motion.div
             aria-hidden
@@ -414,7 +418,7 @@ export function ShortlistCard({
               boxShadow:
                 "inset 0 0 0 5px var(--color-destructive), inset 0 0 30px 0 color-mix(in srgb, var(--color-destructive) 20%, transparent)",
             }}
-            className="absolute inset-0 rounded-2xl pointer-events-none"
+            className="!absolute !inset-0 rounded-2xl pointer-events-none"
           />
         </>
       )}
