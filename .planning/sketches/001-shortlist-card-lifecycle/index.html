@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>001 — Shortlist Card Lifecycle</title>
+<link rel="stylesheet" href="../themes/mono-terracotta.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { padding-top: 56px; }
+
+  /* ── Variant tab bar ─────────────────────────────────────────────── */
+  #variant-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: 8px 12px;
+    display: flex;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    overflow-x: auto;
+  }
+  .variant-tab {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-muted);
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    white-space: nowrap;
+    transition: all 160ms var(--ease-out);
+  }
+  .variant-tab:hover { color: var(--color-text); }
+  .variant-tab.active {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+    border-color: var(--color-primary);
+  }
+
+  /* ── Stage (iPhone-sized viewport per variant) ───────────────────── */
+  .variant { display: none; padding: 24px 0 60px; }
+  .variant.active { display: block; }
+
+  .stage {
+    margin: 0 auto;
+    max-width: 390px;
+    min-height: 720px;
+    background: var(--color-bg);
+    padding: 8px 16px 0;
+    position: relative;
+  }
+
+  /* ── Accueil header (shared across variants) ─────────────────────── */
+  .accueil-header { padding: 24px 4px 4px; }
+  .accueil-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .page-label {
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
+  }
+  .date-caption {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    text-transform: lowercase;
+  }
+  .regenerate-icon {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    margin-left: 8px;
+    transition: transform 200ms var(--ease-craft), color 160ms;
+  }
+  .regenerate-icon:hover { color: var(--color-text); }
+  .regenerate-icon:active { transform: rotate(-90deg) scale(0.95); }
+  .h1 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.15;
+    margin: 16px 0 0;
+    color: var(--color-text);
+  }
+  .marginalia {
+    font-family: var(--font-marginalia);
+    font-size: 18px;
+    color: var(--color-text-muted);
+    margin-top: -2px;
+    transform: rotate(-1.5deg);
+    transform-origin: left center;
+  }
+
+  /* ── Deck (shared shell) ─────────────────────────────────────────── */
+  .deck-wrap {
+    position: relative;
+    width: 100%;
+    margin: 28px 0 16px;
+    height: 480px;
+  }
+  .card {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card-hover);
+    overflow: hidden;
+    background-color: var(--color-card);
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(139, 90, 43, 0.025) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(80, 52, 28, 0.02) 0%, transparent 50%);
+    display: flex;
+    flex-direction: column;
+    will-change: transform, opacity;
+  }
+  .card.peek { box-shadow: var(--shadow-card); }
+
+  /* Photo region */
+  .card-photo {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--color-surface-muted);
+    border-bottom: 1px solid var(--color-border-faint);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .card-photo .swatch {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #d4a36b 0%, #b97c4a 100%);
+    opacity: 0.65;
+  }
+  .card-photo .swatch.green { background: linear-gradient(135deg, #8aa080 0%, #5e7758 100%); }
+  .card-photo .swatch.terra { background: linear-gradient(135deg, #d4a36b 0%, #b97c4a 100%); }
+  .card-photo .swatch.cream { background: linear-gradient(135deg, #e8d4a3 0%, #c1a472 100%); }
+  .card-photo .swatch.crimson { background: linear-gradient(135deg, #c87060 0%, #8b3a2e 100%); }
+  .card-photo .swatch.sea { background: linear-gradient(135deg, #7ba2a8 0%, #4a6b71 100%); }
+  .partner-chip {
+    position: relative;
+    z-index: 2;
+    margin: 12px;
+    background: rgba(255, 252, 244, 0.85);
+    backdrop-filter: blur(4px);
+    border-radius: var(--radius-full);
+    padding: 4px 10px 4px 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-member-partner);
+    flex-shrink: 0;
+  }
+  .dot.no { background: var(--color-rejete); opacity: 0.5; }
+  .dot.unvoted { background: var(--color-text-faint); }
+
+  /* Body */
+  .card-body {
+    flex: 1;
+    padding: 20px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card-title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1.18;
+    color: var(--color-text);
+    margin: 0;
+  }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+  .prep {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+
+  /* Threshold rings */
+  .ring {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    pointer-events: none;
+    opacity: 0;
+    box-shadow: inset 0 0 0 3px var(--color-valide);
+  }
+  .ring.no { box-shadow: inset 0 0 0 3px var(--color-destructive); }
+
+  /* ── Thumb buttons ───────────────────────────────────────────────── */
+  .thumbs {
+    display: flex;
+    justify-content: center;
+    gap: 64px;
+    padding: 16px 0 8px;
+  }
+  .thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border);
+    background: var(--color-card);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    transition: transform 160ms var(--ease-craft), border-color 160ms, color 160ms;
+    box-shadow: var(--shadow-soft);
+  }
+  .thumb:hover { color: var(--color-text); }
+  .thumb:active { transform: scale(0.92); }
+  .thumb.yes {
+    border-color: color-mix(in srgb, var(--color-valide) 50%, transparent);
+    color: var(--color-valide);
+  }
+  .thumb.yes:hover { background: color-mix(in srgb, var(--color-valide) 8%, transparent); }
+  .thumb svg { width: 24px; height: 24px; }
+
+  /* ── State cycler (sketch control) ───────────────────────────────── */
+  .controls {
+    margin: 4px auto 0;
+    max-width: 390px;
+    padding: 10px 16px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-top: 1px dashed var(--color-border);
+  }
+  .controls h4 {
+    width: 100%;
+    margin: 0 0 4px;
+    font-family: var(--font-marginalia);
+    font-size: 15px;
+    color: var(--color-text-muted);
+    font-weight: 400;
+  }
+  .ctrl-btn {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    padding: 5px 10px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .ctrl-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-text-muted);
+  }
+  .ctrl-btn.active {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+    border-color: var(--color-primary);
+  }
+
+  /* ── Validé celebration overlay ──────────────────────────────────── */
+  .celebration {
+    position: absolute;
+    inset: 0;
+    background: var(--color-valide-tint);
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms var(--ease-out);
+    z-index: 3;
+  }
+  .celebration.show { opacity: 1; }
+  .celebration-icon {
+    font-size: 36px;
+    color: var(--color-valide-emphasis);
+  }
+  .celebration-text {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--color-valide-emphasis);
+  }
+  .celebration-sub {
+    font-family: var(--font-marginalia);
+    font-size: 16px;
+    color: var(--color-valide-emphasis);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     FEEDBACK LAYER (shared across all three variants)
+     ─────────────────────────────────────────────────────────────────── */
+
+  /* Progress strip — five dots above the deck */
+  .progress-strip {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 0 6px;
+    min-height: 22px;
+  }
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-text-faint);
+    opacity: 0.32;
+    transition: all 280ms var(--ease-craft);
+    position: relative;
+  }
+  .progress-dot.current {
+    width: 24px;
+    border-radius: var(--radius-full);
+    background: var(--color-text-muted);
+    opacity: 0.7;
+  }
+  .progress-dot.voted-yes {
+    background: var(--color-valide);
+    opacity: 0.85;
+  }
+  .progress-dot.voted-no {
+    background: var(--color-rejete);
+    opacity: 0.5;
+  }
+  .progress-counter {
+    font-family: var(--font-marginalia);
+    font-size: 15px;
+    color: var(--color-text-muted);
+    text-align: center;
+    margin-bottom: -4px;
+    margin-top: 4px;
+    transform: rotate(-1deg);
+    min-height: 22px;
+  }
+
+  /* Inline toast — slides up from beneath the card, short-lived */
+  .vote-toast {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translate(-50%, 24px);
+    background: var(--color-text);
+    color: var(--color-surface);
+    padding: 8px 18px;
+    border-radius: var(--radius-full);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-card-hover);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 280ms var(--ease-craft), opacity 280ms var(--ease-out);
+    z-index: 5;
+    white-space: nowrap;
+  }
+  .vote-toast.show {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+  .vote-toast.yes {
+    background: var(--color-valide-emphasis);
+  }
+  .vote-toast.no {
+    background: var(--color-rejete);
+    color: var(--color-text);
+  }
+  .vote-toast .toast-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Snap-back hint — appears beneath card when drag released early */
+  .snapback-hint {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-marginalia);
+    font-size: 16px;
+    color: var(--color-text-muted);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms var(--ease-out);
+    white-space: nowrap;
+  }
+  .snapback-hint.show { opacity: 0.8; }
+
+  /* Card shake — fires on snap-back to acknowledge the attempt */
+  @keyframes shakeBack {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px) rotate(-1.5deg); }
+    40% { transform: translateX(5px) rotate(1deg); }
+    60% { transform: translateX(-3px) rotate(-0.5deg); }
+    80% { transform: translateX(2px) rotate(0.3deg); }
+  }
+  .card.front.snap-back { animation: shakeBack 360ms var(--ease-out); }
+
+  /* Thumb echo — pulse + ring fill the card briefly before fly-off */
+  /* Thumb pulse rings — use color-mix to derive a 18% alpha from
+     the current theme's validé/destructive tokens. Each theme swap
+     re-resolves these without touching the keyframes. */
+  @keyframes thumbPulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15);
+          box-shadow: 0 0 0 12px color-mix(in srgb, var(--color-valide) 18%, transparent); }
+    100% { transform: scale(1); box-shadow: var(--shadow-soft); }
+  }
+  @keyframes thumbPulseNo {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15);
+          box-shadow: 0 0 0 12px color-mix(in srgb, var(--color-destructive) 18%, transparent); }
+    100% { transform: scale(1); box-shadow: var(--shadow-soft); }
+  }
+  .thumb.echo-yes { animation: thumbPulse 320ms var(--ease-craft); }
+  .thumb.echo-no { animation: thumbPulseNo 320ms var(--ease-craft); }
+
+  /* Ring flash — when thumb tapped, ring flashes briefly on the card
+     so swipe and tap pathways feel equally first-class. */
+  @keyframes ringFlash {
+    0% { opacity: 0; }
+    35% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .card.front.flash-yes .ring.yes { animation: ringFlash 240ms var(--ease-out); }
+  .card.front.flash-no .ring.no { animation: ringFlash 240ms var(--ease-out); }
+
+  /* Partner-voted ripple — chip glows briefly when partner activity arrives */
+  @keyframes partnerRipple {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-valide) 0%, transparent); }
+    40% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-valide) 0%, transparent);
+          background: color-mix(in srgb, var(--color-valide-tint) 95%, transparent); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .partner-chip.ripple { animation: partnerRipple 800ms var(--ease-out); }
+  /* Tiny "+1" mark next to chip when partner voted on this card */
+  .partner-chip .just-voted {
+    color: var(--color-valide-emphasis);
+    font-weight: 600;
+    margin-left: 2px;
+  }
+
+  /* ── Empty state (after all voted) ───────────────────────────────── */
+  .empty-deck {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 320ms var(--ease-out);
+  }
+  .empty-deck.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .empty-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    margin: 0 0 4px;
+    color: var(--color-text);
+  }
+  .empty-sub {
+    font-family: var(--font-marginalia);
+    font-size: 18px;
+    color: var(--color-text-muted);
+    margin-bottom: 16px;
+  }
+  .empty-cta {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    border: none;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-card);
+  }
+  .empty-icon {
+    font-size: 40px;
+    color: var(--color-primary);
+    margin-bottom: 12px;
+    opacity: 0.7;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     VARIANT A — Classic Tinder (refined)
+     ─────────────────────────────────────────────────────────────────── */
+  .va .card.front {
+    transition: transform 280ms var(--ease-craft), opacity 280ms var(--ease-craft);
+  }
+  .va .card.peek-1 {
+    transform: scale(0.94) translateY(12px);
+    opacity: 0.6;
+    transition: transform 320ms var(--ease-craft), opacity 320ms var(--ease-craft);
+  }
+  .va .card.peek-2 {
+    transform: scale(0.88) translateY(24px);
+    opacity: 0;
+    transition: none;
+  }
+  /* Drag state */
+  .va .card.front.dragging-right { transform: translateX(120px) rotate(9deg); }
+  .va .card.front.dragging-left { transform: translateX(-120px) rotate(-9deg); }
+  .va .card.front.dragging-right ~ .deck-wrap .ring { opacity: 1; }
+  .va .card.front.dragging-right .ring.yes { opacity: 1; }
+  .va .card.front.dragging-left .ring.no { opacity: 1; }
+  /* Commit (fly-off) */
+  .va .card.front.fly-right {
+    transform: translateX(560px) rotate(15deg);
+    opacity: 0;
+    transition: transform 280ms var(--ease-craft), opacity 280ms var(--ease-craft);
+  }
+  .va .card.front.fly-left {
+    transform: translateX(-560px) rotate(-15deg);
+    opacity: 0;
+    transition: transform 280ms var(--ease-craft), opacity 280ms var(--ease-craft);
+  }
+  /* Deal-in (initial entry) */
+  .va .card.deal-in.front {
+    animation: vaDealFront 520ms var(--ease-craft) backwards;
+  }
+  .va .card.deal-in.peek-1 {
+    animation: vaDealPeek1 620ms var(--ease-craft) backwards;
+  }
+  @keyframes vaDealFront {
+    0% { transform: translateY(-40px) scale(0.92); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  @keyframes vaDealPeek1 {
+    0% { transform: translateY(-20px) scale(0.86); opacity: 0; }
+    100% { transform: scale(0.94) translateY(12px); opacity: 0.6; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     VARIANT B — Theatrical deal-in pile (3-deep peek, paper-thud)
+     ─────────────────────────────────────────────────────────────────── */
+  .vb .deck-wrap { height: 500px; }
+  .vb .card.front {
+    transition: transform 320ms var(--ease-craft), opacity 320ms var(--ease-craft);
+  }
+  .vb .card.peek-1 {
+    transform: scale(0.95) translateY(8px) rotate(-1deg);
+    opacity: 0.75;
+    transition: transform 320ms var(--ease-craft), opacity 320ms var(--ease-craft);
+  }
+  .vb .card.peek-2 {
+    transform: scale(0.90) translateY(18px) rotate(1.2deg);
+    opacity: 0.45;
+    transition: transform 320ms var(--ease-craft), opacity 320ms var(--ease-craft);
+  }
+  .vb .card.peek-3 {
+    transform: scale(0.85) translateY(28px) rotate(-0.6deg);
+    opacity: 0.22;
+    transition: transform 320ms var(--ease-craft), opacity 320ms var(--ease-craft);
+  }
+  .vb .card.front.dragging-right { transform: translateX(120px) rotate(11deg); }
+  .vb .card.front.dragging-left { transform: translateX(-120px) rotate(-11deg); }
+  .vb .card.front.dragging-right .ring.yes { opacity: 1; }
+  .vb .card.front.dragging-left .ring.no { opacity: 1; }
+  .vb .card.front.fly-right {
+    transform: translateX(580px) translateY(-20px) rotate(22deg);
+    opacity: 0;
+    transition: transform 320ms var(--ease-craft), opacity 320ms var(--ease-craft);
+  }
+  .vb .card.front.fly-left {
+    transform: translateX(-580px) translateY(-20px) rotate(-22deg);
+    opacity: 0;
+    transition: transform 320ms var(--ease-craft), opacity 320ms var(--ease-craft);
+  }
+  /* Theatrical staggered deal-in: each card drops with a paper-thud */
+  .vb .card.deal-in.front { animation: vbDealFront 600ms var(--ease-craft) 240ms backwards; }
+  .vb .card.deal-in.peek-1 { animation: vbDealPeek1 600ms var(--ease-craft) 160ms backwards; }
+  .vb .card.deal-in.peek-2 { animation: vbDealPeek2 600ms var(--ease-craft) 80ms backwards; }
+  .vb .card.deal-in.peek-3 { animation: vbDealPeek3 600ms var(--ease-craft) 0ms backwards; }
+  @keyframes vbDealFront {
+    0% { transform: translateY(-80px) rotate(-8deg) scale(0.9); opacity: 0; }
+    70% { transform: translateY(4px) rotate(0deg) scale(1.02); opacity: 1; }
+    100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  }
+  @keyframes vbDealPeek1 {
+    0% { transform: translateY(-60px) rotate(-6deg) scale(0.82); opacity: 0; }
+    100% { transform: scale(0.95) translateY(8px) rotate(-1deg); opacity: 0.75; }
+  }
+  @keyframes vbDealPeek2 {
+    0% { transform: translateY(-50px) rotate(4deg) scale(0.78); opacity: 0; }
+    100% { transform: scale(0.90) translateY(18px) rotate(1.2deg); opacity: 0.45; }
+  }
+  @keyframes vbDealPeek3 {
+    0% { transform: translateY(-40px) rotate(-3deg) scale(0.74); opacity: 0; }
+    100% { transform: scale(0.85) translateY(28px) rotate(-0.6deg); opacity: 0.22; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     VARIANT C — Coverflow slide (lateral, no rotation)
+     ─────────────────────────────────────────────────────────────────── */
+  .vc .deck-wrap { height: 460px; perspective: 1000px; }
+  .vc .card { transition: transform 360ms var(--ease-craft), opacity 360ms var(--ease-craft); }
+  .vc .card.front { transform: translateX(0) translateZ(0) rotateY(0); }
+  .vc .card.peek-1 {
+    transform: translateX(60px) translateZ(-80px) rotateY(-12deg);
+    opacity: 0.55;
+  }
+  .vc .card.peek-2 {
+    transform: translateX(110px) translateZ(-160px) rotateY(-20deg);
+    opacity: 0.25;
+  }
+  /* Drag — no rotation, just lateral lean + shadow shift */
+  .vc .card.front.dragging-right { transform: translateX(140px) translateZ(20px); }
+  .vc .card.front.dragging-left { transform: translateX(-140px) translateZ(20px); }
+  .vc .card.front.dragging-right .ring.yes { opacity: 1; }
+  .vc .card.front.dragging-left .ring.no { opacity: 1; }
+  /* Commit — slide off (no spin) */
+  .vc .card.front.fly-right {
+    transform: translateX(500px) translateZ(40px);
+    opacity: 0;
+  }
+  .vc .card.front.fly-left {
+    transform: translateX(-500px) translateZ(40px);
+    opacity: 0;
+  }
+  /* Deal-in: cards slide in from right like a coverflow scrub */
+  .vc .card.deal-in.front { animation: vcDealFront 540ms var(--ease-craft) 100ms backwards; }
+  .vc .card.deal-in.peek-1 { animation: vcDealPeek1 540ms var(--ease-craft) 200ms backwards; }
+  .vc .card.deal-in.peek-2 { animation: vcDealPeek2 540ms var(--ease-craft) 280ms backwards; }
+  @keyframes vcDealFront {
+    0% { transform: translateX(200px) translateZ(-200px) rotateY(-25deg); opacity: 0; }
+    100% { transform: translateX(0) translateZ(0) rotateY(0); opacity: 1; }
+  }
+  @keyframes vcDealPeek1 {
+    0% { transform: translateX(220px) translateZ(-260px) rotateY(-30deg); opacity: 0; }
+    100% { transform: translateX(60px) translateZ(-80px) rotateY(-12deg); opacity: 0.55; }
+  }
+  @keyframes vcDealPeek2 {
+    0% { transform: translateX(240px) translateZ(-320px) rotateY(-35deg); opacity: 0; }
+    100% { transform: translateX(110px) translateZ(-160px) rotateY(-20deg); opacity: 0.25; }
+  }
+
+  /* ── Sketch toolbar ──────────────────────────────────────────────── */
+  #sketch-tools {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    z-index: 9999;
+    font-family: system-ui;
+    font-size: 11px;
+    background: rgba(42, 37, 32, 0.82);
+    color: #FAF6EC;
+    padding: 6px 10px;
+    border-radius: 8px;
+    opacity: 0.5;
+    transition: opacity 200ms;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  #sketch-tools:hover { opacity: 1; }
+  #sketch-tools select {
+    background: rgba(255,255,255,0.1);
+    color: #FAF6EC;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div id="variant-nav">
+  <button class="variant-tab active" onclick="showVariant('a', event)">A — Classic Tinder (refined) ★ Selected</button>
+  <button class="variant-tab" onclick="showVariant('b', event)">B — Theatrical pile (3-deep)</button>
+  <button class="variant-tab" onclick="showVariant('c', event)">C — Coverflow slide</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SHARED RECIPE FIXTURES — used by all three variants
+     ─────────────────────────────────────────────────────────────────── -->
+<script>
+  const RECIPES = [
+    { title: "Aubergines parmigiana",       cuisine: "italien",         prep: 45, swatch: "terra",   moods: ["réconfort"], partnerVote: "yes" },
+    { title: "Tajine d'agneau aux pruneaux", cuisine: "nord-africain",  prep: 90, swatch: "crimson", moods: ["réconfort", "fête"], partnerVote: "unvoted" },
+    { title: "Risotto aux champignons",     cuisine: "italien",         prep: 35, swatch: "cream",   moods: ["léger"],     partnerVote: "yes" },
+    { title: "Saumon mi-cuit, fenouil",     cuisine: "français",        prep: 25, swatch: "sea",     moods: ["léger"],     partnerVote: "no" },
+    { title: "Pad thaï aux crevettes",      cuisine: "asiatique",       prep: 30, swatch: "green",   moods: ["rapide"],    partnerVote: "unvoted" },
+  ];
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     VARIANT A — Classic Tinder (refined current contract)
+     ─────────────────────────────────────────────────────────────────── -->
+<div id="variant-a" class="variant active va">
+  <div class="stage">
+    <header class="accueil-header">
+      <div class="accueil-row">
+        <span class="page-label">Accueil</span>
+        <div style="display:flex;align-items:baseline;gap:0;">
+          <small class="date-caption">mercredi 20 mai</small>
+          <button class="regenerate-icon" aria-label="Régénérer" onclick="dealIn('a')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+        </div>
+      </div>
+      <h1 class="h1">On mange quoi ce soir&#8201;?</h1>
+      <p class="marginalia" id="marginalia-a">cinq propositions, à départager.</p>
+    </header>
+
+    <div class="progress-strip" id="progress-a"></div>
+    <div class="progress-counter" id="counter-a"></div>
+
+    <div class="deck-wrap" id="deck-a">
+      <!-- Cards dynamically rendered by JS for reset-ability -->
+    </div>
+
+    <div class="thumbs" id="thumbs-a">
+      <button class="thumb" aria-label="Non" onclick="commit('a','left')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <button class="thumb yes" aria-label="Oui" onclick="commit('a','right')">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="0"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </div>
+
+    <div class="controls">
+      <h4>Lifecycle cycler — variant A</h4>
+      <button class="ctrl-btn" onclick="dealIn('a')">↻ Replay deal-in</button>
+      <button class="ctrl-btn" onclick="simulateDrag('a','right')">⮕ Drag right (hold)</button>
+      <button class="ctrl-btn" onclick="simulateDrag('a','left')">⬅ Drag left (hold)</button>
+      <button class="ctrl-btn" onclick="snapBack('a')">↩ Release early (snap+shake+hint)</button>
+      <button class="ctrl-btn" onclick="commit('a','right')">✓ Commit yes</button>
+      <button class="ctrl-btn" onclick="commit('a','left')">✗ Commit no</button>
+      <button class="ctrl-btn" onclick="partnerRipple('a')">⟳ Partner voted</button>
+      <button class="ctrl-btn" onclick="celebrate('a')">★ Validé celebration</button>
+      <button class="ctrl-btn" onclick="goEmpty('a')">∅ Empty state</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     VARIANT B — Theatrical deal-in pile (3-deep peek)
+     ─────────────────────────────────────────────────────────────────── -->
+<div id="variant-b" class="variant vb">
+  <div class="stage">
+    <header class="accueil-header">
+      <div class="accueil-row">
+        <span class="page-label">Accueil</span>
+        <div style="display:flex;align-items:baseline;gap:0;">
+          <small class="date-caption">mercredi 20 mai</small>
+          <button class="regenerate-icon" aria-label="Régénérer" onclick="dealIn('b')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+        </div>
+      </div>
+      <h1 class="h1">On mange quoi ce soir&#8201;?</h1>
+      <p class="marginalia" id="marginalia-b">la pile du jour, déjà chaude.</p>
+    </header>
+
+    <div class="progress-strip" id="progress-b"></div>
+    <div class="progress-counter" id="counter-b"></div>
+
+    <div class="deck-wrap" id="deck-b"></div>
+
+    <div class="thumbs" id="thumbs-b">
+      <button class="thumb" aria-label="Non" onclick="commit('b','left')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <button class="thumb yes" aria-label="Oui" onclick="commit('b','right')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </div>
+
+    <div class="controls">
+      <h4>Lifecycle cycler — variant B</h4>
+      <button class="ctrl-btn" onclick="dealIn('b')">↻ Replay deal-in (theatrical)</button>
+      <button class="ctrl-btn" onclick="simulateDrag('b','right')">⮕ Drag right</button>
+      <button class="ctrl-btn" onclick="simulateDrag('b','left')">⬅ Drag left</button>
+      <button class="ctrl-btn" onclick="snapBack('b')">↩ Release early (snap+shake+hint)</button>
+      <button class="ctrl-btn" onclick="commit('b','right')">✓ Commit yes</button>
+      <button class="ctrl-btn" onclick="commit('b','left')">✗ Commit no</button>
+      <button class="ctrl-btn" onclick="partnerRipple('b')">⟳ Partner voted</button>
+      <button class="ctrl-btn" onclick="celebrate('b')">★ Validé celebration</button>
+      <button class="ctrl-btn" onclick="goEmpty('b')">∅ Empty state</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     VARIANT C — Coverflow slide (lateral, no rotation)
+     ─────────────────────────────────────────────────────────────────── -->
+<div id="variant-c" class="variant vc">
+  <div class="stage">
+    <header class="accueil-header">
+      <div class="accueil-row">
+        <span class="page-label">Accueil</span>
+        <div style="display:flex;align-items:baseline;gap:0;">
+          <small class="date-caption">mercredi 20 mai</small>
+          <button class="regenerate-icon" aria-label="Régénérer" onclick="dealIn('c')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+        </div>
+      </div>
+      <h1 class="h1">On mange quoi ce soir&#8201;?</h1>
+      <p class="marginalia" id="marginalia-c">faites défiler — la file d'attente.</p>
+    </header>
+
+    <div class="progress-strip" id="progress-c"></div>
+    <div class="progress-counter" id="counter-c"></div>
+
+    <div class="deck-wrap" id="deck-c"></div>
+
+    <div class="thumbs" id="thumbs-c">
+      <button class="thumb" aria-label="Non" onclick="commit('c','left')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <button class="thumb yes" aria-label="Oui" onclick="commit('c','right')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </div>
+
+    <div class="controls">
+      <h4>Lifecycle cycler — variant C</h4>
+      <button class="ctrl-btn" onclick="dealIn('c')">↻ Replay deal-in (scrub-in)</button>
+      <button class="ctrl-btn" onclick="simulateDrag('c','right')">⮕ Drag right</button>
+      <button class="ctrl-btn" onclick="simulateDrag('c','left')">⬅ Drag left</button>
+      <button class="ctrl-btn" onclick="snapBack('c')">↩ Release early (snap+shake+hint)</button>
+      <button class="ctrl-btn" onclick="commit('c','right')">✓ Commit yes</button>
+      <button class="ctrl-btn" onclick="commit('c','left')">✗ Commit no</button>
+      <button class="ctrl-btn" onclick="partnerRipple('c')">⟳ Partner voted</button>
+      <button class="ctrl-btn" onclick="celebrate('c')">★ Validé celebration</button>
+      <button class="ctrl-btn" onclick="goEmpty('c')">∅ Empty state</button>
+    </div>
+  </div>
+</div>
+
+<div id="sketch-tools">
+  <span>palette</span>
+  <select onchange="document.querySelector('link[href*=themes]').href='../themes/'+this.value+'.css'">
+    <option value="mono-terracotta" selected>Mono terracotta ★</option>
+    <option value="patine">Patine (verdigris)</option>
+    <option value="olive">Olive (sage)</option>
+    <option value="default">Default (emerald — locked)</option>
+  </select>
+  <span style="opacity:0.7">| 390×</span>
+</div>
+
+<script>
+  /* ─────────────────────────────────────────────────────────────────────
+     LIFECYCLE STATE — one deck per variant, advances on commit.
+     ───────────────────────────────────────────────────────────────────── */
+  const decks = {
+    a: { idx: 0, peekCount: 1, drag: null, votes: [] },
+    b: { idx: 0, peekCount: 3, drag: null, votes: [] },
+    c: { idx: 0, peekCount: 2, drag: null, votes: [] },
+  };
+
+  function partnerDotHtml(vote, name = "Léa") {
+    const cls = vote === "yes" ? "" : vote === "no" ? "no" : "unvoted";
+    const label = vote === "yes" ? `${name} ♥` : vote === "no" ? `${name} ✕` : `${name} ?`;
+    return `<span class="partner-chip"><span class="dot ${cls}"></span>${label}</span>`;
+  }
+
+  function cardHtml(recipe, slot, variant, dealIn = false) {
+    const slotClass = slot === 0 ? 'front' : `peek peek-${slot}`;
+    const deal = dealIn ? 'deal-in' : '';
+    return `
+      <div class="card ${slotClass} ${deal}" data-slot="${slot}">
+        <div class="card-photo">
+          <div class="swatch ${recipe.swatch}"></div>
+          ${partnerDotHtml(recipe.partnerVote)}
+        </div>
+        <div class="card-body">
+          <h2 class="card-title">${recipe.title}</h2>
+          <div class="badges">
+            <span class="badge">${recipe.cuisine}</span>
+            ${recipe.moods.map(m => `<span class="badge">${m}</span>`).join('')}
+            <span class="prep">${recipe.prep} min</span>
+          </div>
+        </div>
+        ${slot === 0 ? '<div class="ring yes"></div><div class="ring no"></div>' : ''}
+      </div>
+    `;
+  }
+
+  function celebrationHtml() {
+    return `
+      <div class="celebration" data-celebration>
+        <div class="celebration-icon">✦</div>
+        <div class="celebration-text">Validé</div>
+        <div class="celebration-sub">vous êtes d'accord — joli.</div>
+      </div>
+    `;
+  }
+
+  function emptyHtml() {
+    return `
+      <div class="empty-deck" data-empty>
+        <div class="empty-icon">✓</div>
+        <h3 class="empty-title">Tout est passé en revue</h3>
+        <p class="empty-sub">trois validés, deux rejetés. à toi de choisir.</p>
+        <button class="empty-cta">Voir le récap</button>
+      </div>
+    `;
+  }
+
+  function render(variant, dealIn = false) {
+    const deck = decks[variant];
+    const el = document.getElementById('deck-' + variant);
+    renderProgress(variant);
+    const slice = RECIPES.slice(deck.idx, deck.idx + deck.peekCount + 1);
+    if (slice.length === 0) {
+      el.innerHTML = emptyHtml();
+      requestAnimationFrame(() => el.querySelector('[data-empty]')?.classList.add('show'));
+      return;
+    }
+    let html = '';
+    for (let i = slice.length - 1; i >= 0; i--) {
+      html += cardHtml(slice[i], i, variant, dealIn);
+    }
+    // Persistent feedback elements live inside the deck-wrap so they
+    // anchor to the card stack rather than the stage.
+    html += `<div class="vote-toast" data-toast></div>`;
+    html += `<div class="snapback-hint" data-snapback>encore un peu — glissez plus loin</div>`;
+    html += celebrationHtml();
+    html += emptyHtml();
+    el.innerHTML = html;
+  }
+
+  /* ─── Progress strip + marginalia counter ─────────────────────────── */
+  function renderProgress(variant) {
+    const deck = decks[variant];
+    const strip = document.getElementById('progress-' + variant);
+    const counter = document.getElementById('counter-' + variant);
+    if (!strip) return;
+    strip.innerHTML = RECIPES.map((_, i) => {
+      const v = deck.votes[i];
+      const cls = v === 'yes' ? 'voted-yes' :
+                  v === 'no'  ? 'voted-no'  :
+                  i === deck.idx ? 'current' : '';
+      return `<span class="progress-dot ${cls}"></span>`;
+    }).join('');
+    if (counter) {
+      const remaining = RECIPES.length - deck.idx;
+      const yes = deck.votes.filter(v => v === 'yes').length;
+      if (remaining === 0) {
+        counter.textContent = `${yes} validé${yes>1?'s':''} sur ${RECIPES.length} — c'est dit.`;
+      } else if (deck.idx === 0) {
+        counter.textContent = `cinq propositions — à départager.`;
+      } else {
+        counter.textContent = `${remaining} restante${remaining>1?'s':''} · ${yes} oui jusqu'ici`;
+      }
+    }
+  }
+
+  /* ─── Vote-confirmation toast (inline, beneath card) ──────────────── */
+  function showToast(variant, dir, recipeTitle) {
+    const toast = document.querySelector(`#deck-${variant} [data-toast]`);
+    if (!toast) return;
+    const cls = dir === 'right' ? 'yes' : 'no';
+    const label = dir === 'right' ? 'Validé' : 'Non merci';
+    const icon = dir === 'right'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    toast.className = `vote-toast ${cls}`;
+    toast.innerHTML = `<span class="toast-icon">${icon}</span>${label} · ${recipeTitle}`;
+    requestAnimationFrame(() => toast.classList.add('show'));
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove('show'), 1400);
+  }
+
+  /* ─── Snap-back: card shake + hint marginalia ─────────────────────── */
+  function snapBack(variant) {
+    const front = document.querySelector(`#deck-${variant} .card.front`);
+    const hint = document.querySelector(`#deck-${variant} [data-snapback]`);
+    if (!front) return;
+    front.classList.remove('dragging-left', 'dragging-right');
+    void front.offsetWidth; // restart animation
+    front.classList.add('snap-back');
+    if (hint) {
+      hint.classList.add('show');
+      clearTimeout(hint._t);
+      hint._t = setTimeout(() => hint.classList.remove('show'), 1400);
+    }
+    setTimeout(() => front.classList.remove('snap-back'), 400);
+  }
+
+  /* ─── Partner-voted ripple on the front-card chip ─────────────────── */
+  function partnerRipple(variant) {
+    const chip = document.querySelector(`#deck-${variant} .card.front .partner-chip`);
+    if (!chip) return;
+    chip.classList.remove('ripple');
+    void chip.offsetWidth;
+    chip.classList.add('ripple');
+    // Bump the dot to "yes" mid-ripple to read as "Léa just voted yes"
+    const dot = chip.querySelector('.dot');
+    if (dot) {
+      dot.classList.remove('no', 'unvoted');
+    }
+    // Add an inline "+1" badge that fades back out
+    if (!chip.querySelector('.just-voted')) {
+      const span = document.createElement('span');
+      span.className = 'just-voted';
+      span.textContent = '♥';
+      chip.appendChild(span);
+      setTimeout(() => span.remove(), 1200);
+    }
+  }
+
+  function dealIn(variant) {
+    decks[variant].idx = 0;
+    render(variant, true);
+  }
+
+  function simulateDrag(variant, dir) {
+    const front = document.querySelector(`#deck-${variant} .card.front`);
+    if (!front) return;
+    front.classList.remove('dragging-left', 'dragging-right');
+    front.classList.add('dragging-' + dir);
+    decks[variant].drag = dir;
+  }
+
+  function releaseDrag(variant) {
+    const front = document.querySelector(`#deck-${variant} .card.front`);
+    if (!front) return;
+    front.classList.remove('dragging-left', 'dragging-right');
+    decks[variant].drag = null;
+  }
+
+  function commit(variant, dir) {
+    const deck = decks[variant];
+    const front = document.querySelector(`#deck-${variant} .card.front`);
+    if (!front) return;
+    const currentRecipe = RECIPES[deck.idx];
+
+    // Thumb echo + ring flash — makes button-tap pathway feel as decisive
+    // as the swipe pathway. Both pathways are first-class (D-03).
+    const thumbsRow = document.getElementById('thumbs-' + variant);
+    const thumb = thumbsRow?.querySelector(dir === 'right' ? '.thumb.yes' : '.thumb:not(.yes)');
+    if (thumb) {
+      thumb.classList.remove('echo-yes', 'echo-no');
+      void thumb.offsetWidth;
+      thumb.classList.add(dir === 'right' ? 'echo-yes' : 'echo-no');
+    }
+    // Ring flash on the card itself so tap pathway visually echoes the
+    // threshold-ring affordance used by the drag pathway.
+    front.classList.remove('flash-yes', 'flash-no', 'dragging-left', 'dragging-right');
+    void front.offsetWidth;
+    front.classList.add(dir === 'right' ? 'flash-yes' : 'flash-no');
+
+    // Toast confirmation slides up beneath the deck
+    if (currentRecipe) showToast(variant, dir, currentRecipe.title);
+
+    // Record the vote in deck state for the progress strip
+    deck.votes[deck.idx] = dir === 'right' ? 'yes' : 'no';
+
+    // Slight delay before fly-off so the ring flash registers
+    setTimeout(() => {
+      front.classList.add('fly-' + dir);
+    }, 80);
+
+    setTimeout(() => {
+      deck.idx++;
+      render(variant, false);
+      // Promote peek to front via natural transition: peeks now in front slot
+      // will spring from their peek-1 transform to the front (no transform).
+      const newFront = document.querySelector(`#deck-${variant} .card.front`);
+      if (newFront) {
+        // briefly set the previous peek-1 transform, then remove → triggers spring
+        newFront.style.transition = 'none';
+        if (variant === 'a') newFront.style.transform = 'scale(0.94) translateY(12px)';
+        if (variant === 'b') newFront.style.transform = 'scale(0.95) translateY(8px) rotate(-1deg)';
+        if (variant === 'c') newFront.style.transform = 'translateX(60px) translateZ(-80px) rotateY(-12deg)';
+        newFront.style.opacity = variant === 'a' ? '0.6' : variant === 'b' ? '0.75' : '0.55';
+        requestAnimationFrame(() => {
+          newFront.style.transition = '';
+          newFront.style.transform = '';
+          newFront.style.opacity = '';
+        });
+      }
+    }, 360);
+  }
+
+  function celebrate(variant) {
+    const cel = document.querySelector(`#deck-${variant} [data-celebration]`);
+    if (!cel) return;
+    cel.classList.add('show');
+    setTimeout(() => cel.classList.remove('show'), 1800);
+  }
+
+  function goEmpty(variant) {
+    decks[variant].idx = RECIPES.length;
+    render(variant, false);
+  }
+
+  function showVariant(id, ev) {
+    document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('variant-' + id).classList.add('active');
+    ev.target.classList.add('active');
+    // Replay deal-in on switch for full lifecycle feel
+    dealIn(id);
+  }
+
+  // Initial render
+  dealIn('a');
+  dealIn('b');
+  dealIn('c');
+</script>
+
+</body>
+</html>

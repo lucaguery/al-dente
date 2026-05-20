@@ -1,0 +1,75 @@
+/* Al Dente — OLIVE theme variant.
+   Replaces emerald Validé with a muted sage/olive that lives inside the
+   Sober Kitchen register. Kitchen-herb vocabulary: thyme, sage, sienna.
+   Mirror file structure of default.css. */
+
+:root {
+  /* ── Surface / paper / wood ─────────────────────────────────────────── */
+  --color-bg: #F1ECE2;
+  --color-surface: #FAF6EC;
+  --color-surface-muted: #E9E2D2;
+  --color-card: #FFFCF4;
+  --color-border: #D9CFB8;
+  --color-border-faint: #E5DCC4;
+
+  /* ── Ink / type ─────────────────────────────────────────────────────── */
+  --color-text: #2A2520;
+  --color-text-muted: #6F6557;
+  --color-text-faint: #A39880;
+
+  /* ── Primary (terracotta sober) ─────────────────────────────────────── */
+  --color-primary: #C8553D;
+  --color-primary-hover: #B14B36;
+  --color-primary-foreground: #FAF6EC;
+  --color-primary-tint: #E9C8BF;
+
+  /* ── Vote states — OLIVE palette ────────────────────────────────────── */
+  --color-valide: #6E7F4F;             /* sage olive — kitchen-herb green */
+  --color-valide-emphasis: #4F5E36;    /* dried thyme */
+  --color-valide-tint: #DDE0CC;        /* pale olive wash */
+  --color-pressenti: #C8553D;          /* terracotta unchanged */
+  --color-conteste: #8B5A2B;
+  --color-rejete: #A39880;
+  --color-destructive: #9B3A2E;
+
+  /* ── Member dots ────────────────────────────────────────────────────── */
+  --color-member-luca: #C8553D;
+  --color-member-partner: #6E7F4F;     /* aligns with new validé hue */
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-marginalia: 'Caveat', cursive;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem;
+  --text-lg: 1.125rem; --text-xl: 1.375rem; --text-2xl: 1.75rem; --text-3xl: 2.25rem;
+
+  /* ── Spacing ────────────────────────────────────────────────────────── */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+
+  /* ── Shape ──────────────────────────────────────────────────────────── */
+  --radius-sm: 6px; --radius-md: 12px; --radius-lg: 18px;
+  --radius-xl: 22px; --radius-full: 9999px;
+
+  /* ── Shadows ────────────────────────────────────────────────────────── */
+  --shadow-card: 0 1px 2px rgba(80,52,28,0.08), 0 6px 18px rgba(80,52,28,0.10);
+  --shadow-card-hover: 0 2px 4px rgba(80,52,28,0.10), 0 14px 32px rgba(80,52,28,0.16);
+  --shadow-soft: 0 1px 3px rgba(80,52,28,0.06);
+
+  /* ── Motion ─────────────────────────────────────────────────────────── */
+  --ease-craft: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 160ms; --duration-base: 240ms; --duration-slow: 380ms;
+  --duration-flyoff: 280ms; --duration-dealin: 520ms;
+
+  --swipe-threshold: 140px;
+  --swipe-overlay-input: 80px;
+  --swipe-rotate-deg: 15;
+}
+
+.paper-grain {
+  background-color: var(--color-card);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(139, 90, 43, 0.025) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(80, 52, 28, 0.02) 0%, transparent 50%);
+}
