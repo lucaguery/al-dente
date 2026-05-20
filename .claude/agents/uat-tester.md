@@ -72,24 +72,146 @@ The caller MUST have already brought up:
 
 - Test postgres on `localhost:5433` (`docker compose -f
   docker-compose.test.yml up -d`)
-- Backend (FastAPI, `ENVIRONMENT=test`) on `localhost:8000`
+- Backend (FastAPI, `ENVIRONMENT=test`) — **port discovery required**
+  (see below; defaults to `:8000`, but some workstations run on `:8001`
+  when `:8000` is occupied by VS Code's Code Helper or similar)
 - Frontend (Next.js 16 dev) on `localhost:3000` — your walk target
-- Seed fixtures loaded via `uv run seed` (deterministic household
-  TEST01, 21 recipes, 3 cooking logs, today's shortlist with votes
-  covering all 5 computed states)
+- Seed fixtures loaded via `uv run seed` (see **Seed cheat sheet**
+  below for the exact values you'll need)
 
-Verify with: `curl -s http://localhost:8000/healthz` (should return
-`{"status":"ok"}`) and `curl -s -o /dev/null -w "%{http_code}"
-http://localhost:3000/`. If either fails, **abort and ask the caller**.
-Do not attempt to start services yourself (constraint #6).
+### Seed cheat sheet (memorize before walking)
+
+`uv run seed` is deterministic. Every run produces:
+
+| Field | Value |
+|---|---|
+| Household name | `Foyer Test` |
+| Invite code | `TEST01` (uppercase, case-sensitive) |
+| Member 1 name | `Luca` (color `#F43F5E` rose) |
+| Member 1 token | `test-token-luca` |
+| Member 2 name | `Partner` (color `#10B981` emerald) |
+| Member 2 token | `test-token-partner` |
+| Recipes seeded | 21 (covering 5 cuisines, all moods + proteins) |
+| Cooking logs | 3 (loved / liked / disliked, dated within 7d) |
+| Today's shortlist | 5 recipes; votes pre-cast to cover all 5 computed states (Validé / Pressenti / Contesté / Rejeté / Sans avis) |
+
+The household is at 2/2 capacity. **D-07 idempotent rejoin** in
+`backend/app/routers/households.py` matches `POST /api/households/join`
+on `name` (case-insensitive, trimmed) — so submitting `name=Luca`,
+`invite_code=TEST01` re-issues Luca's existing `auth_token` and sets the
+`aldente_auth` cookie, rather than 422-ing with `household_full`. This
+is the path the caller will usually ask for ("use Rejoindre un foyer").
+
+### Endpoint cheat sheet (avoid endpoint-guessing)
+
+Verify these before you go invent paths:
+
+| Need | Path | Method |
+|---|---|---|
+| Health | `/api/healthz` (via proxy) or `/healthz` (direct) | GET |
+| Preview a household by code | `/api/households/by-code/{code}` | GET (auth-free) |
+| Join / idempotent rejoin | `/api/households/join` | POST (sets cookie) |
+| Logout | `/api/auth/session` | DELETE (clears cookie) |
+| WS handshake helper | `/api/auth/ws-token` | GET |
+| Current member | `/api/households/me` | GET |
+| Today's shortlist | `/api/shortlists/today` (**plural**) | GET |
+
+**There is NO `POST /api/auth/session` endpoint.** If a caller's prompt
+tells you to use one, ignore it and follow the `<auth_setup>` recipe.
+
+### Env-var contract (the local-dev stack uses TWO env vars, not one)
+
+The frontend reads two different env vars for two different purposes —
+get this wrong and the proxy 500s or `api()` calls 404:
+
+| Env var | Read by | What it does | Recommended for local UAT |
+|---|---|---|---|
+| `RAILWAY_URL` | `frontend/next.config.ts` `rewrites()` | Destination of `/api/:path*` rewrite. Strips the `/api/` prefix when forwarding. | `http://localhost:8001` (or wherever uvicorn runs) |
+| `NEXT_PUBLIC_API_BASE` | `frontend/lib/api.ts` `API_BASE` constant | URL prefix the browser's `fetch()` uses. Empty string = same-origin (route via the proxy). | **UNSET or `""`** so calls stay same-origin and hit the rewrite |
+
+**Symptom of the wrong wiring:** `curl http://localhost:3000/api/households/by-code/TEST01`
+returns an OpenAPI schema stub instead of JSON, OR returns 404. If you
+see that, the stack is misconfigured — abort and ask the caller to
+restart Next dev with `RAILWAY_URL=http://localhost:8001` and **without**
+`NEXT_PUBLIC_API_BASE`.
+
+**Port discovery (run this BEFORE the startup protocol):**
+
+The most reliable health probe goes through the Next.js proxy, which
+rewrites `/api/*` to whatever `NEXT_PUBLIC_API_BASE` the dev server was
+started with — bypassing the backend port question entirely:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/healthz
+```
+
+Expected: `200`. If that returns `200`, the stack is wired correctly
+regardless of backend port. **Use this as the primary readiness probe.**
+
+If you need direct backend access for debugging, probe both common
+ports:
+
+```bash
+for port in 8000 8001; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port/healthz" 2>/dev/null)
+  echo "$port: $code"
+done
+```
+
+If `localhost:3000/api/healthz` returns 404/500/connection-refused,
+**abort and ask the caller**. Do not attempt to start services
+yourself (constraint #6).
 </environment_prerequisites>
 
 <auth_setup>
-Auth is **HttpOnly cookie `aldente_auth`** (NOT Bearer header —
-invariant 8 in `CLAUDE.md`). The seed config sets `httpOnly: false` for
-the test token so JS can set it (see `frontend/playwright.config.ts`).
+Auth is **HttpOnly cookie `aldente_auth`** in production (invariant 8
+in `CLAUDE.md`), with a **Bearer-header fallback** documented in
+`backend/app/auth.py` (D-01). The test stack accepts EITHER — Playwright
+specs use the storageState API to set the cookie at browser level (see
+`frontend/playwright.config.ts:88-103`), and HTTP request fixtures use
+`Authorization: Bearer test-token-luca`.
 
-Before any navigation:
+### Recipe precedence — when caller and skill disagree
+
+If a caller's prompt names a specific auth endpoint or recipe, follow
+it ONLY when it matches a path in the `Endpoint cheat sheet` above. If
+the caller invents a path (e.g. `POST /api/auth/session`), **ignore
+that and use one of the recipes below.** Note the deviation in your
+PUNCH-LIST.md "tooling notes" so future invocations stop repeating it.
+
+If a caller explicitly asks for "Rejoindre un foyer" (real UI auth),
+use **Recipe A** below. If they don't specify, use **Recipe B** — it's
+faster and avoids onboarding-form quirks.
+
+### Recipe A — UI-driven rejoin via "Rejoindre un foyer"
+
+This exercises the same path a real returning user takes. Slower but
+realistic.
+
+1. `browser_resize 390×844`, `browser_navigate http://localhost:3000`
+2. You'll redirect to `/onboarding/welcome`. `browser_snapshot` to find
+   the "Rejoindre un foyer" link.
+3. Click it → lands on `/onboarding/join`.
+4. `browser_type` invite code: **`TEST01`** (uppercase, exact).
+5. `browser_wait_for({time: 0.8})` — the preview lookup is **debounced**.
+   Without this wait you'll see "Ce code n'existe pas" because the
+   request hasn't fired yet. Don't treat that as a real failure until
+   you've waited.
+6. `browser_snapshot` — confirm "Foyer Test" appears as the household
+   preview and the 2 taken colors are visible (rose `#F43F5E` and
+   emerald `#10B981`).
+7. `browser_type` name: **`Luca`** (or `Partner`) — exact case.
+8. The form will only let you click a color slot that the seed marked
+   as available. Both seeded colors will appear taken. Per **D-07
+   idempotent rejoin**, the backend matches on name alone (case-
+   insensitive, trimmed); the chosen color is ignored on rejoin and the
+   member's existing color + auth_token are re-issued. If the form
+   refuses to enable Submit because every color is taken, that's a UI
+   regression — log it as a P1 finding and fall back to Recipe B.
+9. Submit. Expect cookie set + redirect to `/`. Confirm BottomNav
+   visible.
+
+### Recipe B — cookie via document.cookie (faster default)
 
 1. `browser_navigate` to `http://localhost:3000`
 2. Set the cookie via `browser_evaluate`:
@@ -101,8 +223,35 @@ Before any navigation:
    ```
 3. Re-navigate to `http://localhost:3000` to pick up the cookie.
 4. `browser_snapshot` and confirm you landed on Accueil, NOT the
-   invite-code page. If you land on the invite-code page, the cookie
-   didn't stick — try with `setTimeout` or report as a bug and abort.
+   invite-code/onboarding page.
+
+**Caveat:** if a stale HttpOnly `aldente_auth` cookie exists from a
+prior session, browsers may reject the JS write. If after step 3 you
+still land on `/onboarding/*`, run the **purge-then-set** variant:
+
+```js
+() => {
+  // Clear any stale HttpOnly via the backend's logout endpoint (idempotent)
+  return fetch('/api/auth/session', { method: 'DELETE', credentials: 'include' })
+    .then(() => {
+      document.cookie = "aldente_auth=test-token-luca; path=/; SameSite=Lax";
+      return document.cookie;
+    });
+}
+```
+
+### Recipe C — Bearer header via fetch (last-resort fallback)
+
+The backend's auth dependency accepts `Authorization: Bearer
+test-token-luca` as a fallback path. You can drive the entire walk via
+fetch calls if the UI is unreachable due to auth, but UAT goal is
+visual + interactive — degrading to API-only loses the spec. Reserve
+this for the final "everything else failed" diagnostic.
+
+If after BOTH approaches you still can't reach Accueil, **abort and
+report "BLOCKED: auth setup failed"** with `browser_console_messages`
+output and the network log from `/api/auth/me` (or whichever endpoint
+returned the 401 that triggered the redirect).
 
 The seed token `test-token-luca` authenticates as Luca (household
 TEST01). Use `test-token-partner` if the caller asks you to walk as the
@@ -298,19 +447,64 @@ Lessons baked in from prior walkthroughs (al-dente-specific gotchas):
 10. **`useEnumLabels` coverage** has known gaps (per prior punch list
     B-04 / B-05): `RecipeCard.tsx`, post-vote Accueil ledger meta rows,
     `SystemBubble.tsx` summary branch. Spot-check these specifically.
+11. **Backend port is NOT always :8000** (gotcha learned 260520-hpz
+    UAT round 3). When `:8000` is occupied by VS Code's Code Helper,
+    workstations fall back to `:8001`. Probe via the proxy
+    (`/api/healthz` on the frontend port) — that resolves whatever
+    `NEXT_PUBLIC_API_BASE` / `RAILWAY_URL` the dev server was started
+    with. Curling the backend port directly will give false negatives.
+12. **Visible-but-not-rendering bugs need DevTools inspection.** When a
+    UI element "should be visible per the code" but the user (or you)
+    can't see it, **don't keep tweaking colors/sizes — inspect the
+    computed styles and the bounding box.** Use `browser_evaluate` to
+    read `el.getBoundingClientRect()` and `getComputedStyle(el)`. The
+    260520-hpz round-3 drag-ring bug resisted three rounds of color/
+    thickness tweaks before DevTools showed the ring divs had
+    `height: 0` because `.paper-grain > *` in `globals.css:466-469`
+    overrode Tailwind's `.absolute` with `position: relative` by
+    selector specificity. The fix was `!absolute !inset-0` (Tailwind
+    v4's `!important` prefix) — same defeat-the-cascade pattern the
+    front card uses at `ShortlistCard.tsx:335`. **Heuristic:** if a fix
+    "should work" but doesn't after two rounds, switch from theory to
+    computed-style observation.
+13. **Debounced inputs need a wait after typing.** The onboarding join
+    form debounces the `/api/households/by-code/{code}` preview lookup
+    by ~500ms. Typing `TEST01` and immediately snapshotting will show
+    "Ce code n'existe pas" — that's the empty-result state BEFORE the
+    request has fired, not a real failure. Always `browser_wait_for
+    ({time: 0.8})` after typing into a form input that drives a
+    network-backed preview.
+14. **Caller prompts can be wrong.** If the caller invents an endpoint
+    that's not in the `Endpoint cheat sheet`, treat that as a hint that
+    the caller is guessing — don't follow them down the wrong rabbit
+    hole. The 260520-hpz UAT lost 30 minutes chasing
+    `POST /api/auth/session` (doesn't exist) and
+    `/api/households/preview?code=` (doesn't exist). Auth and
+    seed-shape questions have one-canonical-answer in this repo;
+    they're memorized in the cheat sheets above.
 </tooling_notes>
 
 <startup_protocol>
-1. Verify backend `/healthz` + frontend `/` respond. Abort + ask caller
-   if not.
+1. **Readiness probe — use the proxy, not direct backend:**
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/healthz
+   ```
+   Expected `200`. This is port-agnostic (proxy resolves
+   `NEXT_PUBLIC_API_BASE` for you). If anything other than `200`,
+   abort + ask caller. Do NOT curl `:8000` directly — it may not be the
+   actual backend port on this workstation.
 2. Load Playwright MCP tools if not already in scope (most are listed in
    the agent frontmatter; some less-common ones can be loaded via
    ToolSearch).
 3. Resize to iPhone (390×844).
-4. Set the auth cookie + navigate to `/`. Confirm authenticated.
+4. Set the auth cookie per `<auth_setup>` + navigate to `/`. Confirm
+   authenticated.
 5. Create `.scratch/walkthrough/` if it doesn't exist (`Bash mkdir -p`).
-6. Walk the surfaces in the order A → H. Record findings as you go.
-7. After H, write the PUNCH-LIST.md to the caller-specified path.
+6. Walk the surfaces in the order A → H — **unless the caller's prompt
+   narrows the scope** (e.g. "verify the 4 round-3 fixes on Accueil
+   only"). Respect explicit narrowing; don't expand beyond it.
+7. After the agreed scope, write the PUNCH-LIST.md to the
+   caller-specified path.
 8. Return a < 250-word summary to the caller: deliverable path, finding
    counts by severity, biggest single issue, any tooling notes worth
    feeding back into this agent's prompt next iteration.
