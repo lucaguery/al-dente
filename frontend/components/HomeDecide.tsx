@@ -552,28 +552,31 @@ export function HomeDecide() {
           bottom-nav "Accueil" tab); H1 now sits higher and the date+regen
           row aligns to the right. */}
       <header className="px-(--spacing-page-x) pt-6 pb-2">
-        {/* Header date row: date caption + regenerate icon — pushed right. */}
-        <div className="flex items-baseline justify-end">
-          <div className="flex items-center gap-2">
-            <small className="text-caption capitalize">{formattedDate}</small>
+        {/* H1 + date + regen icon on ONE row — quick-260520-hpz UAT round 2:
+            the standalone date row was visually heavy; date now sits inline
+            with the H1 as a small caption, regen icon on the far right. */}
+        <div className="flex items-end justify-between gap-3">
+          <h1
+            className="text-display text-foreground flex-1 min-w-0"
+            style={{ fontSize: "28px", fontStyle: "normal" }}
+          >
+            {tHome("hero_question")}
+          </h1>
+          <div className="flex items-center gap-2 pb-1 shrink-0">
+            <small className="text-caption capitalize text-foreground-muted">
+              {formattedDate}
+            </small>
             <button
               type="button"
               aria-label={tSummary("regenerate_cta")}
               onClick={() => setRegenOpen(true)}
               className="inline-flex items-center justify-center rounded-full text-foreground-muted hover:text-foreground active:scale-95 transition-all duration-fast ease-craft"
-              style={{ width: "32px", height: "32px" }}
+              style={{ width: "28px", height: "28px" }}
             >
-              <RotateCw size={16} aria-hidden />
+              <RotateCw size={14} aria-hidden />
             </button>
           </div>
         </div>
-        {/* H1 — Cormorant 500 28px upright "On mange quoi ce soir ?" (UI-SPEC §9.1 step 2) */}
-        <h1
-          className="text-display text-foreground mt-4"
-          style={{ fontSize: "28px", fontStyle: "normal" }}
-        >
-          {tHome("hero_question")}
-        </h1>
         {/* State-derived Caveat slant subhead (D-13 + UI-SPEC §9.1 step 3) */}
         <Marginalia size="sm" slant className="mt-[-4px]">
           {subheadText}

@@ -396,13 +396,23 @@ export function ShortlistCard({
         <>
           <motion.div
             aria-hidden
-            style={{ opacity: yesOpacity }}
-            className="absolute inset-0 rounded-2xl ring-2 ring-inset ring-[var(--color-valide-foreground)] pointer-events-none"
+            style={{
+              opacity: yesOpacity,
+              // quick-260520-hpz UAT round 2: Tailwind v4 `ring-[var(...)]`
+              // didn't reliably paint the threshold ring during drag — switch
+              // to an inline inset box-shadow which resolves the CSS var
+              // deterministically and matches the sketch's reference pattern.
+              boxShadow: "inset 0 0 0 3px var(--color-valide-foreground)",
+            }}
+            className="absolute inset-0 rounded-2xl pointer-events-none"
           />
           <motion.div
             aria-hidden
-            style={{ opacity: noOpacity }}
-            className="absolute inset-0 rounded-2xl ring-2 ring-inset ring-destructive pointer-events-none"
+            style={{
+              opacity: noOpacity,
+              boxShadow: "inset 0 0 0 3px var(--color-destructive)",
+            }}
+            className="absolute inset-0 rounded-2xl pointer-events-none"
           />
         </>
       )}

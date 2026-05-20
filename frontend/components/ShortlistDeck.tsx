@@ -81,22 +81,39 @@ export function ShortlistDeck({
   async function handleVote(value: "yes" | "no") {
     if (!front || voteInFlight) return;
     const direction = value === "yes" ? "right" : "left";
+    const recipeId = front.id;
+
+    // quick-260520-hpz UAT round 2 — optimistic advance.
+    // Previously we awaited postVote BEFORE setIndex; that left the user
+    // staring at a static card for the network round-trip (~200-500ms) and
+    // the AnimatePresence fly-off only fired AFTER the server returned.
+    // Now: change the key immediately so framer-motion's exit animation
+    // starts on the next frame, fire the POST in the background, and only
+    // revert if the server rejects.
     setCommittedDirection(direction);
     setVoteInFlight(true);
+    const optimistic: ShortlistVote = {
+      shortlist_id: shortlistId,
+      recipe_id: recipeId,
+      member_id: me.id,
+      vote: value,
+    };
+    onVoteApplied(optimistic);
+    setVoteHistory((h) => [...h, value]);
+    setIndex((i) => i + 1);
+
     try {
-      const result = await postVote(shortlistId, front.id, value);
-      const optimistic: ShortlistVote = {
-        shortlist_id: shortlistId,
-        recipe_id: front.id,
-        member_id: me.id,
-        vote: value,
-      };
-      // Use canonical member_id from server response if available.
-      onVoteApplied({ ...optimistic, member_id: result.member_id });
-      setVoteHistory((h) => [...h, value]);
-      setIndex((i) => i + 1);
+      const result = await postVote(shortlistId, recipeId, value);
+      // Patch the canonical member_id from server if it differs (rare).
+      if (result.member_id !== me.id) {
+        onVoteApplied({ ...optimistic, member_id: result.member_id });
+      }
     } catch {
-      // Vote failed — snap back; parent surfaces errors via existing toast.
+      // Rare path: surface a soft revert. The toast component is owned
+      // by the parent (HomeDecide already surfaces vote errors), so here
+      // we just roll back the local optimistic state.
+      setVoteHistory((h) => h.slice(0, -1));
+      setIndex((i) => Math.max(0, i - 1));
       setCommittedDirection(null);
     } finally {
       setVoteInFlight(false);
@@ -135,7 +152,9 @@ export function ShortlistDeck({
   if (!front) return null;
 
   return (
-    <div className="flex flex-col gap-4 px-(--spacing-page-x) pb-6">
+    // quick-260520-hpz UAT round 2 — tightened gap-4 → gap-2 to keep the
+    // thumb buttons within thumb's-reach of the card edge.
+    <div className="flex flex-col gap-2 px-(--spacing-page-x) pb-6">
       {/* Progress strip — sits above the deck so the user always knows where
           they are in the 5-card walk. */}
       <ShortlistProgress
@@ -187,12 +206,17 @@ export function ShortlistDeck({
       </div>
 
       {/* Snap-back hint — transient marginalia caption ~1.4s after a
-          release-without-commit shake. */}
-      <div className="min-h-[1.5rem] flex items-center justify-center">
+          release-without-commit shake. quick-260520-hpz UAT round 2:
+          absolute-positioned so it does NOT reserve vertical space when
+          empty (previously the min-h-[1.5rem] container pushed the thumbs
+          further from the card). */}
+      <div className="relative h-0">
         {snapbackHint && (
-          <Marginalia size="sm" slant>
-            {tShortlist("snapback_hint")}
-          </Marginalia>
+          <div className="absolute left-0 right-0 top-1 flex justify-center pointer-events-none">
+            <Marginalia size="sm" slant>
+              {tShortlist("snapback_hint")}
+            </Marginalia>
+          </div>
         )}
       </div>
 
