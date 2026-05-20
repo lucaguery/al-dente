@@ -338,8 +338,10 @@ export function ShortlistCard({
             : "!absolute !inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col scale-[0.94] translate-y-3 opacity-60 pointer-events-none"
       }
     >
-      {/* Photo region */}
-      <div className="relative aspect-[4/3] bg-surface-muted rounded-t-2xl overflow-hidden">
+      {/* Photo region — quick-260520-hpz UAT: aspect tightened from 4/3 to
+          16/9 so the body has room for title + badges inside the new
+          clamp(280px, 48dvh, 380px) deck without clipping the thumb row. */}
+      <div className="relative aspect-[16/9] bg-surface-muted rounded-t-2xl overflow-hidden">
         {photoSrc ? (
           // bug 2 fix — render the signed URL once resolved. While the
           // signed-URL fetch is in flight (or if it failed), fall through

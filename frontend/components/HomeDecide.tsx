@@ -61,7 +61,6 @@ export function HomeDecide() {
   const tPartnerWaiting = useTranslations("home.partner_waiting");
   const tSubhead = useTranslations("home.subhead");
   const tHome = useTranslations("home");
-  const tNav = useTranslations("nav");
   const { session, refresh: refreshSession } = useSession();
 
   const [shortlist, setShortlist] = useState<ShortlistResponse | null>(null);
@@ -547,17 +546,14 @@ export function HomeDecide() {
         />
       )}
       {/* Accueil A header composition — docs/design-system.html #accueil lines 1481-1486.
-          gh#32 — header row now carries a RotateCw icon button next to the
-          date caption so the regenerate action is always reachable, not gated
-          on shortlist state (previously: only visible in the no-ctaTarget else
-          branch of VoteSummary, which hid the action whenever a validé or
-          pressenti recipe existed). */}
-      <header className="px-(--spacing-page-x) pt-8 pb-2">
-        {/* Header date row: page label left + date caption + regenerate icon right */}
-        <div className="flex items-baseline justify-between">
-          <span className="text-page-header text-foreground">
-            {tNav("home")}
-          </span>
+          gh#32 — header row carries a RotateCw icon button next to the date
+          caption so the regenerate action is always reachable.
+          quick-260520-hpz UAT — page-label eyebrow removed (duplicated the
+          bottom-nav "Accueil" tab); H1 now sits higher and the date+regen
+          row aligns to the right. */}
+      <header className="px-(--spacing-page-x) pt-6 pb-2">
+        {/* Header date row: date caption + regenerate icon — pushed right. */}
+        <div className="flex items-baseline justify-end">
           <div className="flex items-center gap-2">
             <small className="text-caption capitalize">{formattedDate}</small>
             <button

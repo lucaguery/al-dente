@@ -145,27 +145,18 @@ export function ShortlistDeck({
         voteHistory={voteHistory}
       />
 
-      {/* Card stack */}
+      {/* Card stack — viewport-clamped so the thumb buttons stay above the
+          BottomNav on every iPhone (UAT 260520 finding: 420px was too tall on
+          tall phones, hid the thumbs below the fold).
+          DOM order is peek FIRST, front LAST — DOM order = paint order, so the
+          opaque front card paints on top of the translucent peek (UAT 260520
+          finding: with front first, the peek's title bled through). */}
       <div
         className="relative"
-        // Aspect ratio matches 4/3 photo + body content; peek card needs this
-        // container to establish stacking context.
-        style={{ height: "420px" }}
+        style={{ height: "clamp(280px, 48dvh, 380px)" }}
       >
         <AnimatePresence mode="popLayout">
-          {/* Front card */}
-          <ShortlistCard
-            key={front.id}
-            recipe={front}
-            partnerVote={getPartnerVote(front.id)}
-            partnerName={partner.name}
-            partnerColorHex={partner.color_hex}
-            onVote={handleVote}
-            isFront={true}
-            committedDirection={committedDirection}
-            peekDepth={1}
-          />
-          {/* Peek card */}
+          {/* Peek card — rendered FIRST so the front paints on top. */}
           {peek && (
             <ShortlistCard
               key={peek.id}
@@ -180,6 +171,18 @@ export function ShortlistDeck({
               peekDepth={1}
             />
           )}
+          {/* Front card — rendered LAST so it paints on top of the peek. */}
+          <ShortlistCard
+            key={front.id}
+            recipe={front}
+            partnerVote={getPartnerVote(front.id)}
+            partnerName={partner.name}
+            partnerColorHex={partner.color_hex}
+            onVote={handleVote}
+            isFront={true}
+            committedDirection={committedDirection}
+            peekDepth={1}
+          />
         </AnimatePresence>
       </div>
 
