@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/BrandIcon";
 import { EmptyState } from "@/components/EmptyState";
 import { VoteSummary } from "@/components/VoteSummary";
+import { ShortlistDeck } from "@/components/ShortlistDeck";
 import { CookingBanner } from "@/components/CookingBanner";
 import { PushPermissionBanner } from "@/components/PushPermissionBanner";
 import { RegenerateSheet } from "@/components/RegenerateSheet";
@@ -589,13 +590,11 @@ export function HomeDecide() {
             {tShortlist("regenerate_cta")}
           </Button>
         </div>
-      ) : (
-        // SOBER-09 first-paint ledger — single render path, no allVoted toggle.
-        // VoteSummary receives the full shortlist.recipes (Rejeté rows render
-        // muted via SOBER-15's row-state-rejete variant; rejete is no longer
-        // filtered upstream). `unvotedByMe` drives which rows carry the inline
-        // vote affordance; `onVoteApplied` wires optimistic vote propagation
-        // (mirrors the retired swipe-deck flow).
+      ) : unvotedByMe.length === 0 ? (
+        // All-voted terminal panel — VoteSummary unchanged from SOBER-09.
+        // VoteSummary receives the full shortlist.recipes so Rejeté rows render
+        // muted (SOBER-15). `unvotedByMe` is empty here so no inline affordances
+        // are offered; the CTA tree (cook / delegate / regenerate) is primary.
         <VoteSummary
           shortlistId={shortlist.shortlist_id}
           recipes={shortlist.recipes}
@@ -608,6 +607,18 @@ export function HomeDecide() {
           onDelegate={handleDelegate}
           cookInFlight={cookInFlight}
           delegateInFlight={delegateInFlight}
+        />
+      ) : (
+        // Swipe deck — primary Accueil surface when there are still recipes
+        // to vote on. Re-enabled in quick-260520-hpz (reverting SOBER-09 retire).
+        // Deck advances optimistically; onVoteApplied propagates to shortlist state.
+        <ShortlistDeck
+          shortlistId={shortlist.shortlist_id}
+          unvotedByMe={unvotedByMe}
+          votes={shortlist.votes}
+          me={me}
+          partner={partner}
+          onVoteApplied={handleVoteApplied}
         />
       )}
 
