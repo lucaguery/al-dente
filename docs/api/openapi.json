@@ -1,0 +1,4490 @@
+{
+  "components": {
+    "schemas": {
+      "AdvisoryTurnPayload": {
+        "description": "Phase 26 D-17 — read-side contract.\n\nPhase 29 LLM-02 emits these; Phase 26's proposal_accepted handler reads\npayload.field + payload.proposed_value to apply the value when the user\naccepts the proposal. All four fields are required so the read-side never\nhas to defend against missing keys.",
+        "properties": {
+          "current_value": {
+            "title": "Current Value"
+          },
+          "field": {
+            "enum": [
+              "title",
+              "description",
+              "ingredients",
+              "steps",
+              "prep_time_minutes",
+              "cook_time_minutes",
+              "difficulty",
+              "servings",
+              "cuisine",
+              "mood",
+              "main_protein",
+              "seasonality",
+              "tags"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "kind": {
+            "const": "advisory",
+            "title": "Kind",
+            "type": "string"
+          },
+          "proposed_value": {
+            "title": "Proposed Value"
+          },
+          "reason_excerpt": {
+            "title": "Reason Excerpt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "field",
+          "current_value",
+          "proposed_value",
+          "reason_excerpt"
+        ],
+        "title": "AdvisoryTurnPayload",
+        "type": "object"
+      },
+      "AnswerTurnPayload": {
+        "description": "Phase 26 D-08/D-09 — chip/stepper/text answer turn.\n\nApplied directly to recipes.<field> by the router handler (D-10) and pins\nthe field by appending to recipes.manually_edited_fields. Never triggers\nthe LLM (D-11). The router validates that in_reply_to_turn_id points to\na question turn in the same recipe (D-12).\n\nphoto_paths is intentionally excluded from AnswerField (D-08) — photo\nfollow-ups go through POST /turns/photo multipart, not answer turns.",
+        "properties": {
+          "field": {
+            "enum": [
+              "title",
+              "description",
+              "ingredients",
+              "steps",
+              "prep_time_minutes",
+              "cook_time_minutes",
+              "difficulty",
+              "servings",
+              "cuisine",
+              "mood",
+              "main_protein",
+              "seasonality",
+              "tags"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "in_reply_to_turn_id": {
+            "format": "uuid",
+            "title": "In Reply To Turn Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "answer",
+            "title": "Kind",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "kind",
+          "in_reply_to_turn_id",
+          "field",
+          "value"
+        ],
+        "title": "AnswerTurnPayload",
+        "type": "object"
+      },
+      "Body_create_turn_photo_recipes__recipe_id__turns_photo_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "title": "Body_create_turn_photo_recipes__recipe_id__turns_photo_post",
+        "type": "object"
+      },
+      "Body_upload_cooking_log_photo_endpoint_cooking_logs__log_id__photos_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_cooking_log_photo_endpoint_cooking_logs__log_id__photos_post",
+        "type": "object"
+      },
+      "Body_upload_photo_recipes__recipe_id__photos_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_photo_recipes__recipe_id__photos_post",
+        "type": "object"
+      },
+      "ChipPayload": {
+        "description": "Phase 35 ENUM-01 (B-03 two-layer fix) — structured chip payload for\n`SummaryTurnPayload.chips`.\n\n`field` carries the extracted-map key (e.g. `cuisine`, `ingredients`,\n`mood`); it is intentionally an unconstrained `str` rather than the\n`AnswerField` Literal because the chip-emission loop iterates over the\nfull set of changed fields on `GeminiExtractedRecipe`, which can include\nfuture keys not yet in `AnswerField`. Constraining here would surface as\na 422 on read whenever Gemini's extraction schema gains a field.\n\n`value` is the typed value as Pydantic round-trips it — enum strings stay\nstrings, `list[dict]` ingredients stay JSON-serialisable dicts, ints stay\nints. The backend NEVER concatenates display strings (the prior code\nserialized via `str(val)`, which leaked Python `dict` reprs into the UI\n— see B-03). The frontend owns display formatting via `useEnumLabels`\nand a per-field formatter.\n\nSentinel: `field == \"_legacy\"` is reserved for the `@field_validator`\nthat coerces pre-Phase-35 `list[str]` chips persisted in the DB.",
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "field",
+          "value"
+        ],
+        "title": "ChipPayload",
+        "type": "object"
+      },
+      "CookingLogFinalizeRequest": {
+        "description": "Body for PUT /cooking-logs/{id}.\n\n``rating`` is REQUIRED — D-03 in 04-CONTEXT.md states the Finaliser button\nis disabled until a rating is selected. Backend mirrors that gate so a\nrogue client cannot create unfinalized logs that look finalized.\n\n``photo_paths`` MUST contain only paths previously returned by\n``POST /cooking-logs/{id}/photos`` for this same log (validated server-side\nby intersecting with the persisted photo_paths from prior uploads).",
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "photo_paths": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Photo Paths",
+            "type": "array"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/LogRating"
+          }
+        },
+        "required": [
+          "rating"
+        ],
+        "title": "CookingLogFinalizeRequest",
+        "type": "object"
+      },
+      "CookingLogResponse": {
+        "description": "Wire shape for COOK-01 (start) + COOK-02 (active) + COOK-03 (finalized).",
+        "properties": {
+          "cooked_at": {
+            "format": "date-time",
+            "title": "Cooked At",
+            "type": "string"
+          },
+          "cooked_by_member_id": {
+            "format": "uuid",
+            "title": "Cooked By Member Id",
+            "type": "string"
+          },
+          "household_id": {
+            "format": "uuid",
+            "title": "Household Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "photo_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Photo Paths",
+            "type": "array"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LogRating"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "recipe_id",
+          "household_id",
+          "cooked_by_member_id",
+          "cooked_at"
+        ],
+        "title": "CookingLogResponse",
+        "type": "object"
+      },
+      "CreateHouseholdRequest": {
+        "description": "POST /households body.",
+        "properties": {
+          "color_hex": {
+            "title": "Color Hex",
+            "type": "string"
+          },
+          "household_name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Household Name",
+            "type": "string"
+          },
+          "member_name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Member Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "household_name",
+          "member_name",
+          "color_hex"
+        ],
+        "title": "CreateHouseholdRequest",
+        "type": "object"
+      },
+      "Cuisine": {
+        "enum": [
+          "italian",
+          "french",
+          "asian",
+          "mediterranean",
+          "middleEastern",
+          "indian",
+          "mexican",
+          "northAfrican",
+          "american",
+          "other"
+        ],
+        "title": "Cuisine",
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HouseholdPreview": {
+        "description": "GET /households/by-code/{code} response.\n\nUsed by the Join screen to disable already-taken color swatches BEFORE\nsubmission, avoiding a 409 round-trip after the user has filled the form.\n\nT-01-04-03 mitigation: deliberately omits member names. The 6-char invite\ncode is the credential here — leaking only ``household_name`` and the\nset of taken colors is the minimum needed for the swatch-disable UX.",
+        "properties": {
+          "household_name": {
+            "title": "Household Name",
+            "type": "string"
+          },
+          "taken_colors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Taken Colors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "household_name",
+          "taken_colors"
+        ],
+        "title": "HouseholdPreview",
+        "type": "object"
+      },
+      "IngredientItem": {
+        "description": "One row of the ``ingredients`` JSONB array.\n\nSPEC.md §\"Data model\": ``ingredients JSONB`` = ``[{name, quantity, unit}, ...]``.\nQuantities and units are nullable because quick-add can promote to structured\nlater via PUT and partial fills are common.",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "IngredientItem",
+        "type": "object"
+      },
+      "JoinHouseholdRequest": {
+        "description": "POST /households/join body.",
+        "properties": {
+          "color_hex": {
+            "title": "Color Hex",
+            "type": "string"
+          },
+          "invite_code": {
+            "maxLength": 6,
+            "minLength": 6,
+            "title": "Invite Code",
+            "type": "string"
+          },
+          "member_name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Member Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invite_code",
+          "member_name",
+          "color_hex"
+        ],
+        "title": "JoinHouseholdRequest",
+        "type": "object"
+      },
+      "LogRating": {
+        "description": "Mirrors the SQL ENUM ``log_rating``. Locked 3-value scale per PROJECT.md.",
+        "enum": [
+          "loved",
+          "liked",
+          "disliked"
+        ],
+        "title": "LogRating",
+        "type": "string"
+      },
+      "MemberPublic": {
+        "description": "Public-facing member shape — never exposes ``auth_token``.",
+        "properties": {
+          "color_hex": {
+            "title": "Color Hex",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "joined_at": {
+            "format": "date-time",
+            "title": "Joined At",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "color_hex",
+          "joined_at"
+        ],
+        "title": "MemberPublic",
+        "type": "object"
+      },
+      "MemberRenameRequest": {
+        "description": "PATCH /api/households/me body — IDM-01 (D-18-01).\n\n``str_strip_whitespace=True`` (Pydantic v2 pattern per CONTEXT.md §code_context)\nruns BEFORE min/max validation, so a name of all whitespace correctly\nfails with the 1-char min rather than slipping through.",
+        "properties": {
+          "name": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "MemberRenameRequest",
+        "type": "object"
+      },
+      "Mood": {
+        "enum": [
+          "comfort",
+          "light",
+          "quick",
+          "celebratory",
+          "adventurous"
+        ],
+        "title": "Mood",
+        "type": "string"
+      },
+      "OnboardingResponse": {
+        "description": "Shared response for POST /households and POST /households/join.\n\nShape matches SPEC.md §\"Onboarding\" verbatim: the frontend stashes the\nauth_token in localStorage and ships it as ``Authorization: Bearer …`` from\nthat point on.",
+        "properties": {
+          "auth_token": {
+            "title": "Auth Token",
+            "type": "string"
+          },
+          "household_id": {
+            "format": "uuid",
+            "title": "Household Id",
+            "type": "string"
+          },
+          "invite_code": {
+            "title": "Invite Code",
+            "type": "string"
+          },
+          "member_id": {
+            "format": "uuid",
+            "title": "Member Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "household_id",
+          "member_id",
+          "auth_token",
+          "invite_code"
+        ],
+        "title": "OnboardingResponse",
+        "type": "object"
+      },
+      "PhotoTurnPayload": {
+        "properties": {
+          "kind": {
+            "const": "photo",
+            "title": "Kind",
+            "type": "string"
+          },
+          "photo_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Photo Paths",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "PhotoTurnPayload",
+        "type": "object"
+      },
+      "PromotionRetryResponse": {
+        "description": "POST /recipes/{id}/retry-promotion + POST /recipes/{id}/promote response — minimal ack.",
+        "properties": {
+          "queued": {
+            "title": "Queued",
+            "type": "boolean"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "queued"
+        ],
+        "title": "PromotionRetryResponse",
+        "type": "object"
+      },
+      "ProposalAcceptedPayload": {
+        "description": "Phase 26 D-16 — user taps 'Mettre a jour' on an advisory bubble.\n\nRouter handler reads the referenced advisory turn's payload (field +\nproposed_value), applies proposed_value to recipes.<field>, and REMOVES\nfield from recipes.manually_edited_fields. Atomic transaction.",
+        "properties": {
+          "in_reply_to_turn_id": {
+            "format": "uuid",
+            "title": "In Reply To Turn Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "proposal_accepted",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "in_reply_to_turn_id"
+        ],
+        "title": "ProposalAcceptedPayload",
+        "type": "object"
+      },
+      "ProposalDismissedPayload": {
+        "description": "Phase 26 D-15 — user taps 'Ignorer' on an advisory bubble.\n\nPURE no-op state change — no LLM run, no field mutation, no\nmanually_edited_fields touch. Router validates in_reply_to_turn_id\npoints to an advisory turn in the same recipe (422 otherwise).",
+        "properties": {
+          "in_reply_to_turn_id": {
+            "format": "uuid",
+            "title": "In Reply To Turn Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "proposal_dismissed",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "in_reply_to_turn_id"
+        ],
+        "title": "ProposalDismissedPayload",
+        "type": "object"
+      },
+      "Protein": {
+        "enum": [
+          "poultry",
+          "redMeat",
+          "fish",
+          "seafood",
+          "egg",
+          "legume",
+          "none"
+        ],
+        "title": "Protein",
+        "type": "string"
+      },
+      "PushSubscribeResponse": {
+        "properties": {
+          "ok": {
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "title": "PushSubscribeResponse",
+        "type": "object"
+      },
+      "PushSubscriptionKeys": {
+        "properties": {
+          "auth": {
+            "title": "Auth",
+            "type": "string"
+          },
+          "p256dh": {
+            "title": "P256Dh",
+            "type": "string"
+          }
+        },
+        "required": [
+          "p256dh",
+          "auth"
+        ],
+        "title": "PushSubscriptionKeys",
+        "type": "object"
+      },
+      "PushSubscriptionRequest": {
+        "description": "Body of POST /push/subscribe. Matches browser PushSubscription.toJSON().",
+        "properties": {
+          "endpoint": {
+            "maxLength": 2048,
+            "minLength": 10,
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "expirationTime": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expirationtime"
+          },
+          "keys": {
+            "$ref": "#/components/schemas/PushSubscriptionKeys"
+          }
+        },
+        "required": [
+          "endpoint",
+          "keys"
+        ],
+        "title": "PushSubscriptionRequest",
+        "type": "object"
+      },
+      "PushTestResponse": {
+        "description": "VAL-03 — response from POST /push/test (admin fire-test).\n\n- fired_to: number of subscriptions pywebpush returned success for.\n- delivery_failures: number of subscriptions that raised WebPushException\n  (other than 404/410, which are pruned and counted as 'cleaned' inside\n  send_test_to_member, not as delivery failures).",
+        "properties": {
+          "delivery_failures": {
+            "title": "Delivery Failures",
+            "type": "integer"
+          },
+          "fired_to": {
+            "title": "Fired To",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fired_to",
+          "delivery_failures"
+        ],
+        "title": "PushTestResponse",
+        "type": "object"
+      },
+      "QuestionTurnPayload": {
+        "description": "Phase 29 LLM-03 — emitted by _run_thread_llm (Wave 2) and POST\n/recipes/{id}/questions/trigger (Wave 3). Locked read contract for\nPhase 27 SystemBubble.tsx question branch + Phase 28 D-12 multi field.\n\nfield: AnswerField key — reuse existing Literal (drift-free per CLAUDE.md\n  locked vocabularies).\nprompt: French prompt string from completeness._FIELD_PROMPTS_FR per D-14.\ninput_type: chip / stepper / text per completeness.INPUT_TYPE_MAP per D-10.\n  (ingredients/steps are never emitted — D-10 SKIP.)\noptions: chip options from completeness.OPTIONS_MAP (D-15); empty for\n  stepper/text fields.\nmulti: True only for chip-multi fields (mood per D-10); defaults False\n  so frontends predating Phase 29 don't crash on missing key (Phase 28 D-12).",
+        "properties": {
+          "field": {
+            "enum": [
+              "title",
+              "description",
+              "ingredients",
+              "steps",
+              "prep_time_minutes",
+              "cook_time_minutes",
+              "difficulty",
+              "servings",
+              "cuisine",
+              "mood",
+              "main_protein",
+              "seasonality",
+              "tags"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "input_type": {
+            "enum": [
+              "chip",
+              "stepper",
+              "text"
+            ],
+            "title": "Input Type",
+            "type": "string"
+          },
+          "kind": {
+            "const": "question",
+            "title": "Kind",
+            "type": "string"
+          },
+          "multi": {
+            "default": false,
+            "title": "Multi",
+            "type": "boolean"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "field",
+          "prompt",
+          "input_type"
+        ],
+        "title": "QuestionTurnPayload",
+        "type": "object"
+      },
+      "RecipeBlankCreate": {
+        "description": "Phase 27 CAPTURE-03 — empty-body create for the conversational capture\nscreen. The server stamps status='draft' and title='Extraction en cours…';\nall recipe fields are populated by promote_draft after « Enregistrer »\ntriggers POST /recipes/{id}/promote. CONTEXT.md D-12 + D-13b.\n\nStrict {} per CONTEXT.md Claude's Discretion (\"Recommend strict {}\").",
+        "properties": {},
+        "title": "RecipeBlankCreate",
+        "type": "object"
+      },
+      "RecipeResponse": {
+        "description": "Single shape used for every read endpoint AND every WS broadcast payload.\n\nKeeping HTTP and WS payloads byte-identical means the frontend has one\nparser to maintain (plan 01-10). ``mood``/``seasonality``/``cuisine``/\n``main_protein`` come back as plain strings because the SQLAlchemy model\nstores them as ``ARRAY(Text)``/``Text`` columns — the wire vocabulary is\nenforced on the WRITE side via the create/update schemas above.",
+        "properties": {
+          "cook_count": {
+            "title": "Cook Count",
+            "type": "integer"
+          },
+          "cook_time_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cook Time Minutes"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_member_id": {
+            "format": "uuid",
+            "title": "Created By Member Id",
+            "type": "string"
+          },
+          "cuisine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cuisine"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          },
+          "household_id": {
+            "format": "uuid",
+            "title": "Household Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "illustration_svg": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Illustration Svg"
+          },
+          "ingredients": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IngredientItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredients"
+          },
+          "initial_turn_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Turn Kind"
+          },
+          "last_cooked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Cooked At"
+          },
+          "last_cooked_photo_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Cooked Photo Path"
+          },
+          "main_protein": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Protein"
+          },
+          "manually_edited_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Manually Edited Fields",
+            "type": "array"
+          },
+          "mood": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mood",
+            "type": "array"
+          },
+          "photo_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Photo Paths",
+            "type": "array"
+          },
+          "prep_time_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prep Time Minutes"
+          },
+          "promotion_attempts": {
+            "default": 0,
+            "title": "Promotion Attempts",
+            "type": "integer"
+          },
+          "promotion_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promotion Error"
+          },
+          "questions_deferred_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Questions Deferred Until"
+          },
+          "seasonality": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Seasonality",
+            "type": "array"
+          },
+          "servings": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Servings"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "household_id",
+          "created_by_member_id",
+          "status",
+          "title",
+          "photo_paths",
+          "mood",
+          "seasonality",
+          "tags",
+          "cook_count",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RecipeResponse",
+        "type": "object"
+      },
+      "RecipeUpdate": {
+        "description": "RECIPE-05 — patch-style update.\n\n``manually_edited_fields`` is INTENTIONALLY absent — write path is Phase 28\nDETAIL-05. ``photo_paths``, ``cook_count`` and ``last_cooked_at`` are also\nabsent: the photo route (01-09) and the cooking-log handler (W3) own those\ncolumns respectively. Raw capture inputs are kept forever in ``recipe_turns``\n(Phase 25 invariant #5 via turn payload, not a column on this schema).\n\nSetting ``status`` here IS allowed in W1 because the user's \"I finished\nfilling the draft\" gesture is the only promotion path until W2's\nBackgroundTask lands. Threat T-01-08-08 documents this as accepted.",
+        "properties": {
+          "cook_time_minutes": {
+            "anyOf": [
+              {
+                "maximum": 1440.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cook Time Minutes"
+          },
+          "cuisine": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cuisine"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "enum": [
+                  "easy",
+                  "medium",
+                  "hard"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          },
+          "ingredients": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IngredientItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredients"
+          },
+          "main_protein": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Protein"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mood": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Mood"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mood"
+          },
+          "prep_time_minutes": {
+            "anyOf": [
+              {
+                "maximum": 1440.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prep Time Minutes"
+          },
+          "seasonality": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Season"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seasonality"
+          },
+          "servings": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Servings"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "draft",
+                  "structured",
+                  "verified"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "RecipeUpdate",
+        "type": "object"
+      },
+      "RegenerateRequest": {
+        "description": "Optional filters for POST /shortlists/regenerate (SHORTLIST-02).\n\nWire shape mirrors services/algorithm.py::ShortlistFilters. All fields\nnullable/optional — empty body regenerates with no filters.",
+        "properties": {
+          "cuisine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cuisine"
+          },
+          "exclude_protein": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exclude Protein"
+          },
+          "max_prep_time": {
+            "anyOf": [
+              {
+                "maximum": 999.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Prep Time"
+          },
+          "required_moods": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Moods",
+            "type": "array"
+          }
+        },
+        "title": "RegenerateRequest",
+        "type": "object"
+      },
+      "Season": {
+        "enum": [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "title": "Season",
+        "type": "string"
+      },
+      "SessionResponse": {
+        "description": "GET /households/me response — Phase 01.1 cookie-auth.\n\nEmbeds the requester's own member identity (``me``) so the frontend's\nSessionProvider can render the user's name/color without a second\nround-trip. Mirrors HouseholdPublic but adds ``me``.",
+        "properties": {
+          "household_id": {
+            "format": "uuid",
+            "title": "Household Id",
+            "type": "string"
+          },
+          "household_name": {
+            "title": "Household Name",
+            "type": "string"
+          },
+          "invite_code": {
+            "title": "Invite Code",
+            "type": "string"
+          },
+          "me": {
+            "$ref": "#/components/schemas/MemberPublic"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MemberPublic"
+            },
+            "title": "Members",
+            "type": "array"
+          }
+        },
+        "required": [
+          "household_id",
+          "household_name",
+          "invite_code",
+          "me",
+          "members"
+        ],
+        "title": "SessionResponse",
+        "type": "object"
+      },
+      "ShortlistResponse": {
+        "description": "GET /shortlists/today and POST /shortlists/regenerate response.\n\nFrontend (Plan 03) computes the 5 vote-states client-side from `votes`\nusing the lib/votes.ts mirror of services/voting.py — same logic,\nidentical branch order.",
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "recipes": {
+            "items": {
+              "$ref": "#/components/schemas/RecipeResponse"
+            },
+            "title": "Recipes",
+            "type": "array"
+          },
+          "shortlist_id": {
+            "format": "uuid",
+            "title": "Shortlist Id",
+            "type": "string"
+          },
+          "votes": {
+            "items": {
+              "$ref": "#/components/schemas/ShortlistVote"
+            },
+            "title": "Votes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "shortlist_id",
+          "date",
+          "generation",
+          "recipes",
+          "votes"
+        ],
+        "title": "ShortlistResponse",
+        "type": "object"
+      },
+      "ShortlistVote": {
+        "description": "One row from the votes table for the current shortlist.",
+        "properties": {
+          "member_id": {
+            "format": "uuid",
+            "title": "Member Id",
+            "type": "string"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "shortlist_id": {
+            "format": "uuid",
+            "title": "Shortlist Id",
+            "type": "string"
+          },
+          "vote": {
+            "title": "Vote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shortlist_id",
+          "recipe_id",
+          "member_id",
+          "vote"
+        ],
+        "title": "ShortlistVote",
+        "type": "object"
+      },
+      "SummaryTurnPayload": {
+        "description": "Phase 29 LLM-01 — emitted by _run_thread_llm after every successful\nGemini run (D-07). Idempotency-gated by D-03 extraction_hash: re-running\nthe same thread produces a byte-identical hash, and emission is skipped.\n\nbody: Gemini-generated French recap of what was extracted/modified this\n  run (D-05 — Optional because apply_voice_modification doesn't request\n  it; _run_thread_llm uses a server-fallback if None).\nchips: Structured `ChipPayload(field, value)` items per changed field —\n  display formatting belongs to the frontend (B-03 two-layer fix, Phase\n  35 ENUM-01). Backend never concatenates display strings. A read-side\n  `@field_validator(mode='before')` coerces legacy `list[str]` summary\n  turns persisted before Phase 35 to `ChipPayload(field='_legacy', value=str)`\n  so old DB rows still parse during the deploy transition.\nextraction_hash: SHA256 hex of GeminiExtractedRecipe.model_dump() canonical\n  (D-03 — see RESEARCH Pitfall 1: use json.dumps(..., sort_keys=True,\n  ensure_ascii=False), NOT model_dump_json(sort_keys=True) which raises\n  TypeError in Pydantic v2). Stored here so the next LLM run can skip\n  emission cheaply.",
+        "properties": {
+          "body": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "chips": {
+            "items": {
+              "$ref": "#/components/schemas/ChipPayload"
+            },
+            "title": "Chips",
+            "type": "array"
+          },
+          "extraction_hash": {
+            "title": "Extraction Hash",
+            "type": "string"
+          },
+          "kind": {
+            "const": "summary",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "extraction_hash"
+        ],
+        "title": "SummaryTurnPayload",
+        "type": "object"
+      },
+      "TextTurnPayload": {
+        "properties": {
+          "kind": {
+            "const": "text",
+            "title": "Kind",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ],
+        "title": "TextTurnPayload",
+        "type": "object"
+      },
+      "TurnResponse": {
+        "description": "Read-side schema for a single turn — payload stays raw dict (see Phase 25 stub doc).",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "sender": {
+            "title": "Sender",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "recipe_id",
+          "position",
+          "sender",
+          "kind",
+          "payload",
+          "created_at"
+        ],
+        "title": "TurnResponse",
+        "type": "object"
+      },
+      "UrlTurnPayload": {
+        "properties": {
+          "extracted_html_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extracted Html Path"
+          },
+          "kind": {
+            "const": "url",
+            "title": "Kind",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "url"
+        ],
+        "title": "UrlTurnPayload",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VoiceModifyRequest": {
+        "description": "POST /recipes/{id}/voice-modify body.",
+        "properties": {
+          "transcript": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Transcript",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transcript"
+        ],
+        "title": "VoiceModifyRequest",
+        "type": "object"
+      },
+      "VoiceTurnPayload": {
+        "properties": {
+          "kind": {
+            "const": "voice",
+            "title": "Kind",
+            "type": "string"
+          },
+          "transcript": {
+            "title": "Transcript",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "transcript"
+        ],
+        "title": "VoiceTurnPayload",
+        "type": "object"
+      },
+      "VoteRequest": {
+        "description": "POST /shortlists/{shortlist_id}/recipes/{recipe_id}/vote body.",
+        "properties": {
+          "vote": {
+            "enum": [
+              "yes",
+              "no"
+            ],
+            "title": "Vote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vote"
+        ],
+        "title": "VoteRequest",
+        "type": "object"
+      },
+      "VoteResponse": {
+        "description": "Mirrors the broadcast payload — frontend uses this shape unchanged\nfor both HTTP response and `vote.created` WS event handling.",
+        "properties": {
+          "member_id": {
+            "format": "uuid",
+            "title": "Member Id",
+            "type": "string"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "shortlist_id": {
+            "format": "uuid",
+            "title": "Shortlist Id",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "vote": {
+            "title": "Vote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shortlist_id",
+          "recipe_id",
+          "member_id",
+          "vote",
+          "state"
+        ],
+        "title": "VoteResponse",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Al Dente API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/auth/session": {
+      "delete": {
+        "description": "Clear the aldente_auth cookie. Idempotent — always returns 200.",
+        "operationId": "delete_session_auth_session_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Delete Session Auth Session Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Delete Session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/ws-token": {
+      "get": {
+        "description": "Return the caller's auth token for direct-to-Railway WebSocket auth.\n\nThe aldente_auth cookie is HttpOnly so JS can't read it.  The frontend\ncalls this endpoint (same-origin, cookie travels automatically) to get a\ntoken it can append as ``?token=`` on a wss://railway… URL, bypassing the\nVercel-proxy hop that drops long-lived WS connections.",
+        "operationId": "get_ws_token_auth_ws_token_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Get Ws Token Auth Ws Token Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Ws Token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/cooking-logs": {
+      "get": {
+        "description": "HIST-01 — household's finalized cooking logs from the last `days`.\n\nPer D-17-01: filter by household_id == member.household_id,\ncooked_at >= now() - interval `days` days, rating IS NOT NULL\n(finalized only; the unfinalized `today` log surfaces via the\ndedicated /cooking-logs/active endpoint). Sort: cooked_at DESC.\n\nPer D-17-02: reuse CookingLogResponse — no eager-loaded recipe\njoin. Frontend resolves recipe titles via its existing recipe\nfetch (couple-scale workload, ~30 logs max per page).\n\nPer D-17-03 + D-17-10: read-only — no realtime broadcast\n(invariant #4 unaffected). The relative `days` window is not\ntimezone-sensitive (it's a duration, not a calendar boundary), so\nthis endpoint does NOT use _household_today_in_tz / FIX-01's\nmachinery.",
+        "operationId": "list_cooking_logs_cooking_logs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CookingLogResponse"
+                  },
+                  "title": "Response List Cooking Logs Cooking Logs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Cooking Logs",
+        "tags": [
+          "cooking_logs"
+        ]
+      }
+    },
+    "/cooking-logs/active": {
+      "get": {
+        "description": "COOK-02: today's unfinalized cooking log for the household, or null.\n\nFIX-01 / TZ-01: \"today\" is the household's IANA-timezone calendar day; the\nSQL comparison shifts `cooked_at` into the same zone before extracting the\ndate (D-17-09 — both callsites share the same TZ boundary).",
+        "operationId": "get_active_cooking_log_cooking_logs_active_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CookingLogResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Active Cooking Log Cooking Logs Active Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Active Cooking Log",
+        "tags": [
+          "cooking_logs"
+        ]
+      }
+    },
+    "/cooking-logs/{log_id}": {
+      "get": {
+        "description": "HIST-02 — single household-scoped cooking log for the detail page.\n\nT-04-01-03: cross-household reads return 404 (never 403) — same\npattern as photos.py and the existing PUT/POST endpoints in this\nmodule. Returns finalized OR unfinalized logs (the detail page\nmay be reached from the active-cook banner before finalize, in\naddition to the history list after).",
+        "operationId": "get_cooking_log_cooking_logs__log_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "log_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Log Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CookingLogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Cooking Log",
+        "tags": [
+          "cooking_logs"
+        ]
+      },
+      "put": {
+        "description": "COOK-03 + COOK-05: finalize a cooking log and denormalize the parent\nrecipe in the SAME DB TRANSACTION (architecture invariant #3).\n\nPhase 15 (INV-02 / B-4): atomic UPDATE-with-rowcount-gate replaces the\nPython check-then-act `is_first_finalize = log_row.rating is None`. Two\nconcurrent PUTs can no longer both observe rating=NULL and both fire\n`cook_count + 1`; Postgres row-level UPDATE locking serializes the\ncontenders, and rowcount=0 on the loser cleanly returns the canonical\npersisted state.\n\nSame household-scoped 404 policy as photos.py — cross-household reads do\nnot leak existence (T-04-01-03). We do a SELECT-first existence check so\nrowcount=0 means unambiguously \"already finalized\" (not \"wrong\nhousehold\") — Option A from 15-RESEARCH §Pattern 1.",
+        "operationId": "finalize_cooking_log_cooking_logs__log_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "log_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Log Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CookingLogFinalizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CookingLogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Finalize Cooking Log",
+        "tags": [
+          "cooking_logs"
+        ]
+      }
+    },
+    "/cooking-logs/{log_id}/photo-url": {
+      "get": {
+        "description": "Mirror of GET /recipes/{id}/photo-url scoped to a cooking log.\n\nT-04-01-02 mitigation: validate that ``path`` is in ``log_row.photo_paths``\nso a member cannot mint signed URLs for arbitrary bucket objects.",
+        "operationId": "cooking_log_signed_photo_url_cooking_logs__log_id__photo_url_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "log_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Log Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "maxLength": 300,
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cooking Log Signed Photo Url Cooking Logs  Log Id  Photo Url Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cooking Log Signed Photo Url",
+        "tags": [
+          "cooking_logs"
+        ]
+      }
+    },
+    "/cooking-logs/{log_id}/photos": {
+      "post": {
+        "description": "Append a photo to a cooking log.\n\nMirrors the threat model of backend/app/routers/photos.py:\n  - 404 (not 403) on cross-household / unknown id (T-04-01-03)\n  - magic-byte MIME sniff (T-04-01-04)\n  - server-side path layout cooking-logs/{household_id}/{log_id}/{uuid}.{ext}\n  - 8 MiB hard cap with `read(MAX_BYTES + 1)` overflow detection (T-04-01-05)\n\nNo `recipe.updated` broadcast per upload — finalization (PUT) is the\ncanonical sync point. Mid-finalization photos stream silently.",
+        "operationId": "upload_cooking_log_photo_endpoint_cooking_logs__log_id__photos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "log_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Log Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_cooking_log_photo_endpoint_cooking_logs__log_id__photos_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CookingLogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Cooking Log Photo Endpoint",
+        "tags": [
+          "cooking_logs"
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "description": "Unauthenticated liveness probe used by Railway.",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Healthz Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz"
+      }
+    },
+    "/households": {
+      "post": {
+        "description": "Create a household + the creator's member row in one transaction.\n\nONBOARD-01 / ONBOARD-02. Both inserts share a single commit so the\nhousehold never exists without at least one member (and vice versa).\nD-02: aldente_auth cookie is set alongside the auth_token body field.",
+        "operationId": "create_household_households_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHouseholdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Household",
+        "tags": [
+          "households"
+        ]
+      }
+    },
+    "/households/by-code/{code}": {
+      "get": {
+        "description": "Auth-free preview for the Join screen.\n\nONBOARD-05 support: the frontend uses ``taken_colors`` to grey-out swatches\nbefore the user submits, preventing a 409 after a filled form. The 6-char\ninvite code itself is the bearer of trust here (T-01-04-03 mitigation:\nschema deliberately omits member names).",
+        "operationId": "household_preview_households_by_code__code__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Household Preview",
+        "tags": [
+          "households"
+        ]
+      }
+    },
+    "/households/join": {
+      "post": {
+        "description": "Add a member to an existing household via invite code.\n\nONBOARD-04 + IDM-03. Returns:\n- 404 if the invite_code does not match any household.\n- 422 with ``code=HOUSEHOLD_FULL`` if the household already has\n  ``len(MEMBER_COLORS)`` (5) members (IDM-03, D-18-09/10). This gate\n  runs BEFORE color uniqueness — capacity is the broader denial.\n- 409 if ``color_hex`` is already taken by an existing member.\n- 422 if ``color_hex`` is not in the locked palette (Pydantic-level).\n\nT-01-04-05 mitigation: ``existing_colors`` set check happens in the same\ntransaction as the insert, so two simultaneous joins-with-the-same-color\nare serialized at the row level (rare at couple-scale, but free correctness).",
+        "operationId": "join_household_households_join_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinHouseholdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Join Household",
+        "tags": [
+          "households"
+        ]
+      }
+    },
+    "/households/me": {
+      "get": {
+        "description": "Return the bearer's household + roster — closes INFRA-06.\n\nPhase 01.1: response_model changed to SessionResponse (adds ``me`` field\nso the frontend SessionProvider knows which member is the requester without\na separate round-trip — D-06).\n\nT-01-04-06 mitigation: ``member.household_id`` comes from the\nauthenticated member row (NOT a request param), so there's no\ncross-household read path through this endpoint.",
+        "operationId": "household_me_households_me_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Household Me",
+        "tags": [
+          "households"
+        ]
+      },
+      "patch": {
+        "description": "Rename the authenticated member — IDM-01 (D-18-01..04).\n\nMember-scoped (``current_member``). Enforces per-household name uniqueness\nexcluding the caller's own row (D-18-02) so a no-op rename to the current\nname is a valid 200 (idempotent). Broadcasts ``member.updated`` AFTER commit\nper invariant #4 so partner phones reconcile via RealtimeProvider (D-18-03).\n\nPydantic strips whitespace + bounds 1..40 before this handler runs\n(MemberRenameRequest in app/schemas/member.py), so an empty / 41-char body\nshort-circuits to 422 at validation.",
+        "operationId": "rename_me_households_me_patch",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rename Me",
+        "tags": [
+          "households"
+        ]
+      }
+    },
+    "/households/{household_id}/export.json": {
+      "get": {
+        "description": "Return the household's recipe library as a JSON attachment.",
+        "operationId": "export_recipes_households__household_id__export_json_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "household_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Household Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Recipes",
+        "tags": [
+          "households-export"
+        ]
+      }
+    },
+    "/push/subscribe": {
+      "post": {
+        "description": "Idempotent: upserts on member_id UNIQUE constraint.",
+        "operationId": "subscribe_push_subscribe_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSubscribeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Subscribe",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/push/test": {
+      "post": {
+        "description": "VAL-03 — admin fire-test for Web Push.\n\nFires a deterministic push to every PushSubscription owned by the\ncalling member. Lets the operator verify end-to-end Web Push delivery\non both household iPhones without waiting for the 16:00 cron or\ntriggering a real product event.\n\nDESIGN NOTE (D-19-11) — This endpoint does NOT emit a realtime\nhousehold broadcast (services/realtime is intentionally not called).\nCLAUDE.md invariant #4 says \"all household-affecting mutations\nbroadcast\"; this is NOT a mutation (it only reads PushSubscription +\nwrites pywebpush + may DELETE dead subs). It is an admin-test surface,\nnot a product event. The pytest test_push_test_endpoint_fires asserts\nthe absence of any realtime broadcast call structurally.",
+        "operationId": "push_test_push_test_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushTestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Push Test",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/push/vapid-public-key": {
+      "get": {
+        "description": "Public-key fetch endpoint (defense-in-depth).",
+        "operationId": "vapid_public_key_push_vapid_public_key_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Vapid Public Key",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/recipes": {
+      "get": {
+        "description": "RECIPE-03 (search) + RECIPE-06 (drafts inbox).\n\n``?status=draft`` is the query backing the bottom-nav ``À compléter (N)``\nbadge in 01-10. ``?q=`` runs ILIKE on the title and on the cast-to-text\ningredients JSONB per D-03 — no pg_trgm, no FTS.",
+        "operationId": "list_recipes_recipes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(draft|structured|verified|failed)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RecipeResponse"
+                  },
+                  "title": "Response List Recipes Recipes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Recipes",
+        "tags": [
+          "recipes"
+        ]
+      },
+      "post": {
+        "description": "Phase 27 CAPTURE-03 — blank-draft create for the conversational capture screen.\n\nPer CONTEXT.md D-12 + D-13b: POST /recipes accepts {} and ONLY creates the\ndraft row + broadcasts recipe.created. It does NOT schedule promote_draft —\nthat is the explicit job of POST /recipes/{id}/promote (D-13b), called by\nthe frontend after all per-bubble POST /turns have landed.\n\nWhy no promote_draft here: the user adds N pending bubbles in the chat\ncomposer; on Enregistrer the frontend posts each as one /turns call (Phase\n26 D-20), then calls /promote ONCE so promote_draft runs over the full\nthread (ADR-0001 \"one Gemini call per Enregistrer\"). If POST /recipes\nscheduled promote_draft here, it would race the per-turn BackgroundTasks\nPhase 26 already schedules per D-22 — both would re-read the thread and\nproduce duplicate-system-turn noise.\n\nLayering note (Phase 27 → Phase 29): Phase 26's POST /turns schedules\nprocess_thread_turn (text/voice/photo) and extract_and_process_url_turn\n(url) as BackgroundTasks per D-22. Those stubs run alongside the new\nPOST /promote's promote_draft. Today (Phase 27) process_thread_turn is a\nstub (26-02-PLAN Task 1) that does no real work, so in practice only\npromote_draft from POST /promote does meaningful extraction. Phase 29 fills\nprocess_thread_turn's body; until then the coexistence is harmless.\n\nTitle placeholder is the same literal Phase 26's RealtimeProvider\ninspects to know when the draft is still extracting.",
+        "operationId": "create_blank_recipes_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipeBlankCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Blank",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}": {
+      "delete": {
+        "description": "Hard-delete a recipe and its FK-constrained children (votes, cooking logs).\n\nReturns 404 for cross-household or missing recipes so existence isn't leaked.\nBroadcasts recipe.deleted so both clients remove it from their local state.",
+        "operationId": "delete_recipe_recipes__recipe_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Recipe",
+        "tags": [
+          "recipes"
+        ]
+      },
+      "get": {
+        "description": "RECIPE-04 — household-scoped detail.\n\nReturns 404 (not 403) when the recipe exists in another household — same\nresponse as a nonexistent id, so cross-household existence cannot be\nprobed (T-01-08-04 elevation-of-privilege guard).",
+        "operationId": "get_recipe_recipes__recipe_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Recipe",
+        "tags": [
+          "recipes"
+        ]
+      },
+      "put": {
+        "description": "RECIPE-05 — patch-style update.\n\nOnly the fields in the request body are touched. ``manually_edited_fields``,\n``photo_paths``, ``cook_count``, ``last_cooked_at`` and the identity\ncolumns are blocklist-stripped even if seen — defense-in-depth in case\nthe schema gains those fields by mistake later.",
+        "operationId": "update_recipe_recipes__recipe_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Recipe",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/cook": {
+      "post": {
+        "description": "COOK-01: start a cooking session. Immutable insert; rating/notes/\nphotos are added by Phase 4's finalization PUT.",
+        "operationId": "start_cooking_recipes__recipe_id__cook_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CookingLogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Cooking",
+        "tags": [
+          "cooking_logs"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/photo-url": {
+      "get": {
+        "description": "RECIPE-04 read counterpart of RECIPE-07 (plan 01-10).\n\nReturns a 5-minute signed URL the FE drops into ``<img src=...>``. The\n``recipe-photos`` bucket is private (Public=OFF), so anonymous reads fail;\nthe FE refreshes the URL on each detail-page mount per\n``SIGNED_URL_TTL_SECONDS``.\n\nAuthorization (T-01-10-01 mitigation):\n\n1. The recipe MUST live in the requester's household — 404 otherwise\n   (matches the 01-08 / 01-09 cross-household policy: 404, not 403, so\n   existence cannot be probed).\n2. The ``path`` query MUST be one of the values in ``recipe.photo_paths``.\n   Without this check, a member could mint signed URLs for arbitrary\n   bucket objects belonging to OTHER recipes inside the SAME household\n   (or, with knowledge of any uuid layout, ANY object — though in\n   practice household_id is the first segment so cross-household reads\n   were already gated by step 1).",
+        "operationId": "signed_photo_url_recipes__recipe_id__photo_url_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "maxLength": 300,
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Signed Photo Url Recipes  Recipe Id  Photo Url Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Signed Photo Url",
+        "tags": [
+          "recipes-photos"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/photos": {
+      "post": {
+        "description": "Append a photo to a recipe.\n\nReturns the updated recipe (same shape as ``GET /recipes/{id}``) so the FE\ncan drop the response into its store without a follow-up read.",
+        "operationId": "upload_photo_recipes__recipe_id__photos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_photo_recipes__recipe_id__photos_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Photo",
+        "tags": [
+          "recipes-photos"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/promote": {
+      "post": {
+        "description": "Phase 27 CAPTURE-03 / CONTEXT.md D-13b — coalescing promote trigger.\n\nCalled once by the frontend after all per-bubble POST /turns have landed\n(the chat composer save flow). Schedules promote_draft over the full\nthread — matching ADR-0001 \"one Gemini call per Enregistrer\".\n\nNo-op idempotency: if the user double-taps Enregistrer, two promote_draft\nruns happen back-to-back. Each one re-reads the full thread (Phase 26 D-22)\nand the second run sees the result of the first; the LLM idempotency comes\nfrom \"full re-read\" (ADR-0001), not from request-level deduplication.\n\n422 when the recipe has no position=0 user turn — promote_draft would\nraise inside the BackgroundTask, which has no caller to report to. Fail\nfast at HTTP time instead. Cross-household → 404.",
+        "operationId": "promote_recipe_recipes__recipe_id__promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionRetryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Promote Recipe",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/questions/defer": {
+      "post": {
+        "description": "Phase 29 D-08 / D-20 — pause question emission for 24h.\n\nUsed by the « Plus tard » CTA in SystemBubble's summary branch.\n\nSets recipes.questions_deferred_until = now() + 24h (tz-aware UTC per\nPitfall 9). The Phase 29 _run_thread_llm body reads this column and\nskips question emission while now() < questions_deferred_until.\n\nBroadcasts recipe.updated so both phones see the new value and the\nSystemBubble summary CTAs collapse into the \"deferred\" state (D-22).\nAuto-expires after 24h — no separate \"un-defer\" endpoint needed (the\nuser re-engages naturally on the next session).\n\nT-29-14: endpoint takes NO body — questions_deferred_until is server-computed\nas datetime.now(tz=timezone.utc) + timedelta(hours=24). No client-supplied\nvalue is accepted.\n\nCross-household → 404 (no existence leak, T-29-13).",
+        "operationId": "defer_questions_recipes__recipe_id__questions_defer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Defer Questions",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/questions/trigger": {
+      "post": {
+        "description": "Phase 29 D-20 / LLM-03 — emit the next missing-field question on demand.\n\nUsed by the « Oui, compléter » CTA in SystemBubble's summary branch.\n\nPicks the highest-priority eligible missing field per services/completeness\n(FIELD_KEYS order; skips ingredients/steps via INPUT_TYPE_MAP[field] is None;\nde-dups against existing open question turns via _should_emit_question).\nEmits ONE question turn, returns 201 + TurnResponse.\n\nReturns 204 No Content when no eligible missing field remains (or all\ncandidates already have open questions). Frontend renders \"Tout est complet.\"\ntoast on 204.\n\nCross-household → 404 (no existence leak, T-29-13).",
+        "operationId": "trigger_next_question_recipes__recipe_id__questions_trigger_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trigger Next Question",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/retry-promotion": {
+      "post": {
+        "description": "Phase 16 D-16-05 — retry a failed promotion. Resets the row from\n`failed` to `draft` (so the FE refetch sees the in-flight/spinner\nvariant) and clears `promotion_error`, then queues retry_promotion\nwhich wraps promote_draft (Phase 25 D-09 collapse).\n\nIdempotency contract: retrying a recipe already in `structured` is a\nno-op 202 (status untouched; we still queue retry_promotion but the\nBackgroundTask body short-circuits on non-failed input). Retrying a\nrecipe in `draft` (e.g. mid-flight) is also a no-op 202.\n\nReturns 404 for cross-household or missing recipes — existence not\nleaked (matches the contract on GET /{id}).",
+        "operationId": "retry_promote_recipes__recipe_id__retry_promotion_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionRetryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry Promote",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/turns": {
+      "get": {
+        "description": "Phase 26 TURN-01 — flat list ordered by position ASC.\n\nNo pagination — couple-scale corpus is 5-50 turns per recipe (D-02).\nCross-household → 404 (matches GET /recipes/{id} no-leak contract).\n200 + [] when no turns exist (defensive — Phase 25 backfill should\nhave inserted position=0 for every surviving recipe).",
+        "operationId": "list_turns_recipes__recipe_id__turns_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TurnResponse"
+                  },
+                  "title": "Response List Turns Recipes  Recipe Id  Turns Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Turns",
+        "tags": [
+          "recipes"
+        ]
+      },
+      "post": {
+        "description": "Phase 26 TURN-01 — append a user turn to a recipe's thread.\n\nAccepts 6 kinds via TurnPayload discriminated union:\n  text, voice, url, answer, proposal_accepted, proposal_dismissed.\n\nPhoto turns route to POST /recipes/{id}/turns/photo (D-01 split topology).\n\nDispatch matrix (D-22):\n  * text / voice → BackgroundTask: process_thread_turn (Phase 29 fills body)\n  * url          → BackgroundTask: extract_and_process_url_turn (closes TODO(productize))\n  * answer       → atomic field-apply + pin (no LLM)\n  * proposal_*   → validated state change (no LLM)\n\nEvery persisted turn broadcasts `turn.created` via broadcast_to_household\n(invariant #4). Status code is 201 (D-04) regardless of whether a\nBackgroundTask was scheduled.\n\nCross-household → 404 (matches GET /recipes/{id} — no existence leak).\nNo status guard (D-05) — turns can be appended to a recipe in any status.",
+        "operationId": "create_turn_recipes__recipe_id__turns_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "advisory": "#/components/schemas/AdvisoryTurnPayload",
+                    "answer": "#/components/schemas/AnswerTurnPayload",
+                    "photo": "#/components/schemas/PhotoTurnPayload",
+                    "proposal_accepted": "#/components/schemas/ProposalAcceptedPayload",
+                    "proposal_dismissed": "#/components/schemas/ProposalDismissedPayload",
+                    "question": "#/components/schemas/QuestionTurnPayload",
+                    "summary": "#/components/schemas/SummaryTurnPayload",
+                    "text": "#/components/schemas/TextTurnPayload",
+                    "url": "#/components/schemas/UrlTurnPayload",
+                    "voice": "#/components/schemas/VoiceTurnPayload"
+                  },
+                  "propertyName": "kind"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/TextTurnPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/VoiceTurnPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PhotoTurnPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UrlTurnPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AnswerTurnPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ProposalAcceptedPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ProposalDismissedPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SummaryTurnPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/QuestionTurnPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AdvisoryTurnPayload"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Turn",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/turns/photo": {
+      "post": {
+        "description": "Phase 26 TURN-01 — multipart photo turn (D-01 split topology).\n\nMirrors POST /recipes/photo (the initial capture endpoint) for FOLLOW-UP\nphoto turns on existing recipes. Photos upload via upload_recipe_photo to\nthe recipe-photos bucket; storage paths land in the turn payload as\n`photo_paths` (D-10 — same shape as the initial photo capture turn).\n\nSchedules process_thread_turn (D-22) — Phase 29 fills the LLM body.\nCross-household → 404.",
+        "operationId": "create_turn_photo_recipes__recipe_id__turns_photo_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_turn_photo_recipes__recipe_id__turns_photo_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Turn Photo",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/voice-modify": {
+      "post": {
+        "description": "CAPTURE-05 — voice modification. Synchronous Gemini call; returns the\nmodified fields to the FE. Does NOT persist — the user reviews via the\nedit form and saves via PUT /recipes/{id}.\n\nCross-household: 404 (consistent with /{id} and /{id} PUT).",
+        "operationId": "voice_modify_recipes__recipe_id__voice_modify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceModifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Voice Modify",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
+    "/shortlists/regenerate": {
+      "post": {
+        "description": "SHORTLIST-02: regenerate today's shortlist with optional filters.\nIncrements generation; previous generations remain in the table.",
+        "operationId": "regenerate_shortlists_regenerate_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortlistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Regenerate",
+        "tags": [
+          "shortlists"
+        ]
+      }
+    },
+    "/shortlists/today": {
+      "get": {
+        "description": "Latest generation for today, or null if none exists yet.",
+        "operationId": "get_today_shortlist_shortlists_today_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ShortlistResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Today Shortlist Shortlists Today Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Today Shortlist",
+        "tags": [
+          "shortlists"
+        ]
+      }
+    },
+    "/shortlists/{shortlist_id}/delegate": {
+      "post": {
+        "description": "VOTE-03 + D-12: append `yes` for every recipe in shortlist.recipe_ids\nfor the requesting member. Existing yes votes are no-ops; existing no\nvotes flip to yes via on_conflict_do_update.",
+        "operationId": "delegate_shortlists__shortlist_id__delegate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shortlist_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Shortlist Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortlistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delegate",
+        "tags": [
+          "shortlists"
+        ]
+      }
+    },
+    "/shortlists/{shortlist_id}/recipes/{recipe_id}/vote": {
+      "post": {
+        "description": "VOTE-01 + VOTE-02 + VOTE-05: upsert + compute state + broadcast.",
+        "operationId": "cast_vote_shortlists__shortlist_id__recipes__recipe_id__vote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shortlist_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Shortlist Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cast Vote",
+        "tags": [
+          "votes"
+        ]
+      }
+    }
+  }
+}
