@@ -27,31 +27,88 @@ from app.services.llm import (
 # Used by frontend/tests/e2e/capture-voice-failed-recovery.spec.ts.
 _FORCE_FAIL_PREFIX = "__TEST_FORCE_FAIL__"
 
+# D-39-05 Category C fix: test-only sentinel that triggers a partial extraction
+# (cook_time_minutes omitted so compute_completeness finds at least one eligible
+# missing field → _run_thread_llm emits a question turn). The distinct summary_body
+# ensures _extraction_hash differs from the default branch so the idempotency check
+# in _run_thread_llm does NOT short-circuit the second call.
+# cook_time_minutes is in INPUT_TYPE_MAP (numeric stepper) → eligible for question
+# emission per D-10/D-11; choosing it keeps the partial shape orthogonal to
+# mood/seasonality which vary in other fixture tests.
+_FORCE_NEW_HASH_PREFIX = "__TEST_FORCE_NEW_HASH__"
+
 
 def canned_thread_extract(
-    turns,  # list[RecipeTurn] — inspected for force-fail only; shape is deterministic
+    turns,  # list[RecipeTurn] — inspected for sentinel prefixes; shape is deterministic
     pinned,  # set[str] — unused for deterministic shape
 ) -> GeminiExtractedRecipe:
     """Phase 29 — deterministic full-thread extraction for test mode.
 
     Returns the same 'risotto' shape that canned_voice_recipe used to return,
     so existing Playwright recipe assertions still match. summary_body is a
-    French prose stub. Ignores turn content except for __TEST_FORCE_FAIL__ prefix
-    on any text or voice turn (mirrors canned_voice_recipe D-16-13 convention).
+    French prose stub. Inspects each text/voice turn for two sentinel prefixes
+    (mirrors the established D-16-13 pattern):
+
+    - __TEST_FORCE_FAIL__: raises RuntimeError to exercise the failure-recording path.
+    - __TEST_FORCE_NEW_HASH__: returns a partial extract (cook_time_minutes=None,
+      distinct summary_body) so _run_thread_llm emits a question turn after a
+      deferral is cleared (D-08 / D-39-05 Category C test).
+
+    Force-fail is checked first; if both sentinels appear in different turns,
+    force-fail wins.
     """
-    # __TEST_FORCE_FAIL__ on any text or voice turn forces failure.
+    force_new_hash = False
     for turn in turns:
         payload = turn.payload or {}
-        if turn.kind == "text" and payload.get("text", "").startswith(_FORCE_FAIL_PREFIX):
-            raise RuntimeError(
-                "Thread extraction forcée à échouer pour les tests (Phase 29). "
-                "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
-            )
-        if turn.kind == "voice" and payload.get("transcript", "").startswith(_FORCE_FAIL_PREFIX):
-            raise RuntimeError(
-                "Thread extraction forcée à échouer pour les tests (Phase 29). "
-                "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
-            )
+        if turn.kind == "text":
+            text = payload.get("text", "")
+            if text.startswith(_FORCE_FAIL_PREFIX):
+                raise RuntimeError(
+                    "Thread extraction forcée à échouer pour les tests (Phase 29). "
+                    "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
+                )
+            if text.startswith(_FORCE_NEW_HASH_PREFIX):
+                force_new_hash = True
+        if turn.kind == "voice":
+            transcript = payload.get("transcript", "")
+            if transcript.startswith(_FORCE_FAIL_PREFIX):
+                raise RuntimeError(
+                    "Thread extraction forcée à échouer pour les tests (Phase 29). "
+                    "Le préfixe __TEST_FORCE_FAIL__ active ce chemin."
+                )
+            if transcript.startswith(_FORCE_NEW_HASH_PREFIX):
+                force_new_hash = True
+
+    if force_new_hash:
+        # Partial extract: cook_time_minutes omitted (None) → eligible missing field
+        # for question emission. summary_body is distinct so _extraction_hash differs
+        # from the default branch and the idempotency gate does not short-circuit.
+        return GeminiExtractedRecipe(
+            title="Risotto aux champignons (test)",
+            ingredients=[
+                GeminiIngredient(name="riz arborio", quantity=300.0, unit="g"),
+                GeminiIngredient(name="champignons", quantity=400.0, unit="g"),
+                GeminiIngredient(name="bouillon de légumes", quantity=1.0, unit="L"),
+                GeminiIngredient(name="parmesan", quantity=50.0, unit="g"),
+            ],
+            steps=[
+                "Faire revenir l'oignon dans le beurre.",
+                "Ajouter le riz et nacrer.",
+                "Mouiller au bouillon louche par louche.",
+                "Incorporer les champignons et le parmesan.",
+            ],
+            prep_time_minutes=35,
+            cook_time_minutes=None,  # omitted → compute_completeness finds missing field
+            difficulty="medium",
+            description="Un risotto crémeux aux champignons, parfait pour l'automne.",
+            servings=2,
+            cuisine="italian",
+            mood=["comfort"],
+            main_protein="none",
+            seasonality=["autumn", "winter"],
+            summary_body="J'ai mis à jour la recette avec les nouveaux ingrédients (test).",
+        )
+
     return GeminiExtractedRecipe(
         title="Risotto aux champignons (test)",
         ingredients=[

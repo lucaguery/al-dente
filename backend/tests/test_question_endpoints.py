@@ -480,16 +480,6 @@ def test_defer_unauthenticated_returns_401(
 # ===========================================================================
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason=(
-        "Known issue D-39-05 / 37-01-SUMMARY Category C — "
-        "canned LLM stub in app/services/llm_fixtures.py does not emit question turns "
-        "for this scenario; _run_thread_llm does not emit a question turn after deferral "
-        "clears in the stub path. Fix requires editing llm_fixtures.py which is out of "
-        "scope for this test-only phase per scope_fence."
-    ),
-)
 @pytest.mark.asyncio
 async def test_defer_suppresses_question_in_run_thread_llm(
     client,
