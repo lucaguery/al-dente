@@ -112,6 +112,7 @@ None. Baseline captured in quick-260519-uxn (2026-05-19). Coverage numbers and f
 | 260519-ucl | Align CLAUDE.md Invariant 5 + snake_case example with ADR-0001 (graphify drift fix) | 2026-05-19 | d85ecd9 | [260519-ucl](./quick/260519-ucl-align-claude-md-invariant-5-and-snake-ca/) |
 | 260519-uxn | Add pytest-cov + capture backend coverage baseline (35.9% line / 6.8% branch; rules-files gap surfaced) | 2026-05-19 | 4e24da6 | [260519-uxn](./quick/260519-uxn-add-pytest-cov-to-backend-run-baseline-c/) |
 | 260520-hpz | Bring back swipe deck on Accueil — Variant A + mono-terracotta palette + feedback layer (sketch 001 winner; supersedes Phase 5 emerald Validé lock via ADR-0003) | 2026-05-20 | 4b3d61b | [260520-hpz](./quick/260520-hpz-bring-back-swipe-deck-on-accueil-variant/) |
+| 260520-lit | Wire OpenAPI auto-generation into pre-commit — husky + lint-staged baseline, dump_openapi.py + initial docs/api/openapi.json + endpoints.md, .husky/pre-commit gate that regenerates on backend router changes. uat-tester skill now references the auto-generated reference. | 2026-05-20 | 87cf5ea | [260520-lit](./quick/260520-lit-wire-openapi-auto-generation-into-pre-co/) |
 
 ## Deferred Items
 
@@ -137,9 +138,9 @@ UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surfac
 
 ## Session Continuity
 
-Last activity: 2026-05-20 — Completed quick task 260520-hpz: Bring back swipe deck on Accueil — Variant A + mono-terracotta palette + feedback layer. 7 atomic commits (palette tokens, design-system mirror, ADR-0003, i18n strings, ShortlistDeck restore + HomeDecide rewire, ShortlistProgress + snap-back + thumb echo, toast + partner ripple). Sketch 001 winner shipped; manual UAT pending on iPhone PWA viewport.
-Stopped at: 7-task quick complete; SUMMARY at .planning/quick/260520-hpz-bring-back-swipe-deck-on-accueil-variant/260520-hpz-SUMMARY.md.
-Next: User UAT walkthrough (see SUMMARY.md "Manual UAT pending"). Follow-ups in SUMMARY: re-record E2E specs against the restored swipe-deck surface; clear pre-existing lint debt (separate quick task).
+Last activity: 2026-05-20 — Completed quick task 260520-lit: Wire OpenAPI auto-generation into pre-commit. 7 atomic commits (husky+lint-staged install, lint-staged config, dump_openapi.py + initial docs/api/, hook gate, hook fix, uat-tester cheat sheet → canonical reference, CLAUDE.md doc-lifecycle row). Backend router changes now auto-regenerate docs/api/openapi.json + endpoints.md in the same commit. Surfaced during 260520-hpz UAT: agents were guessing endpoint paths without a single source of truth.
+Stopped at: 6-task quick complete; SUMMARY at .planning/quick/260520-lit-wire-openapi-auto-generation-into-pre-co/260520-lit-SUMMARY.md.
+Next: User pushes the accumulated 8-commit window (sketch winner 260520-hpz + OpenAPI hook 260520-lit) when satisfied. Local stack remains up.
 
 ## Operator Next Steps
 
