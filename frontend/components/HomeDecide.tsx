@@ -158,6 +158,23 @@ export function HomeDecide() {
         return { ...prev, votes: [...others, next] };
       });
 
+      // Quick-260520-hpz — forward a card-scoped event so the partner chip
+      // on the current front card can ripple. The card subscribes in a
+      // useEffect; it checks recipe_id matches before triggering. Skip the
+      // forward for self-votes — the optimistic-deck-advance already gave
+      // us the "I heard you" signal.
+      if (me && payload.member_id !== me.id) {
+        window.dispatchEvent(
+          new CustomEvent("shortlist:partner-vote-on-card", {
+            detail: {
+              recipe_id: payload.recipe_id,
+              member_id: payload.member_id,
+              vote: payload.vote,
+            },
+          }),
+        );
+      }
+
       // T-03-04-07 — drift detection. Compute the local state from the
       // votes (with this payload merged in) and warn if it disagrees with
       // the server's `state` field. The displayed state mirrors the server

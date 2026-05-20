@@ -13,6 +13,7 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import {
   animate,
   motion,
+  useAnimationControls,
   useMotionValue,
   useTransform,
   type PanInfo,
@@ -20,6 +21,7 @@ import {
 import { Heart, UtensilsCrossed } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MemberDot } from "@/components/MemberDot";
@@ -136,18 +138,70 @@ export function ShortlistCard({
       }
       return;
     }
-    onVote(info.offset.x > 0 ? "yes" : "no");
+    // Quick-260520-hpz — inline commit toast for the swipe pathway.
+    // Sits beneath the card (position bottom-center, 1.4s). Pressenti→Validé
+    // celebration is a separate toast fired from HomeDecide (unchanged).
+    const value: VoteValue = info.offset.x > 0 ? "yes" : "no";
+    toast(
+      value === "yes"
+        ? t("toast_yes", { title: recipe.title })
+        : t("toast_no", { title: recipe.title }),
+      {
+        id: `vote-${recipe.id}`,
+        position: "bottom-center",
+        duration: 1400,
+      },
+    );
+    onVote(value);
   }
+
+  // Quick-260520-hpz — partner-chip ripple controls. When HomeDecide forwards
+  // a `shortlist:partner-vote-on-card` event for the current front card, the
+  // chip wrapper plays a one-shot scale ripple.
+  const chipControls = useAnimationControls();
+  useEffect(() => {
+    if (!isFront) return;
+    function onPartnerVote(e: Event) {
+      const detail = (e as CustomEvent<{ recipe_id: string }>).detail;
+      if (!detail) return;
+      if (detail.recipe_id !== recipe.id) return;
+      if (reducedMotion) return;
+      void chipControls.start({
+        scale: [1, 1.15, 1],
+        transition: transitions.springSnap,
+      });
+    }
+    window.addEventListener("shortlist:partner-vote-on-card", onPartnerVote);
+    return () =>
+      window.removeEventListener(
+        "shortlist:partner-vote-on-card",
+        onPartnerVote,
+      );
+  }, [isFront, reducedMotion, recipe.id, chipControls]);
 
   // Quick-260520-hpz — thumb-button ring flash. When the deck dispatches
   // `shortlist:thumb-vote`, briefly set the matching ring's MotionValue
   // to 1 then 0 so the card flashes the same threshold ring the swipe
-  // pathway would. Reduced-motion path: skip the flash.
+  // pathway would. Reduced-motion path: skip the flash (toast still fires).
+  // The thumb-tap pathway also fires the inline commit toast here because
+  // the card owns recipe.title (and the deck dispatches the event BEFORE
+  // calling onVote, so this fires synchronously alongside the vote).
   useEffect(() => {
     if (!isFront) return;
     function onThumbVote(e: Event) {
       const detail = (e as CustomEvent<{ value: VoteValue }>).detail;
       if (!detail) return;
+      // Toast for the thumb-tap pathway (mirrors the swipe-end toast).
+      toast(
+        detail.value === "yes"
+          ? t("toast_yes", { title: recipe.title })
+          : t("toast_no", { title: recipe.title }),
+        {
+          id: `vote-${recipe.id}`,
+          position: "bottom-center",
+          duration: 1400,
+        },
+      );
       if (reducedMotion) return;
       const target = detail.value === "yes" ? yesOpacity : noOpacity;
       target.set(1);
@@ -156,7 +210,7 @@ export function ShortlistCard({
     window.addEventListener("shortlist:thumb-vote", onThumbVote);
     return () =>
       window.removeEventListener("shortlist:thumb-vote", onThumbVote);
-  }, [isFront, reducedMotion, yesOpacity, noOpacity]);
+  }, [isFront, reducedMotion, yesOpacity, noOpacity, recipe.id, recipe.title, t]);
 
   const dragEnabled = isFront && !reducedMotion;
   const cuisine = recipe.cuisine;
@@ -374,8 +428,11 @@ export function ShortlistCard({
         </div>
       </div>
 
-      {/* Partner-vote dot footer */}
-      <div
+      {/* Partner-vote dot footer — motion.div so the chip can ripple
+          (scale 1 → 1.15 → 1) when the partner votes on this card.
+          Quick-260520-hpz. */}
+      <motion.div
+        animate={chipControls}
         className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-card/70 backdrop-blur-sm"
         aria-label={partnerAria}
       >
@@ -389,7 +446,7 @@ export function ShortlistCard({
         <span className="text-xs font-medium text-foreground-muted">
           {partnerName}
         </span>
-      </div>
+      </motion.div>
 
       {/* Thumb buttons row — sit OUTSIDE the card; Plan 04 places them under the deck.
           We expose ShortlistThumbButtons as a sibling component below. */}
