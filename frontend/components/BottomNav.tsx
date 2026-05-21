@@ -94,7 +94,14 @@ export function BottomNav() {
       >
         <span
           aria-hidden
-          className={`flex items-center justify-center rounded-full bg-foreground text-background w-14 h-14 -translate-y-3 transition-all duration-(--duration-fast) ease-(--ease) active:scale-95 hover:bg-primary${ctaActive ? " ring-2 ring-primary/30 ring-offset-1 ring-offset-background" : ""}`}
+          // PUNCH-LIST P-02 (260521-l8g) — elevation grammar = translate + soft
+          // drop-shadow. ADR-0004 §Shadows: the deck card is the canonical
+          // shadow exception, and the central nav CTA is the only OTHER place
+          // where a soft shadow is allowed (it carries the same elevation
+          // metaphor — "above the surface"). Shadow params match the deck
+          // card token (var(--shadow-deck) decomposed to inline). The active
+          // ring is preserved as a separate state affordance.
+          className={`flex items-center justify-center rounded-full bg-foreground text-background w-14 h-14 -translate-y-3 shadow-[0px_8px_24px_-8px_rgba(20,17,13,0.18)] transition-all duration-(--duration-fast) ease-(--ease) active:scale-95 hover:bg-primary${ctaActive ? " ring-2 ring-primary/30 ring-offset-1 ring-offset-background" : ""}`}
         >
           <Plus size={20} strokeWidth={2.5} aria-hidden />
         </span>

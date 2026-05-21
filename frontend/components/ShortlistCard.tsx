@@ -18,7 +18,7 @@ import {
   useTransform,
   type PanInfo,
 } from "framer-motion";
-import { Heart, UtensilsCrossed } from "lucide-react";
+import { Heart, HeartOff, UtensilsCrossed } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -505,7 +505,11 @@ export function ShortlistThumbButtons({
         aria-label={t("vote_no_aria")}
         className="h-14 w-14 rounded-full border-2 border-border hover:bg-foreground-muted/10 active:scale-95 transition-transform"
       >
-        <Heart size={24} className="text-foreground-muted" />
+        {/* PUNCH-LIST P-03 (260521-l8g) — HeartOff (slashed heart) replaces
+            the outlined Heart on the "no" button so the binary affordance
+            reads unambiguously (the prior outlined-heart vs filled-heart
+            pairing produced "two identical hearts" ambiguity per UAT). */}
+        <HeartOff size={24} className="text-foreground-muted" />
       </Button>
       <Button
         type="button"

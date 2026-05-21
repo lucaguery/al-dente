@@ -67,7 +67,13 @@ export default async function RootLayout({
         <LocaleProvider messages={messages}>
           <SessionProvider>
             <RealtimeProvider>
-              <main className="flex flex-col flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">{children}</main>
+              {/* PUNCH-LIST B-01 + B-02 (260521-l8g) — shared <main> pb bumped
+                  to clear the BottomNav 60px + the central « + » CTA's 12px
+                  -translate-y-3 nub + the device safe-area. Single-source-of-
+                  truth scope per the plan ("do NOT duplicate per-page"); this
+                  covers both Accueil branches (deck + ledger) AND the /recipes
+                  Liste view in one edit. */}
+              <main className="flex flex-col flex-1 pb-[calc(5rem+0.75rem+env(safe-area-inset-bottom))]">{children}</main>
               <BottomNav />
               <Toaster />
             </RealtimeProvider>

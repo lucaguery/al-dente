@@ -68,15 +68,21 @@ function DialogContent({
       >
         {children}
         {showCloseButton && (
+          // PUNCH-LIST P-01 (260521-l8g) — French-only invariant #6:
+          // aria-label and sr-only text are both « Fermer ». Mirrors the
+          // common.close key in lib/i18n/fr.json. shadcn dialog primitive
+          // is consumed by many surfaces but the close button copy is
+          // app-wide (no per-surface override needed).
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button
               variant="ghost"
               className="absolute top-2 right-2"
               size="icon-sm"
+              aria-label="Fermer"
             >
               <XIcon
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">Fermer</span>
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -114,8 +120,9 @@ function DialogFooter({
     >
       {children}
       {showCloseButton && (
+        // PUNCH-LIST P-01 (260521-l8g) — French-only invariant #6.
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline">Fermer</Button>
         </DialogPrimitive.Close>
       )}
     </div>
