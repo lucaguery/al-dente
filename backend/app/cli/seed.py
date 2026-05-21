@@ -218,7 +218,10 @@ def _recipe_specs() -> list[dict]:
                 {"name": "poulet", "quantity": 600, "unit": "g"},
                 {"name": "citron", "quantity": 2, "unit": None},
             ],
-            "steps": ["Mariner le poulet.", "Cuire a la poele."],
+            "steps": [
+                {"text": "Mariner le poulet.", "ingredient_refs": []},
+                {"text": "Cuire a la poele.", "ingredient_refs": []},
+            ],
             "illustration_svg": _SEED_ILLUSTRATION_SVG,
         },
         # 2. Italian / red_meat / comfort / autumn-winter
@@ -232,7 +235,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 90,
             "servings": 6,
             "ingredients": [{"name": "boeuf hache", "quantity": 500, "unit": "g"}],
-            "steps": ["Faire revenir.", "Mijoter 1h."],
+            "steps": [
+                {"text": "Faire revenir.", "ingredient_refs": []},
+                {"text": "Mijoter 1h.", "ingredient_refs": []},
+            ],
         },
         # 3. Italian / none / comfort / autumn-winter - parity with canned_voice_recipe
         {
@@ -248,7 +254,10 @@ def _recipe_specs() -> list[dict]:
             "description": "Un risotto crémeux aux champignons des bois, parfait pour l'automne.",
             "servings": 2,
             "ingredients": [{"name": "riz arborio", "quantity": 300, "unit": "g"}],
-            "steps": ["Nacrer le riz.", "Mouiller au bouillon."],
+            "steps": [
+                {"text": "Nacrer le riz.", "ingredient_refs": []},
+                {"text": "Mouiller au bouillon.", "ingredient_refs": []},
+            ],
             "illustration_svg": _SEED_ILLUSTRATION_SVG,
         },
         # 4. French / poultry / celebratory / autumn
@@ -262,7 +271,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 120,
             "servings": 4,
             "ingredients": [{"name": "coq", "quantity": 1.5, "unit": "kg"}],
-            "steps": ["Mariner.", "Mijoter."],
+            "steps": [
+                {"text": "Mariner.", "ingredient_refs": []},
+                {"text": "Mijoter.", "ingredient_refs": []},
+            ],
         },
         # 5. French / fish / light / summer
         {
@@ -275,7 +287,7 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 20,
             "servings": 2,
             "ingredients": [{"name": "loup", "quantity": 1, "unit": "kg"}],
-            "steps": ["Griller au four."],
+            "steps": [{"text": "Griller au four.", "ingredient_refs": []}],
         },
         # 6. French / none / celebratory / autumn - matches canned_photo_recipe
         {
@@ -291,7 +303,10 @@ def _recipe_specs() -> list[dict]:
             "description": "La tarte tatin classique aux pommes caramélisées, renversée à la sortie du four.",
             "servings": 6,
             "ingredients": [{"name": "pommes", "quantity": 6, "unit": None}],
-            "steps": ["Carameliser.", "Cuire 30 min."],
+            "steps": [
+                {"text": "Carameliser.", "ingredient_refs": []},
+                {"text": "Cuire 30 min.", "ingredient_refs": []},
+            ],
             "illustration_svg": _SEED_ILLUSTRATION_SVG,
         },
         # 7. Asian / poultry / quick / all-seasons
@@ -310,7 +325,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 30,
             "servings": 2,
             "ingredients": [{"name": "poulet", "quantity": 400, "unit": "g"}],
-            "steps": ["Mariner.", "Sauter."],
+            "steps": [
+                {"text": "Mariner.", "ingredient_refs": []},
+                {"text": "Sauter.", "ingredient_refs": []},
+            ],
         },
         # 8. Asian / seafood / light / summer
         {

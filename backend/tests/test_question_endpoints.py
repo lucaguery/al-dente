@@ -54,7 +54,11 @@ def _fill_recipe(recipe: Recipe, **overrides) -> None:
         title="Risotto",
         description="Risotto crémeux aux champignons",
         ingredients=[{"name": "riz arborio", "quantity": 300, "unit": "g"}],
-        steps=["Faire revenir l'oignon.", "Nacrer le riz.", "Mouiller au bouillon."],
+        steps=[
+            {"text": "Faire revenir l'oignon.", "ingredient_refs": []},
+            {"text": "Nacrer le riz.", "ingredient_refs": []},
+            {"text": "Mouiller au bouillon.", "ingredient_refs": []},
+        ],
         prep_time_minutes=10,
         cook_time_minutes=20,
         servings=2,

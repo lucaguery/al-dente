@@ -65,7 +65,10 @@ FULL_RECIPE_KWARGS = dict(
     title="Pâtes carbonara",
     description="Un classique romain crémeux.",
     ingredients=[{"name": "pancetta", "quantity": 150, "unit": "g"}],
-    steps=["Cuire les pâtes", "Mélanger les oeufs"],
+    steps=[
+        {"text": "Cuire les pâtes", "ingredient_refs": []},
+        {"text": "Mélanger les oeufs", "ingredient_refs": []},
+    ],
     prep_time_minutes=10,
     cook_time_minutes=15,
     servings=2,
