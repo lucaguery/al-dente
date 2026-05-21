@@ -11,6 +11,7 @@ Current coverage:
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import os
 import uuid
@@ -96,9 +97,11 @@ def test_extract_and_persist_steps_preserves_turn_zero_payload(
 
     payload_before = copy.deepcopy(turn_zero.payload)
 
-    extract_and_persist_steps(
-        recipe_id=recipe.id,
-        household_id=member.household_id,
+    asyncio.run(
+        extract_and_persist_steps(
+            recipe_id=recipe.id,
+            household_id=member.household_id,
+        )
     )
     db_session.expire(turn_zero)
 

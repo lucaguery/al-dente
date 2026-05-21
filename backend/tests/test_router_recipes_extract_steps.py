@@ -20,6 +20,7 @@ auth dependency accepts as a fallback during tests per app/auth.py).
 
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 
@@ -323,9 +324,11 @@ def test_extract_steps_broadcasts_recipe_updated_after_commit(
     )
     db_session.commit()
 
-    extract_and_persist_steps(
-        recipe_id=recipe.id,
-        household_id=member.household_id,
+    asyncio.run(
+        extract_and_persist_steps(
+            recipe_id=recipe.id,
+            household_id=member.household_id,
+        )
     )
 
     # Exactly one recipe.updated broadcast.

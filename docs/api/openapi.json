@@ -301,6 +301,37 @@
         "title": "Cuisine",
         "type": "string"
       },
+      "ExtractStepsResponse": {
+        "description": "Phase 42 STEP-03 — response shape for POST /{id}/extract-steps.\n\nTwo terminal states (CONTEXT.md D-04 + D-05):\n  * 202 Accepted: `{recipe_id, scheduled: true, reason: null}` —\n    BackgroundTask scheduled; frontend listens for `recipe.updated`.\n  * 200 OK: `{recipe_id, scheduled: false, reason: \"already_extracted\"}` —\n    idempotent no-op when steps already have the StepEntry shape.",
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "recipe_id": {
+            "format": "uuid",
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "scheduled": {
+            "title": "Scheduled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "scheduled"
+        ],
+        "title": "ExtractStepsResponse",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -993,18 +1024,11 @@
             "type": "string"
           },
           "steps": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Steps"
+            "items": {
+              "$ref": "#/components/schemas/StepEntry"
+            },
+            "title": "Steps",
+            "type": "array"
           },
           "tags": {
             "items": {
@@ -1191,7 +1215,7 @@
             "anyOf": [
               {
                 "items": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/StepEntry"
                 },
                 "type": "array"
               },
@@ -1400,6 +1424,28 @@
           "vote"
         ],
         "title": "ShortlistVote",
+        "type": "object"
+      },
+      "StepEntry": {
+        "description": "One structured cooking step.\n\nPhase 42 STEP-01 (D-03) — replaces the legacy flat-string step shape.\n``ingredient_refs`` are exact-string matches against ``ingredients[].name``\n(D-08); the frontend joins by name with a graceful fallback to the\nref text if no match (services/llm.py extraction is constrained by\nthe Gemini prompt to reuse the ingredient names verbatim).",
+        "properties": {
+          "ingredient_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ingredient Refs",
+            "type": "array"
+          },
+          "text": {
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "StepEntry",
         "type": "object"
       },
       "SummaryTurnPayload": {
@@ -3416,6 +3462,82 @@
         "summary": "Start Cooking",
         "tags": [
           "cooking_logs"
+        ]
+      }
+    },
+    "/recipes/{recipe_id}/extract-steps": {
+      "post": {
+        "description": "Phase 42 STEP-03 — schedule structured-step backfill for a promoted recipe.\n\nIdempotent: if `recipes.steps` already has the StepEntry shape (every\nentry is a dict with `text` + `ingredient_refs`), returns 200 with\nreason=`already_extracted` and does NOT schedule a duplicate task.\nOtherwise schedules `extract_and_persist_steps` and returns 202.\n\nCross-household returns 404 (NOT 403) per the leak-prevention convention\n(T-01-08-04). Auth gated by `current_member` — invariant #8 HttpOnly\ncookie (or Bearer fallback for tests).",
+        "operationId": "extract_steps_recipes__recipe_id__extract_steps_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Recipe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractStepsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Extract Steps",
+        "tags": [
+          "recipes"
         ]
       }
     },

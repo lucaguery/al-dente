@@ -1,5 +1,5 @@
 ---
-last_generated_at: 2026-05-21T16:43:00Z
+last_generated_at: 2026-05-21T18:02:00Z
 source: backend/scripts/dump_openapi.py
 auto_generated: true
 ---
@@ -211,6 +211,13 @@ RECIPE-05 — patch-style update
 **Auth:** required
 **Request body:** RecipeUpdate
 **Responses:** 200, 422
+
+### POST /recipes/{recipe_id}/extract-steps
+
+Phase 42 STEP-03 — schedule structured-step backfill for a promoted recipe
+
+**Auth:** required
+**Responses:** 202, 422
 
 ### POST /recipes/{recipe_id}/promote
 

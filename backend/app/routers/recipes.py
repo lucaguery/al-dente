@@ -85,6 +85,7 @@ from app.schemas.recipe_turn import (
     TurnPayload,
     TurnResponse,
 )
+from app.services import llm as llm_service  # Phase 42 STEP-03 — module-level for monkeypatch
 from app.services import storage as storage_service
 from app.services.completeness import (
     _FIELD_PROMPTS_FR,
@@ -94,6 +95,7 @@ from app.services.completeness import (
 )
 from app.services.llm import (
     _should_emit_question,
+    _steps_are_structured,  # Phase 42 STEP-03 — idempotency guard
     apply_voice_modification,
     extract_and_process_url_turn,  # Phase 26 D-22 url dispatch
     process_thread_turn,  # Phase 26 D-21/D-22 text/voice/photo dispatch
@@ -564,6 +566,88 @@ async def promote_recipe(
 
     background_tasks.add_task(promote_draft, recipe_id)
     return PromotionRetryResponse(recipe_id=recipe_id, queued=True)
+
+
+# ---------------------------------------------------------------------------
+# Phase 42 STEP-03 — lazy backfill structured steps
+# ---------------------------------------------------------------------------
+
+
+from pydantic import BaseModel  # noqa: E402 — co-located with the route response model
+
+
+class ExtractStepsResponse(BaseModel):
+    """Phase 42 STEP-03 — response shape for POST /{id}/extract-steps.
+
+    Two terminal states (CONTEXT.md D-04 + D-05):
+      * 202 Accepted: `{recipe_id, scheduled: true, reason: null}` —
+        BackgroundTask scheduled; frontend listens for `recipe.updated`.
+      * 200 OK: `{recipe_id, scheduled: false, reason: "already_extracted"}` —
+        idempotent no-op when steps already have the StepEntry shape.
+    """
+
+    recipe_id: UUID
+    scheduled: bool
+    reason: str | None = None
+
+
+@router.post(
+    "/{recipe_id}/extract-steps",
+    response_model=ExtractStepsResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def extract_steps(
+    recipe_id: UUID,
+    background_tasks: BackgroundTasks,
+    response: Response,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> ExtractStepsResponse:
+    """Phase 42 STEP-03 — schedule structured-step backfill for a promoted recipe.
+
+    Idempotent: if `recipes.steps` already has the StepEntry shape (every
+    entry is a dict with `text` + `ingredient_refs`), returns 200 with
+    reason=`already_extracted` and does NOT schedule a duplicate task.
+    Otherwise schedules `extract_and_persist_steps` and returns 202.
+
+    Cross-household returns 404 (NOT 403) per the leak-prevention convention
+    (T-01-08-04). Auth gated by `current_member` — invariant #8 HttpOnly
+    cookie (or Bearer fallback for tests).
+    """
+
+    recipe = db.scalar(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == member.household_id,
+        )
+    )
+    if recipe is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="recipe not found",
+        )
+
+    if _steps_are_structured(recipe.steps):
+        response.status_code = status.HTTP_200_OK
+        return ExtractStepsResponse(
+            recipe_id=recipe.id,
+            scheduled=False,
+            reason="already_extracted",
+        )
+
+    # Dereference via the module so tests can monkeypatch
+    # `app.services.llm.extract_and_persist_steps` at call time and have the
+    # background-task scheduler pick up the patched callable.
+    background_tasks.add_task(
+        llm_service.extract_and_persist_steps,
+        recipe_id=recipe.id,
+        household_id=member.household_id,
+    )
+    return ExtractStepsResponse(
+        recipe_id=recipe.id,
+        scheduled=True,
+        reason=None,
+    )
 
 
 @router.delete("/{recipe_id}", status_code=204)
