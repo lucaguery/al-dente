@@ -35,20 +35,23 @@ const withNextIntl = createNextIntlPlugin("./i18n.ts");
 // D-01: RAILWAY_URL is a server-only env var (no NEXT_PUBLIC_ prefix) so it
 // never ships in the browser bundle. It is used solely to configure the
 // rewrites() proxy at build/request time. Threat T-01.1-03-01 mitigated.
-const RAILWAY_URL = process.env.RAILWAY_URL;
+const RAILWAY_URL = process.env.RAILWAY_URL?.trim();
 if (!RAILWAY_URL) {
   if (process.env.VERCEL) {
     // T-01.1-03-03: Fail fast on Vercel — without RAILWAY_URL the rewrites
     // silently 404 and cookie auth breaks. Set in Vercel Project Settings.
+    // Empty-string check matters: Vercel's env UI can persist "" which
+    // would pass `??` but collapse the rewrite destination to "/:path*"
+    // (proxying /api/* back into the static page tree).
     throw new Error(
-      "RAILWAY_URL env var is required in Vercel Project Settings.",
+      "RAILWAY_URL env var is required (and non-empty) in Vercel Project Settings.",
     );
   }
   // Local builds: proxy to localhost backend. Set RAILWAY_URL in .env.local
   // to target a real Railway instance for end-to-end cookie testing.
   console.warn("RAILWAY_URL not set — rewrites will proxy to http://localhost:8000");
 }
-const RAILWAY_BASE = (RAILWAY_URL ?? "http://localhost:8000").replace(/\/+$/, "");
+const RAILWAY_BASE = (RAILWAY_URL || "http://localhost:8000").replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
   // Pin the workspace root so Turbopack stops inferring the wrong package
