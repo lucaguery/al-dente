@@ -206,3 +206,175 @@ def test_migration_upgrade_then_downgrade_runs_clean(
             f"--- stdout ---\n{downgrade_result.stdout}\n"
             f"--- stderr ---\n{downgrade_result.stderr}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Phase 42 STEP-01 — explicit invariant tests for 0013_recipes_steps_not_null.
+#
+# The parametrized chain walker above auto-picks up revision 0013, but cannot
+# express the load-bearing data-invariant assertions (NULL backfill, NOT NULL
+# + server_default DDL, downgrade restores nullability). These two tests
+# encode those invariants explicitly. See 42-RESEARCH.md §R-01 — the
+# migration is an ALTER, not an add_column, because the column already
+# exists from the 0001 baseline as nullable JSONB.
+# ---------------------------------------------------------------------------
+
+
+def _run_alembic(args: list[str], db_url: str) -> subprocess.CompletedProcess:
+    env = {
+        **os.environ,
+        "ENVIRONMENT": "test",
+        "DATABASE_URL": db_url,
+        "DATABASE_URL_TEST": db_url,
+    }
+    return subprocess.run(
+        ["uv", "run", "alembic", *args],
+        cwd=BACKEND_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+
+def test_0013_backfills_nulls_and_constrains_not_null(
+    throwaway_database_url: str,
+) -> None:
+    """0013 upgrade backfills NULL steps to '[]' and applies NOT NULL DEFAULT.
+
+    Phase 42 STEP-01 D-01 + D-02.
+    """
+    from urllib.parse import urlparse
+
+    import psycopg2
+    from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+    # 1. Upgrade to 0012 (state before our migration lands).
+    up0012 = _run_alembic(["upgrade", "0012"], throwaway_database_url)
+    assert up0012.returncode == 0, (
+        f"alembic upgrade 0012 failed:\nstdout:\n{up0012.stdout}\nstderr:\n{up0012.stderr}"
+    )
+
+    # 2. Insert two seed rows: one with NULL steps, one with legacy list[str].
+    #    Connect directly (psycopg2 sync) to the throwaway DB.
+    parsed = urlparse(throwaway_database_url)
+    dsn = {
+        "host": parsed.hostname or "localhost",
+        "port": parsed.port or 5433,
+        "user": parsed.username or "postgres",
+        "password": parsed.password or "postgres",
+        "dbname": (parsed.path or "/postgres").lstrip("/"),
+    }
+    raw = psycopg2.connect(**dsn)
+    raw.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    with raw.cursor() as cur:
+        # Seed: minimum household + member to satisfy FKs.
+        cur.execute(
+            "INSERT INTO households (id, name, timezone) "
+            "VALUES (gen_random_uuid(), 'h', 'Europe/Paris') RETURNING id"
+        )
+        hh_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO members (id, household_id, display_name, color, auth_token) "
+            "VALUES (gen_random_uuid(), %s, 'm', 'red', 'tok_' || gen_random_uuid()::text) RETURNING id",
+            (hh_id,),
+        )
+        mb_id = cur.fetchone()[0]
+
+        cur.execute(
+            "INSERT INTO recipes (id, household_id, created_by_member_id, title, status, steps) "
+            "VALUES (gen_random_uuid(), %s, %s, 'null-row', 'structured', NULL) RETURNING id",
+            (hh_id, mb_id),
+        )
+        null_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO recipes (id, household_id, created_by_member_id, title, status, steps) "
+            "VALUES (gen_random_uuid(), %s, %s, 'legacy-row', 'structured', %s::jsonb) RETURNING id",
+            (hh_id, mb_id, '["sauter l\'oignon"]'),
+        )
+        legacy_id = cur.fetchone()[0]
+    raw.close()
+
+    # 3. Upgrade to 0013.
+    up0013 = _run_alembic(["upgrade", "0013"], throwaway_database_url)
+    assert up0013.returncode == 0, (
+        f"alembic upgrade 0013 failed:\nstdout:\n{up0013.stdout}\nstderr:\n{up0013.stderr}"
+    )
+
+    # 4. Assert invariants.
+    raw = psycopg2.connect(**dsn)
+    raw.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    with raw.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM recipes WHERE steps IS NULL")
+        assert cur.fetchone()[0] == 0, "Expected zero NULL steps after upgrade"
+
+        cur.execute("SELECT steps FROM recipes WHERE id = %s", (null_id,))
+        assert cur.fetchone()[0] == [], "NULL row should have been backfilled to []"
+
+        cur.execute("SELECT steps FROM recipes WHERE id = %s", (legacy_id,))
+        assert cur.fetchone()[0] == ["sauter l'oignon"], "Legacy list[str] row must be untouched"
+
+        cur.execute(
+            "SELECT column_default FROM information_schema.columns "
+            "WHERE table_name='recipes' AND column_name='steps'"
+        )
+        default = cur.fetchone()[0]
+        assert default is not None and "'[]'::jsonb" in default, (
+            f"server_default not set correctly: {default!r}"
+        )
+
+        cur.execute(
+            "SELECT is_nullable FROM information_schema.columns "
+            "WHERE table_name='recipes' AND column_name='steps'"
+        )
+        assert cur.fetchone()[0] == "NO", "steps column should be NOT NULL after 0013"
+    raw.close()
+
+
+def test_0013_downgrade_restores_nullable(
+    throwaway_database_url: str,
+) -> None:
+    """0013 downgrade restores recipes.steps to nullable, no default.
+
+    Phase 42 STEP-01 D-02.
+    """
+    from urllib.parse import urlparse
+
+    import psycopg2
+    from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+    # Upgrade to 0013.
+    up = _run_alembic(["upgrade", "0013"], throwaway_database_url)
+    assert up.returncode == 0, (
+        f"alembic upgrade 0013 failed:\nstdout:\n{up.stdout}\nstderr:\n{up.stderr}"
+    )
+
+    # Downgrade to 0012.
+    down = _run_alembic(["downgrade", "0012"], throwaway_database_url)
+    assert down.returncode == 0, (
+        f"alembic downgrade 0012 failed:\nstdout:\n{down.stdout}\nstderr:\n{down.stderr}"
+    )
+
+    parsed = urlparse(throwaway_database_url)
+    dsn = {
+        "host": parsed.hostname or "localhost",
+        "port": parsed.port or 5433,
+        "user": parsed.username or "postgres",
+        "password": parsed.password or "postgres",
+        "dbname": (parsed.path or "/postgres").lstrip("/"),
+    }
+    raw = psycopg2.connect(**dsn)
+    raw.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    with raw.cursor() as cur:
+        cur.execute(
+            "SELECT is_nullable FROM information_schema.columns "
+            "WHERE table_name='recipes' AND column_name='steps'"
+        )
+        assert cur.fetchone()[0] == "YES", "steps must be nullable after downgrade"
+
+        cur.execute(
+            "SELECT column_default FROM information_schema.columns "
+            "WHERE table_name='recipes' AND column_name='steps'"
+        )
+        assert cur.fetchone()[0] is None, "server_default must be cleared on downgrade"
+    raw.close()
