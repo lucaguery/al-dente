@@ -163,6 +163,47 @@ def test_invariant_02_votes_table_has_no_state_column():
     )
 
 
+def test_delete_does_not_introduce_state_column():
+    """INV-02 regression — Phase 41 UNDO-01 must NOT add a `state` column.
+
+    Phase 41 Plan 41-01 introduces DELETE /votes/{vote_id} for the deck-undo
+    button (Plan 41-04). The whole point of the DELETE design is that voting
+    state stays COMPUTED — undo deletes the row and compute_vote_state
+    naturally re-derives. If a future engineer adds a `state` column to
+    `votes` or `recipes` to "make undo easier", that's a dual-write
+    corruption surface and breaks the invariant load-bearing for the entire
+    voting feature.
+
+    This test FAILS LOUDLY if any such column appears, forcing whoever
+    introduced it to either revert or land a new ADR superseding invariant #2.
+
+    Pattern: v0.8 D-38-03 break-observe-revert. Recipe.status (the capture-
+    lifecycle field) is NOT a violation — it tracks draft/structured/verified,
+    not voting state. The forbidden name is exactly `state`.
+
+    Refs:
+      CLAUDE.md "Architecture invariants" #2
+      .planning/phases/41-navigation-surgery-first-backend-touch/41-01-PLAN.md D-07
+    """
+    from app.models.recipe import Recipe
+    from app.models.vote import Vote
+
+    vote_columns = {col.name for col in Vote.__table__.columns}
+    assert "state" not in vote_columns, (
+        f"INV-02 regression — the `votes` table grew a `state` column: {vote_columns}. "
+        "Phase 41 UNDO-01 DELETE flow assumes state stays computed; adding a `state` "
+        "column breaks compute_vote_state's invariant. See CLAUDE.md #2 + Plan 41-01."
+    )
+
+    recipe_columns = {col.name for col in Recipe.__table__.columns}
+    assert "state" not in recipe_columns, (
+        f"INV-02 regression — the `recipes` table grew a `state` column: {recipe_columns}. "
+        "Recipe.status (draft/structured/verified) tracks capture lifecycle; a `state` "
+        "column would conflate that with voting state and reintroduce dual-write risk. "
+        "See CLAUDE.md #2 + Plan 41-01."
+    )
+
+
 # ===========================================================================
 # INV-03 — CLAUDE.md #3
 # ===========================================================================
