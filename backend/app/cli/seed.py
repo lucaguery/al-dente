@@ -203,7 +203,9 @@ def _recipe_specs() -> list[dict]:
         {
             "slug": "poulet-citron",
             "title": "Poulet au citron",
-            "cuisine": Cuisine.italian.value,
+            # quick-260521-l8g (PUNCH-LIST D-06): cuisine was incorrectly tagged
+            # `italian` — Poulet au citron is a French recipe per locked vocab.
+            "cuisine": Cuisine.french.value,
             "mood": [Mood.quick.value],
             "main_protein": Protein.poultry.value,
             "seasonality": [Season.spring.value, Season.summer.value],
@@ -611,38 +613,21 @@ def run_test_seed() -> None:
         # `status` would otherwise default to 'draft' via server_default; we want
         # 'structured' so specs see populated structured fields immediately.
         #
-        # bug 2 fix (260512-df0): pre-populate photo_paths for the 5
-        # shortlist-recipe slugs so the seeded demo env exercises
-        # ShortlistCard's signed-URL render path. Other recipes stay at [].
-        # The path layout mirrors what the live capture pipeline writes
-        # ({household_id}/{recipe_id}/{stable_uuid}.jpg) so the
-        # `path in recipe.photo_paths` check in routers/photos.py:173 lets
-        # the signed-URL endpoint authorize the request.
-        # NOTE: this seed does NOT upload bytes — uploads need Supabase
-        # creds which the test env intentionally lacks (playwright.config.ts
-        # withholds SUPABASE_* env). If Supabase credentials are
-        # present, the prod-synthetic seed (run_prod_synthetic_seed) is the
-        # path that uploads JPGs end-to-end. Frontend silently falls back
-        # to the UtensilsCrossed placeholder on a signed-URL fetch failure
-        # (ShortlistCard.tsx catch handler), so an unconfigured test env
-        # still renders cleanly — just without photos.
-        shortlist_slugs_with_photos = {
-            "ragu-bolognese",
-            "coq-au-vin",
-            "butter-chicken",
-            "shawarma",
-            "tacos-boeuf",
-        }
+        # quick-260521-l8g (PUNCH-LIST B-03): photo_paths left empty for ALL
+        # recipes in the test-env seed. The previous bug-2-fix (260512-df0)
+        # branch registered photo_paths for 5 shortlist slugs to exercise
+        # ShortlistCard's signed-URL render path, but the test env doesn't
+        # upload bytes (SUPABASE_* withheld in playwright.config.ts), so every
+        # mount produced a 404-cascade through the photo-url endpoint (48
+        # console errors per Bibliothèque walk). The signed-URL render path is
+        # exercised end-to-end by the prod-synthetic seed (run_prod_synthetic_seed)
+        # which DOES upload JPGs; the hermetic test env now produces zero
+        # photo-url 404s, and the SVG placeholder fallback is the canonical
+        # demo state.
         recipes_by_slug: dict[str, Recipe] = {}
         for spec in _recipe_specs():
             recipe_id = _id("recipe", spec["slug"])
-            if spec["slug"] in shortlist_slugs_with_photos:
-                # Stable uuid5 photo filename — re-running the seed never
-                # changes the path, so signed-URL authz is stable across runs.
-                photo_uuid = _id("photo", spec["slug"])
-                recipe_photo_paths = [f"{household.id}/{recipe_id}/{photo_uuid}.jpg"]
-            else:
-                recipe_photo_paths = []
+            recipe_photo_paths: list[str] = []
             r = db.merge(
                 Recipe(
                     id=recipe_id,
