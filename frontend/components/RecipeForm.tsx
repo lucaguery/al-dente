@@ -122,7 +122,10 @@ export type RecipeFormRefs = {
 export type RecipeBody = {
   title: string;
   ingredients?: { name: string; quantity?: number | null; unit?: string | null }[];
-  steps?: string[];
+  // Phase 42 STEP-02 — backend RecipeUpdate.steps is now `list[StepEntry] | None`.
+  // Manual-edit path emits `{ text, ingredient_refs: [] }` (refs lost in the
+  // flat textarea round-trip; Gemini re-extract restores them).
+  steps?: { text: string; ingredient_refs: string[] }[];
   prep_time_minutes?: number;
   // Phase 24 RID-02 new fields
   cook_time_minutes?: number;
@@ -150,7 +153,10 @@ export function recipeToFormValues(r: Recipe): RecipeFormValues {
           .join(" "),
       )
       .join("\n"),
-    steps_text: (r.steps ?? []).join("\n"),
+    // Phase 42 STEP-02 — steps are now StepEntry objects; flatten to text-only
+    // lines for the textarea. Round-trip drops ingredient_refs (textarea-edited
+    // steps lose ref metadata); a follow-up Gemini re-extract restores them.
+    steps_text: (r.steps ?? []).map((s) => s.text).join("\n"),
     prep_time_minutes: r.prep_time_minutes?.toString() ?? "",
     cook_time_minutes: r.cook_time_minutes?.toString() ?? "",
     difficulty: r.difficulty ?? "",
@@ -216,10 +222,14 @@ export function formValuesToBody(v: RecipeFormValues): RecipeBody {
         unit: null,
       };
     });
+  // Phase 42 STEP-02 — emit StepEntry-shaped objects. The manual-edit textarea
+  // can't capture ingredient_refs; we send empty arrays so a follow-up Gemini
+  // re-extract can repopulate them.
   const steps = v.steps_text
     .split("\n")
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((text) => ({ text, ingredient_refs: [] as string[] }));
   const tags = v.tags_text
     .split("\n")
     .map((s) => s.trim())

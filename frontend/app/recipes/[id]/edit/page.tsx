@@ -120,6 +120,14 @@ function EditInner() {
                 prefill.seasonality !== null
                   ? prefill.seasonality
                   : r.seasonality,
+              // Phase 42 STEP-02 — prefill.steps is `StepEntry[] | null` (the
+              // Gemini-modified shape may omit steps); the persisted Recipe
+              // shape is non-nullable `StepEntry[]`. Fall back to the
+              // server-fetched recipe steps when prefill carries null.
+              steps:
+                prefill.steps !== undefined && prefill.steps !== null
+                  ? prefill.steps
+                  : r.steps,
             }
           : r;
         setInitial(recipeToFormValues(merged));

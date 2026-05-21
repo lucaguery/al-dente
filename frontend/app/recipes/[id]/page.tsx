@@ -703,7 +703,12 @@ export default function RecipeDetailPage() {
                         >
                           {String(idx + 1).padStart(2, "0")}
                         </span>
-                        <span style={{ fontSize: "13.5px", lineHeight: 1.55 }}>{step}</span>
+                        {/* Phase 42 STEP-02 — step is now StepEntry; render the
+                            instruction text. Productize-later may surface
+                            step.ingredient_refs as inline chips. */}
+                        <span style={{ fontSize: "13.5px", lineHeight: 1.55 }}>
+                          {typeof step === "string" ? step : step.text}
+                        </span>
                       </div>
                       {/*
                         Phase 32 D-13 — step-1 marginalia (conditional).
