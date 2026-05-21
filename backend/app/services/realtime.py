@@ -13,7 +13,15 @@ v0.1 event types are (CLAUDE.md "Architecture invariants" #4):
     * ``recipe.updated``    — routers/recipes.py PUT handler (W1, plan 01-08)
     * ``turn.created``      — routers/recipes.py thread endpoints (Phase 26 plan 26-03)
     * ``turn.updated``      — services/llm.py extract_and_process_url_turn (Phase 26 plan 26-02; D-29)
-    * ``vote.created``      — routers/votes.py (W3 plan 03-02)
+    * ``vote.created``      — routers/votes.py (W3 plan 03-02); payload includes
+                              ``vote_id`` since Phase 41 plan 41-01 so receiving
+                              clients can store the id for later undo
+    * ``vote.deleted``      — routers/votes.py DELETE handler (Phase 41 plan 41-01);
+                              payload ``{vote_id, shortlist_id, recipe_id,
+                              member_id, shortlist_date}``. Receiving clients
+                              remove the matching row from their local votes[]
+                              cache; ``compute_vote_state`` naturally re-derives
+                              on next render. Architecture invariant #2.
     * ``shortlist.created`` — services/shortlist.py cron + regenerate (W3 plan 03-02)
     * ``cooking.started``   — routers/cooking_logs.py (W3 plan 03-02)
 

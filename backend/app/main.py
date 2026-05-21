@@ -124,5 +124,6 @@ app.include_router(exports.router)  # 01-08
 app.include_router(photos.router)  # 01-09 — POST /recipes/{id}/photos
 app.include_router(shortlist.router)  # 03-02 — GET today / POST regenerate / POST delegate
 app.include_router(votes.router)  # 03-02 — POST cast vote
+app.include_router(votes.votes_router)  # 41-01 — DELETE /votes/{vote_id} (UNDO-01)
 app.include_router(cooking_logs.router)  # 03-02 — POST cook / GET active
 app.include_router(push.router)  # 03-05 — POST /push/subscribe + GET /push/vapid-public-key

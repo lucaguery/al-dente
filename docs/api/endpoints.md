@@ -1,5 +1,5 @@
 ---
-last_generated_at: 2026-05-21T16:41:00Z
+last_generated_at: 2026-05-21T16:43:00Z
 source: backend/scripts/dump_openapi.py
 auto_generated: true
 ---
@@ -324,4 +324,11 @@ VOTE-01 + VOTE-02 + VOTE-05: upsert + compute state + broadcast
 **Auth:** required
 **Request body:** VoteRequest
 **Responses:** 201, 422
+
+### DELETE /votes/{vote_id}
+
+UNDO-01: hard-delete one vote row
+
+**Auth:** required
+**Responses:** 204, 422
 

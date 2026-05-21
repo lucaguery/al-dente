@@ -4591,6 +4591,75 @@
           "votes"
         ]
       }
+    },
+    "/votes/{vote_id}": {
+      "delete": {
+        "description": "UNDO-01: hard-delete one vote row. Architecture invariant #2 holds —\nstate is computed from row existence, so deleting the row IS the undo.\n\nOrder matters:\n  1. Resolve the vote (404 if missing — invariant #2 record-existence non-leak).\n  2. Cross-household check via Member.household_id join (Vote has no\n     household_id column — isolation runs through Member). Same 404 on\n     mismatch, NOT 403 — D-38-02 / invariant #2.\n  3. Resolve shortlist for the date we use in the veto-window guard.\n  4. Veto-window guard (D-12): if any CookingLog exists for\n     (household_id, shortlist.date) — counted by date(cooked_at) — refuse\n     with 409 `veto_window_closed`. Defense-in-depth behind the frontend's\n     preemptive disabled button (Plan 41-04).\n  5. Snapshot the broadcast payload BEFORE delete (FKs still resolvable).\n  6. Delete + commit.\n  7. Broadcast `vote.deleted`. Receiving clients drop the row from their\n     votes[] cache and `compute_vote_state` naturally re-derives.",
+        "operationId": "delete_vote_votes__vote_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vote_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vote Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Vote",
+        "tags": [
+          "votes"
+        ]
+      }
     }
   }
 }
