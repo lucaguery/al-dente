@@ -336,6 +336,30 @@
         "title": "HouseholdPreview",
         "type": "object"
       },
+      "HouseholdStats": {
+        "description": "GET /households/{id}/stats response — Phase 40 PROF-01 (D-04, D-05).\n\nThree all-time household counts, surfaced on the Profil page's stats block.\nCounters use the filtered definitions from Phase 40 CONTEXT.md D-05:\n\n- ``recipes_count``: structured recipes only (drafts excluded — they are\n  not \"real\" library entries until promotion completes).\n- ``cooking_logs_count``: finalized cooking sessions only (in-progress\n  logs with ``rating IS NULL`` excluded — the COOK-02 finalization proxy\n  from 03-RESEARCH §A5 is the canonical \"is this a real cook\" signal).\n- ``votes_count``: all-time, no filtering (votes have no \"void\" state).",
+        "properties": {
+          "cooking_logs_count": {
+            "title": "Cooking Logs Count",
+            "type": "integer"
+          },
+          "recipes_count": {
+            "title": "Recipes Count",
+            "type": "integer"
+          },
+          "votes_count": {
+            "title": "Votes Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recipes_count",
+          "cooking_logs_count",
+          "votes_count"
+        ],
+        "title": "HouseholdStats",
+        "type": "object"
+      },
       "IngredientItem": {
         "description": "One row of the ``ingredients`` JSONB array.\n\nSPEC.md §\"Data model\": ``ingredients JSONB`` = ``[{name, quantity, unit}, ...]``.\nQuantities and units are nullable because quick-add can promote to structured\nlater via PUT and partial fills are common.",
         "properties": {
@@ -2600,6 +2624,82 @@
         "summary": "Export Recipes",
         "tags": [
           "households-export"
+        ]
+      }
+    },
+    "/households/{household_id}/stats": {
+      "get": {
+        "description": "Return three all-time household counts for the Profil stats block.\n\nPhase 40 PROF-01 (D-04, D-05). Filtered counts so the surface only shows\n\"real\" library activity:\n\n- ``recipes_count``: structured recipes only (drafts excluded — they live\n  in the capture pipeline, not the library).\n- ``cooking_logs_count``: finalized sessions only. The canonical \"is this\n  a real cook\" signal is ``rating IS NOT NULL`` (the COOK-02 finalization\n  proxy from 03-RESEARCH §A5 — the schema has no ``finalized_at`` column;\n  the rating PUT marks completion via PUT /cooking-logs/{id}).\n- ``votes_count``: all-time, no filtering. Votes have no \"void\" state, so\n  every row counts. The ``Vote`` model has no direct ``household_id``\n  column — join through ``Member`` to derive it.\n\nInvariant #4 enforcement: cross-household requests return 404 (not 403)\nso the endpoint never leaks the existence of foreign household IDs.",
+        "operationId": "household_stats_households__household_id__stats_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "household_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Household Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "aldente_auth",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aldente Auth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdStats"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Household Stats",
+        "tags": [
+          "households"
         ]
       }
     },

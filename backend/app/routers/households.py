@@ -19,6 +19,8 @@ The router is a thin HTTP adapter; secrets generation lives in
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -26,11 +28,15 @@ from sqlalchemy.orm import Session
 from app.auth import current_member, generate_auth_token, set_auth_cookie
 from app.colors import MEMBER_COLORS
 from app.db import get_db
+from app.models.cooking_log import CookingLog
 from app.models.household import Household
 from app.models.member import Member
+from app.models.recipe import Recipe, RecipeStatus
+from app.models.vote import Vote
 from app.schemas.household import (
     CreateHouseholdRequest,
     HouseholdPreview,
+    HouseholdStats,
     JoinHouseholdRequest,
     OnboardingResponse,
     SessionResponse,
@@ -290,3 +296,60 @@ async def rename_me(
         },
     )
     return MemberPublic.model_validate(member)
+
+
+@router.get("/{household_id}/stats", response_model=HouseholdStats)
+def household_stats(
+    household_id: UUID,
+    member: Member = Depends(current_member),
+    db: Session = Depends(get_db),
+) -> HouseholdStats:
+    """Return three all-time household counts for the Profil stats block.
+
+    Phase 40 PROF-01 (D-04, D-05). Filtered counts so the surface only shows
+    "real" library activity:
+
+    - ``recipes_count``: structured recipes only (drafts excluded — they live
+      in the capture pipeline, not the library).
+    - ``cooking_logs_count``: finalized sessions only. The canonical "is this
+      a real cook" signal is ``rating IS NOT NULL`` (the COOK-02 finalization
+      proxy from 03-RESEARCH §A5 — the schema has no ``finalized_at`` column;
+      the rating PUT marks completion via PUT /cooking-logs/{id}).
+    - ``votes_count``: all-time, no filtering. Votes have no "void" state, so
+      every row counts. The ``Vote`` model has no direct ``household_id``
+      column — join through ``Member`` to derive it.
+
+    Invariant #4 enforcement: cross-household requests return 404 (not 403)
+    so the endpoint never leaks the existence of foreign household IDs.
+    """
+    if member.household_id != household_id:
+        # Invariant #4 — never 403: 404 keeps "your household? someone else's?"
+        # indistinguishable from "nonexistent UUID".
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="household not found",
+        )
+
+    recipes_count = db.scalar(
+        select(func.count(Recipe.id)).where(
+            Recipe.household_id == household_id,
+            Recipe.status == RecipeStatus.structured,
+        )
+    )
+    cooking_logs_count = db.scalar(
+        select(func.count(CookingLog.id)).where(
+            CookingLog.household_id == household_id,
+            CookingLog.rating.isnot(None),
+        )
+    )
+    # Vote has no household_id column — join via Member to derive household scope.
+    votes_count = db.scalar(
+        select(func.count(Vote.id))
+        .join(Member, Vote.member_id == Member.id)
+        .where(Member.household_id == household_id)
+    )
+    return HouseholdStats(
+        recipes_count=recipes_count or 0,
+        cooking_logs_count=cooking_logs_count or 0,
+        votes_count=votes_count or 0,
+    )

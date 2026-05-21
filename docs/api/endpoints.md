@@ -1,5 +1,5 @@
 ---
-last_generated_at: 2026-05-20T14:42:00Z
+last_generated_at: 2026-05-21T15:47:00Z
 source: backend/scripts/dump_openapi.py
 auto_generated: true
 ---
@@ -118,6 +118,13 @@ Rename the authenticated member — IDM-01 (D-18-01
 
 **Auth:** required
 **Request body:** MemberRenameRequest
+**Responses:** 200, 422
+
+### GET /households/{household_id}/stats
+
+Return three all-time household counts for the Profil stats block
+
+**Auth:** required
 **Responses:** 200, 422
 
 
