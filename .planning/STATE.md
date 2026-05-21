@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: La Grille Completion
-status: executing
+status: Awaiting next milestone
 stopped_at: Phase 40 planned (5 plans)
-last_updated: "2026-05-21T17:36:19.618Z"
-last_activity: 2026-05-21 -- Phase 42 execution started
+last_updated: "2026-05-21T18:21:24.797Z"
+last_activity: 2026-05-21 — Milestone v0.9 completed and archived
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 14
-  completed_plans: 9
-  percent: 64
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -21,25 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-21 — v0.9 La Grille Completion scaffolded)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 42 — structured-steps-active-cooking-session
+**Current focus:** Awaiting next milestone scaffold (v0.9 La Grille Completion shipped 2026-05-21)
 
 ## Current Position
 
-Phase: 42 (structured-steps-active-cooking-session) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 42
-Last activity: 2026-05-21 -- Phase 42 execution started
-
-Progress: [░░░░░░░░░░] 0%
+Phase: Milestone v0.9 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-21 — Milestone v0.9 completed and archived
 
 ## Performance Metrics
 
 **Velocity (cumulative through v0.8):**
 
-- Total milestones shipped: 10 (v0.1 → v0.8)
-- Total phases shipped: 40
-- Total plans shipped: 171
-- Total requirements validated: 226 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6 + 12 v0.7 + 22 v0.7.1 + 33 v0.8)
+- Total milestones shipped: 11 (v0.1 → v0.9)
+- Total phases shipped: 43
+- Total plans shipped: 185
+- Total requirements validated: 245 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6 + 12 v0.7 + 22 v0.7.1 + 33 v0.8 + 19 v0.9)
 - v0.8 timeline: 2026-05-19 → 2026-05-21 (3 calendar days)
 
 **By Milestone:**
@@ -56,7 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | v0.7 (Phases 30-33) | 4 | ✅ Complete (shipped 2026-05-18) |
 | v0.7.1 (Phases 34-36) | 3 | ✅ Complete (shipped 2026-05-18) |
 | v0.8 (Phases 37-39) | 3 | ✅ Complete (shipped 2026-05-21) |
-| v0.9 (Phases 40-42) | 3 | 🚧 In progress |
+| v0.9 (Phases 40-42) | 3 | ✅ Complete (shipped 2026-05-21) |
 
 ## Accumulated Context
 
@@ -103,3 +101,7 @@ Items acknowledged and deferred at v0.8 milestone close on 2026-05-21:
 Last activity: 2026-05-21 — v0.9 roadmap scaffolded. ROADMAP.md, REQUIREMENTS.md, STATE.md written.
 Stopped at: Phase 40 planned (5 plans)
 Next: `/gsd:execute-phase 40` to execute Phase 40 (Pure-Frontend Restyles) — into executable plans.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
