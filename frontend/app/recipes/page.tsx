@@ -39,6 +39,7 @@ import { BrandIcon } from "@/components/BrandIcon";
 import { EmptyState } from "@/components/EmptyState";
 import { RecipeCard } from "@/components/RecipeCard";
 import { RecipeRow } from "@/components/RecipeRow";
+import { RecipeRowMinimal } from "@/components/RecipeRowMinimal";
 import { LibraryViewSwitch, type LibraryView } from "@/components/LibraryViewSwitch";
 import { SearchInput } from "@/components/SearchInput";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
@@ -80,11 +81,11 @@ export default function RecipesPage() {
     try {
       const stored = window.localStorage.getItem("aldente.library.view");
       // PUNCH-LIST D-01 (260521-l8g): coerce stale "patina" reads to "grid".
-      // This is the single mandated MVP backcompat shim — existing test fixtures
-      // may have "patina" persisted from before the Patine view was dropped.
+      // Phase 40 LIB-01 — adds "minimal" as a third accepted value.
       // TODO(productize): refactor to lazy-init useState to avoid effect-driven render.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored === "list") setView("list");
+      else if (stored === "minimal") setView("minimal");
       // any other stored value (including stale "patina") → default "grid"
     } catch {
       /* localStorage may throw in private-mode Safari; degrade silently */
@@ -215,6 +216,19 @@ export default function RecipesPage() {
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-[10px] px-(--spacing-page-x)">
                   {recipes.map((r) => (
                     <RecipeCard key={r.id} recipe={r} />
+                  ))}
+                </div>
+              ) : view === "minimal" ? (
+                // Phase 40 LIB-01 — text-only mode. Pure hairline rows, no
+                // photos. `validated` left as the default (false) for now —
+                // the cheap path (live compute_vote_state on today's
+                // daily_shortlist) would require either threading the
+                // shortlist data into this page or adding a new fetch.
+                // TODO(productize): wire daily-shortlist validated state per
+                // CONTEXT.md line 61-62.
+                <div className="divide-y divide-border px-(--spacing-page-x)">
+                  {recipes.map((r, idx) => (
+                    <RecipeRowMinimal key={r.id} recipe={r} index={idx} />
                   ))}
                 </div>
               ) : (
