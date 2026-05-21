@@ -60,7 +60,13 @@
       "progress_partial": "{remaining, plural, =1 {1 restante} other {# restantes}} · {yes, plural, =0 {aucun oui} =1 {1 oui} other {# oui}} jusqu'ici",
       "snapback_hint": "encore un peu — glissez plus loin",
       "toast_yes": "Validé · {title}",
-      "toast_no": "Non merci · {title}"
+      "toast_no": "Non merci · {title}",
+      "undo": {
+        "aria": "Annuler le vote",
+        "locked": "Vote verrouillé · décision déjà cuisinée",
+        "race_toast": "Vote verrouillé · décision déjà cuisinée",
+        "generic_error": "Annulation impossible · réessayez"
+      }
     },
     "summary": {
       "heading": "Vous avez tout vu",

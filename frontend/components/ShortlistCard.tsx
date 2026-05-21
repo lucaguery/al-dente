@@ -18,7 +18,7 @@ import {
   useTransform,
   type PanInfo,
 } from "framer-motion";
-import { Heart, HeartOff, UtensilsCrossed } from "lucide-react";
+import { Heart, HeartOff, RotateCcw, UtensilsCrossed } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -485,17 +485,35 @@ export function ShortlistCard({
   );
 }
 
-/** Stand-alone thumb buttons component. Used by Plan 04's deck container under the stack. */
+/** Stand-alone thumb buttons component. Used by Plan 04's deck container under the stack.
+ *
+ *  Phase 41 UNDO-02 — 3-button stable layout: HeartOff / RotateCcw / Heart.
+ *  Middle button (RotateCcw) is always rendered so the layout never shifts
+ *  mid-vote. It's enabled iff the parent passes canUndo=true (current
+ *  member has cast a vote on the front card AND the veto window is open).
+ *  When disabled with a lockedTooltip the title attr surfaces the
+ *  "Vote verrouillé · décision déjà cuisinée" copy on long-press / hover
+ *  (mobile-first; no Radix tooltip provider needed). */
 export function ShortlistThumbButtons({
   onVote,
+  onUndo,
+  canUndo,
+  lockedTooltip,
   disabled,
 }: {
   onVote: (value: VoteValue) => void;
+  /** Phase 41 UNDO-02 — undo handler (tap of middle button). */
+  onUndo?: () => void;
+  /** Phase 41 UNDO-02 — when false, middle button renders disabled. */
+  canUndo?: boolean;
+  /** Phase 41 UNDO-03 — when set AND !canUndo, surfaces via title attr. */
+  lockedTooltip?: string;
   disabled?: boolean;
 }) {
   const t = useTranslations("home.shortlist");
+  const tUndo = useTranslations("home.shortlist.undo");
   return (
-    <div className="flex items-center justify-center gap-12">
+    <div className="flex items-center justify-center gap-8">
       <Button
         type="button"
         variant="outline"
@@ -507,10 +525,34 @@ export function ShortlistThumbButtons({
       >
         {/* PUNCH-LIST P-03 (260521-l8g) — HeartOff (slashed heart) replaces
             the outlined Heart on the "no" button so the binary affordance
-            reads unambiguously (the prior outlined-heart vs filled-heart
-            pairing produced "two identical hearts" ambiguity per UAT). */}
+            reads unambiguously. */}
         <HeartOff size={24} className="text-foreground-muted" />
       </Button>
+      {/* Phase 41 UNDO-02 — undo button always present, disabled-state per
+          canUndo. opacity-40 + pointer-events-none drives the muted look
+          (D-06). Wrapping <span> carries the title for the locked tooltip
+          even when the inner button is non-interactive. */}
+      <span
+        title={!canUndo && lockedTooltip ? lockedTooltip : undefined}
+        className="inline-flex"
+      >
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          disabled={disabled || !canUndo}
+          onClick={() => onUndo?.()}
+          aria-label={tUndo("aria")}
+          aria-disabled={!canUndo || disabled}
+          className={
+            !canUndo
+              ? "h-14 w-14 rounded-full border-2 border-border opacity-40 pointer-events-none"
+              : "h-14 w-14 rounded-full border-2 border-border hover:bg-foreground-muted/10 active:scale-95 transition-transform"
+          }
+        >
+          <RotateCcw size={22} className="text-foreground-muted" />
+        </Button>
+      </span>
       <Button
         type="button"
         variant="outline"

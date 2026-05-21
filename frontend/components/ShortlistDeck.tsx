@@ -12,9 +12,11 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { ShortlistCard, ShortlistThumbButtons } from "@/components/ShortlistCard";
 import { ShortlistProgress } from "@/components/ShortlistProgress";
-import { postVote, type ShortlistVote } from "@/lib/votes";
+import { deleteVote, postVote, type ShortlistVote } from "@/lib/votes";
+import { fetchCookingLogs, type CookingLogResponse } from "@/lib/cooking";
 import type { Recipe } from "@/lib/recipes";
 
 type Member = { id: string; name: string; color_hex: string };
@@ -37,6 +39,7 @@ export function ShortlistDeck({
   onVoteApplied,
 }: ShortlistDeckProps) {
   const tShortlist = useTranslations("home.shortlist");
+  const tUndo = useTranslations("home.shortlist.undo");
 
   const [committedDirection, setCommittedDirection] = useState<
     "left" | "right" | null
@@ -46,6 +49,19 @@ export function ShortlistDeck({
   // strip's voted-yes/voted-no dot coloring AND the "remaining = total -
   // voteHistory.length" math.
   const [voteHistory, setVoteHistory] = useState<Array<"yes" | "no">>([]);
+  // Phase 41 UNDO-03 — local copy of today's cooking_logs so the deck can
+  // compute vetoWindowOpen without prop-drilling from HomeDecide. If any
+  // CookingLog exists for today's shortlist, the veto window is closed
+  // (D-12 — the frontend tooltip is preemptive; the backend 409 is
+  // defense-in-depth).
+  const [cookingLogs, setCookingLogs] = useState<CookingLogResponse[]>([]);
+  // Phase 41 UNDO-02 — track the last vote id we POSTed so the undo
+  // button has something to DELETE. Indexed by recipe_id (one vote per
+  // current member per recipe). Populated from postVote() response and
+  // mirrored optimistically when a vote lands.
+  const [voteIdByRecipe, setVoteIdByRecipe] = useState<
+    Record<string, string>
+  >({});
   // Snap-back hint flag — true for ~1.4s after the card shakes, then clears.
   const [snapbackHint, setSnapbackHint] = useState(false);
   // Total dots on the progress strip — captured on first render with a
@@ -102,6 +118,10 @@ export function ShortlistDeck({
       if (result.member_id !== me.id) {
         onVoteApplied({ ...optimistic, member_id: result.member_id });
       }
+      // Phase 41 UNDO-02 — capture vote_id so the undo button has a target.
+      if (result.vote_id) {
+        setVoteIdByRecipe((prev) => ({ ...prev, [recipeId]: result.vote_id }));
+      }
     } catch {
       // Rare path: roll back local optimistic state. Parent surfaces toast.
       setVoteHistory((h) => h.slice(0, -1));
@@ -137,6 +157,94 @@ export function ShortlistDeck({
     window.addEventListener("shortlist:snapback", onSnapback);
     return () => window.removeEventListener("shortlist:snapback", onSnapback);
   }, []);
+
+  // Phase 41 UNDO-03 — initial cooking-log fetch + listen for cooking.started
+  // window events so the veto-window state updates without a page refresh.
+  // The existing RealtimeProvider re-fires WS frames as window CustomEvents
+  // for cross-component sync (similar to shortlist:thumb-vote).
+  useEffect(() => {
+    let alive = true;
+    fetchCookingLogs(1)
+      .then((logs) => {
+        if (alive) setCookingLogs(logs);
+      })
+      .catch(() => {
+        if (alive) setCookingLogs([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Phase 41 UNDO-02 + UNDO-03 — compute the undo state per render.
+  // front-card vote: the row from votes[] keyed by (front.id, me.id).
+  // veto window open: zero cooking_logs today.
+  const currentMemberVote = front
+    ? votes.find((v) => v.recipe_id === front.id && v.member_id === me.id)
+    : undefined;
+  const vetoWindowOpen = cookingLogs.length === 0;
+  // The vote_id either rides on the vote row (older fetches don't carry it)
+  // or sits in voteIdByRecipe from a fresh postVote in this session.
+  const undoVoteId =
+    currentMemberVote?.id ??
+    (front ? voteIdByRecipe[front.id] : undefined);
+  const canUndo =
+    !!currentMemberVote && !!undoVoteId && vetoWindowOpen && !voteInFlight;
+  const lockedTooltip = !vetoWindowOpen ? tUndo("locked") : undefined;
+
+  async function handleUndo() {
+    if (!currentMemberVote || !undoVoteId || !canUndo) return;
+    setVoteInFlight(true);
+    try {
+      await deleteVote(undoVoteId);
+      // Optimistic: pop voteHistory; signal the parent to remove the vote
+      // from its votes[] state. The parent reads the optional `deleted`
+      // flag on ShortlistVote-shaped payloads (HomeDecide handles this).
+      setVoteHistory((h) => h.slice(0, -1));
+      setVoteIdByRecipe((prev) => {
+        const next = { ...prev };
+        delete next[currentMemberVote.recipe_id];
+        return next;
+      });
+      // Synthesize a delete-shaped vote for the parent. HomeDecide filters
+      // its votes[] state on this shape (Plan 41-04 Task 3 contract).
+      onVoteApplied({
+        ...currentMemberVote,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as ShortlistVote & { deleted: true } as any);
+      // Dispatch a window event so RealtimeProvider-fed listeners get the
+      // same signal regardless of whether the WS vote.deleted lands first.
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("shortlist:vote-undo", {
+            detail: {
+              vote_id: undoVoteId,
+              recipe_id: currentMemberVote.recipe_id,
+              member_id: currentMemberVote.member_id,
+            },
+          }),
+        );
+      }
+    } catch (err) {
+      // D-12 race: backend 409 fires when a partner finalized a CookingLog
+      // between page load and undo tap. Re-fetch cookingLogs so the button
+      // disables on next render, then surface the localized toast.
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("409")) {
+        toast.error(tUndo("race_toast"));
+        try {
+          const logs = await fetchCookingLogs(1);
+          setCookingLogs(logs);
+        } catch {
+          /* defensive — if the refetch fails the user will reload */
+        }
+      } else {
+        toast.error(tUndo("generic_error"));
+      }
+    } finally {
+      setVoteInFlight(false);
+    }
+  }
 
   const yesCount = voteHistory.filter((v) => v === "yes").length;
 
@@ -207,9 +315,13 @@ export function ShortlistDeck({
           previously caused the hint to overlap the thumb buttons. */}
 
       {/* Thumb buttons below the stack — wrapped to also dispatch the
-          `shortlist:thumb-vote` CustomEvent so the card flashes the ring. */}
+          `shortlist:thumb-vote` CustomEvent so the card flashes the ring.
+          Phase 41 UNDO-02 — 3-button layout now; middle button is the undo. */}
       <ShortlistThumbButtons
         onVote={handleThumbVote}
+        onUndo={handleUndo}
+        canUndo={canUndo}
+        lockedTooltip={lockedTooltip}
         disabled={voteInFlight || !front}
       />
 

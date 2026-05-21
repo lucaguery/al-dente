@@ -1,6 +1,11 @@
 // Phase 3 voting client + frontend mirror of backend services/voting.py.
 // Branch order MUST match Python — drift is a UX bug class (architecture
 // invariant #2; 03-RESEARCH.md Pattern 10).
+//
+// Phase 41 UNDO-01 — also exports deleteVote (DELETE /votes/{vote_id}) and
+// extends ShortlistVote with an optional `id` so the deck can call DELETE
+// later. Architecture invariant #2: undo deletes the row; the next compute
+// re-derives the right VoteState from row absence (no stored state column).
 
 import { api } from "@/lib/api";
 
@@ -17,6 +22,12 @@ export type ShortlistVote = {
   recipe_id: string;
   member_id: string;
   vote: VoteValue;
+  /** Phase 41 UNDO-01 — present on votes returned by POST (server payload)
+   *  and populated locally for optimistic rows. Required by deleteVote().
+   *  Older cached vote rows (loaded before Phase 41) may not carry it; the
+   *  undo button stays disabled for those until a fresh fetch / WS event
+   *  surfaces the id. */
+  id?: string;
 };
 
 /**
@@ -47,12 +58,15 @@ export function computeVoteState(
   return "sans_avis";
 }
 
-/** VOTE-01 — POST /api/shortlists/{shortlistId}/recipes/{recipeId}/vote. */
+/** VOTE-01 — POST /api/shortlists/{shortlistId}/recipes/{recipeId}/vote.
+ *  Phase 41 UNDO-01 (Plan 41-01 Task 1) — response now carries `vote_id` so
+ *  the deck can later DELETE it. */
 export async function postVote(
   shortlistId: string,
   recipeId: string,
   vote: VoteValue,
 ): Promise<{
+  vote_id: string;
   shortlist_id: string;
   recipe_id: string;
   member_id: string;
@@ -63,6 +77,20 @@ export async function postVote(
     `/api/shortlists/${shortlistId}/recipes/${recipeId}/vote`,
     { method: "POST", body: JSON.stringify({ vote }) },
   );
+}
+
+/** Phase 41 UNDO-01 — DELETE /api/votes/{vote_id}.
+ *
+ *  Throws on non-2xx via the existing api() utility (the same HttpOnly
+ *  cookie auth path used by postVote — invariant #8). The error message
+ *  starts with the HTTP status, so callers can pattern-match for the
+ *  D-12 race path: `err.message.startsWith("409")`.
+ *
+ *  Architecture invariant #2 holds — the backend hard-deletes the row;
+ *  compute_vote_state naturally re-derives the right VoteState on the
+ *  next read (no stored state to roll back). */
+export async function deleteVote(voteId: string): Promise<void> {
+  await api<void>(`/api/votes/${voteId}`, { method: "DELETE" });
 }
 
 /** VOTE-03 / D-12 — POST /api/shortlists/{shortlistId}/delegate. */
