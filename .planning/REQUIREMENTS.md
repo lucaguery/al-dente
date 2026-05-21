@@ -13,24 +13,24 @@
 
 ### PROF — Profil page (Phase 40)
 
-- [ ] **PROF-01**: `/settings` page renders with hero "Profil", numbered hairline rows (`01`–`05`: Notifications / Heure du décide / Inviter quelqu'un / Exporter les données / Déconnexion), and a stats block (recettes / cuisinées / votes) — **no Card components anywhere** on the page. Matches sketch lines 1765-1809.
+- [x] **PROF-01**: `/settings` page renders with hero "Profil", numbered hairline rows (`01`–`05`: Notifications / Heure du décide / Inviter quelqu'un / Exporter les données / Déconnexion), and a stats block (recettes / cuisinées / votes) — **no Card components anywhere** on the page. Matches sketch lines 1765-1809.
 
 ### ONBO — Onboarding welcome (Phase 40)
 
-- [ ] **ONBO-01**: `/onboarding/welcome` renders as wordmark-centric composition (centered `Al Dente.` wordmark + dot, italic-emphasis tagline "On mange quoi *ce soir* ?", sub-tagline "Une app pour deux. Pour décider ensemble, sans se relancer toute la soirée.", primary filled-dark button + ghost hairline button pair, footer line "cuisine partagée · 0 frais · 0 pub") — **no Card components**. Matches sketch lines 2060-2076.
+- [x] **ONBO-01**: `/onboarding/welcome` renders as wordmark-centric composition (centered `Al Dente.` wordmark + dot, italic-emphasis tagline "On mange quoi *ce soir* ?", sub-tagline "Une app pour deux. Pour décider ensemble, sans se relancer toute la soirée.", primary filled-dark button + ghost hairline button pair, footer line "cuisine partagée · 0 frais · 0 pub") — **no Card components**. Matches sketch lines 2060-2076.
 
 ### LIB — Library text-only view (Phase 40)
 
-- [ ] **LIB-01**: `LibraryViewSwitch` gains a third mode beyond grid-with-photo and row-with-thumb: pure numbered text rows (`ix` + name + meta + tag pill, no photo column). View choice persists in `localStorage`. Matches sketch lines 1687-1693.
+- [x] **LIB-01**: `LibraryViewSwitch` gains a third mode beyond grid-with-photo and row-with-thumb: pure numbered text rows (`ix` + name + meta + tag pill, no photo column). View choice persists in `localStorage`. Matches sketch lines 1687-1693.
 
 ### SPLA — Splash screen (Phase 40)
 
-- [ ] **SPLA-01**: `app/loading.tsx` renders the La Grille splash composition (table-à-manger logo SVG, `Al Dente.` wordmark, "On mange quoi ce soir ?" tagline, 3-dot loader, `v0.9 · 2026` version footer) on Next.js navigation loads. Matches sketch lines 1989-2013.
+- [x] **SPLA-01**: `app/loading.tsx` renders the La Grille splash composition (table-à-manger logo SVG, `Al Dente.` wordmark, "On mange quoi ce soir ?" tagline, 3-dot loader, `v0.9 · 2026` version footer) on Next.js navigation loads. Matches sketch lines 1989-2013.
 - [ ] **SPLA-02**: iOS PWA boot ships an `apple-touch-startup-image` referencing a static splash asset that matches the SPLA-01 composition; verified on iPhone "Add to Home Screen" launch.
 
 ### DRIFT — Cooking-logs token drift fix (Phase 40)
 
-- [ ] **DRIFT-01**: `app/cooking-logs/[id]/page.tsx` no longer references Fraunces italic typography, `bg-surface-rose-100`, or `bg-[var(--color-valide-tint)]`. All visual tokens come from the La Grille set in `frontend/app/globals.css`. File header comments updated to reflect La Grille register.
+- [x] **DRIFT-01**: `app/cooking-logs/[id]/page.tsx` no longer references Fraunces italic typography, `bg-surface-rose-100`, or `bg-[var(--color-valide-tint)]`. All visual tokens come from the La Grille set in `frontend/app/globals.css`. File header comments updated to reflect La Grille register.
 
 ### THRD — Recipe thread dedicated view (Phase 41)
 

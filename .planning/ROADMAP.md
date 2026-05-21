@@ -25,7 +25,7 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
 
 ### Phases
 
-- [ ] **Phase 40: Pure-Frontend Restyles** - Bring Profil, Onboarding, Library text-only, Splash, and cooking-logs detail into full La Grille · Soft warmth alignment — no schema or API changes.
+- [x] **Phase 40: Pure-Frontend Restyles** - Bring Profil, Onboarding, Library text-only, Splash, and cooking-logs detail into full La Grille · Soft warmth alignment — no schema or API changes. (completed 2026-05-21)
 - [ ] **Phase 41: Navigation Surgery + First Backend Touch** - Dedicated recipe thread route, Nouvelle Recette route-level chooser, and deck undo button (UI + `DELETE /votes/{id}` + veto-window guard).
 - [ ] **Phase 42: Structured Steps + Active Cooking Session** - `recipes.steps` JSONB migration, Gemini prompt update, lazy backfill, and new `/cooking-logs/[id]/active` step-by-step cooking route.
 
@@ -81,7 +81,7 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 40. Pure-Frontend Restyles | 0/5 | Planned | - |
+| 40. Pure-Frontend Restyles | 5/5 | Complete   | 2026-05-21 |
 | 41. Navigation Surgery + First Backend Touch | 0/TBD | Not started | - |
 | 42. Structured Steps + Active Cooking Session | 0/TBD | Not started | - |
 
