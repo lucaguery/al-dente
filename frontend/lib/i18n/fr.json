@@ -250,7 +250,38 @@
       "submit_full": "Enregistrer la recette",
       "uploading_photo": "Envoi de la photo…",
       "saved_toast": "Recette enregistrée",
-      "saved_without_photo": "Recette enregistrée, mais la photo n'a pas pu être ajoutée."
+      "saved_without_photo": "Recette enregistrée, mais la photo n'a pas pu être ajoutée.",
+      "hero": "Nouvelle recette",
+      "subtitle": "5 méthodes · choisis-en une",
+      "options": {
+        "quick": {
+          "label": "Note rapide",
+          "hint": "juste le nom, à compléter plus tard"
+        },
+        "form": {
+          "label": "Formulaire",
+          "hint": "tous les détails à la main"
+        },
+        "voice": {
+          "label": "Voix",
+          "hint": "dicte, on transcrit"
+        },
+        "photo": {
+          "label": "Photo",
+          "hint": "photographie un plat, on lit"
+        },
+        "url": {
+          "label": "Lien",
+          "hint": "colle une URL, on extrait"
+        }
+      },
+      "note_rapide": {
+        "title": "Note rapide",
+        "description": "Enregistre uniquement le nom de la recette ; tu compléteras les détails plus tard.",
+        "placeholder": "Nom de la recette…",
+        "cta": "Enregistrer",
+        "error": "Impossible d'enregistrer la recette. Réessaie."
+      }
     },
     "edit": {
       "title": "Modifier la recette",
