@@ -419,8 +419,15 @@
   "onboarding": {
     "welcome": {
       "tagline": "Décide ce qu'on mange ensemble.",
+      "tagline_lead": "On mange quoi ",
+      "tagline_emphasis": "ce soir",
+      "tagline_tail": " ?",
+      "sub_tagline": "Une app pour deux. Pour décider ensemble, sans se relancer toute la soirée.",
       "create_cta": "Créer un foyer",
-      "join_cta": "Rejoindre un foyer"
+      "join_cta": "Rejoindre un foyer",
+      "primary_cta": "Créer notre foyer",
+      "ghost_cta": "Rejoindre avec un code",
+      "footer": "cuisine partagée · 0 frais · 0 pub"
     },
     "create": {
       "title": "Nouveau foyer",
