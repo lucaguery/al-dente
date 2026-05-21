@@ -1,3 +1,7 @@
+/* ADR-0004 — La Grille · Soft warmth.
+   Supersedes the Phase 5/32 Sober Kitchen register. Tokens locked. See
+   docs/adr/0004-modern-sober-refresh.md. */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -7,8 +11,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -65,43 +69,36 @@
 
   /* Phase 3 — Decide layer.
      `--color-valide-tint` is reserved exclusively for the "Validé" winning
-     row in the "Tout vu" summary and the cooking-banner background. Hue
-     axis h≈145 (emerald) deliberately distinct from the brand-rose accent
-     so a "consensus reached" surface reads semantically without competing
-     with the primary CTA. Per 03-UI-SPEC.md §"Phase 3 token additions". */
+     row in the "Tout vu" summary and the cooking-banner background. Per
+     ADR-0004 §Tokens, the tint is now a solid `#F5E5DD` pill (not a wash),
+     and `--color-valide-foreground` deepens to `#82371F` for on-tint
+     legibility. */
   /* CANONICAL — DO NOT introduce `--color-validé-tint` (with French accent). DECIDE-03 invariant lock. */
   --color-valide-tint: var(--valide-tint);
 
-  /* Phase 5 (Slow Food artisanal) — warm two-layer paper-on-wood shadows.
-     `rgba(74, 56, 40, *)` is a deep warm-brown — the color of the underlying
-     "wood." On a warm-cream surface this reads as tone-on-tone (paper resting
-     on a kitchen table) rather than cool floating boxes. Two layers
-     reproduce the physical truth: a hairline contact shadow at the edge plus
-     a slightly diffuse ambient shadow underneath. Per UI-SPEC §Shadows. */
-  --shadow-card:
-    0 1px 2px 0 rgba(74, 56, 40, 0.05),
-    0 1px 3px 0 rgba(74, 56, 40, 0.03);
-  --shadow-card-hover:
-    0 1px 2px 0 rgba(74, 56, 40, 0.08),
-    0 4px 10px 0 rgba(74, 56, 40, 0.07);
-  --shadow-nav:
-    0 -1px 0 0 rgba(74, 56, 40, 0.08);
+  /* ADR-0004 §Shadows — shadows dropped globally. Cards exist by
+     hairline border + radius, not depth. The deck card (Tinder) is the
+     ONLY exception and applies a local ambient shadow in
+     ShortlistCard.tsx (wave 2). `--shadow-hairline` is available for
+     callers that want an explicit inset hairline rather than a `border`
+     declaration. */
+  --shadow-card: none;
+  --shadow-hairline: inset 0 0 0 1px var(--color-border);
 
-  /* Phase 5 motion tokens (DESIGN-06) — one curve, two durations.
-     Tailwind v4 exposes `--ease-*` and `--duration-*` from @theme as
-     `ease-*` and `duration-*` utilities. The same numbers are re-exported
-     as Framer Motion presets in `frontend/lib/motion.ts` (Plan 04) so CSS
-     transitions and Framer Motion animations stay in lockstep.
-     - ease-craft: high-snap-out curve, "deliberate craftsman placing the
-       object" — accelerates through the first 30%, decelerates smoothly.
-     - duration-fast (150ms): interactive feedback (button press, hover,
+  /* ADR-0004 §Type stack / SKILL.md Motion — one ease curve, three
+     durations. The previous warm-brown two-layer shadow + spring-overshoot
+     `--ease-craft` register is gone. `--ease` is a deliberate ease-out
+     (cubic-bezier(0.22, 1, 0.36, 1)) with no overshoot — see
+     grille-warm.css.
+     - duration-fast (160ms): interactive feedback (button press, hover,
        chip selection, focus ring).
-     - duration-normal (280ms): structural transitions (sheet/dialog,
-       card hover-lift, swipe-deck commit, realtime appear). */
-  --ease-craft: cubic-bezier(0.32, 0.72, 0.0, 1);
-  --duration-fast: 150ms;
-  --duration-normal: 280ms;
-  --duration-slow: 3200ms;
+     - duration-base (240ms): structural transitions (sheet/dialog,
+       card hover, swipe-deck commit, realtime appear).
+     - duration-sheet (380ms): full-sheet / dialog enter/exit. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+  --duration-sheet: 380ms;
 
   /* Quick-260512-l0l — page-rhythm tokens. Single source of truth for the
      phone-mobile-PWA chrome: horizontal gutter, vertical section rhythm,
@@ -140,75 +137,73 @@
 }
 
 :root {
-  /* Phase 5 (Slow Food artisanal) — terracotta primary on warm cream surface.
-     Hue axes: h≈60 on the cream background, h≈50 on warm-taupe neutrals
-     (drifts toward sienna), h≈35 on terracotta accent + faint terracotta
-     wash, h≈145 on the Validé emerald tint. All values per UI-SPEC §Color
-     "Final OKLCH values — light mode" — verbatim. */
-  --background: oklch(0.975 0.006 75);
-  --foreground: oklch(0.21 0.014 55);
-  --card: oklch(0.99 0.005 75);
-  --card-foreground: oklch(0.21 0.014 55);
-  --popover: oklch(0.99 0.005 75);
-  --popover-foreground: oklch(0.21 0.014 55);
-  --primary: oklch(0.50 0.10 32);
-  --primary-foreground: oklch(0.975 0.006 75);
-  --secondary: oklch(0.93 0.010 60);
-  --secondary-foreground: oklch(0.28 0.015 50);
-  --muted: oklch(0.93 0.010 60);
-  --muted-foreground: oklch(0.50 0.012 55);
-  --accent: oklch(0.93 0.010 60);
-  --accent-foreground: oklch(0.28 0.015 50);
-  --destructive: oklch(0.50 0.15 25);
-  --border: oklch(0.86 0.010 55);
-  --input: oklch(0.86 0.010 55);
-  --ring: oklch(0.50 0.10 32);
+  /* ADR-0004 §Tokens — La Grille · Soft warmth (light mode).
+     Literal hex values per the locked palette table. Refined terracotta
+     `#A8523C` supersedes the production `#C8553D` (which ADR-0004
+     §Considered Alternatives rejected as too 1970s-ceramic-tile). */
+  --background: #FAFAF7;
+  --foreground: #14110D;
+  --card: #FFFFFF;
+  --card-foreground: #14110D;
+  --popover: #FFFFFF;
+  --popover-foreground: #14110D;
+  --primary: #A8523C;
+  --primary-foreground: #FAFAF7;
+  --secondary: #EDEBE4;
+  --secondary-foreground: #14110D;
+  --muted: #EDEBE4;
+  --muted-foreground: #6F6B62;
+  --accent: #EDEBE4;
+  --accent-foreground: #14110D;
+  --destructive: #B23A2A;
+  --border: #EDEBE4;
+  --input: #EDEBE4;
+  --ring: #A8523C;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.975 0.01 50);
-  --sidebar-foreground: oklch(0.22 0.018 50);
-  --sidebar-primary: oklch(0.28 0.015 50);
-  --sidebar-primary-foreground: oklch(0.985 0.008 60);
-  --sidebar-accent: oklch(0.945 0.012 50);
-  --sidebar-accent-foreground: oklch(0.28 0.015 50);
-  --sidebar-border: oklch(0.88 0.012 50);
-  --sidebar-ring: oklch(0.595 0.135 35);
+  --sidebar: #FAFAF7;
+  --sidebar-foreground: #14110D;
+  --sidebar-primary: #14110D;
+  --sidebar-primary-foreground: #FAFAF7;
+  --sidebar-accent: #EDEBE4;
+  --sidebar-accent-foreground: #14110D;
+  --sidebar-border: #EDEBE4;
+  --sidebar-ring: #A8523C;
 
-  /* UI-SPEC tokens — warm-taupe equivalents (h≈50). */
-  --surface-muted: oklch(0.945 0.012 50);
-  --foreground-muted: oklch(0.50 0.014 50);
+  /* ADR-0004 §Tokens — additions not present in old palette. */
+  --foreground-faint: #A09A8C;
+  --border-strong: #D8D4C7;
+  --primary-deep: #8E4330;
 
-  /* Token names retained from v0.1 (`--surface-rose-*`); values shifted from
-     rose (h=16.5°) to faint terracotta wash (h≈35°) per UI-SPEC §Color
-     "Token preservation matrix". Cleanup of the legacy "rose" name is
-     deferred to Phase 6+. */
-  --surface-rose-50: oklch(0.97 0.022 35);
-  --surface-rose-100: oklch(0.94 0.045 35);
+  /* UI-SPEC tokens — neutral muted surfaces alias to the new palette. */
+  --surface-muted: #EDEBE4;
+  --foreground-muted: #6F6B62;
 
-  /* Phase 3 — Validé tint (light). Mono-terracotta wash (h≈35). */
-  --valide-tint: oklch(0.91 0.045 35);
+  /* Token names retained from v0.1 (`--surface-rose-*`); values rebased to
+     the refined terracotta tint per ADR-0004 §Tokens. */
+  --surface-rose-50: #FBEFE9;
+  --surface-rose-100: #F5E5DD;
 
-  /* mono-terracotta — Validé differentiates from primary by saturation+lightness
-     on the terracotta hue alone, see ADR-0003. Member-color tokens
-     (`--color-member-emerald-*`) are EXEMPT — they are member-slot identity,
-     not a Validé semantic, and keep their independent emerald hexes. */
-  --color-valide-foreground: #A8412E;     /* terracotta-600 — primary accent */
-  --color-valide-emphasis: #8B331F;       /* terracotta-700 — darker accent text */
-  --color-valide-border: #A8412E80;       /* terracotta-600/50 — Heart button border */
-  --color-valide-border-faint: #A8412E4D; /* terracotta-600/30 — row borders */
-  --color-cooking-foreground: #8B331F;    /* terracotta-700 — cooking-banner icon */
+  /* ADR-0004 §Tokens — Validé tint (light). Solid `#F5E5DD` pill (not a wash). */
+  --valide-tint: #F5E5DD;
+
+  /* ADR-0004 §Tokens — Validé foregrounds deepen for on-tint legibility. */
+  --color-valide-foreground: #82371F;     /* deep terracotta — primary accent on tint */
+  --color-valide-emphasis: #5E2614;       /* darker terracotta — emphasis text */
+  --color-valide-border: #82371F80;       /* deep terracotta/50 — Heart button border */
+  --color-valide-border-faint: #82371F4D; /* deep terracotta/30 — row borders */
+  --color-cooking-foreground: #5E2614;    /* darker terracotta — cooking-banner icon */
 
   /* Phase 20 TOK-02 — member-color tokens (5 slots × bg/fg pairs).
-     `--color-member-{slot}-bg` is the chip background; `-foreground` is the
-     readable text/icon on top. Five fixed slots mirror MEMBER_COLORS in
-     `frontend/lib/colors.ts` and `backend/app/colors.py`. Storage of
-     `Member.color_hex` is unchanged — these tokens are the new RENDER layer
-     (D-20-05/06). Backwards-compat: amber needs a dark foreground because
-     amber-500 is too light to support white text at AA contrast. */
+     Per ADR-0004 §Member colors, the 5-slot model is preserved in tokens
+     for productize-later (3+ member households). Accueil display collapses
+     to 2 visible identities (ink + muted) — see `--color-member-luca` /
+     `--color-member-partner` below. Do not delete the rose/amber/emerald/
+     sky/violet slots. */
   --color-member-rose-bg: #C0364A;
   --color-member-rose-foreground: #FFFFFF;
   --color-member-amber-bg: #C98512;
@@ -220,16 +215,20 @@
   --color-member-violet-bg: #6E46C1;
   --color-member-violet-foreground: #FFFFFF;
 
-  /* Phase 32 §15.A — Sober Kitchen additions */
-  --font-marginalia: "Caveat", cursive;
-  --patina: 0;  /* global default; per-card override via inline style */
+  /* ADR-0004 §Member colors — Accueil table-à-manger renders 2 seats. */
+  --color-member-luca: var(--foreground);
+  --color-member-partner: var(--muted-foreground);
 }
 
 .dark {
-  /* Phase 5 (Slow Food artisanal) — same hue axes as light mode, inverted
-     lightness. Background drifts toward terracotta-neighborhood (h≈50)
-     rather than cream-axis. Cards lift via warmer tone, not shadow. All
-     values per UI-SPEC §Color "Final OKLCH values — dark mode" verbatim. */
+  /* ADR-0004 §Tokens — dark-mode rebase. Token NAMES stay; values
+     stay on the inverted-lightness path that reads correctly on a dark
+     surface (production currently inverts lightness, not a separate
+     palette). The refined terracotta primary in dark stays at
+     `oklch(0.70 0.13 35)`; only the LIGHT-mode hexes above are the
+     ADR-locked decision per §Tokens. Per ADR §Shadows, the
+     `--shadow-card` / `--shadow-nav` overrides for dark mode are gone —
+     shadows are dropped in both modes. */
   --background: oklch(0.16 0.012 50);
   --foreground: oklch(0.94 0.008 50);
   --card: oklch(0.21 0.014 50);
@@ -262,26 +261,24 @@
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.70 0.13 35);
 
+  --foreground-faint: oklch(0.55 0.010 50);
+  --border-strong: oklch(1 0 0 / 22%);
+  --primary-deep: oklch(0.58 0.13 35);
+
   --surface-muted: oklch(0.24 0.012 50);
   --foreground-muted: oklch(0.66 0.010 50);
   --surface-rose-50: oklch(0.22 0.025 35);
   --surface-rose-100: oklch(0.27 0.045 35);
 
-  /* Phase 3 — Validé tint (dark). Mono-terracotta dark wash (h≈35). */
+  /* Validé tint (dark) — terracotta dark wash. */
   --valide-tint: oklch(0.30 0.05 35);
 
-  /* mono-terracotta dark — lighter, desaturated terracotta on dark surface.
-     See ADR-0003. Member-color tokens (`--color-member-emerald-*`) keep their
-     independent emerald hexes — they are member-slot identity, not Validé semantic. */
-  --color-valide-foreground: #E9A893;     /* light terracotta — readable on dark surface */
-  --color-valide-emphasis: #F2C7B6;       /* lighter terracotta — emphasis text */
-  --color-valide-border: #E9A89380;       /* light terracotta/50 */
-  --color-valide-border-faint: #E9A8934D; /* light terracotta/30 */
-  --color-cooking-foreground: #F2C7B6;    /* lighter terracotta — banner icon */
+  --color-valide-foreground: #E9A893;
+  --color-valide-emphasis: #F2C7B6;
+  --color-valide-border: #E9A89380;
+  --color-valide-border-faint: #E9A8934D;
+  --color-cooking-foreground: #F2C7B6;
 
-  /* Phase 20 TOK-02 dark — member chip hexes stay identical (the bg IS the
-     chip; foreground readability is encoded in the fg token). Amber's dark
-     foreground is intentional for AA contrast in both modes. */
   --color-member-rose-bg: #F43F5E;
   --color-member-rose-foreground: #FFFFFF;
   --color-member-amber-bg: #F59E0B;
@@ -292,26 +289,9 @@
   --color-member-sky-foreground: #FFFFFF;
   --color-member-violet-bg: #8B5CF6;
   --color-member-violet-foreground: #FFFFFF;
-}
 
-/* Phase 5 dark-mode shadow overrides (DESIGN-05).
-   Intentionally a separate `.dark { ... }` block from the OKLCH color block
-   above so the shadow-color overrides are visually grouped with the shadow
-   tokens themselves — Tailwind v4 / browsers concatenate same-selector
-   rules, so this is purely an organization choice. In dark mode the
-   wood-surface metaphor doesn't apply (surface is implicitly dim); standard
-   near-black shadows read correctly. The hairline above the bottom nav uses
-   a light-alpha so it stays visible against the dark background. Per
-   UI-SPEC §Shadows "Dark-mode shadows". */
-.dark {
-  --shadow-card:
-    0 1px 2px 0 rgba(0, 0, 0, 0.30),
-    0 2px 4px 0 rgba(0, 0, 0, 0.22);
-  --shadow-card-hover:
-    0 1px 2px 0 rgba(0, 0, 0, 0.36),
-    0 4px 10px 0 rgba(0, 0, 0, 0.28);
-  --shadow-nav:
-    0 -1px 0 0 rgba(255, 255, 255, 0.06);
+  --color-member-luca: var(--foreground);
+  --color-member-partner: var(--muted-foreground);
 }
 
 /* Honor iOS dark mode automatically. The shadcn primitives expect a `.dark`
@@ -334,13 +314,12 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* UI-SPEC §Typography — IBM Plex Sans is the canonical UI body font (Phase 5).
-       The `--font-body` CSS variable is registered via next/font/google in
+    /* ADR-0004 §Type stack — Geist is the canonical UI body font. The
+       `--font-sans` CSS variable is registered via next/font/google in
        `frontend/app/layout.tsx`. */
-    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   }
   html {
-    @apply font-body;
     /* Quick-260507-hd0 — `100dvh` (dynamic viewport height) avoids the
        iOS Safari address-bar collapse gap that `100vh` leaves behind.
        Layout.tsx still sets `h-full` on <html> for the outer flex chain. */
@@ -348,61 +327,46 @@
   }
 }
 
-/* Quick-260507-hd0 — canonical typography scale (UI-SPEC §Typography).
-   These four classes give every screen a single, consistent type
-   hierarchy to converge on, instead of ad-hoc text-[28px]/text-2xl
-   choices per page. They supplement (do not replace) Tailwind's
-   text-* utilities. */
+/* ADR-0004 §Hero sizing — canonical typography scale. All four utilities
+   resolve to Geist (`--font-sans`); `.text-caption` resolves to Geist Mono
+   (`--font-mono`). No serif, no italic, no handwriting. The 24px hero IS
+   the canonical home-screen "On mange quoi ?" size — NOT a clamp. */
 @layer utilities {
-  /* Phase 5 §Typography type-scale — Cormorant Garamond italic for the hero
-     wordmark and primary display text. Weight 500 (not 700) is the Slow Food
-     restraint principle: heavier reads as advertising, not editorial. Italic
-     is the cookbook-cover signature. Letter-spacing -0.02em counteracts the
-     optical loosening that occurs at large sizes. clamp(32px, 6vw, 44px)
-     keeps the headline responsive between iPhone-narrow and desktop reads.
-     (Cormorant Garamond is not a variable font — no opsz axis.) */
   .text-display {
-    font-family: var(--font-display), ui-serif, Georgia, serif;
-    font-size: clamp(2rem, 6vw, 2.75rem);
-    line-height: 1.05;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 24px;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-weight: 500;
+  }
+  .text-title {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.2;
     letter-spacing: -0.02em;
     font-weight: 500;
-    /* font-style: italic REMOVED per §15.B — sober upright register */
   }
-  /* Phase 5 §Typography type-scale — Cormorant Garamond upright for page
-     titles, section headings, and dialog/sheet titles. 24px sits at the
-     title-sweet-spot for the family. Upright (not italic) for legibility in
-     longer strings. Weight 500 holds the restraint pairing with the display
-     class. (Cormorant Garamond is not a variable font — no opsz axis.) */
-  .text-title {
-    font-family: var(--font-display), ui-serif, Georgia, serif;
-    font-size: 1.5rem;
-    line-height: 1.2;
+  .text-page-header {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.25;
     letter-spacing: -0.015em;
     font-weight: 500;
   }
-  /* Phase 5 §Typography type-scale — IBM Plex Sans 16/1.55 for body running
-     text. Verified-readable for French long-form on iOS Safari at PWA-
-     compressed sizes. Weight 400 is the running-text weight; locked usages
-     (CTAs, locked-rating labels, vote-chip pills) declare 600 explicitly. */
   .text-body {
-    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
-    font-size: 1rem;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 13px;
     line-height: 1.55;
     letter-spacing: -0.005em;
     font-weight: 400;
   }
-  /* Phase 5 §Typography type-scale — IBM Plex Sans 13/1.45 for captions,
-     helper copy, and metadata. IBM Plex Sans' small-size hinting handles
-     13px without hairline breakage. Color tied to `--foreground-muted` so
-     captions read as faded-ink rather than fighting body text. */
   .text-caption {
-    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
-    font-size: 0.8125rem;
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 11px;
     line-height: 1.45;
     letter-spacing: 0;
     font-weight: 400;
-    color: var(--foreground-muted);
+    color: var(--muted-foreground);
   }
 
   /* POLISH-01 — French typography: NBSP both sides of middle-dot via
@@ -412,60 +376,6 @@
      no-wrap behavior so the separator never breaks across lines. */
   .meta-sep {
     white-space: nowrap;
-  }
-
-  /* Quick-260512-l0l — page-chrome header register. Sits between
-     `.text-display` (hero / wordmark) and `.text-body` (running text).
-     Mirrors `.scratch/ui-proposals.html` `.frame-head h3` (Cormorant
-     22px) — the "you are on this surface" gesture for sticky
-     headers (Bibliothèque, Réception, Réglages, recipe detail).
-     1.25rem = 20px, sits just above body for a chrome-density read.
-     gh#31 — italic dropped: the page-header register now reads upright
-     across Recettes / Ajouter recette / Profil for visual consistency
-     with the rest of the Sober Kitchen typography stack. */
-  .text-page-header {
-    font-family: var(--font-display), ui-serif, Georgia, serif;
-    font-size: 1.25rem;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
-    font-weight: 500;
-    font-style: normal;
-  }
-
-  /* Phase 5 paper-grain texture (DESIGN-04). Single SVG asset at
-     /textures/paper-grain.svg (Plan 02), surfaced via ::before pseudo so the
-     noise sits behind content without affecting layout. The blend mode
-     `multiply` darkens the cream surface (paper fibers absorbing light)
-     rather than overlaying gray (which would read as dust). 6% opacity is
-     the "subtle warm noise" target — perceptible up close, invisible from
-     across the room. `border-radius: inherit` makes the overlay respect the
-     parent's corner radius so the grain doesn't leak past rounded card
-     edges. Applied by Plan 05 to Card / Dialog / Sheet / Popover content
-     only — never to full-page backgrounds, buttons, or chrome.
-     Per UI-SPEC §Paper-Grain "CSS application" verbatim. */
-  .paper-grain {
-    position: relative;
-  }
-  .paper-grain::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url('/textures/paper-grain.svg');
-    background-repeat: repeat;
-    background-size: 240px 240px;
-    /* Round-2 (260512-gpl): bumped 0.06 → 0.12. The original "perceptible
-       up close, invisible from across the room" target read as no texture
-       at all on a phone screen at arm's length. 0.12 keeps it tone-on-tone
-       (still well below "noisy") but actually shows. */
-    opacity: 0.12;
-    mix-blend-mode: multiply;
-    pointer-events: none;
-    border-radius: inherit;
-    z-index: 0;
-  }
-  .paper-grain > * {
-    position: relative;
-    z-index: 1;
   }
 
   /* Phase 6 (CAPTURE-09) — hide scrollbar on the 5-tab capture row. Used at
@@ -485,82 +395,11 @@
 }
 
 @layer utilities {
-  /* Phase 32 §15.B — Marginalia register (Caveat handwriting).
-     Source: docs/design-system.html lines 170-184. */
-  .marginalia {
-    font-family: var(--font-marginalia);
-    font-weight: 500;
-    line-height: 1.25;
-    color: var(--primary);
-  }
-  .marginalia-sm { font-size: 1rem; }
-  .marginalia-md { font-size: 1.2rem; }
-  .marginalia-lg { font-size: 1.5rem; }
-  .marginalia.slant {
-    transform: rotate(-1.2deg);
-    display: inline-block;
-  }
-  .marginalia em {
-    font-style: italic;
-    color: color-mix(in oklch, var(--primary) 70%, var(--foreground));
-  }
-
-  /* Phase 32 §15.C — Patine ledger card.
-     Source: docs/design-system.html lines 186-236.
-     Driven by inline --patina: 0|1|2|3 set per-instance by <LedgerCard>. */
-  .ledger-card {
-    position: relative;
-    background: color-mix(in oklch,
-      var(--card) calc(100% - var(--patina) * 6%),
-      oklch(0.91 0.032 50));
-    border: 1px solid color-mix(in oklch,
-      var(--border) calc(100% - var(--patina) * 12%),
-      oklch(0.72 0.035 35));
-    border-radius: calc(12px - var(--patina) * 1px);
-    box-shadow: var(--shadow-card);
-    padding: 14px;
-    overflow: hidden;
-    transition: background var(--duration-normal) var(--ease-craft);
-  }
-  .ledger-card::before {
-    content: ""; position: absolute; inset: 0;
-    background-image:
-      radial-gradient(circle at 22% 28%,
-        color-mix(in oklch, oklch(0.62 0.10 50) calc(var(--patina) * 5%), transparent) 0,
-        transparent 32%),
-      radial-gradient(circle at 82% 72%,
-        color-mix(in oklch, oklch(0.55 0.08 30) calc(var(--patina) * 4%), transparent) 0,
-        transparent 30%);
-    background-repeat: no-repeat;
-    mix-blend-mode: multiply;
-    opacity: calc(0.3 + var(--patina) * 0.10);
-    border-radius: inherit; pointer-events: none; z-index: 0;
-  }
-  .ledger-card::after {
-    content: ""; position: absolute; inset: 0;
-    background-image:
-      radial-gradient(rgba(74, 56, 40, 0.12) 1px, transparent 1px),
-      radial-gradient(rgba(74, 56, 40, 0.08) 1px, transparent 1px);
-    background-size: 3px 3px, 7px 7px;
-    background-position: 0 0, 1px 2px;
-    opacity: calc(0.08 + var(--patina) * 0.03);
-    mix-blend-mode: multiply;
-    border-radius: inherit; pointer-events: none; z-index: 0;
-  }
-  .ledger-card > * { position: relative; z-index: 1; }
-  .dogear {
-    position: absolute; top: 0; right: 0;
-    width: 26px; height: 26px; pointer-events: none; z-index: 2;
-  }
-  .patina-stamp {
-    position: absolute; top: 10px; left: 12px; z-index: 3;
-    font-family: var(--font-marginalia); font-size: 14px;
-    color: color-mix(in oklch, var(--primary) 70%, oklch(0.30 0 0));
-    opacity: 0.65; transform: rotate(-5deg);
-  }
-
-  /* Phase 32 §15.C — Table-à-manger voting scene.
-     Source: docs/design-system.html lines 238-297. */
+  /* Phase 32 §15.C — Table-à-manger voting scene. Preserved in this wave
+     (the geometry IS the new logomark per ADR-0004 §Logo). The seat-state
+     classes consume the new ADR-0004 token values automatically because
+     `--color-valide-border` / `--card` / `--border` / `--primary` were
+     rebased above. */
   .table-scene {
     position: relative; width: 90px; height: 90px; flex-shrink: 0;
   }
@@ -580,14 +419,14 @@
   .table-seat {
     position: absolute; width: 22px; height: 22px;
     border-radius: 50%;
-    font-family: var(--font-body); font-weight: 600; font-size: 11px;
+    font-family: var(--font-sans); font-weight: 600; font-size: 11px;
     display: flex; align-items: center; justify-content: center;
     border: 1.5px solid var(--card);
     box-shadow: 0 0 0 1px var(--border);
     transition:
-      transform var(--duration-normal) var(--ease-craft),
-      opacity var(--duration-normal) var(--ease-craft),
-      box-shadow var(--duration-normal) var(--ease-craft);
+      transform var(--duration-base) var(--ease),
+      opacity var(--duration-base) var(--ease),
+      box-shadow var(--duration-base) var(--ease);
   }
   .table-scene.ts-56 .table-seat { width: 16px; height: 16px; font-size: 9px; }
   .seat-north { top: -2px; left: 50%; transform: translateX(-50%); }
@@ -612,7 +451,7 @@
   .seat-east.seat-state-rejected  { transform: translateY(-50%) translateX(6px); }
   .seat-west.seat-state-rejected  { transform: translateY(-50%) translateX(-6px); }
 
-  /* CONTESTÉ — locked: trait barré (foreground-muted strike) */
+  /* CONTESTÉ — locked: trait barré (foreground strike) */
   .seat-state-contested { position: relative; }
   .seat-state-contested::after {
     content: ""; position: absolute;
@@ -634,52 +473,6 @@
     color: var(--color-muted-foreground);
     border-left: 2px solid color-mix(in oklch, var(--destructive) 50%, transparent);
   }
-
-  /* Phase 32 §15.C — Brand-mark loader (drawing stroke).
-     Source: docs/design-system.html lines 299-320.
-     Consumes --duration-slow added to @theme inline in Task 1. */
-  .loader-brand {
-    width: 96px; height: 96px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .loader-brand.loader-brand-sm { width: 18px; height: 18px; }
-  .loader-brand svg path {
-    stroke-dasharray: 220;
-    stroke-dashoffset: 220;
-    animation: drawLoop var(--duration-slow) var(--ease-craft) infinite;
-  }
-  .loader-brand svg path:nth-child(2) {
-    animation-delay: 280ms;
-  }
-}
-
-@keyframes drawLoop {
-  0%   { stroke-dashoffset: 220; opacity: 0.25; }
-  38%  { stroke-dashoffset: 0;   opacity: 1; }
-  62%  { stroke-dashoffset: 0;   opacity: 1; }
-  100% { stroke-dashoffset: -220; opacity: 0.25; }
-}
-
-/* The global prefers-reduced-motion rule in this file already
-   sets animation-duration: 0ms !important on all elements, which neutralizes
-   drawLoop. The explicit fallback below is included for clarity and per-doc parity. */
-@media (prefers-reduced-motion: reduce) {
-  .loader-brand svg path {
-    animation: none;
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-}
-
-/* Phase 5 dark-mode paper-grain override (DESIGN-04). In dark mode the
-   physical metaphor inverts — paper fibers catch light against a dark
-   surface — so opacity raises to 10% and blend mode flips to `overlay` to
-   lighten rather than darken. Lives outside `@layer utilities` so its
-   cascade weight matches other `.dark` overrides elsewhere. */
-.dark .paper-grain::before {
-  /* Round-2 (260512-gpl) parallel bump 0.10 → 0.18 for dark mode. */
-  opacity: 0.18;
-  mix-blend-mode: overlay;
 }
 
 /* UI-SPEC §Motion — `prefers-reduced-motion` is non-negotiable. Replace

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, IBM_Plex_Sans, Caveat } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { getMessages } from "next-intl/server";
 import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
@@ -8,26 +8,20 @@ import { RealtimeProvider } from "@/components/RealtimeProvider";
 import { SessionProvider } from "@/components/SessionProvider";
 import "./globals.css";
 
-const cormorantGaramond = Cormorant_Garamond({
-  variable: "--font-display",
+// ADR-0004 §Type stack — Geist 400/500 for display + body, Geist Mono 400
+// for indices/dates/metadata. The old serif + handwriting + body fonts are
+// dropped per the La Grille · Soft warmth register.
+const geist = Geist({
+  variable: "--font-sans",
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500"],
-  style: ["normal", "italic"],
   display: "swap",
 });
 
-const ibmPlexSans = IBM_Plex_Sans({
-  variable: "--font-body",
-  subsets: ["latin", "latin-ext"],
-  weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-const caveat = Caveat({
-  variable: "--font-marginalia",
-  subsets: ["latin", "latin-ext"],
-  weight: ["500", "600"],
+const geistMono = Geist_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400"],
   display: "swap",
 });
 
@@ -43,8 +37,9 @@ export const metadata: Metadata = {
 };
 
 // Next.js 16: themeColor moved from `metadata` to the `viewport` export.
+// ADR-0004 §Logo — refined terracotta `#A8523C` is the brand atom.
 export const viewport: Viewport = {
-  themeColor: "#8B4A35",
+  themeColor: "#A8523C",
   width: "device-width",
   initialScale: 1,
   // viewportFit=cover lets us paint into the iOS notch / home-indicator
@@ -61,7 +56,7 @@ export default async function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${cormorantGaramond.variable} ${ibmPlexSans.variable} ${caveat.variable} h-full antialiased`}
+      className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body
         className="min-h-dvh flex flex-col bg-background text-foreground"
