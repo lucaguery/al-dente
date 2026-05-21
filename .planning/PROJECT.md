@@ -8,9 +8,48 @@ A shared recipe + decision app for couples, built as an installable PWA with a P
 
 Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable on both iPhones with no App Store, no $99/year, no native build.
 
-## Current Milestone: _(none — awaiting next milestone scaffold)_
+## Current Milestone: v0.9 La Grille Completion
 
-Run `/gsd-new-milestone` to scaffold the next milestone. Leading candidate: **v0.9 — La Grille Completion** (8 unimplemented sketch screens from sketch 002 + `cooking-logs/[id]/page.tsx` token drift fix, recommended 3-phase split: pure-frontend restyles / cross-cutting features w/ first backend touch / new-data-model + active cooking session).
+**Goal:** Close the 8 unimplemented sketch screens from sketch 002 (`.claude/skills/sketch-findings-al-dente/sources/002-refresh-direction-explorations/index.html`) plus the `app/cooking-logs/[id]/page.tsx` token drift, bringing production into full alignment with [ADR-0004](docs/adr/0004-modern-sober-refresh.md) La Grille · Soft warmth.
+
+**Target features (3-phase risk-graduated split, ships earliest-risk-first):**
+
+**Phase 40 — Pure-frontend restyles** (safest, no schema/API/data changes)
+- Profil page rewrite (`/settings`) — numbered hairline rows + stats block, no Cards (sketch §Profil)
+- Onboarding welcome rewrite — wordmark-centric, primary filled-dark + ghost hairline buttons, footer marketing line, no Cards (sketch §Onboarding)
+- Library text-only option — third `LibraryViewSwitch` mode; new `RecipeRowMinimal` (sketch §Recettes liste)
+- Splash screen — `app/loading.tsx` + `apple-touch-startup-image` iOS PWA boot metadata (sketch §Splash)
+- `cooking-logs/[id]/page.tsx` token drift fix — Fraunces + rose tokens → Geist + La Grille tokens
+
+**Phase 41 — Navigation surgery + first backend touch**
+- Recipe thread as dedicated view — new `app/recipes/[id]/thread/page.tsx`; structured view gets "N tours" pin that routes to /thread (sketch §Recette thread)
+- Nouvelle Recette chooser — route-level picker at `/recipes/new` with 5 numbered options (Note rapide / Formulaire / Voix / Photo / Lien); thread moves to `/recipes/new/[surface]` (sketch §Ajouter)
+- Deck card undo button — `ShortlistThumbButtons` 2→3 (X / RotateCcw / Heart); `DELETE /votes/{id}` in backend; veto-window guard (sketch §Shortlist deck)
+
+**Phase 42 — New data model + active cooking session** (riskiest, ships last)
+- `recipes.steps` JSONB Alembic migration (nullable)
+- Gemini prompt-schema update for structured step extraction
+- Lazy backfill on first /active visit
+- `app/cooking-logs/[id]/active/page.tsx` — new route with progress segments, prev/next, "Terminé · marquer cuisinée" CTA (sketch §Cuisine session active)
+
+**Locked decisions (milestone-level, captured at scaffold time):**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Milestone shape | 3 phases (40, 41, 42) — risk-graduated (frontend / nav+backend / data model) | Ships earliest-risk first; each phase's verifier output informs the next; phase boundaries match concern boundaries cleanly |
+| Deck undo veto-window | Refuse undo if any `CookingLog` for `(shortlist_id, date)` exists; "vote verrouillé — décision déjà cuisinée" tooltip | Preserves SPEC.md veto-window contract (first CookingLog closes voting); UI affordance is a SPEC-level requirement, not a Plan detail |
+| `DELETE /votes/{id}` vs flip-on-repost | DELETE — preserves invariant #2 (state computed from rows, not stored) | The button introduces a UI assumption that maps cleanly to row deletion; flip-on-repost would require dual-write semantics that complicate the invariant |
+| `recipes.steps` data shape | JSONB array of `{text: string, ingredient_refs: string[]}`; nullable column | Structured steps with ingredient cross-refs match the sketch's "utilise : 1L bouillon · 200g riz arborio" affordance |
+| Backfill strategy | Lazy — re-promote on first /active visit | Avoids eager migration on couple-scale workload (~21 recipes); productize-later if scale ever changes |
+| Splash strategy | Both `app/loading.tsx` (Next nav loading) AND `apple-touch-startup-image` metadata (iOS PWA boot) | PWA splash and Next loading are different surfaces; sketch covers both |
+| Nouvelle Recette picker placement | Route-level chooser at `/recipes/new`; thread mounts at `/recipes/new/[surface]` | D-09 + D-11 (no tabs *inside* the thread) still stands; this adds a route-level chooser *upstream* of capture |
+| Phase numbering | Continues from v0.8 → starts at Phase 40 | Standard GSD convention |
+
+**Phase numbering:** continues from v0.8 → starts at Phase 40.
+
+**Closes (potential):** Sketch 002 sketch-vs-implementation gap surfaced 2026-05-21; reconcile any open GH issues tagged design-system / ui-completion / la-grille during phase planning.
+
+**Out of scope:** Backend changes beyond `DELETE /votes/{id}` + `recipes.steps` migration + Gemini prompt update. No new architecture invariants expected (Phase 41 reinforces #2 via DELETE semantics; Phase 42 may surface a new "structured steps" invariant — evaluate during plan-phase). No productize-later i18n work beyond surface-level strings already present in `fr.json`. No design-system additions beyond La Grille tokens already in `frontend/app/globals.css` (the hand-drawn signature seed remains parked).
 
 ## Previous Milestone Outcome: v0.8 Backend Coverage Until Done (shipped 2026-05-21)
 

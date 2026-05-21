@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.8
-milestone_name: Backend Coverage Until Done
-status: Awaiting next milestone
-stopped_at: 6-task quick complete; SUMMARY at .planning/quick/260521-g26-modern-sober-ui-refresh-port-adr-0004-la/260521-g26-SUMMARY.md. The 13-commit window from `260520-hpz` (swipe deck) → `260520-lit` (OpenAPI hook) → `260521-g26` wave 1-5 (UI migration) is still local.
-last_updated: "2026-05-21T14:47:51.948Z"
-last_activity: 2026-05-21 — Milestone v0.8 completed and archived
+milestone: v0.9
+milestone_name: La Grille Completion
+status: planning
+last_updated: "2026-05-21T15:01:52.937Z"
+last_activity: 2026-05-21
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-21 — v0.8 Backend Coverage Until Done shipped)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Awaiting next milestone scaffold (leading candidate: v0.9 La Grille Completion — 8 sketch screens + cooking-logs token drift fix)
+**Current focus:** v0.9 — La Grille Completion (8 unimplemented sketch screens + cooking-logs token drift fix; 3-phase risk-graduated split per ADR-0004)
 
 ## Current Position
 
-Phase: Milestone v0.8 complete and archived
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-05-21 — Milestone v0.8 completed and archived; ROADMAP.md / MILESTONES.md / PROJECT.md updated; REQUIREMENTS.md archived to milestones/v0.8-REQUIREMENTS.md
+Status: Defining requirements
+Last activity: 2026-05-21 — Milestone v0.9 started
 
 ## Performance Metrics
 
