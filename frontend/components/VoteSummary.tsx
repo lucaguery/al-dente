@@ -240,11 +240,16 @@ export function VoteSummary({
                 }
               }}
             >
+              {/* ADR-0004 §Member colors + PUNCH-LIST D-03 (260521-l8g):
+                  Accueil ledger collapses the 5-slot palette to ink+muted.
+                  Settings + cooking-logs continue to render slot-distinct
+                  via the default variant="slot". */}
               <TableVote
                 votes={recipeVotes}
                 members={members}
                 myMemberId={me.id}
                 size="ts-56"
+                variant="accueil-collapse"
               />
               <span
                 className="text-caption tabular-nums shrink-0 self-start pt-1"

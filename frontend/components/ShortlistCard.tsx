@@ -458,7 +458,17 @@ export function ShortlistCard({
         aria-label={partnerAria}
       >
         {partnerVote === "yes" ? (
-          <MemberDot colorHex={partnerColorHex} size={10} />
+          /* ADR-0004 §Member colors + PUNCH-LIST D-04 (260521-l8g): the
+             pre-vote deck identity dot collapses to ink (first-member)
+             on Accueil. In a 2-member household only the local user ever
+             sees this dot for the partner, but the variant is forward-
+             consistent for productize-later 3+ member households. */
+          <MemberDot
+            colorHex={partnerColorHex}
+            size={10}
+            variant="accueil-collapse"
+            position="first"
+          />
         ) : partnerVote === "no" ? (
           <span className="h-2.5 w-2.5 rounded-full bg-destructive/40" />
         ) : (

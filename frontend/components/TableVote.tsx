@@ -26,12 +26,20 @@ export type HouseholdMemberLite = {
 
 export type TableVoteSize = "ts-90" | "ts-72" | "ts-56";
 
+// ADR-0004 §Member colors + PUNCH-LIST D-03 (quick 260521-l8g):
+// "accueil-collapse" overrides the 5-slot seat palette with ink+muted on
+// Accueil ledger surfaces only (the `me` seat → ink, the partner seat →
+// muted). The "slot" default preserves the 5-slot palette for Settings +
+// cooking-logs + the swipe-deck table scene.
+export type TableVoteVariant = "slot" | "accueil-collapse";
+
 export interface TableVoteProps {
   votes: readonly ShortlistVote[];
   members: readonly HouseholdMemberLite[];
   myMemberId: string;
   size?: TableVoteSize;
   className?: string;
+  variant?: TableVoteVariant;
 }
 
 type SeatPosition = "north" | "south" | "east" | "west";
@@ -87,6 +95,7 @@ export function TableVote({
   myMemberId,
   size = "ts-90",
   className,
+  variant = "slot",
 }: TableVoteProps) {
   const me = members.find((m) => m.id === myMemberId);
   const others = members.filter((m) => m.id !== myMemberId);
@@ -109,14 +118,38 @@ export function TableVote({
       role="img"
     >
       <div className="table-plate" aria-hidden />
-      {plan.map(({ position, member }) => {
+      {plan.map(({ position, member }, seatIdx) => {
         const memberVote = votes.find((v) => v.member_id === member.id)?.vote;
         const stateClass = seatStateClass(aggregate, memberVote, members.length);
         const slot = memberSlot(member.color_hex);
-        const seatStyle: CSSProperties = {
-          background: `var(--color-member-${slot}-bg)`,
-          color: `var(--color-member-${slot}-foreground)`,
-        };
+        // ADR-0004 §Member colors + PUNCH-LIST D-03 (260521-l8g):
+        // accueil-collapse pins seat 0 → ink, seat 1 → muted regardless of
+        // the member's 5-slot color_hex. Seats 2/3 fall back to the slot
+        // palette (productize-later 3+ member households are untouched).
+        let seatStyle: CSSProperties;
+        if (variant === "accueil-collapse") {
+          if (seatIdx === 0) {
+            seatStyle = {
+              background: "var(--foreground)",
+              color: "var(--background)",
+            };
+          } else if (seatIdx === 1) {
+            seatStyle = {
+              background: "var(--muted-foreground)",
+              color: "var(--background)",
+            };
+          } else {
+            seatStyle = {
+              background: `var(--color-member-${slot}-bg)`,
+              color: `var(--color-member-${slot}-foreground)`,
+            };
+          }
+        } else {
+          seatStyle = {
+            background: `var(--color-member-${slot}-bg)`,
+            color: `var(--color-member-${slot}-foreground)`,
+          };
+        }
         return (
           <span
             key={member.id}
