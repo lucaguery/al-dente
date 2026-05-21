@@ -17,7 +17,8 @@
 // React text children only inside a <span className="text-caption">. React
 // default-escapes text. (T-32-05-01 mitigation — see 32-05-PLAN.md threat_model.)
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -45,12 +46,7 @@ import {
 } from "@/lib/cooking";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 import { useRealtime } from "@/components/RealtimeProvider";
-import RecipeThread from "@/components/RecipeThread";
-import type {
-  PersistedTurn,
-  RecipeStatus,
-  AnswerTurnSubmission,
-} from "@/components/RecipeThread/types";
+import type { PersistedTurn } from "@/components/RecipeThread/types";
 import type { Recipe } from "@/lib/recipes";
 import { PinLabel } from "@/components/RecipeThread/PinLabel";
 import {
@@ -60,9 +56,9 @@ import {
 } from "@/lib/pin-sections";
 import type { AnswerField } from "@/lib/enums";
 
-// API_BASE needed for the multipart photo turn POST (Phase 26 D-01 — FormData
-// bypasses the api() helper which would set Content-Type: application/json).
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
+// Phase 41 THRD-01 — API_BASE was used for the multipart photo turn POST;
+// the per-turn handlers moved to /recipes/[id]/thread/page.tsx along with
+// that constant. Nothing on this page needs API_BASE anymore.
 
 // Phase 30 BUG-01 — per-path image component so each photo in the hero /
 // carousel calls useSignedPhotoUrl independently with its own retry budget.
@@ -89,7 +85,9 @@ export default function RecipeDetailPage() {
   const tSubhead = useTranslations("recipes.detail.subhead");
   const tVoiceModify = useTranslations("recipes.voice_modify");
   const tErr = useTranslations("onboarding.errors");
-  // Phase 27 CAPTURE-04 — tThread for turn-POST error toast (recipes.thread.turn_failed)
+  // Phase 41 THRD-01 — tThread now only used for the det-top pin aria-label
+  // (the inline RecipeThread mount was hard-deleted per D-17; the
+  // turn-POST handlers moved to /recipes/[id]/thread/page.tsx).
   const tThread = useTranslations("recipes.thread");
   const labels = useEnumLabels();
   const router = useRouter();
@@ -111,11 +109,13 @@ export default function RecipeDetailPage() {
   // Phase 32 SOBER-04 — cooking-start in-flight state for the sticky CTA.
   const [cookInFlight, setCookInFlight] = useState(false);
 
-  // Phase 27 CAPTURE-04 — thread state
+  // Phase 41 THRD-01 / D-15 — turns array drives the "N tours" det-top pin
+  // count. The full thread (and its turn-POST handlers) moved to the
+  // dedicated /recipes/[id]/thread route; this page only needs the count.
+  // turn.created realtime updates keep the counter live (invariant #4).
   const [turns, setTurns] = useState<PersistedTurn[]>([]);
-  const [postingTurn, setPostingTurn] = useState(false);
-  // formRef: target for the manual-edit link's scrollIntoView (D-15).
-  const formRef = useRef<HTMLDivElement | null>(null);
+  // Open-advisory detection still needs turn payloads; openAdvisoryByField
+  // memo reads from this array.
 
   async function handleDelete() {
     if (!recipe) return;
@@ -262,248 +262,13 @@ export default function RecipeDetailPage() {
     };
   }, [realtime, id]);
 
-  // Phase 27 CAPTURE-04 — per-turn POST handlers.
-  // Each handler is guarded by `postingTurn` (T-27-05-02 spam mitigation).
-  // Text / voice / url use api() (HttpOnly cookie via Next.js rewrite,
-  // invariant #8). Photo uses raw fetch with FormData + credentials: include
-  // (Phase 26 D-01 multipart endpoint — api() would inject Content-Type:
-  // application/json which would corrupt the FormData boundary).
-
-  const handlePostTextTurn = useCallback(async (text: string) => {
-    if (!id || postingTurn) return;
-    setPostingTurn(true);
-    try {
-      await api(`/api/recipes/${id}/turns`, {
-        method: "POST",
-        body: JSON.stringify({ kind: "text", text }),
-      });
-    } catch {
-      toast.error(tThread("turn_failed"));
-    } finally {
-      setPostingTurn(false);
-    }
-  }, [id, postingTurn, tThread]);
-
-  const handlePostVoiceTurn = useCallback(async (transcript: string) => {
-    if (!id || postingTurn) return;
-    setPostingTurn(true);
-    try {
-      await api(`/api/recipes/${id}/turns`, {
-        method: "POST",
-        body: JSON.stringify({ kind: "voice", transcript }),
-      });
-    } catch {
-      toast.error(tThread("turn_failed"));
-    } finally {
-      setPostingTurn(false);
-    }
-  }, [id, postingTurn, tThread]);
-
-  const handlePostUrlTurn = useCallback(async (url: string) => {
-    if (!id || postingTurn) return;
-    setPostingTurn(true);
-    try {
-      await api(`/api/recipes/${id}/turns`, {
-        method: "POST",
-        body: JSON.stringify({ kind: "url", url }),
-      });
-    } catch {
-      toast.error(tThread("turn_failed"));
-    } finally {
-      setPostingTurn(false);
-    }
-  }, [id, postingTurn, tThread]);
-
-  const handlePostPhotoTurn = useCallback(async (file: File) => {
-    if (!id || postingTurn) return;
-    setPostingTurn(true);
-    try {
-      const fd = new FormData();
-      fd.append("files", file);
-      const res = await fetch(`${API_BASE}/api/recipes/${id}/turns/photo`, {
-        method: "POST",
-        body: fd,
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error(`photo turn ${res.status}`);
-    } catch {
-      toast.error(tThread("turn_failed"));
-    } finally {
-      setPostingTurn(false);
-    }
-  }, [id, postingTurn, tThread]);
-
-  // Phase 28 DETAIL-02 — answer turn handler with optimistic state update.
-  // On Valider tap: write local recipe state FIRST (the form field updates
-  // instantly; the « épinglé » marginalia appears instantly), then POST.
-  // On 201 + recipe.updated WS event: state aligns. On POST failure: revert
-  // local state, fire toast.error.
-  const handlePostAnswerTurn = useCallback(
-    async (submission: AnswerTurnSubmission) => {
-      if (!id || !recipe) return;
-      const prevRecipe = recipe;
-      // Apply optimistic state: set the field + add it to pin set.
-      setRecipe((r) =>
-        r
-          ? {
-              ...r,
-              [submission.field]: submission.value,
-              manually_edited_fields: Array.from(
-                new Set([...(r.manually_edited_fields ?? []), submission.field])
-              ).sort(),
-            }
-          : null
-      );
-      try {
-        await api(`/api/recipes/${id}/turns`, {
-          method: "POST",
-          body: JSON.stringify({
-            kind: "answer",
-            in_reply_to_turn_id: submission.in_reply_to_turn_id,
-            field: submission.field,
-            value: submission.value,
-          }),
-        });
-      } catch (err) {
-        console.error("answer turn failed", err);
-        setRecipe(prevRecipe);
-        toast.error(tThread("action_failed"));
-        throw err; // let SystemBubble release committing state and not assume success
-      }
-    },
-    [id, recipe, tThread]
-  );
-
-  // Phase 28 DETAIL-03 — proposal_accepted handler with optimistic apply
-  // proposed_value + remove pin. Reads the advisory turn from turns[] to
-  // extract field + proposed_value (D-17).
-  const handlePostProposalAccepted = useCallback(
-    async (advisoryTurnId: string) => {
-      if (!id || !recipe) return;
-      const advisoryTurn = turns.find(
-        (t) => t.id === advisoryTurnId && t.kind === "advisory"
-      );
-      if (!advisoryTurn) {
-        console.warn("advisory not found", advisoryTurnId);
-        return;
-      }
-      const advisoryPayload = advisoryTurn.payload as {
-        field?: string;
-        proposed_value?: unknown;
-      };
-      const field = advisoryPayload.field;
-      if (!field) {
-        console.warn("advisory missing field", advisoryTurnId);
-        return;
-      }
-      const prevRecipe = recipe;
-      setRecipe((r) =>
-        r
-          ? {
-              ...r,
-              [field]: advisoryPayload.proposed_value,
-              manually_edited_fields: (r.manually_edited_fields ?? []).filter(
-                (f) => f !== field
-              ),
-            }
-          : null
-      );
-      try {
-        await api(`/api/recipes/${id}/turns`, {
-          method: "POST",
-          body: JSON.stringify({
-            kind: "proposal_accepted",
-            in_reply_to_turn_id: advisoryTurnId,
-          }),
-        });
-      } catch (err) {
-        console.error("proposal_accepted failed", err);
-        setRecipe(prevRecipe);
-        toast.error(tThread("action_failed"));
-        throw err;
-      }
-    },
-    [id, recipe, turns, tThread]
-  );
-
-  // Phase 28 DETAIL-03 — proposal_dismissed handler. Pure no-op on the recipe
-  // row (D-18); just POST. The advisory bubble collapses when the resulting
-  // turn.created WS event lands and advisoryResolutions memo picks up the
-  // new dismissed entry.
-  const handlePostProposalDismissed = useCallback(
-    async (advisoryTurnId: string) => {
-      if (!id) return;
-      try {
-        await api(`/api/recipes/${id}/turns`, {
-          method: "POST",
-          body: JSON.stringify({
-            kind: "proposal_dismissed",
-            in_reply_to_turn_id: advisoryTurnId,
-          }),
-        });
-      } catch (err) {
-        console.error("proposal_dismissed failed", err);
-        toast.error(tThread("action_failed"));
-        throw err;
-      }
-    },
-    [id, tThread]
-  );
-
-  // Phase 29 D-22 — summary CTA wire-up: « Oui, compléter ».
-  // POSTs /questions/trigger. Backend returns:
-  //  - 201 + TurnResponse → the new question turn arrives via the existing
-  //    turn.created WS subscription; setTurns picks it up. No local state work.
-  //  - 204 → no eligible missing field; show toast "Tout est complet."
-  // api() returns parsed JSON on 201; returns null on 204.
-  const handleSummaryComplete = useCallback(
-    async (_turnId: string) => {
-      if (!id) return;
-      try {
-        const result = await api(`/api/recipes/${id}/questions/trigger`, {
-          method: "POST",
-        });
-        if (result === null) {
-          // 204 — nothing to ask.
-          toast.success(tThread("all_complete"));
-        }
-        // 201 — new question turn lands via WS; no local state change here.
-      } catch (err) {
-        console.error("questions/trigger failed", err);
-        toast.error(tThread("action_failed"));
-        throw err; // let SystemBubble release committing state
-      }
-    },
-    [id, tThread]
-  );
-
-  // Phase 29 D-22 — summary CTA wire-up: « Plus tard ».
-  // POSTs /questions/defer. Backend returns 204 and broadcasts recipe.updated
-  // with the new questions_deferred_until timestamp. The existing recipe.updated
-  // WS handler (already wired in this file) updates `recipe`, which causes the
-  // `deferred` derived prop to flip to true and the SystemBubble CTAs collapse.
-  const handleSummaryLater = useCallback(
-    async (_turnId: string) => {
-      if (!id) return;
-      try {
-        await api(`/api/recipes/${id}/questions/defer`, { method: "POST" });
-        // recipe.updated WS carries questions_deferred_until → setRecipe updates
-        // deferred prop → CTAs render in collapsed/disabled state.
-      } catch (err) {
-        console.error("questions/defer failed", err);
-        toast.error(tThread("action_failed"));
-        throw err;
-      }
-    },
-    [id, tThread]
-  );
-
-  // Phase 27 CAPTURE-04 — manual-edit link scrolls up to the recipe form.
-  // formRef is attached to a <div className="contents"> wrapper around the
-  // hero + form chunk so scrollIntoView targets the top of the form section.
-  const handleManualEditLinkClick = useCallback(() => {
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // Phase 41 THRD-01 / D-17 — the per-turn POST handlers (handlePostTextTurn,
+  // handlePostVoiceTurn, handlePostUrlTurn, handlePostPhotoTurn,
+  // handlePostAnswerTurn, handlePostProposalAccepted,
+  // handlePostProposalDismissed, handleSummaryComplete, handleSummaryLater,
+  // handleManualEditLinkClick) all moved to /recipes/[id]/thread/page.tsx
+  // alongside the RecipeThread mount. The structured view no longer hosts a
+  // thread, so the dead code is gone (MVP no-shim posture).
 
   // Phase 28 DETAIL-04 — Open-advisory lookup for « conflit » escalation.
   // Maps each AnswerField to the id of its OLDEST open advisory turn (no
@@ -627,12 +392,9 @@ export default function RecipeDetailPage() {
     );
   }
 
-  // Phase 29 D-22 — deferred derived from recipe.questions_deferred_until being a future timestamp.
-  // NULL or past → deferred=false (questions allowed). recipe.updated WS flips this in real time
-  // when the partner taps « Plus tard » on the other phone.
-  const deferred = recipe?.questions_deferred_until
-    ? new Date(recipe.questions_deferred_until) > new Date()
-    : false;
+  // Phase 41 THRD-01 — the `deferred` derived prop only fed RecipeThread
+  // (now hosted at /recipes/[id]/thread); that route owns its own deferred
+  // computation. Nothing on this page consumes it anymore.
 
   return (
     <OnboardingGuard>
@@ -757,7 +519,6 @@ export default function RecipeDetailPage() {
           this click handler is the secondary "tap a field" path.
         */}
         <div
-          ref={formRef}
           role="button"
           tabIndex={0}
           className="flex flex-col flex-1 cursor-pointer"
@@ -770,27 +531,43 @@ export default function RecipeDetailPage() {
             }
           }}
         >
-          {/* Title + identity subhead (D-13) */}
-          <div className="relative overflow-visible">
-            {renderSectionPin("title")}
-            <h1
-              className="text-foreground"
-              style={{
-                fontSize: "26px",
-                fontWeight: 500,
-                letterSpacing: "-0.015em",
-                lineHeight: 1.1,
-                margin: 0,
-              }}
+          {/* Title + identity subhead (D-13)
+              Phase 41 THRD-01 — title row hosts the "N tours" det-top pin on
+              the right slot. Full-row height tap target (h-12-equivalent
+              via padding); Link uses an explicit href so a shared/deep URL
+              still routes to /thread (D-16). The Link sits inside the
+              click-to-edit wrapper, so stopPropagation prevents the body's
+              edit-navigation handler from firing when the pin is tapped. */}
+          <div className="relative overflow-visible flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              {renderSectionPin("title")}
+              <h1
+                className="text-foreground"
+                style={{
+                  fontSize: "26px",
+                  fontWeight: 500,
+                  letterSpacing: "-0.015em",
+                  lineHeight: 1.1,
+                  margin: 0,
+                }}
+              >
+                {recipe.title}
+              </h1>
+              {/* ADR-0004 §Marginalia register — Geist Mono caption subhead from cook_count */}
+              <span className="text-caption block" style={{ marginTop: "4px" }}>
+                {recipe.cook_count > 0
+                  ? tSubhead("cooked", { count: recipe.cook_count })
+                  : tSubhead("never")}
+              </span>
+            </div>
+            <Link
+              href={`/recipes/${recipe.id}/thread`}
+              aria-label={`${tThread("see_conversation_aria")} · ${turns.length} ${tThread("tours_label")}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center h-12 px-3 -my-3 text-caption font-mono tabular-nums text-muted-foreground hover:text-foreground transition-colors shrink-0"
             >
-              {recipe.title}
-            </h1>
-            {/* ADR-0004 §Marginalia register — Geist Mono caption subhead from cook_count */}
-            <span className="text-caption block" style={{ marginTop: "4px" }}>
-              {recipe.cook_count > 0
-                ? tSubhead("cooked", { count: recipe.cook_count })
-                : tSubhead("never")}
-            </span>
+              {turns.length} {tThread("tours_label")}
+            </Link>
           </div>
 
           {/*
@@ -982,32 +759,10 @@ export default function RecipeDetailPage() {
         </div>
 
         {/*
-          Phase 27 CAPTURE-04 — RecipeThread in detail mode, mounted BELOW the
-          existing form per D-15 + UI-SPEC §"Layout > /recipes/[id]".
-          The thread-meta strip (rendered inside RecipeThread when mode=detail)
-          sits above the chat body, acting as a visual "this section is the
-          thread" header. The manual-link inside the thread calls
-          handleManualEditLinkClick which scrolls up to formRef.
+          Phase 41 THRD-01 / D-17 — inline RecipeThread mount HARD-DELETED
+          per MVP no-shim posture. The thread now lives at its own route
+          /recipes/[id]/thread, reached via the "N tours" pin in the title row.
         */}
-        <RecipeThread
-          mode="detail"
-          recipeId={recipe.id}
-          title={recipe.title}
-          turns={turns}
-          recipeStatus={recipe.status as RecipeStatus}
-          manuallyEditedFields={recipe.manually_edited_fields ?? []}
-          onPostTextTurn={handlePostTextTurn}
-          onPostVoiceTurn={handlePostVoiceTurn}
-          onPostUrlTurn={handlePostUrlTurn}
-          onPostPhotoTurn={handlePostPhotoTurn}
-          onPostAnswerTurn={handlePostAnswerTurn}
-          onPostProposalAccepted={handlePostProposalAccepted}
-          onPostProposalDismissed={handlePostProposalDismissed}
-          deferred={deferred}
-          onSummaryComplete={handleSummaryComplete}
-          onSummaryLater={handleSummaryLater}
-          onManualEditLinkClick={handleManualEditLinkClick}
-        />
 
         {/*
           Phase 32 §15.C — Sticky bottom CTA: "Cuisiner maintenant".

@@ -4,14 +4,14 @@ milestone: v0.9
 milestone_name: La Grille Completion
 status: executing
 stopped_at: Phase 40 planned (5 plans)
-last_updated: "2026-05-21T15:44:03.446Z"
-last_activity: 2026-05-21 -- Phase 40 execution started
+last_updated: "2026-05-21T16:39:36.335Z"
+last_activity: 2026-05-21 -- Phase 41 execution started
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 5
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 9
+  completed_plans: 5
+  percent: 33
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-21 — v0.9 La Grille Completion scaffolded)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** Phase 40 — pure-frontend-restyles
+**Current focus:** Phase 41 — navigation-surgery-first-backend-touch
 
 ## Current Position
 
-Phase: 40 (pure-frontend-restyles) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 40
-Last activity: 2026-05-21 -- Phase 40 execution started
+Phase: 41 (navigation-surgery-first-backend-touch) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 41
+Last activity: 2026-05-21 -- Phase 41 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
