@@ -121,3 +121,24 @@ class HouseholdPreview(BaseModel):
 
     household_name: str
     taken_colors: list[str]
+
+
+class HouseholdStats(BaseModel):
+    """GET /households/{id}/stats response — Phase 40 PROF-01 (D-04, D-05).
+
+    Three all-time household counts, surfaced on the Profil page's stats block.
+    Counters use the filtered definitions from Phase 40 CONTEXT.md D-05:
+
+    - ``recipes_count``: structured recipes only (drafts excluded — they are
+      not "real" library entries until promotion completes).
+    - ``cooking_logs_count``: finalized cooking sessions only (in-progress
+      logs with ``rating IS NULL`` excluded — the COOK-02 finalization proxy
+      from 03-RESEARCH §A5 is the canonical "is this a real cook" signal).
+    - ``votes_count``: all-time, no filtering (votes have no "void" state).
+    """
+
+    recipes_count: int
+    cooking_logs_count: int
+    votes_count: int
+
+    model_config = {"from_attributes": True}
