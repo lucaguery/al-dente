@@ -41,7 +41,12 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
   3. The Library view switcher offers a third "text-only" mode: pure numbered rows (index + name + meta + tag pill, no photo column); the user's selection persists after app reload.
   4. `app/loading.tsx` renders the La Grille splash composition (table-à-manger logo, wordmark, tagline, 3-dot loader, version footer) on Next.js navigation loads; iOS PWA boot shows a matching `apple-touch-startup-image` on "Add to Home Screen" launch.
   5. `app/cooking-logs/[id]/page.tsx` contains no reference to Fraunces italic, `bg-surface-rose-100`, or `bg-[var(--color-valide-tint)]`; all visual tokens are La Grille set tokens from `frontend/app/globals.css`.
-**Plans**: TBD
+**Plans**:
+  - 40-01: Stats backend endpoint + Profil page rewrite (PROF-01)
+  - 40-02: Onboarding welcome rewrite (ONBO-01)
+  - 40-03: Library text-only mode (LIB-01)
+  - 40-04: Splash loading.tsx (SPLA-01; SPLA-02 deferred per D-09)
+  - 40-05: cooking-logs DRIFT sweep (DRIFT-01)
 **UI hint**: yes
 
 ### Phase 41: Navigation Surgery + First Backend Touch
@@ -76,7 +81,7 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 40. Pure-Frontend Restyles | 0/TBD | Not started | - |
+| 40. Pure-Frontend Restyles | 0/5 | Planned | - |
 | 41. Navigation Surgery + First Backend Touch | 0/TBD | Not started | - |
 | 42. Structured Steps + Active Cooking Session | 0/TBD | Not started | - |
 
