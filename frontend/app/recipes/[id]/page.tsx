@@ -835,21 +835,14 @@ export default function RecipeDetailPage() {
 
           {/*
             Ingredients section.
-            Phase 36 SOBER-12 (gesture 1, §15.C cookbook page): the section
-            carries a terracotta-30 left margin-rule — a vertical 3px border in
-            ~30% terracotta running down the left edge of the ingredient block,
-            with paddingLeft to inset the list from the rule. This is the
-            cookbook-page gesture: the recipe reads as printed against a
-            terracotta-tinted margin guide, not as a flat list.
+            PUNCH-LIST D-02 (quick 260521-l8g): the prior Sober Kitchen
+            cookbook-page gesture (a 3px terracotta-30 left margin-rule with
+            12px inset) is dropped per ADR-0004 — the numbered Mono indices
+            carry enough structural pressure; the card hairline is the only
+            border that remains.
           */}
           {recipe.ingredients && recipe.ingredients.length > 0 ? (
-            <section
-              style={{
-                borderLeft:
-                  "3px solid color-mix(in oklch, var(--primary) 30%, transparent)",
-                paddingLeft: "12px",
-              }}
-            >
+            <section>
               <div className="relative overflow-visible" style={{ marginBottom: "8px" }}>
                 {renderSectionPin("ingredients")}
                 <h2 style={{ fontSize: "17px", fontWeight: 500, margin: 0 }}>
@@ -909,7 +902,7 @@ export default function RecipeDetailPage() {
                   {t("section_steps")}
                 </h2>
               </div>
-              <div className="flex flex-col" style={{ gap: 0 }}>
+              <div className="flex flex-col" style={{ gap: "4px" }}>
                 {recipe.steps.map((step, idx) => {
                   const isFirst = idx === 0;
                   return (
@@ -917,7 +910,11 @@ export default function RecipeDetailPage() {
                       key={idx}
                       style={{
                         padding: "8px 0",
-                        borderTop: isFirst ? "none" : "1px dashed var(--border)",
+                        // PUNCH-LIST P-04 (260521-l8g) — the prior 1px dashed-horizontal
+                        // continuation line between step rows is dropped per ADR-0004.
+                        // The numbered Mono indices carry the row separation; marginalia
+                        // children (when present) render with a left vertical hairline,
+                        // not a dashed-horizontal continuation.
                       }}
                     >
                       <div className="flex items-baseline">
@@ -949,17 +946,19 @@ export default function RecipeDetailPage() {
                         Kitchen marginalia register (design-system §13).
                       */}
                       {isFirst && recipeLog?.notes ? (
-                        /* ADR-0004 §Marginalia register — Geist Mono caption.
-                           The dotted-terracotta left border is preserved as a
-                           cookbook-margin gesture; the register is now data-
-                           mono rather than the dropped handwriting variant. */
+                        /* PUNCH-LIST P-04 (260521-l8g) — solid faint-ink left
+                           hairline + 12px padding-left per
+                           .claude/skills/sketch-findings-al-dente/references/components.md
+                           §Data lists. Replaces the prior dotted-terracotta
+                           gesture (which read as a printed paper-margin
+                           annotation — wrong register for La Grille). */
                         <span
                           className="text-caption block"
                           style={{
                             margin: "4px 0 0 0",
-                            paddingLeft: "16px",
+                            paddingLeft: "12px",
                             borderLeft:
-                              "1px dotted color-mix(in oklch, var(--primary) 25%, transparent)",
+                              "1px solid color-mix(in oklab, var(--foreground) 30%, transparent)",
                           }}
                         >
                           {recipeLog.notes}
