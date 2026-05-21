@@ -341,7 +341,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 45,
             "servings": 2,
             "ingredients": [{"name": "saumon", "quantity": 200, "unit": "g"}],
-            "steps": ["Preparer le riz.", "Rouler les makis."],
+            "steps": [
+                {"text": "Preparer le riz.", "ingredient_refs": []},
+                {"text": "Rouler les makis.", "ingredient_refs": []},
+            ],
         },
         # 9. Asian / legume / light / spring
         {
@@ -354,7 +357,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 25,
             "servings": 2,
             "ingredients": [{"name": "tofu", "quantity": 200, "unit": "g"}],
-            "steps": ["Sauter.", "Ajouter les nouilles."],
+            "steps": [
+                {"text": "Sauter.", "ingredient_refs": []},
+                {"text": "Ajouter les nouilles.", "ingredient_refs": []},
+            ],
         },
         # 10. Mediterranean / fish / light / summer
         {
@@ -367,7 +373,7 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 30,
             "servings": 2,
             "ingredients": [{"name": "branzino", "quantity": 1, "unit": "kg"}],
-            "steps": ["Cuire au four."],
+            "steps": [{"text": "Cuire au four.", "ingredient_refs": []}],
         },
         # 11. Mediterranean / legume / light / summer
         {
@@ -380,7 +386,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 10,
             "servings": 4,
             "ingredients": [{"name": "tomates", "quantity": 4, "unit": None}],
-            "steps": ["Couper.", "Melanger."],
+            "steps": [
+                {"text": "Couper.", "ingredient_refs": []},
+                {"text": "Melanger.", "ingredient_refs": []},
+            ],
         },
         # 12. Middle Eastern / red_meat / adventurous / all-seasons
         {
@@ -398,7 +407,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 60,
             "servings": 4,
             "ingredients": [{"name": "agneau", "quantity": 800, "unit": "g"}],
-            "steps": ["Mariner 4h.", "Griller."],
+            "steps": [
+                {"text": "Mariner 4h.", "ingredient_refs": []},
+                {"text": "Griller.", "ingredient_refs": []},
+            ],
         },
         # 13. Middle Eastern / legume / quick / winter
         {
@@ -411,7 +423,7 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 15,
             "servings": 4,
             "ingredients": [{"name": "pois chiches", "quantity": 400, "unit": "g"}],
-            "steps": ["Mixer."],
+            "steps": [{"text": "Mixer.", "ingredient_refs": []}],
         },
         # 14. Indian / legume / adventurous / autumn-winter
         {
@@ -424,7 +436,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 90,
             "servings": 4,
             "ingredients": [{"name": "lentilles noires", "quantity": 250, "unit": "g"}],
-            "steps": ["Tremper.", "Mijoter."],
+            "steps": [
+                {"text": "Tremper.", "ingredient_refs": []},
+                {"text": "Mijoter.", "ingredient_refs": []},
+            ],
         },
         # 15. Indian / poultry / adventurous / all-seasons
         {
@@ -442,7 +457,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 50,
             "servings": 4,
             "ingredients": [{"name": "poulet", "quantity": 600, "unit": "g"}],
-            "steps": ["Mariner.", "Cuire a la sauce."],
+            "steps": [
+                {"text": "Mariner.", "ingredient_refs": []},
+                {"text": "Cuire a la sauce.", "ingredient_refs": []},
+            ],
         },
         # 16. Mexican / red_meat / comfort / all-seasons
         {
@@ -460,7 +478,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 25,
             "servings": 4,
             "ingredients": [{"name": "boeuf hache", "quantity": 500, "unit": "g"}],
-            "steps": ["Cuire le boeuf.", "Garnir les tortillas."],
+            "steps": [
+                {"text": "Cuire le boeuf.", "ingredient_refs": []},
+                {"text": "Garnir les tortillas.", "ingredient_refs": []},
+            ],
         },
         # 17. Mexican / egg / quick / all-seasons
         {
@@ -478,7 +499,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 15,
             "servings": 2,
             "ingredients": [{"name": "oeufs", "quantity": 4, "unit": None}],
-            "steps": ["Cuire les oeufs.", "Servir sur tortilla."],
+            "steps": [
+                {"text": "Cuire les oeufs.", "ingredient_refs": []},
+                {"text": "Servir sur tortilla.", "ingredient_refs": []},
+            ],
         },
         # 18. North African / red_meat / adventurous / autumn-winter
         {
@@ -491,7 +515,7 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 120,
             "servings": 6,
             "ingredients": [{"name": "agneau", "quantity": 1, "unit": "kg"}],
-            "steps": ["Mijoter avec epices."],
+            "steps": [{"text": "Mijoter avec epices.", "ingredient_refs": []}],
         },
         # 19. American / red_meat / comfort / all-seasons
         {
@@ -509,7 +533,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 20,
             "servings": 2,
             "ingredients": [{"name": "boeuf hache", "quantity": 300, "unit": "g"}],
-            "steps": ["Former les steaks.", "Griller."],
+            "steps": [
+                {"text": "Former les steaks.", "ingredient_refs": []},
+                {"text": "Griller.", "ingredient_refs": []},
+            ],
         },
         # 20. Other / egg / quick / all-seasons
         {
@@ -527,7 +554,10 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 10,
             "servings": 2,
             "ingredients": [{"name": "oeufs", "quantity": 4, "unit": None}],
-            "steps": ["Battre.", "Cuire a la poele."],
+            "steps": [
+                {"text": "Battre.", "ingredient_refs": []},
+                {"text": "Cuire a la poele.", "ingredient_refs": []},
+            ],
         },
         # 21. American / fish / light / summer (extra to push past 20)
         {
@@ -540,7 +570,7 @@ def _recipe_specs() -> list[dict]:
             "prep_time_minutes": 20,
             "servings": 2,
             "ingredients": [{"name": "saumon", "quantity": 400, "unit": "g"}],
-            "steps": ["Griller 8 min."],
+            "steps": [{"text": "Griller 8 min.", "ingredient_refs": []}],
         },
     ]
 
