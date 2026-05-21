@@ -74,7 +74,18 @@ class Recipe(Base):
         default=list,
     )
     ingredients: Mapped[list | None] = mapped_column(JSONB, nullable=True)
-    steps: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    # Phase 42 STEP-01 (migration 0013) — NOT NULL DEFAULT '[]'::jsonb.
+    # Inner shape per ``StepEntry`` in app/schemas/recipe.py: ``{text, ingredient_refs}``.
+    # Legacy rows with list[str] shape are tolerated at read time until plan 42-03
+    # lazy backfill re-extracts on first /active visit (invariant #5 — turn-0 is
+    # the durable source). The model declares ``list[dict]`` because SQLAlchemy
+    # cannot enforce the inner JSONB structure at the column level.
+    steps: Mapped[list[dict]] = mapped_column(
+        JSONB,
+        nullable=False,
+        server_default=text("'[]'::jsonb"),
+        default=list,
+    )
     # Phase 25 THREAD-03 (migration 0009) — JSON array of field names edited by the user.
     # Write path owned by Phase 28 DETAIL-05; default [] means no manual overrides.
     manually_edited_fields: Mapped[list[str]] = mapped_column(
