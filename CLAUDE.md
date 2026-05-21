@@ -452,6 +452,10 @@ A shared recipe + decision app for couples, built as an installable PWA with a P
 No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, `.github/skills/`, or `.codex/skills/` with a `SKILL.md` index file.
 <!-- GSD:skills-end -->
 
+### Skill auto-load routing
+
+- **Sketch findings for al-dente** (design decisions, CSS patterns, visual direction from sketches 001 + 002, La Grille · Soft warmth refresh) → `Skill("sketch-findings-al-dente")`. Load whenever working on `frontend/app/globals.css`, components in `frontend/components/`, or any UI surface during the modern-sober refresh migration tracked in [ADR-0004](docs/adr/0004-modern-sober-refresh.md).
+
 <!-- GSD:profile-start -->
 
 ## Developer Profile
