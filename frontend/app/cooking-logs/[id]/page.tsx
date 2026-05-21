@@ -1,26 +1,12 @@
 "use client";
 
-// Phase 17 / HIST-02 — Cooking-log detail page.
+// Cooking-log detail page.
 //
-// Per D-17-05: hairline Card chrome consistent with the Phase 8
-// cookbook-chapter-opener gesture. Header is an absolute French date
-// in Fraunces italic (the gesture the user explicitly named); body
-// shows the cooked-by chip (member name + color from useSession), the
-// photo at aspect-square, the rating chip, and the notes paragraph
-// (preserves line breaks via whitespace-pre-line).
-//
-// The recipe-back-link routes to `/recipes/{recipe_id}` so the user
-// can re-cook (D-17-05 tail).
-//
-// This file is the read sibling of `[id]/finalize/page.tsx` — both
-// routes coexist (App Router treats `[id]/page.tsx` and
-// `[id]/finalize/page.tsx` as `/:id` vs `/:id/finalize`).
-//
-// i18n: reuses existing keys (`cooking_log.rating.*`,
-// `cooking_log.finalize.gone_heading`, `cooking_log.finalize.notes_heading`).
-// A small number of strings have no existing key and are marked
-// `TODO(productize): i18n — Phase 20 (FIX-03)` per invariant #6 +
-// Plan 17-02 Path B (sweep deferred to the Phase 20 i18n pass).
+// Visual register: La Grille · Soft warmth per ADR-0004
+// (docs/adr/0004-modern-sober-refresh.md). Token sources:
+// frontend/app/globals.css. Locked decisions for this file
+// ship in .planning/phases/40-pure-frontend-restyles/40-CONTEXT.md
+// (D-10 through D-14).
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -45,16 +31,17 @@ function ratingChipClass(rating: LogRating): string {
     "inline-flex items-center rounded-full px-2 py-1 h-8 text-sm font-medium";
   switch (rating) {
     case "loved":
-      return `${base} bg-surface-rose-100 text-primary border border-primary/40`;
+      return `${base} bg-[var(--color-valide-tint)] text-primary border border-primary`;
     case "liked":
-      return `${base} bg-[var(--color-valide-tint)] text-foreground border border-[var(--color-valide-border-faint)]`;
+      return `${base} bg-card border border-border text-foreground`;
     case "disliked":
       return `${base} bg-muted text-muted-foreground border border-border`;
   }
 }
 
-/** Absolute French date — "vendredi 8 mai 2026". Cookbook-chapter-opener
- *  gesture per D-17-05; pairs with the Phase 7 HomeDecide header.
+/** Absolute French date — "vendredi 8 mai 2026". Renders in Geist 500
+ *  (no italic) per Phase 40 D-13; aligned with the other La Grille
+ *  detail-view headers.
  */
 function formatAbsoluteFr(date: Date): string {
   return new Intl.DateTimeFormat("fr-FR", {
