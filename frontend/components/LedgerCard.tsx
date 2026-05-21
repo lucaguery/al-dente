@@ -1,14 +1,21 @@
 "use client";
 
-// Phase 32 §15.C — Patine ledger card.
-// Wraps a <article> (or chosen element) with .ledger-card class and an
-// inline --patina CSS var consumed by the patine overlays (::before /
-// ::after / .dogear) in globals.css (added in 32-01).
-// Per CONTEXT D-05, D-07 + UI-SPEC §7.1 + RESEARCH Pattern 3.
+// TODO(wave-3): delete this stub once all callers are migrated.
 //
-// Consumers must NOT add `paper-grain` class — .ledger-card::after
-// provides its own dot-grid grain (RESEARCH Pitfall 1).
-// Dogear renders when `dogear` prop OR when patina >= 3 (Héritage).
+// ADR-0004 §Patine ledger card "Dropped entirely" — the patine system + dog-
+// ear corner-fold + hand-stamp grammar are gone. The proper deletion is
+// `git rm` of this file, BUT 4 callers (app/recipes/page.tsx,
+// components/RecipeCard.tsx, components/RecipeRow.tsx,
+// app/recipes/[id]/page.tsx — and the patina-view branch of recipes/page.tsx)
+// still import `<LedgerCard patina={…} dogear>`. Removing the file in wave 2
+// would break `next build --webpack` and force the wave-3 screen refit to
+// happen in a single megacommit, against the per-wave atomic-commit contract.
+//
+// This stub re-exports `LedgerCard` as a thin <article> with the same
+// `className` / `style` / children pass-through. The `patina` and `dogear`
+// props are accepted but rendered as plain hairline borders (no overlays,
+// no ::before / ::after stamps — those CSS rules were deleted in wave 1).
+// Wave 3 sweeps all call sites + `git rm`s this file in the same commit.
 
 import type { ReactNode, CSSProperties } from "react";
 
@@ -24,36 +31,22 @@ export interface LedgerCardProps {
 }
 
 export function LedgerCard({
-  patina,
-  dogear,
+  // patina + dogear accepted but no-op'd — overlays are gone in wave 1.
+  patina: _patina,
+  dogear: _dogear,
   as: Tag = "article",
   className,
   style,
   children,
 }: LedgerCardProps) {
-  const showDogear = dogear ?? patina >= 3;
-  const cls = ["ledger-card", className].filter(Boolean).join(" ");
+  // Compose the new hairline-card class chain so the stub still reads as a
+  // card surface against the off-white bg. No shadows, no texture, no patine.
+  const cls = ["rounded-lg border border-border bg-card", className]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <Tag
-      className={cls}
-      style={{ ...style, ["--patina" as string]: patina } as CSSProperties}
-    >
+    <Tag className={cls} style={style}>
       {children}
-      {showDogear ? (
-        <span className="dogear" aria-hidden>
-          {/* Doc line 1612: SVG corner-fold. Foreground = border-mix. */}
-          <svg viewBox="0 0 26 26" width={26} height={26}>
-            <path
-              d="M 0 0 L 26 0 L 26 26 Z"
-              fill="color-mix(in oklch, var(--border) 60%, transparent)"
-            />
-            <path
-              d="M 0 0 L 26 0 L 14 12 Z"
-              fill="var(--card)"
-            />
-          </svg>
-        </span>
-      ) : null}
     </Tag>
   );
 }

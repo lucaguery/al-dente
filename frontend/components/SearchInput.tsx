@@ -74,27 +74,22 @@ export function SearchInput({ onQueryChange }: Props) {
     scheduleSearch("");
   };
 
-  // NOTE: paper-grain is applied as a SIBLING absolute layer, NOT a parent
-  // class. globals.css `.paper-grain > * { position: relative }` would
-  // override the absolute Search icon + right-side controls. Putting the
-  // paper-grain on a sibling div (not a parent of the icons) keeps the
-  // texture while preserving the layout. The Input gets `bg-card relative`
-  // to layer above the paper-grain layer.
+  // ADR-0004 wave 2 — paper-grain sibling layer dropped. The new <Input>
+  // primitive already carries the border-border (#EDEBE4) hairline + focus
+  // ring (--ring #A8523C). The Input's bg is transparent; we set bg-card on
+  // the wrapper instead so the search-row reads as a card surface against
+  // the off-white background.
   return (
-    <div className="relative rounded-xl">
-      <div
-        aria-hidden
-        className="absolute inset-0 paper-grain rounded-xl pointer-events-none"
-      />
+    <div className="relative rounded-xl bg-card">
       <Search
         aria-hidden
-        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted z-10 pointer-events-none"
+        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none"
       />
       <Input
         value={value}
         onChange={onChange}
         placeholder={t("search_placeholder")}
-        className="pl-10 pr-12 h-12 rounded-xl bg-card relative focus:ring-2 focus:ring-primary/30"
+        className="pl-10 pr-12 h-12 rounded-xl"
         aria-label={t("search_placeholder")}
       />
       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center z-10">
