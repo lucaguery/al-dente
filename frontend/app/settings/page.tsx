@@ -1,16 +1,37 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+// Profil page — La Grille · Soft warmth composition (Phase 40 PROF-01).
+//
+// Replaces the prior 3-Card stack with the literal-sketch composition from
+// .claude/skills/sketch-findings-al-dente/sources/002-refresh-direction-explorations/index.html
+// lines 1765-1809: hero word + identity line + partner block + stats block +
+// 5 numbered hairline rows. No Card components anywhere — only hairline
+// borders on the off-white surface (ADR-0004 Type stack + Surface temperature).
+//
+// Phase 40 CONTEXT.md decisions in effect:
+//   D-01 — Shortlist-scheduling row dropped (no such setting exists today;
+//          household timezone is fixed at onboarding).
+//   D-03 — No Card components. Hairline rows only.
+//   D-06 — Stats block fetches once via useEffect on mount; no realtime sub.
+
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import Link from "next/link";
-import { Bell, Copy, Check, Download, ChevronRight, LogOut, Pencil, X } from "lucide-react";
+import {
+  Bell,
+  Check,
+  ChevronRight,
+  Copy,
+  Download,
+  LogOut,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/components/SessionProvider";
 import { MemberDot } from "@/components/MemberDot";
 import { VersionFooter } from "@/components/VersionFooter";
+import { api } from "@/lib/api";
 import { renameMe } from "@/lib/households";
 import {
   canReceivePush,
@@ -18,29 +39,11 @@ import {
   unsubscribePush,
 } from "@/lib/push";
 
-// Phase 01.1 D-08: read-only settings screen with three blocks (household
-// name, invite code w/ copy, current member). Phase 01-foundations-w1
-// plan 01-10 adds the JSON export section per UI-SPEC §11 / RECIPE-08.
-//
-// Phase 09-03 (v0.2): restructured into three Card surfaces stacked at
-// gap-6 (Membre / Foyer / Sauvegarde mental model) with the Phase 9 identity
-// signature on the invite-code (Fraunces italic terracotta — byte-
-// identical mirror of share-code Plan 02). Tap-targets bumped to the
-// D-08 48px floor. Zero new i18n keys: existing field-labels carry the
-// section meaning per UI-SPEC §"Typography > Settings section title".
-//
-// Export uses raw `fetch()` instead of api<T>() because we need the
-// streamed Blob (not parsed JSON) and the Content-Disposition header.
-// Auth travels via the same-origin aldente_auth cookie automatically
-// (credentials: "include"). API_BASE === "" in production; the path
-// /api/households/{id}/export.json is rewritten by next.config.ts to
-// the Railway backend.
-
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
-// VAL-02 — Notifications Card push state. Lives at module scope so the
-// useSyncExternalStore snapshot getter is referentially stable across renders
-// (Notification.permission + canReceivePush() are read fresh each call).
+// Push-permission snapshot. Lives at module scope so the useSyncExternalStore
+// snapshot getter is referentially stable across renders (Notification.permission
+// + canReceivePush() are read fresh each call).
 type PushState = "unsupported" | "default" | "granted" | "denied";
 
 function readPushState(): PushState {
@@ -51,16 +54,62 @@ function readPushState(): PushState {
   return "default";
 }
 
+type HouseholdStats = {
+  recipes_count: number;
+  cooking_logs_count: number;
+  votes_count: number;
+};
+
+// Format the household-creation month into the La Grille `YYYY.MM` shape
+// (e.g. `2026.03`). fr-FR locale renders `MM/YYYY`; we swap order + separator.
+function formatCreatedAt(value: string | null | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${yyyy}.${mm}`;
+}
+
+type SessionShape = ReturnType<typeof useSession>["session"];
+
+function NumberedRow({
+  index,
+  label,
+  meta,
+  onClick,
+  ariaLabel,
+}: {
+  index: string;
+  label: string;
+  meta?: React.ReactNode;
+  onClick?: () => void;
+  ariaLabel?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel ?? label}
+      className="flex items-center gap-4 w-full py-4 border-b border-border text-left"
+    >
+      <span className="text-caption tabular-nums shrink-0 text-foreground font-mono">
+        {index}
+      </span>
+      <span className="flex-1 text-base font-medium">{label}</span>
+      {meta !== undefined && meta !== null ? (
+        <span className="text-caption text-muted-foreground">{meta}</span>
+      ) : null}
+      <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+    </button>
+  );
+}
+
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const { status, session, refresh } = useSession();
-  // LIVE-03 (Phase 34 B-07 punch-list): the Foyer section must render one
-  // Card per household member. The seed and prod both deliver the partner
-  // in session.members alongside `me` (the Partner already renders on
-  // Accueil voting cards via this same context), but Settings only consumed
-  // session.me — silently hiding the partner block. Filter out `me` to get
-  // the partner list. Sorted by id for determinism if a future 3-member
-  // family lands; couple-scale today has exactly one partner.
+
+  // Partner list: everyone except `me`. Sorted by id for determinism.
   const partners = useMemo(() => {
     if (!session) return [];
     return session.members
@@ -68,37 +117,67 @@ export default function SettingsPage() {
       .slice()
       .sort((a, b) => a.id.localeCompare(b.id));
   }, [session]);
+
+  // Identity line: `maison · CODE · depuis YYYY.MM`. Falls back to empty
+  // strings if SessionProvider hasn't filled the relevant fields yet.
+  const identityDate = useMemo(() => {
+    // session.household_created_at may not be on the SessionResponse today
+    // (it isn't in the Pydantic shape) — fall back to empty if missing.
+    const raw = (session as SessionShape & { household_created_at?: string })
+      ?.household_created_at;
+    return formatCreatedAt(raw);
+  }, [session]);
+
+  // Stats block — single useEffect fetch on mount (D-06: no realtime sub).
+  const [stats, setStats] = useState<HouseholdStats | null>(null);
+
+  useEffect(() => {
+    if (!session?.household_id) return;
+    let cancelled = false;
+    // /api/ prefix in prod (rewritten by next.config.ts to Railway);
+    // in local dev (NEXT_PUBLIC_API_BASE set), strip /api/.
+    const path =
+      API_BASE === ""
+        ? `/api/households/${session.household_id}/stats`
+        : `/households/${session.household_id}/stats`;
+    api<HouseholdStats>(path)
+      .then((data) => {
+        if (!cancelled) setStats(data);
+      })
+      .catch(() => {
+        // Silent fallback — em-dash placeholders remain.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.household_id]);
+
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
-  // Phase 18 IDM-02 — Membre Card inline rename.
-  // `renaming` toggles the name <span> ↔ <Input> swap. `renameValue` is the
-  // controlled input. `renameSubmitting` guards against double-submit when
-  // Enter and onBlur both fire (Enter triggers blur on most browsers).
+
+  // Inline-rename state for `03 Membre`.
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [renameSubmitting, setRenameSubmitting] = useState(false);
 
-  // "Compte" card — two-step disconnect (Se déconnecter → Confirmer).
-  // No localStorage to clear ourselves (cookie-auth, invariant 8); the
-  // DELETE /api/auth/session endpoint clears the HttpOnly cookie server-side.
+  // Inline-confirm state for `05 Déconnexion`.
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
 
-  // VAL-02 — Notifications Card state. The Notification.permission +
-  // PushSubscription state lives outside React; read via useSyncExternalStore
-  // (same pattern as PushPermissionBanner) to avoid set-state-in-effect lint.
+  // Push-permission snapshot (same useSyncExternalStore pattern as the
+  // prior implementation — `pushRefreshKey` bumps after each user action
+  // to force a fresh read of Notification.permission).
   const [pushRefreshKey, setPushRefreshKey] = useState(0);
   const [pushSubmitting, setPushSubmitting] = useState(false);
-
-  // useSyncExternalStore subscribe is a no-op: permission only flips via user
-  // action handlers below, which bump pushRefreshKey explicitly. We embed the
-  // refresh key in the snapshot so React re-evaluates after each bump.
   const pushSnapshot = useSyncExternalStore(
     () => () => {},
     () => `${readPushState()}::${pushRefreshKey}`,
     () => "unsupported::0",
   );
   const pushState = pushSnapshot.split("::")[0] as PushState;
+
+  // Foyer (invite-code copy) inline-expanded state for `02 Foyer`.
+  const [foyerOpen, setFoyerOpen] = useState(false);
 
   const onActivatePush = async () => {
     if (pushSubmitting) return;
@@ -108,7 +187,6 @@ export default function SettingsPage() {
       if (res.ok) {
         toast.success(t("notifications.activated_toast"));
       } else if (res.reason === "denied") {
-        // Permission denied at OS level — state will re-read as "denied".
         toast(t("notifications.status_denied_explainer"));
       } else {
         toast.error(t("notifications.activate_failed_toast"));
@@ -119,35 +197,11 @@ export default function SettingsPage() {
     }
   };
 
-  const onDisconnect = async () => {
-    if (disconnecting) return;
-    setDisconnecting(true);
-    try {
-      // Clear HttpOnly cookie server-side. Mirrors the same path-selection
-      // logic as `lib/api.ts` so the call works in both prod (rewrite via
-      // next.config.ts → Railway) and local dev (direct hit on backend).
-      const sessionPath =
-        API_BASE === "" ? "/api/auth/session" : "/auth/session";
-      await fetch(`${API_BASE}${sessionPath}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      // Hard navigate so SessionProvider re-fetches and OnboardingGuard
-      // routes the user to /onboarding/welcome on a clean slate.
-      window.location.href = "/onboarding/welcome";
-    } catch {
-      toast.error(t("disconnect.error"));
-      setDisconnecting(false);
-      setConfirmingDisconnect(false);
-    }
-  };
-
   const onDeactivatePush = async () => {
     if (pushSubmitting) return;
     setPushSubmitting(true);
     try {
       const did = await unsubscribePush();
-      // did === false just means "no subscription was active" — still ok to refresh.
       if (did) toast.success(t("notifications.deactivated_toast"));
       setPushRefreshKey((k) => k + 1);
     } catch {
@@ -157,16 +211,33 @@ export default function SettingsPage() {
     }
   };
 
+  const onDisconnect = async () => {
+    if (disconnecting) return;
+    setDisconnecting(true);
+    try {
+      const sessionPath =
+        API_BASE === "" ? "/api/auth/session" : "/auth/session";
+      await fetch(`${API_BASE}${sessionPath}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      window.location.href = "/onboarding/welcome";
+    } catch {
+      toast.error(t("disconnect.error"));
+      setDisconnecting(false);
+      setConfirmingDisconnect(false);
+    }
+  };
+
   if (status === "loading") {
     return (
       <section className="flex flex-col flex-1 px-(--spacing-page-x) pt-6">
-        <div className="h-6 w-32 bg-surface-muted animate-pulse rounded" />
+        <div className="h-6 w-32 bg-muted animate-pulse rounded" />
       </section>
     );
   }
 
   if (status !== "authenticated" || !session) {
-    // OnboardingGuard normally catches this at the route level; defensive null.
     return null;
   }
 
@@ -181,9 +252,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Phase 18 IDM-02 — extract numeric status from api()'s Error("<status> <text>").
-  // The generic api() wrapper has no typed-error surface; this matches the
-  // statusOf-style pattern used elsewhere in the codebase.
   const statusOf = (err: unknown): number | null => {
     if (err instanceof Error) {
       const m = err.message.match(/^(\d{3})\s/);
@@ -205,8 +273,6 @@ export default function SettingsPage() {
   const onSubmitRename = async () => {
     if (renameSubmitting) return;
     const trimmed = renameValue.trim();
-    // Empty submits are a no-op; same-name submits close the input as a no-op
-    // (the user opened the input and committed without changes — treat as cancel).
     if (trimmed.length === 0) return;
     if (trimmed === session.me.name) {
       onCancelRename();
@@ -216,24 +282,16 @@ export default function SettingsPage() {
     try {
       await renameMe(trimmed);
       toast.success(t("member.rename_success_toast"));
-      // Canonical reconciliation: re-fetch /households/me so SessionProvider's
-      // snapshot reflects the server truth (optimistic+canonical merge per
-      // D-18-07). Both phones converge through this same path — the renamer's
-      // phone via this direct refresh call, the partner's phone via
-      // RealtimeProvider's member.updated handler (Task 3).
       await refresh();
       setRenaming(false);
       setRenameValue("");
     } catch (err) {
-      const status = statusOf(err);
-      if (status === 409) {
+      const s = statusOf(err);
+      if (s === 409) {
         toast.error(t("member.rename_409_toast"));
       } else {
         toast.error(t("member.rename_error_toast"));
       }
-      // Keep the input open with the rejected value so the user can adjust + retry.
-      // useSession().refresh() is NOT called on error — UI never diverges from
-      // the server's truth (T-18-02-06).
     } finally {
       setRenameSubmitting(false);
     }
@@ -244,10 +302,6 @@ export default function SettingsPage() {
     setExporting(true);
     try {
       const householdId = session.household_id;
-      // Use /api/ prefix so Vercel rewrites this to Railway in production
-      // (next.config.ts) and the aldente_auth cookie rides along same-origin.
-      // In local dev, NEXT_PUBLIC_API_BASE points directly at the backend
-      // and the /api/ prefix would 404; strip it.
       const apiPath =
         API_BASE === ""
           ? `/api/households/${householdId}/export.json`
@@ -268,9 +322,6 @@ export default function SettingsPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      // iOS Safari quirk: PWA standalone mode may open the JSON in a new
-      // tab rather than downloading directly. Either is acceptable for
-      // v0.1; productize-later TODO is an explicit "Save to Files" hint.
     } catch {
       toast.error(t("export_error"));
     } finally {
@@ -278,26 +329,33 @@ export default function SettingsPage() {
     }
   };
 
+  const dash = t("stats.loading_dash");
+  const recipesDisplay = stats ? stats.recipes_count.toString() : dash;
+  const logsDisplay = stats ? stats.cooking_logs_count.toString() : dash;
+  const votesDisplay = stats ? stats.votes_count.toString() : dash;
+
+  // Identity line: `maison · CODE · depuis YYYY.MM`.
+  const identityLine = t("identity_format", {
+    invite_code: session.invite_code,
+    date: identityDate || "—",
+  });
+
+  const notificationsMeta =
+    pushState === "granted"
+      ? t("rows.notifications_on_meta")
+      : t("rows.notifications_off_meta");
+
   return (
     <section className="flex flex-col flex-1 bg-background">
-      <header className="sticky top-0 h-12 px-(--spacing-page-x) flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-10">
-        <h1 className="text-page-header">{t("title")}</h1>
-      </header>
+      <div className="flex flex-col px-(--spacing-page-x) pt-8 pb-(--spacing-bottom-safe)">
+        {/* Hero word + identity line. */}
+        <h1 className="text-3xl font-medium tracking-tight">{t("hero")}</h1>
+        <p className="mt-2 text-caption text-muted-foreground tabular-nums">
+          {identityLine}
+        </p>
 
-      <div className="flex flex-col gap-(--spacing-section-y) px-(--spacing-page-x) pt-6 pb-(--spacing-bottom-safe)">
-
-        {/* Card 1 — Membre. Member color attribution + name.
-            The "Membre" mental model is delivered by the Card grouping;
-            the existing `settings.member_label` ("Toi") field-label inside
-            carries the section meaning. NO new section-heading string.
-            Phase 18 IDM-02: Pencil affordance swaps the name <span> into an
-            <Input>; Enter/blur submit, Escape/cancel-X revert. The submit
-            path is renameMe() (PATCH /households/me) with toast + canonical
-            session refresh on success, optimistic+canonical merge on error. */}
-        <Card className="p-6 flex flex-col gap-2">
-          <span className="text-sm text-foreground-muted">
-            {t("member_label")}
-          </span>
+        {/* Partner block — `me` + partners as a row of MemberDot + name pairs. */}
+        <div className="mt-6 flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <MemberDot colorHex={session.me.color_hex} />
             {renaming ? (
@@ -321,8 +379,6 @@ export default function SettingsPage() {
                   disabled={renameSubmitting}
                   className="text-base font-medium"
                 />
-                {/* Cancel-X — onMouseDown (not onClick) so the cancel fires
-                    BEFORE the Input's blur handler would trigger onSubmitRename. */}
                 <Button
                   size="icon"
                   variant="ghost"
@@ -338,230 +394,144 @@ export default function SettingsPage() {
                 </Button>
               </div>
             ) : (
-              <>
-                <span className="text-base font-medium flex-1">
-                  {session.me.name}
-                </span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-12 w-12"
-                  onClick={onStartRename}
-                  aria-label={t("member.rename_aria")}
-                >
-                  <Pencil size={18} />
-                </Button>
-              </>
+              <span className="text-base font-medium">{session.me.name}</span>
             )}
           </div>
-        </Card>
-
-        {/* Card 1b — Partenaire block(s). LIVE-03 (B-07) fix: Settings was
-            silently dropping the partner because it only read session.me.
-            Mirrors the Toi Card's visual chrome (member dot + name) WITHOUT
-            the rename affordance — only `me` can rename `me`. Solo-household
-            (members.length === 1) renders nothing; the .map naturally
-            no-ops. A future 3-member family would render a stable order
-            (sorted by id in the `partners` memo). */}
-        {partners.map((partner) => (
-          <Card
-            key={partner.id}
-            className="p-6 flex flex-col gap-2"
-          >
-            <span className="text-sm text-foreground-muted">
-              {t("partner_label")}
-            </span>
-            <div className="flex items-center gap-3">
+          {partners.map((partner) => (
+            <div key={partner.id} className="flex items-center gap-3">
               <MemberDot colorHex={partner.color_hex} />
-              <span className="text-base font-medium flex-1">
-                {partner.name}
-              </span>
+              <span className="text-base font-medium">{partner.name}</span>
             </div>
-          </Card>
-        ))}
+          ))}
+        </div>
 
-        {/* Card 2 — Foyer. Household name + invite-code identity signature + copy affordance.
-            The invite-code rendering MIRRORS share-code (Plan 02) byte-for-byte
-            (Fraunces italic, terracotta, wide tracking — see the className below).
-            This is the single most identity-bearing class string in v0.2 — used
-            twice (share-code first-touch + Settings re-find) for recognition. */}
-        <Card className="p-6 flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-sm text-foreground-muted">
-              {t("household_name_label")}
+        {/* Stats block — three numeric counts, hairline column layout. */}
+        <div className="mt-8 grid grid-cols-3 gap-4 border-y border-border py-6">
+          <div className="flex flex-col gap-1">
+            <span className="text-2xl font-medium tabular-nums">
+              {recipesDisplay}
             </span>
-            <span className="text-base font-medium">{session.household_name}</span>
+            <span className="text-caption text-muted-foreground">
+              {t("stats.recipes_label")}
+            </span>
           </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-sm text-foreground-muted">
-              {t("invite_code_label")}
+          <div className="flex flex-col gap-1">
+            <span className="text-2xl font-medium tabular-nums">
+              {logsDisplay}
             </span>
-            <div className="flex items-center gap-3">
-              {/* IDENTITY SIGNATURE — ADR-0004 La Grille refit (wave 3).
-                  The terracotta + Geist Mono + wide-tracking combo is the
-                  "this is YOUR household monogram" gesture; replaces the
-                  Fraunces italic register dropped per ADR §Type stack. */}
+            <span className="text-caption text-muted-foreground">
+              {t("stats.cooking_logs_label")}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-2xl font-medium tabular-nums">
+              {votesDisplay}
+            </span>
+            <span className="text-caption text-muted-foreground">
+              {t("stats.votes_label")}
+            </span>
+          </div>
+        </div>
+
+        {/* 5 numbered hairline rows. */}
+        <div className="mt-2 flex flex-col">
+          {/* 01 Notifications — tap toggles push permission. */}
+          <NumberedRow
+            index="01"
+            label={t("rows.notifications")}
+            meta={
+              <span className="inline-flex items-center gap-1">
+                <Bell size={12} className="text-muted-foreground" aria-hidden />
+                {notificationsMeta}
+              </span>
+            }
+            onClick={() => {
+              if (pushSubmitting) return;
+              if (pushState === "granted") void onDeactivatePush();
+              else if (pushState === "default") void onActivatePush();
+              else if (pushState === "denied")
+                toast(t("notifications.status_denied_explainer"));
+            }}
+          />
+
+          {/* 02 Foyer — tap opens inline invite-code copy affordance. */}
+          <NumberedRow
+            index="02"
+            label={t("rows.foyer")}
+            meta={session.household_name || "maison"}
+            onClick={() => setFoyerOpen((open) => !open)}
+          />
+          {foyerOpen ? (
+            <div className="flex items-center gap-3 pb-4 -mt-1">
               <span
-                className="text-3xl tracking-widest text-primary tabular-nums"
-                style={{ fontFamily: "var(--font-mono), ui-monospace, monospace" }}
+                className="text-2xl tracking-widest text-primary tabular-nums font-mono"
                 aria-label={t("invite_code_aria")}
               >
                 {session.invite_code}
               </span>
-              {/* Copy Button — h-12 w-12 (UI-SPEC tap-target audit row).
-                  Bumped from default `size-8`. The Copy → Check icon swap on
-                  the 2-second setTimeout is preserved unchanged. */}
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-12 w-12"
-                onClick={onCopy}
-                aria-label={t("invite_code_copy_aria")}
-              >
-                {copied ? <Check size={20} /> : <Copy size={20} />}
-              </Button>
-            </div>
-            {/* FIX-04 (Phase 18): explicit text Copy button — discoverable
-                affordance the audit found missing. The icon-only Button
-                above stays as the keyboard / screen-reader-friendly alias
-                AND as the inline visual pair with the invite code itself;
-                this h-12 full-width Button is the primary visual affordance.
-                Both share `onCopy` so the copy state and toast stay unified. */}
-            <Button
-              variant="outline"
-              className="h-12 w-full"
-              onClick={onCopy}
-              disabled={copied}
-            >
-              <Copy className="h-4 w-4 mr-2" aria-hidden />
-              {copied ? t("invite_code_copied") : t("invite_code_copy_cta")}
-            </Button>
-            <p className="text-sm text-foreground-muted">
-              {t("invite_code_helper")}
-            </p>
-          </div>
-        </Card>
-
-        {/* VAL-02 — Notifications Card. Push-recovery surface: a user who tapped
-            "Pas maintenant" on PushPermissionBanner can re-summon the request
-            from here without clearing session storage. Renders 4 states based
-            on canReceivePush() + Notification.permission. Sits between Foyer
-            and Historique to follow the semantic order: identity → group →
-            notification settings → history → backup. */}
-        <Card className="p-6 flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <Bell size={18} className="text-primary" aria-hidden />
-            <span className="text-sm text-foreground-muted">
-              {t("notifications.card_title")}
-            </span>
-          </div>
-          <p className="text-sm text-foreground-muted">
-            {t("notifications.card_subtitle")}
-          </p>
-          {pushState === "unsupported" && (
-            <p className="text-sm text-muted-foreground">
-              {t("notifications.unsupported_note")}
-            </p>
-          )}
-          {pushState === "default" && (
-            <Button
-              className="h-12 w-full"
-              variant="default"
-              onClick={onActivatePush}
-              disabled={pushSubmitting}
-              aria-busy={pushSubmitting}
-            >
-              {t("notifications.status_default_cta")}
-            </Button>
-          )}
-          {pushState === "granted" && (
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-base font-medium">
-                {t("notifications.status_granted")}
-              </span>
               <Button
                 variant="outline"
-                className="h-12"
-                onClick={onDeactivatePush}
-                disabled={pushSubmitting}
-                aria-busy={pushSubmitting}
+                className="h-10"
+                onClick={onCopy}
+                disabled={copied}
               >
-                {t("notifications.disable_cta")}
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" aria-hidden />
+                    {t("invite_code_copied")}
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" aria-hidden />
+                    {t("invite_code_copy_cta")}
+                  </>
+                )}
               </Button>
             </div>
-          )}
-          {pushState === "denied" && (
-            <p className="text-sm text-foreground-muted">
-              {t("notifications.status_denied_explainer")}
-            </p>
-          )}
-        </Card>
+          ) : null}
 
-        {/* Card 3 — Historique des cuissons. Nav entry to /cooking-logs (COOK-10
-            from Phase 8). Closes audit MISSING-01 (cooking-log history page
-            had no navigation entry point). Phase 20 FIX-03: copy routed
-            through next-intl (settings.history.*) alongside the HomeDecide
-            partner-waiting strings — invariant #6 code-layer break closed. */}
-        <Card className="p-6 flex flex-col gap-3">
-          <span className="text-sm text-foreground-muted">{t("history.title")}</span>
-          <Button asChild className="h-12 w-full" variant="ghost">
-            <Link href="/cooking-logs" className="flex items-center justify-between">
-              <span>{t("history.cta_label")}</span>
-              <ChevronRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-        </Card>
+          {/* 03 Membre — tap opens inline rename. */}
+          <NumberedRow
+            index="03"
+            label={t("rows.membre")}
+            meta={session.me.name}
+            onClick={onStartRename}
+            ariaLabel={t("member.rename_aria")}
+          />
+          {renaming ? null : null}
 
-        {/* Card 4 — Sauvegarde. JSON export.
-            Replaces the previous flat block (lines 145-161). The
-            `settings.export_section_title` field-label inside carries the
-            section meaning ("Exporter mes données"). NO new section-heading. */}
-        <Card className="p-6 flex flex-col gap-3">
-          <span className="text-sm text-foreground-muted">
-            {t("export_section_title")}
-          </span>
-          <p className="text-sm text-foreground-muted">{t("export_body")}</p>
-          {/* Export CTA — h-12 w-full (UI-SPEC tap-target audit row).
-              Bumped to the 48px D-08 floor. The onExport handler + disabled + aria-busy preserved. */}
-          <Button
-            className="h-12 w-full"
-            variant="default"
+          {/* 04 Exporter les données — tap triggers JSON export. */}
+          <NumberedRow
+            index="04"
+            label={t("rows.export")}
+            meta={exporting ? <Download size={12} aria-hidden /> : undefined}
             onClick={onExport}
-            disabled={exporting}
-            aria-busy={exporting}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            {t("export_cta")}
-          </Button>
-        </Card>
+          />
 
-        {/* Card 5 — Compte. Two-step disconnect. The body line explains that
-            disconnecting does NOT delete the household or recipes — the user
-            can rejoin with the invite code. Confirmation is inline (no
-            modal) to match the rest of the page's interaction language. */}
-        <Card className="p-6 flex flex-col gap-3">
-          <span className="text-sm text-foreground-muted">
-            {t("disconnect.title")}
-          </span>
-          <p className="text-sm text-foreground-muted">{t("disconnect.body")}</p>
+          {/* 05 Déconnexion — tap reveals inline confirmation. */}
+          <NumberedRow
+            index="05"
+            label={t("rows.logout")}
+            meta={<LogOut size={12} aria-hidden />}
+            onClick={() => setConfirmingDisconnect(true)}
+          />
           {confirmingDisconnect ? (
-            <>
+            <div className="flex flex-col gap-2 py-4 -mt-1">
               <p className="text-sm font-medium text-foreground">
                 {t("disconnect.confirm_question")}
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
                 <Button
-                  className="h-12 w-full"
+                  className="h-10 flex-1"
                   variant="destructive"
                   onClick={onDisconnect}
                   disabled={disconnecting}
                   aria-busy={disconnecting}
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
                   {t("disconnect.confirm_cta")}
                 </Button>
                 <Button
-                  className="h-12 w-full"
+                  className="h-10 flex-1"
                   variant="ghost"
                   onClick={() => setConfirmingDisconnect(false)}
                   disabled={disconnecting}
@@ -569,20 +539,13 @@ export default function SettingsPage() {
                   {t("disconnect.cancel")}
                 </Button>
               </div>
-            </>
-          ) : (
-            <Button
-              className="h-12 w-full"
-              variant="outline"
-              onClick={() => setConfirmingDisconnect(true)}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              {t("disconnect.cta")}
-            </Button>
-          )}
-        </Card>
+            </div>
+          ) : null}
+        </div>
 
-        <VersionFooter />
+        <div className="mt-12">
+          <VersionFooter />
+        </div>
       </div>
     </section>
   );
