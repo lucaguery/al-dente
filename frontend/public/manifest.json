@@ -4,8 +4,8 @@
   "description": "Décide ce qu'on mange ensemble.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAF7F2",
-  "theme_color": "#C8553D",
+  "background_color": "#FAFAF7",
+  "theme_color": "#A8523C",
   "lang": "fr",
   "icons": [
     { "src": "/icon", "sizes": "256x256", "type": "image/png", "purpose": "any maskable" },

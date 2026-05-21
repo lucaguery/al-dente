@@ -486,3 +486,18 @@
     transition-duration: 0ms !important;
   }
 }
+
+/* ADR-0004 wave 4 (belated) — BrandLoader centre-dot pulse. Uses var(--ease)
+   from the wave-1 motion token block (cubic-bezier(0.22, 1, 0.36, 1)) — not a
+   literal Material curve. The pulse rides ONLY the centre accent dot so the
+   plate edge + seats stay still and the mark still reads as the brand at rest. */
+@keyframes brand-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+.loader-dot-pulse {
+  animation: brand-dot-pulse 1.6s var(--ease) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .loader-dot-pulse { animation: none; }
+}

@@ -1,47 +1,61 @@
-// RID-01 — Reusable brand mark extracted from frontend/app/icon.tsx.
+// ADR-0004 §Logo — Al Dente table-à-manger logomark.
 //
-// Why a duplicate of the two <path d="..."> strings: app/icon.tsx runs at
-// the Next.js Edge runtime (`ImageResponse`) and rasterizes the SVG to a
-// PNG for the PWA `apple-icon.tsx` / manifest pipeline. It cannot be
-// imported by React components because its export is an ImageResponse,
-// not a JSX element. So both files keep the same two path strings; per
-// 24-CONTEXT.md D-09, both must update together if the brand mark ever
-// changes. The viewBox / paths are byte-identical to app/icon.tsx:26-39.
+// Geometry mirrors `frontend/public/logo.svg` byte-for-byte at the visual
+// level (same viewBox 0 0 64 64, same circles, same radii, same fill rules).
+// We duplicate the SVG inline rather than `<Image src="/logo.svg" />` because
+// `app/icon.tsx` + `app/apple-icon.tsx` run at the Next.js Edge runtime
+// (`ImageResponse`) and cannot import React components — they keep their own
+// literal-hex copy. The static asset is therefore the source of truth; any
+// geometry edit must land in all three files (logo.svg / BrandIcon.tsx /
+// app/icon.tsx + app/apple-icon.tsx) in the same commit.
 //
-// Why stroke is currentColor instead of the literal `#FAF7F2`: BrandIcon
-// inherits the text color of its container so it tints into whatever
-// palette wraps it (foreground-muted on EmptyState, primary on onboarding
-// welcome, etc.). The PWA twin keeps the literal because the Edge runtime
-// cannot resolve CSS variables.
-export function BrandIcon({
-  size = 48,
-  strokeWidth = 6,
-  className,
-  "aria-label": ariaLabel,
-}: {
+// Stroke is `currentColor` so the mark inherits container ink (used as
+// `text-foreground` on Accueil empty state, `text-primary` on onboarding,
+// `text-muted-foreground` on quiet surfaces). The centre accent dot stays
+// literal `#A8523C` because it IS the brand atom — per ADR §Logo it does not
+// recolor with context.
+export type BrandIconProps = {
   size?: number;
   strokeWidth?: number;
   className?: string;
+  dotClassName?: string;
   "aria-label"?: string;
-}) {
+};
+
+export function BrandIcon({
+  size = 48,
+  strokeWidth = 2,
+  className,
+  dotClassName,
+  "aria-label": ariaLabel,
+}: BrandIconProps) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 160 160"
+      viewBox="0 0 64 64"
       fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
       className={className}
       aria-label={ariaLabel}
       aria-hidden={ariaLabel === undefined ? true : undefined}
       role={ariaLabel !== undefined ? "img" : undefined}
     >
-      {/* Outer pasta-strand spiral (closed Bézier whorl) — verbatim from app/icon.tsx */}
-      <path d="M 40 80 C 40 50, 70 30, 100 40 S 130 80, 100 100 S 50 110, 40 80 Z" />
-      {/* Inner whorl — single curve reading as the pasta unfurling — verbatim from app/icon.tsx */}
-      <path d="M 60 80 C 60 65, 80 55, 95 65" />
+      {/* Plate edge */}
+      <circle cx="32" cy="32" r="27" stroke="currentColor" strokeWidth={strokeWidth} />
+      {/* Inner well — subtle, omit below 32px per ADR-0004 §Logo */}
+      {size >= 32 && (
+        <circle cx="32" cy="32" r="19" stroke="currentColor" strokeWidth="1" opacity="0.22" />
+      )}
+      {/* North seat (member 1) */}
+      <circle cx="32" cy="5" r="4" fill="currentColor" />
+      {/* South seat (member 2) */}
+      <circle cx="32" cy="59" r="4" fill="currentColor" />
+      {/* Centre accent dot — terracotta brand atom (locked hex, ADR §Logo) */}
+      <circle cx="32" cy="32" r="3.5" fill="#A8523C" className={dotClassName} />
     </svg>
   );
 }
+
+// ADR-aligned alias for new code. Same component, more descriptive name —
+// the mark IS the table-à-manger voting scene at brand scale.
+export const AlDenteMark = BrandIcon;

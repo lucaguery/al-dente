@@ -1,12 +1,17 @@
 "use client";
 
-// Phase 32 §15.C — Brand-mark drawing-stroke loader.
-// Composes BrandIcon SVG inside .loader-brand wrapper. The
-// stroke-dasharray animation lives in globals.css (added in 32-01).
-// Per CONTEXT D-05, D-14, D-15 + UI-SPEC §7.4 + RESEARCH Pattern 5.
+// ADR-0004 §Logo + sketch SKILL.md Motion — Brand-mark loader.
 //
-// prefers-reduced-motion handled by globals.css (per-loader-brand fallback
-// + global animation-duration: 0ms !important rule).
+// Wave 1 deleted the old stroke-dasharray drawLoop CSS that animated the
+// pasta-strand path. Wave 4 rebuilds the loader against the new
+// table-à-manger mark: the centre accent dot pulses (opacity 1 → 0.35 → 1)
+// on the locked motion curve `var(--ease)` / 1.6s. The pulse rides ONLY the
+// centre dot — the plate edge + seats stay static so the mark still reads as
+// the brand at rest.
+//
+// `prefers-reduced-motion` is handled both globally (the
+// `animation-duration: 0ms !important` rule in globals.css) and locally
+// (the `.loader-dot-pulse` class includes its own reduced-motion guard).
 
 import { BrandIcon } from "@/components/BrandIcon";
 
@@ -23,19 +28,15 @@ export function BrandLoader({
   className,
   "aria-label": ariaLabel = "Chargement",
 }: BrandLoaderProps) {
-  // BrandIcon's intrinsic SVG size; .loader-brand and .loader-brand-sm
-  // CSS overrides the wrapper dimensions. SVG scales via viewBox.
   const svgSize = size === "sm" ? 18 : 96;
-  const cls = [
-    "loader-brand",
-    size === "sm" ? "loader-brand-sm" : null,
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
   return (
-    <div className={cls} role="img" aria-label={ariaLabel}>
-      <BrandIcon size={svgSize} strokeWidth={6} aria-hidden />
+    <div className={className} role="img" aria-label={ariaLabel}>
+      <BrandIcon
+        size={svgSize}
+        strokeWidth={2}
+        dotClassName="loader-dot-pulse"
+        aria-hidden
+      />
     </div>
   );
 }
