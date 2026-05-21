@@ -1323,3 +1323,93 @@ def test_chips_mixed_legacy_and_new_shapes_coexist() -> None:
     assert s.chips[0].field == "cuisine" and s.chips[0].value == "italian"
     assert s.chips[1].field == "_legacy" and s.chips[1].value == "label: legacy-value"
     assert s.chips[2].field == "mood" and s.chips[2].value == ["comfort"]
+
+
+# ---------------------------------------------------------------------------
+# Phase 42 STEP-02 — Gemini schema update for structured steps
+# ---------------------------------------------------------------------------
+
+
+def test_extract_prompt_includes_step_instruction_clause() -> None:
+    """STEP-02 — the thread-extraction prompt must instruct Gemini to emit
+    structured steps with ingredient_refs that reuse ingredient names verbatim."""
+
+    from app.services.llm import _EXTRACT_PROMPT_THREAD
+
+    # The clause must mention BOTH the step structure (text + ingredient_refs)
+    # AND the ingredient-name-reuse rule. Loose substring match — the exact
+    # French phrasing is planner-discretion but the load-bearing nouns must
+    # be present.
+    assert "ingredient_refs" in _EXTRACT_PROMPT_THREAD, (
+        "Prompt must mention the ingredient_refs field name"
+    )
+    assert "EXACTEMENT" in _EXTRACT_PROMPT_THREAD or "verbatim" in _EXTRACT_PROMPT_THREAD, (
+        "Prompt must instruct Gemini to reuse ingredient names exactly"
+    )
+    # The prompt mentions 'steps' or 'étapes' (French word for steps)
+    assert (
+        "étapes" in _EXTRACT_PROMPT_THREAD.lower() or "steps" in _EXTRACT_PROMPT_THREAD.lower()
+    ), "Prompt must mention steps/étapes as a field to extract"
+
+
+def test_apply_extracted_persists_step_dicts_not_models(db_session: Session) -> None:
+    """STEP-02 — _apply_extracted must persist steps as list[dict] (JSON-safe),
+    not list[StepEntry] (Pydantic models would fail JSONB serialization)."""
+
+    from app.services.llm import GeminiExtractedRecipe, StepEntry, _apply_extracted
+
+    member = _seeded_member(db_session)
+    recipe = _make_recipe(db_session, member.household_id, member.id)
+    db_session.commit()
+
+    extracted = GeminiExtractedRecipe(
+        title="Plat test",
+        steps=[StepEntry(text="sauter l'oignon", ingredient_refs=["oignon"])],
+    )
+    _apply_extracted(recipe, extracted)
+    # After apply, the JSONB column must hold dicts, not Pydantic models.
+    assert recipe.steps == [{"text": "sauter l'oignon", "ingredient_refs": ["oignon"]}]
+    for entry in recipe.steps:
+        assert isinstance(entry, dict)
+
+
+def test_run_thread_llm_returns_step_entries_in_test_mode(db_session: Session, monkeypatch) -> None:
+    """STEP-02 — _run_thread_llm in deterministic test mode (settings.environment
+    == 'test') returns a thread/recipe whose persisted steps are structured
+    StepEntry dicts with the documented shape.
+
+    This guards against regression where the test-mode short-circuit (which
+    bypasses the real Gemini call) emits a legacy list[str] shape that would
+    slip past unit tests but fail in _apply_extracted at write time.
+    """
+
+    broadcasts = []
+
+    async def fake_broadcast(hh_id, event, payload):
+        broadcasts.append((hh_id, event, payload))
+
+    monkeypatch.setattr(llm_module, "broadcast_to_household", fake_broadcast)
+
+    member = _seeded_member(db_session)
+    recipe = _make_recipe(db_session, member.household_id, member.id)
+    recipe.steps = []
+    db_session.flush()
+    trigger = _make_user_turn(db_session, recipe.id, 0, "text", {"text": "risotto aux champignons"})
+    db_session.commit()
+
+    import asyncio as _asyncio
+
+    _asyncio.run(_run_thread_llm(db_session, recipe, trigger.id))
+
+    db_session.expire_all()
+    refreshed = db_session.scalar(select(Recipe).where(Recipe.id == recipe.id))
+    assert refreshed.steps is not None
+    assert len(refreshed.steps) >= 1
+    for entry in refreshed.steps:
+        assert isinstance(entry, dict), (
+            f"Each persisted step must be a JSON dict; got {type(entry).__name__}"
+        )
+        assert "text" in entry and isinstance(entry["text"], str) and entry["text"]
+        assert "ingredient_refs" in entry and isinstance(entry["ingredient_refs"], list)
+        for ref in entry["ingredient_refs"]:
+            assert isinstance(ref, str)
