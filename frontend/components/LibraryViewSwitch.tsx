@@ -8,9 +8,11 @@
 // PARENT page — this component is a pure controlled segmented input.
 
 import { useTranslations } from "next-intl";
-import { LayoutGrid, List } from "lucide-react";
+import { AlignJustify, LayoutGrid, List } from "lucide-react";
 
-export type LibraryView = "grid" | "list";
+// Phase 40 LIB-01 — third "minimal" (text-only) mode joins grid + list.
+// Persistence key is unchanged; only the accepted value set grows.
+export type LibraryView = "grid" | "list" | "minimal";
 
 export interface LibraryViewSwitchProps {
   value: LibraryView;
@@ -21,6 +23,7 @@ export interface LibraryViewSwitchProps {
 const VIEWS: { key: LibraryView; Icon: typeof LayoutGrid }[] = [
   { key: "grid", Icon: LayoutGrid },
   { key: "list", Icon: List },
+  { key: "minimal", Icon: AlignJustify },
 ];
 
 export function LibraryViewSwitch({ value, onChange, className }: LibraryViewSwitchProps) {
