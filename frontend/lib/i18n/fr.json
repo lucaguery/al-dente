@@ -349,6 +349,23 @@
   "settings": {
     "title": "Paramètres",
     "tab_title": "Plus",
+    "hero": "Profil",
+    "identity_format": "maison · {invite_code} · depuis {date}",
+    "stats": {
+      "recipes_label": "recettes",
+      "cooking_logs_label": "cuisinées",
+      "votes_label": "votes",
+      "loading_dash": "—"
+    },
+    "rows": {
+      "notifications": "Notifications",
+      "foyer": "Foyer",
+      "membre": "Membre",
+      "export": "Exporter les données",
+      "logout": "Déconnexion",
+      "notifications_off_meta": "désactivées",
+      "notifications_on_meta": "actives"
+    },
     "household_name_label": "Nom du foyer",
     "invite_code_label": "Code d'invitation",
     "invite_code_aria": "Code d'invitation du foyer",
