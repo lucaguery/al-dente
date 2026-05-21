@@ -560,6 +560,16 @@
     "empty_heading": "Aucun repas cuisiné cette semaine",
     "empty_body": "Quand tu marqueras une recette comme cuisinée, elle apparaîtra ici."
   },
+  "cooking_active": {
+    "steps_extracting": "Préparation des étapes…",
+    "step_next": "Étape suivante",
+    "step_prev": "Étape précédente",
+    "finalize_cta": "Terminé · marquer cuisinée",
+    "crumb_started_at": "démarrée à {time} · {elapsed} min",
+    "step_count_pin": "étape {current}/{total}",
+    "uses_ingredients_label": "utilise",
+    "close_aria": "Fermer la session de cuisine"
+  },
   "completeness": {
     "header": "À compléter — {filled}/11",
     "progress_aria": "{percent} % complète",

@@ -116,3 +116,27 @@ export async function fetchCookingLog(
 ): Promise<CookingLogResponse> {
   return api<CookingLogResponse>(`/api/cooking-logs/${logId}`);
 }
+
+// --- Phase 42 STEP-03 — structured steps lazy backfill -------------------
+
+export type ExtractStepsResponse = {
+  recipe_id: string;
+  scheduled: boolean;
+  reason: string | null;
+};
+
+/** Phase 42 STEP-03 — POST /api/recipes/{id}/extract-steps. Triggers the
+ *  backend BackgroundTask that backfills structured steps for a recipe
+ *  whose `steps` is empty or in the legacy `string[]` shape.
+ *
+ *  Returns 202 with `scheduled: true` when extraction was scheduled, or
+ *  200 with `scheduled: false, reason: 'already_extracted'` when no-op.
+ *  Frontend should listen for `recipe.updated` (via useRealtime) to know
+ *  when steps land. */
+export async function triggerStepsExtraction(
+  recipeId: string,
+): Promise<ExtractStepsResponse> {
+  return api<ExtractStepsResponse>(`/api/recipes/${recipeId}/extract-steps`, {
+    method: "POST",
+  });
+}

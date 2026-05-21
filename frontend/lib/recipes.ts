@@ -17,6 +17,19 @@ export type IngredientItem = {
   unit?: string | null;
 };
 
+/** Phase 42 STEP-02 — one structured cooking step. Mirrors
+ *  backend/app/schemas/recipe.py::StepEntry exactly (locked-vocabulary
+ *  discipline; drift between this and the Python declaration is a bug
+ *  category per CLAUDE.md §"Locked vocabularies"). `text` is the
+ *  human-readable instruction (French, imperative voice, ≤2 sentences);
+ *  `ingredient_refs` lists ingredient name strings that match
+ *  `Recipe.ingredients[].name` exactly (frontend falls back to raw ref
+ *  text when no match — used by the /active step navigator). */
+export type StepEntry = {
+  text: string;
+  ingredient_refs: string[];
+};
+
 export type Recipe = {
   id: string;
   household_id: string;
@@ -32,7 +45,10 @@ export type Recipe = {
   initial_turn_kind: TurnKind | null;
   photo_paths: string[];
   ingredients?: IngredientItem[] | null;
-  steps?: string[] | null;
+  // Phase 42 STEP-01/02 — backend RecipeResponse always emits a structured
+  // array (default []); no `?`, no `| null`. Legacy DB rows are lazily
+  // backfilled via POST /recipes/{id}/extract-steps on first /active visit.
+  steps: StepEntry[];
   prep_time_minutes?: number | null;
   // Phase 24 RID-02 — three optional recipe-identity fields (migration 0007).
   // Restored in 24-03 after the Wave 1 HEAD commit reverted them.
@@ -161,7 +177,7 @@ export function invalidateSignedPhotoUrl(
 export type GeminiExtractedRecipe = {
   title: string;
   ingredients?: { name: string; quantity?: number | null; unit?: string | null }[] | null;
-  steps?: string[] | null;
+  steps?: StepEntry[] | null;
   prep_time_minutes?: number | null;
   servings?: number | null;
   cuisine?: string | null;
