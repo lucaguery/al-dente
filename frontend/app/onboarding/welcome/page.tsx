@@ -25,10 +25,7 @@ export default function OnboardingWelcomePage() {
           aria-label="al dente"
           className="text-primary mb-2"
         />
-        {/* Wordmark — Fraunces italic display register (mirrors Phase 7
-            daily date header + Phase 8 recipe-detail hero). */}
         <h1 className="text-display">{tHome("title")}</h1>
-        {/* Tagline — IBM Plex Sans body. */}
         <p className="text-base text-muted-foreground mt-2 text-center">
           {t("tagline")}
         </p>

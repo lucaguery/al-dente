@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Al Dente — Living Design System</title>
+    <title>Al Dente — Living Design System (HISTORICAL — superseded by ADR-0004)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,12 +12,36 @@
     />
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
-      /* ─────────────────────────────────────────────────────────────
-         LOCKED — sober + authentic
+      /* ⚠ HISTORICAL — SOBER KITCHEN REGISTER, SUPERSEDED 2026-05-21 ⚠
+         ─────────────────────────────────────────────────────────────
+         This file documents the "Sober Kitchen / Slow Food artisanal"
+         visual register (Cormorant Garamond + Caveat + IBM Plex Sans on
+         warm cream + paper-grain + patine ledger cards + warm-brown
+         shadows). It is NO LONGER the source of truth for the running app.
+
+         CURRENT visual register: **La Grille · Soft warmth** —
+         Geist + Geist Mono on #FAFAF7 off-white, refined terracotta
+         #A8523C reserved for state, numbered indices as the
+         composition keystone, flat hairline cards, table-à-manger
+         logomark.
+
+         Authoritative spec:    docs/adr/0004-modern-sober-refresh.md
+         Validated sketch:      .planning/sketches/002-refresh-direction-explorations/index.html
+         Theme tokens (ported): frontend/app/globals.css
+         Validated decisions:   .claude/skills/sketch-findings-al-dente/SKILL.md
+
+         Promoting the sketch HTML to replace this file is a productize-later
+         choice — see ADR-0004 §Documents that need updating downstream. The
+         content below remains useful only as a record of where the project
+         came from. Do NOT mirror these tokens into new code.
+         ────────────────────────────────────────────────────────────
+         LOCKED — sober + authentic (HISTORICAL).
          Verdict B/A/A/A/A from /design-system-3.html applied.
          Three departures kept (patine, table-à-manger, marginalia)
          plus the logo-drawing loader. Ambient mode dropped.
-         ──────────────────────────────────────────────────────────── */
+         All three departures + the warm-brown shadow vocabulary
+         + the marginalia handwriting register were retired in
+         ADR-0004 (2026-05-21). */
       :root {
         --background: oklch(0.975 0.006 75);
         --foreground: oklch(0.21 0.014 55);
@@ -766,9 +790,9 @@
   <body>
     <div style="background:#14110D;color:#FAFAF7;padding:14px 22px;font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.55;border-bottom:1px solid #2A2620;">
       <div style="max-width:1080px;margin:0 auto;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
-        <span style="background:#A8523C;color:#FAFAF7;padding:3px 10px;border-radius:999px;font-family:ui-monospace,'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;flex-shrink:0;">superseded · 2026-05-21</span>
+        <span style="background:#A8523C;color:#FAFAF7;padding:3px 10px;border-radius:999px;font-family:ui-monospace,'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;flex-shrink:0;">historical · superseded 2026-05-21</span>
         <div style="flex:1;min-width:280px;">
-          <strong style="color:#F5C44C;font-weight:600;">This document describes the current Sober Kitchen register as implemented in `frontend/app/globals.css`.</strong> The visual register is being replaced by <strong style="color:#FAFAF7;">La Grille · Soft warmth</strong> per <a href="adr/0004-modern-sober-refresh.md" style="color:#FFD278;text-decoration:underline;">ADR-0004</a>. The new canonical reference lives at <code style="font-family:ui-monospace,'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.08);padding:1px 7px;border-radius:4px;">.planning/sketches/002-refresh-direction-explorations/index.html</code> (tab <em>Composants</em>). This file remains accurate to current code; once migration waves 1–5 land, this file will be replaced by the sketch content.
+          <strong style="color:#F5C44C;font-weight:600;">This document is historical — it describes the retired Sober Kitchen register.</strong> The running app uses <strong style="color:#FAFAF7;">La Grille · Soft warmth</strong> (Geist + Geist Mono on #FAFAF7, refined terracotta #A8523C reserved for state, numbered indices, hairline cards, table-à-manger logomark) per <a href="adr/0004-modern-sober-refresh.md" style="color:#FFD278;text-decoration:underline;">ADR-0004</a>. Migration shipped in 5 atomic commits on 2026-05-21 (quick task <code style="font-family:ui-monospace,'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.08);padding:1px 7px;border-radius:4px;">260521-g26</code>). Canonical visual reference now lives at <code style="font-family:ui-monospace,'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.08);padding:1px 7px;border-radius:4px;">.planning/sketches/002-refresh-direction-explorations/index.html</code> (tab <em>Composants</em>) and the validated decisions index at <code style="font-family:ui-monospace,'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,0.08);padding:1px 7px;border-radius:4px;">.claude/skills/sketch-findings-al-dente/SKILL.md</code>. Promoting the sketch HTML to replace this file is a productize-later choice — do NOT mirror the tokens / classes below into new code.
         </div>
       </div>
     </div>
