@@ -275,8 +275,8 @@ def test_0013_backfills_nulls_and_constrains_not_null(
         )
         hh_id = cur.fetchone()[0]
         cur.execute(
-            "INSERT INTO members (id, household_id, display_name, color, auth_token) "
-            "VALUES (gen_random_uuid(), %s, 'm', 'red', 'tok_' || gen_random_uuid()::text) RETURNING id",
+            "INSERT INTO members (id, household_id, name, color_hex, auth_token) "
+            "VALUES (gen_random_uuid(), %s, 'm', '#A8523C', 'tok_' || gen_random_uuid()::text) RETURNING id",
             (hh_id,),
         )
         mb_id = cur.fetchone()[0]
