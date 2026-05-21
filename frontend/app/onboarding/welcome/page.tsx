@@ -1,77 +1,56 @@
 "use client";
 
+// Onboarding welcome — La Grille wordmark-centric composition (Phase 40 ONBO-01).
+// Sketch lines 2060-2076: BrandIcon + wordmark + italic-emphasis tagline +
+// sub-tagline + primary filled-dark CTA + ghost hairline CTA + footer line.
+// No Cards — ADR-0004 surface-temperature + hairline discipline.
+
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ChevronRight } from "lucide-react";
 import { BrandIcon } from "@/components/BrandIcon";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-// UI-SPEC §"Surface-by-Surface Pinning" §1 — Onboarding Welcome.
-// Wordmark + tagline + Créer/Rejoindre CTAs. No back button (root).
-// Phase 9 retheme + ADR-0004 wave 3: Geist 500 wordmark + 2 hairline CTA
-// Cards mirroring the Phase 6 D-Voice callout pattern (3px terracotta-60
-// left border, no texture, sans CTA labels, h-12 interior tap target).
-// The Card wraps a Link — the Link IS the tap target so href-based
-// navigation supersedes the previous router.push.
 export default function OnboardingWelcomePage() {
-  const tHome = useTranslations("home");
   const t = useTranslations("onboarding.welcome");
 
   return (
-    <section className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x) py-16 bg-background">
-      <header className="flex flex-col items-center gap-2 text-center">
-        <BrandIcon
-          size={72}
-          aria-label="al dente"
-          className="text-primary mb-2"
-        />
-        <h1 className="text-display">{tHome("title")}</h1>
-        <p className="text-base text-muted-foreground mt-2 text-center">
-          {t("tagline")}
-        </p>
-      </header>
+    <section className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 py-12 bg-background text-center">
+      <BrandIcon
+        size={72}
+        aria-label="al dente"
+        className="text-primary"
+      />
 
-      <div className="flex-1" />
+      {/* Wordmark — accent dot in terracotta is the La Grille signature. */}
+      <h1 className="text-4xl font-medium tracking-tight">
+        Al Dente<span className="text-primary">.</span>
+      </h1>
 
-      {/* CTA Card pair — hairline Cards (ADR-0004 wave 3) mirroring the
-          Phase 6 D-Voice callout pattern. Each Card surrounds a Link; the
-          Link IS the tap target at h-12 interior. */}
-      <div className="flex flex-col gap-3 w-full max-w-xs">
-        <Card
-          className="border-l-[3px] border-primary/60 p-4 transition-colors hover:bg-card/95"
-          style={{
-            transitionDuration: "var(--duration-fast)",
-            transitionTimingFunction: "var(--ease)",
-          }}
-        >
-          <Link
-            href="/onboarding/create"
-            className="flex items-center justify-between h-12"
-          >
-            <span className="text-base font-medium">
-              {t("create_cta")}
-            </span>
-            <ChevronRight className="text-primary" aria-hidden />
-          </Link>
-        </Card>
-        <Card
-          className="border-l-[3px] border-primary/60 p-4 transition-colors hover:bg-card/95"
-          style={{
-            transitionDuration: "var(--duration-fast)",
-            transitionTimingFunction: "var(--ease)",
-          }}
-        >
-          <Link
-            href="/onboarding/join"
-            className="flex items-center justify-between h-12"
-          >
-            <span className="text-base font-medium">
-              {t("join_cta")}
-            </span>
-            <ChevronRight className="text-primary" aria-hidden />
-          </Link>
-        </Card>
+      {/* Tagline — single italic emphasis on `ce soir`. */}
+      <p className="text-lg text-muted-foreground">
+        {t("tagline_lead")}
+        <em className="italic font-medium text-foreground">
+          {t("tagline_emphasis")}
+        </em>
+        {t("tagline_tail")}
+      </p>
+
+      <p className="text-base text-muted-foreground max-w-[32ch]">
+        {t("sub_tagline")}
+      </p>
+
+      <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
+        <Button asChild variant="default" size="lg" className="w-full">
+          <Link href="/onboarding/create">{t("primary_cta")}</Link>
+        </Button>
+        <Button asChild variant="outline" size="lg" className="w-full">
+          <Link href="/onboarding/join">{t("ghost_cta")}</Link>
+        </Button>
       </div>
+
+      <p className="text-caption text-muted-foreground mt-12">
+        {t("footer")}
+      </p>
     </section>
   );
 }
