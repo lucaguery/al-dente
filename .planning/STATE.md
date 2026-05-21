@@ -5,7 +5,7 @@ milestone_name: Backend Coverage Until Done
 status: Phase 39 Plan 01 complete; MIG-01 + MIG-02 closed. Ready for Plan 39-02 (CI gate).
 stopped_at: 39-01 committed (c39b367 + 95f31e3). SUMMARY.md written. 11 migration tests: 10 passed, 1 xfailed (0006 intentional non-downgradeable).
 last_updated: "2026-05-20T12:00:00.000Z"
-last_activity: 2026-05-20 — Phase 39 Plan 01 shipped. 3 files created: tests/migrations/__init__.py, conftest.py (throwaway-DB fixture), test_migration_safety.py (11 parametrized upgrade+downgrade cases). MIG-01 + MIG-02 closed. 0006 xfailed (Postgres ALTER TYPE DROP VALUE unsupported, intentional). Parent suite 521/2 baseline preserved.
+last_activity: 2026-05-21 — Quick task 260521-g26 shipped — ADR-0004 La Grille · Soft warmth UI migration across 5 atomic commits (tokens, shared primitives, screens, cleanup, logomark). Wave 4 landed belated due to a phantom-commit incident in the original wave-4 executor; investigation captured in feedback_executor_phantom_commit.md.
 progress:
   total_phases: 3
   completed_phases: 2
@@ -113,6 +113,7 @@ None. Baseline captured in quick-260519-uxn (2026-05-19). Coverage numbers and f
 | 260519-uxn | Add pytest-cov + capture backend coverage baseline (35.9% line / 6.8% branch; rules-files gap surfaced) | 2026-05-19 | 4e24da6 | [260519-uxn](./quick/260519-uxn-add-pytest-cov-to-backend-run-baseline-c/) |
 | 260520-hpz | Bring back swipe deck on Accueil — Variant A + mono-terracotta palette + feedback layer (sketch 001 winner; supersedes Phase 5 emerald Validé lock via ADR-0003) | 2026-05-20 | 4b3d61b | [260520-hpz](./quick/260520-hpz-bring-back-swipe-deck-on-accueil-variant/) |
 | 260520-lit | Wire OpenAPI auto-generation into pre-commit — husky + lint-staged baseline, dump_openapi.py + initial docs/api/openapi.json + endpoints.md, .husky/pre-commit gate that regenerates on backend router changes. uat-tester skill now references the auto-generated reference. | 2026-05-20 | 87cf5ea | [260520-lit](./quick/260520-lit-wire-openapi-auto-generation-into-pre-co/) |
+| 260521-g26 | ADR-0004 La Grille · Soft warmth UI migration — 5 atomic commits: tokens + Geist fonts (5f2e1f5), shared primitives + drop LedgerCard/Marginalia (bdab4ca), 10 canonical screens + numbered indices (f767f16), cleanup orphan assets/tokens (866e0d6), logomark belated (c50e7b0). Wave 4 landed after wave 5 because the original wave-4 executor hallucinated a phantom commit; investigation + fix documented in SUMMARY.md "Process notes". | 2026-05-21 | c50e7b0 | [260521-g26](./quick/260521-g26-modern-sober-ui-refresh-port-adr-0004-la/) |
 
 ## Deferred Items
 
@@ -138,9 +139,9 @@ UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surfac
 
 ## Session Continuity
 
-Last activity: 2026-05-20 — Completed quick task 260520-lit: Wire OpenAPI auto-generation into pre-commit. 7 atomic commits (husky+lint-staged install, lint-staged config, dump_openapi.py + initial docs/api/, hook gate, hook fix, uat-tester cheat sheet → canonical reference, CLAUDE.md doc-lifecycle row). Backend router changes now auto-regenerate docs/api/openapi.json + endpoints.md in the same commit. Surfaced during 260520-hpz UAT: agents were guessing endpoint paths without a single source of truth.
-Stopped at: 6-task quick complete; SUMMARY at .planning/quick/260520-lit-wire-openapi-auto-generation-into-pre-co/260520-lit-SUMMARY.md.
-Next: User pushes the accumulated 8-commit window (sketch winner 260520-hpz + OpenAPI hook 260520-lit) when satisfied. Local stack remains up.
+Last activity: 2026-05-21 — Completed quick task 260521-g26: ADR-0004 La Grille · Soft warmth UI migration. 5 atomic commits land the visual refresh across tokens, shared primitives, 10 canonical screens, cleanup, and the table-à-manger logomark. Wave 4 landed BELATED (after wave 5) because the original wave-4 executor hallucinated a phantom commit hash (`b8c97b2`) that never existed — caught by the wave-5 executor's empirical grep of the filesystem. Phantom-commit investigation + orchestrator-side learnings captured in `feedback_executor_phantom_commit.md`.
+Stopped at: 6-task quick complete; SUMMARY at .planning/quick/260521-g26-modern-sober-ui-refresh-port-adr-0004-la/260521-g26-SUMMARY.md. The 13-commit window from `260520-hpz` (swipe deck) → `260520-lit` (OpenAPI hook) → `260521-g26` wave 1-5 (UI migration) is still local.
+Next: Follow-up quick task to port ADR-0004 supersession into `docs/design-system.html` / `CONTEXT.md` / `SPEC.md` / `frontend/CLAUDE.md` per ADR-0004 §Documents that need updating downstream. User pushes the accumulated commit window when satisfied with the modern-sober refresh on real devices.
 
 ## Operator Next Steps
 
