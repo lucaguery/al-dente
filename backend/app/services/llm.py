@@ -1204,6 +1204,98 @@ async def process_thread_turn(recipe_id: UUID, turn_id: UUID) -> None:
         db.close()
 
 
+def _steps_are_structured(steps: list | None) -> bool:
+    """Phase 42 STEP-03 — true if every entry has the StepEntry shape.
+
+    Returns False for None, [], and any legacy `list[str]` entries — all three
+    count as "needs backfill" per CONTEXT.md D-04. The router uses this as the
+    idempotency gate; `extract_and_persist_steps` also calls it defensively in
+    case the same task is scheduled twice under load.
+    """
+
+    if not steps:
+        return False
+    return all(isinstance(s, dict) and "text" in s and "ingredient_refs" in s for s in steps)
+
+
+async def extract_and_persist_steps(recipe_id: UUID, household_id: UUID) -> None:
+    """Phase 42 STEP-03 — lazy backfill structured steps for a promoted recipe.
+
+    Mirrors the v0.6 invariant #1 server-side BackgroundTask pattern. Called
+    from POST /recipes/{id}/extract-steps. Reads the full thread (turn-0 +
+    follow-ups), runs the existing `_run_thread_llm` orchestration which:
+      * builds the Gemini prompt from the full thread (turn-0 immutable —
+        invariant #5),
+      * calls Gemini (or canned fixture in test mode),
+      * applies non-pinned-conflicting fields via `_apply_extracted` (which
+        per 42-02 dumps StepEntry models to dicts before JSONB write),
+      * emits the summary/question/advisory system turns,
+      * commits, and
+      * broadcasts `recipe.updated` (invariant #4).
+
+    Idempotency: defensive `_steps_are_structured` guard short-circuits if the
+    persisted steps already have the StepEntry shape (also enforced by the
+    router; this layer protects against duplicate scheduling under load).
+
+    Async signature matches FastAPI BackgroundTasks (which accepts async
+    callables), so we can directly `await broadcast_to_household` via
+    `_run_thread_llm` without spinning a one-shot loop.
+
+    Caller is responsible for scheduling this via `BackgroundTasks.add_task`
+    — do NOT call inline on a request thread (invariant #1).
+
+    NEVER raises — exceptions are logged and swallowed (the BackgroundTask
+    has no caller to report to). Productize-later: persist a
+    `steps_extraction_error` column for retry UX.
+    """
+
+    db = SessionLocal()
+    try:
+        recipe = db.scalar(select(Recipe).where(Recipe.id == recipe_id))
+        if recipe is None:
+            log.warning("extract_and_persist_steps: recipe %s not found", recipe_id)
+            return
+        # Defensive cross-household guard (the router already filters, but a
+        # mis-scheduled task should still refuse to act on a foreign tenant).
+        if recipe.household_id != household_id:
+            log.warning(
+                "extract_and_persist_steps: household mismatch recipe=%s expected=%s actual=%s",
+                recipe_id,
+                household_id,
+                recipe.household_id,
+            )
+            return
+        if _steps_are_structured(recipe.steps):
+            log.info(
+                "extract_and_persist_steps: recipe %s already structured; skipping",
+                recipe_id,
+            )
+            return
+        turn_zero = db.scalar(
+            select(RecipeTurn).where(
+                RecipeTurn.recipe_id == recipe_id,
+                RecipeTurn.position == 0,
+            )
+        )
+        if turn_zero is None:
+            log.warning(
+                "extract_and_persist_steps: recipe %s has no turn-0; skipping",
+                recipe_id,
+            )
+            return
+
+        try:
+            # _run_thread_llm reads the full thread, applies non-pinned fields
+            # (steps included — 42-02 persistence path), and broadcasts
+            # recipe.updated after commit. Turn-0 is read-only; no mutation.
+            await _run_thread_llm(db, recipe, turn_zero.id)
+        except Exception as exc:  # noqa: BLE001 — never raise out
+            log.error("extract_and_persist_steps failed for %s: %s", recipe_id, exc)
+            db.rollback()
+    finally:
+        db.close()
+
+
 async def extract_and_process_url_turn(recipe_id: UUID, turn_id: UUID) -> None:
     """Phase 26 D-28 / TURN-04 — close the URL-extraction TODO(productize).
 
