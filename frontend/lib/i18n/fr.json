@@ -7,6 +7,14 @@
     "sending": "Envoi…",
     "close": "Fermer"
   },
+  "library": {
+    "minimal": {
+      "validated_pill": "validé"
+    },
+    "view_switch": {
+      "minimal": "Vue texte"
+    }
+  },
   "nav": {
     "home": "Accueil",
     "recipes": "Recettes",
@@ -109,7 +117,8 @@
     "library": {
       "view": {
         "grid": { "aria": "Grille" },
-        "list": { "aria": "Liste" }
+        "list": { "aria": "Liste" },
+        "minimal": { "aria": "Vue texte" }
       }
     }
   },
