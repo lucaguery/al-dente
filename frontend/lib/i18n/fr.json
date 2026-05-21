@@ -337,7 +337,11 @@
       "advisory_resolved_accepted": "accepté",
       "advisory_resolved_dismissed": "ignoré",
       "stepper_unit_minutes": "min",
-      "stepper_unit_servings": "{count, plural, one {# pers.} other {# pers.}}"
+      "stepper_unit_servings": "{count, plural, one {# pers.} other {# pers.}}",
+      "back_aria": "Retour à la recette",
+      "crumb_suffix": "thread",
+      "tours_label": "tours",
+      "see_conversation_aria": "Voir la conversation"
     },
     "pin": {
       "label": "épinglé",
