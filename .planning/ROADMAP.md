@@ -83,7 +83,7 @@ _Source-of-truth for milestone history: `.planning/MILESTONES.md` (full narrativ
 |-------|----------------|--------|-----------|
 | 40. Pure-Frontend Restyles | 5/5 | Complete   | 2026-05-21 |
 | 41. Navigation Surgery + First Backend Touch | 0/TBD | Not started | - |
-| 42. Structured Steps + Active Cooking Session | 0/TBD | Not started | - |
+| 42. Structured Steps + Active Cooking Session | 1/5 | In Progress|  |
 
 ---
 
