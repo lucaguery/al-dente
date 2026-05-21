@@ -5,8 +5,9 @@ import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 // Asserts the 6th joiner sees the "Foyer complet" Card after the backend
 // returns 422 `HOUSEHOLD_FULL` (Plan 18-01 §IDM-03). The frontend branch
 // (Plan 18-03) discriminates on `body.detail.code === "HOUSEHOLD_FULL"`
-// and switches to a Fraunces italic paper-grain terminal Card instead of
-// the inline color_taken error.
+// and switches to a hairline terminal Card instead of the inline
+// color_taken error. (Per ADR-0004 wave 3 the prior Sober Kitchen chrome
+// is gone — the Card now reads as Geist on a flat hairline surface.)
 //
 // Six independent browser contexts (each with its own cookie jar) — the
 // `fresh` Playwright project starts each spec against a TRUNCATED DB so the

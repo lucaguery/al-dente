@@ -3,7 +3,8 @@
 // ADR-0004 La Grille (wave 3) — Geist Mono pin label for « épinglé » /
 // « conflit » per ADR §Marginalia register: "Everywhere marginalia was used,
 // the replacement is Geist Mono — small, structured, data-like rather than
-// hand-written." The Caveat handwriting register is dropped entirely.
+// hand-written." The prior handwriting register (font + slant) is dropped
+// entirely per ADR §Marginalia register.
 //
 // Used at two mount sites:
 //   1. Detail page sections (gutter=true — absolute-positioned by parent)

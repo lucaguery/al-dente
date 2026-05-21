@@ -78,9 +78,10 @@ export default defineConfig({
         // the layout bugs that bite users on the actual production phones.
         // Concrete example diagnosed via Playwright MCP on 2026-05-09: the
         // bottom-sheet `position: relative` regression in
-        // `frontend/components/ui/sheet.tsx` (paper-grain class overrides
-        // Tailwind `fixed`) leaves the Caméra/Photothèque sheet entirely
-        // off-screen on a 390x844 viewport. iPhone-size viewport + an
+        // `frontend/components/ui/sheet.tsx` (a texture-wrapper class on
+        // SheetContent overrode Tailwind `fixed`) left the Caméra/Photothèque
+        // sheet entirely off-screen on a 390x844 viewport. The texture class
+        // is gone per ADR-0004 wave 1, but iPhone-size viewport + an
         // explicit `toBeInViewport()` on critical interactive elements is
         // the minimum bar to catch this class of bug going forward.
         ...devices['Desktop Chrome'],

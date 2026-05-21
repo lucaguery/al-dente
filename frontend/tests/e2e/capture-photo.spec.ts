@@ -21,8 +21,11 @@ const FIXTURE_PATH = path.resolve(
 //      contract is honored end-to-end.
 //   2. The UI-layer flow that opens the bottom sheet, picks the file source,
 //      and submits — the path real users actually take. Adds toBeInViewport()
-//      so an offscreen-sheet regression (paper-grain class overriding Tailwind
+//      so an offscreen-sheet regression (any wrapper class overriding Tailwind
 //      `fixed` in components/ui/sheet.tsx) surfaces here, not in production.
+//      Historically a Sober Kitchen texture wrapper triggered this via a
+//      `> * { position: relative }` cascade collision; that wrapper is gone
+//      per ADR-0004, but the viewport assertion remains as a defensive guard.
 //
 // Field-name drift from plan: backend uses `files` (see
 // backend/app/routers/recipes.py:372 `files: list[UploadFile] = File(...)`),
@@ -73,7 +76,11 @@ test.describe('capture-photo', () => {
   test(
     'photo upload sheet is reachable on iPhone-sized viewports',
     async ({ page }) => {
-      // Guards VAL-01 / Sheet-01 (closed v0.4 Phase 19). components/ui/sheet.tsx must not re-add 'paper-grain' to SheetContent — the .paper-grain > * { position: relative } rule in globals.css would override Radix 'fixed' and push the sheet off-screen.
+      // Guards VAL-01 / Sheet-01 (closed v0.4 Phase 19). Historically the
+      // Sober Kitchen texture wrapper on SheetContent re-introduced a
+      // `position: relative` cascade collision that pushed the sheet
+      // off-screen; the texture is dropped per ADR-0004, but the
+      // assertion remains as a defensive viewport guard.
       await page.goto('/recipes/new');
       await page.getByRole('tab', { name: 'Photo' }).click();
 

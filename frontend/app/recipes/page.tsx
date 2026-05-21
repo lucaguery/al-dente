@@ -66,7 +66,8 @@ let recipesCache: Recipe[] | null = null;
 // including empty buckets. The section structure is part of the Bibliothèque
 // visual contract — a single-bucket distribution must NOT collapse to a blank
 // container (B-06 + D-08 walkthrough findings). Empty buckets render a
-// Caveat-slant marginalia line in place of the empty grid.
+// Geist Mono caption line in place of the empty grid (per ADR-0004 §Marginalia
+// register — the prior handwriting variant is dropped).
 function PatinaSection({
   label,
   count,

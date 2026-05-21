@@ -328,9 +328,10 @@ export function VoteSummary({
       </div>
 
       {/* Sticky bottom CTA — POLISH-04: fixed-length "Cuisiner ce soir" copy
-          with the recipe title rendered as Caveat-slant marginalia in its own
-          visual layer below. 320px-safe (button never wraps; title can
-          ellipsis without clipping the button text).
+          with the recipe title rendered as a Geist Mono caption in its own
+          visual layer below (per ADR-0004 §Marginalia register — the prior
+          handwriting variant is dropped). 320px-safe (button never wraps;
+          title can ellipsis without clipping the button text).
           gh#32 — the no-ctaTarget regenerate fallback below was dropped:
           the regenerate action is now always reachable from the Accueil header
           icon (HomeDecide.tsx). When ctaTarget is null, the bottom is empty —

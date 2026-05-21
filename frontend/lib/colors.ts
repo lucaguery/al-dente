@@ -1,3 +1,11 @@
+/**
+ * Per ADR-0004 §Member colors, the 5-slot model (rose / amber / emerald /
+ * sky / violet) is preserved here for productize-later (3+ member households).
+ * On the current Soft warmth Accueil scene, display collapses to 2 visible
+ * identities (ink + muted) — see CSS tokens `--color-member-luca` /
+ * `--color-member-partner` in `frontend/app/globals.css`. Do not delete the
+ * 5 rose/amber/emerald/sky/violet slots.
+ */
 // Mirror of backend/app/colors.py — drift is a category of bug per CLAUDE.md.
 // Per D-04 (CONTEXT.md), Tailwind v4 default 500-shade hex values.
 //

@@ -33,7 +33,7 @@ import {
   SWIPE_THRESHOLD_PX,
   SWIPE_VELOCITY_PX_S,
 } from "@/lib/swipe-tokens";
-import { easeCraft, transitions } from "@/lib/motion";
+import { ease, transitions } from "@/lib/motion";
 import { useEnumLabels } from "@/lib/enum-labels";
 import { type Recipe } from "@/lib/recipes";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
@@ -130,7 +130,7 @@ export function ShortlistCard({
       if (!reducedMotion) {
         animate(x, [0, -6, 6, -3, 0], {
           duration: 0.3,
-          ease: easeCraft,
+          ease,
         });
       }
       if (typeof window !== "undefined") {
@@ -269,7 +269,7 @@ export function ShortlistCard({
           x: committedDirection === "right" ? flyX : -flyX,
           rotate: committedDirection === "right" ? 12 : -12,
           opacity: 0,
-          transition: { duration: SWIPE_FLYOFF_DURATION_S, ease: easeCraft },
+          transition: { duration: SWIPE_FLYOFF_DURATION_S, ease },
         }
       : undefined;
   const motionInitial =

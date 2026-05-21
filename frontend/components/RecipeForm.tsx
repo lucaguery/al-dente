@@ -262,10 +262,10 @@ type Props = {
    *  Only needed on the edit page; new-recipe form omits it (D-23). */
   focusRefs?: RecipeFormRefs;
   /**
-   * Phase 28 DETAIL-04 — pin set, drives per-input « épinglé » Caveat
-   * marginalia next to AnswerField labels. The edit form NEVER shows
-   * « conflit » (turn data not fetched here); conflit is detail-page-only
-   * per UI-SPEC §Layout §2.
+   * Phase 28 DETAIL-04 — pin set, drives per-input « épinglé » Geist Mono
+   * pin label next to AnswerField labels (post-ADR-0004; the handwriting
+   * variant is dropped). The edit form NEVER shows « conflit » (turn data
+   * not fetched here); conflit is detail-page-only per UI-SPEC §Layout §2.
    */
   manuallyEditedFields?: string[];
 };
@@ -286,10 +286,11 @@ export function RecipeForm({
   const labels = useEnumLabels();
   const pinSet = manuallyEditedFields ?? [];
 
-  // Phase 28 DETAIL-04 — render inline « épinglé » Caveat label next to an
-  // AnswerField's form label when that field is pinned. The edit form NEVER
-  // shows « conflit » (turn data is not fetched here); hasConflict is
-  // hardcoded false per UI-SPEC §Layout §2.
+  // Phase 28 DETAIL-04 — render inline « épinglé » Geist Mono pin label next
+  // to an AnswerField's form label when that field is pinned (per ADR-0004;
+  // the prior handwriting variant is dropped). The edit form NEVER shows
+  // « conflit » (turn data is not fetched here); hasConflict is hardcoded
+  // false per UI-SPEC §Layout §2.
   const renderInlinePin = (field: AnswerField) =>
     pinSet.includes(field) ? (
       <PinLabel field={field} hasConflict={false} gutter={false} />

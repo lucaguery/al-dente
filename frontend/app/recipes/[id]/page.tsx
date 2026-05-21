@@ -1,11 +1,11 @@
 "use client";
 
-// Phase 32 §15.C (SOBER-04) — Recette A Sober Kitchen composition.
-// Sticky topbar + hero 16:10 -38px bleed + body block (title + Caveat
-// marginalia identity subhead from cook_count + badges + ingredients with
-// terracotta qty + steps with terracotta numerals + step-1 marginalia from
+// ADR-0004 (La Grille · Soft warmth) Recette composition.
+// Sticky topbar + hero 16:10 -38px bleed + body block (title + Geist Mono
+// caption identity subhead from cook_count + badges + ingredients with
+// terracotta qty + steps with terracotta numerals + step-1 caption from
 // most recent cooking_logs[].notes) + sticky bottom CTA.
-// Per CONTEXT D-08 + D-13 + UI-SPEC §9.3 + design-system.html #recette.
+// Per CONTEXT D-08 + D-13 + ADR-0004 §Marginalia register + sketch 002.
 //
 // Preserves:
 //   - Phase 27 CAPTURE-04 — RecipeThread in detail mode below
@@ -952,7 +952,7 @@ export default function RecipeDetailPage() {
                         /* ADR-0004 §Marginalia register — Geist Mono caption.
                            The dotted-terracotta left border is preserved as a
                            cookbook-margin gesture; the register is now data-
-                           mono rather than handwritten Caveat. */
+                           mono rather than the dropped handwriting variant. */
                         <span
                           className="text-caption block"
                           style={{
