@@ -17,6 +17,7 @@ from typing import Any
 from app.services.llm import (
     GeminiExtractedRecipe,
     GeminiIngredient,
+    StepEntry,
 )
 
 # Phase 16 D-16-13: test-only force-failure prefix. When the transcript
@@ -78,6 +79,21 @@ def canned_thread_extract(
             if transcript.startswith(_FORCE_NEW_HASH_PREFIX):
                 force_new_hash = True
 
+    # Phase 42 STEP-02 — canned steps use the StepEntry shape with ingredient_refs
+    # cross-referencing the canned ingredient names verbatim ("riz arborio",
+    # "champignons", "parmesan"). Matches the locked-vocabulary mirror discipline.
+    _canned_steps = [
+        StepEntry(text="Faire revenir l'oignon dans le beurre.", ingredient_refs=[]),
+        StepEntry(text="Ajouter le riz et nacrer.", ingredient_refs=["riz arborio"]),
+        StepEntry(
+            text="Mouiller au bouillon louche par louche.", ingredient_refs=["bouillon de légumes"]
+        ),
+        StepEntry(
+            text="Incorporer les champignons et le parmesan.",
+            ingredient_refs=["champignons", "parmesan"],
+        ),
+    ]
+
     if force_new_hash:
         # Partial extract: cook_time_minutes omitted (None) → eligible missing field
         # for question emission. summary_body is distinct so _extraction_hash differs
@@ -90,12 +106,7 @@ def canned_thread_extract(
                 GeminiIngredient(name="bouillon de légumes", quantity=1.0, unit="L"),
                 GeminiIngredient(name="parmesan", quantity=50.0, unit="g"),
             ],
-            steps=[
-                "Faire revenir l'oignon dans le beurre.",
-                "Ajouter le riz et nacrer.",
-                "Mouiller au bouillon louche par louche.",
-                "Incorporer les champignons et le parmesan.",
-            ],
+            steps=_canned_steps,
             prep_time_minutes=35,
             cook_time_minutes=None,  # omitted → compute_completeness finds missing field
             difficulty="medium",
@@ -116,12 +127,7 @@ def canned_thread_extract(
             GeminiIngredient(name="bouillon de légumes", quantity=1.0, unit="L"),
             GeminiIngredient(name="parmesan", quantity=50.0, unit="g"),
         ],
-        steps=[
-            "Faire revenir l'oignon dans le beurre.",
-            "Ajouter le riz et nacrer.",
-            "Mouiller au bouillon louche par louche.",
-            "Incorporer les champignons et le parmesan.",
-        ],
+        steps=_canned_steps,
         prep_time_minutes=35,
         cook_time_minutes=25,
         difficulty="medium",
@@ -178,11 +184,26 @@ def canned_recipe_illustration(recipe_title: str) -> str:
 
 
 def canned_modified_recipe(recipe_json: dict[str, Any], transcript: str) -> GeminiExtractedRecipe:
-    """Echo the input recipe but mark prep_time_minutes as +10 to simulate a modification."""
+    """Echo the input recipe but mark prep_time_minutes as +10 to simulate a modification.
+
+    Phase 42 STEP-02 — steps round-trip through StepEntry. The input may carry
+    legacy `list[str]` shape (older test fixtures) OR the new `list[dict]`
+    shape (post-42-01 persistence). Both branches normalise to StepEntry.
+    """
+    raw_steps = recipe_json.get("steps") or []
+    coerced_steps: list[StepEntry] = []
+    for entry in raw_steps:
+        if isinstance(entry, str):
+            # Legacy flat-string shape — preserve text, no refs.
+            coerced_steps.append(StepEntry(text=entry, ingredient_refs=[]))
+        elif isinstance(entry, dict):
+            coerced_steps.append(StepEntry(**entry))
+        elif isinstance(entry, StepEntry):
+            coerced_steps.append(entry)
     return GeminiExtractedRecipe(
         title=recipe_json.get("title", "Recette modifiée (test)"),
         ingredients=[GeminiIngredient(**i) for i in (recipe_json.get("ingredients") or [])] or None,
-        steps=recipe_json.get("steps"),
+        steps=coerced_steps,
         prep_time_minutes=(recipe_json.get("prep_time_minutes") or 30) + 10,
         servings=recipe_json.get("servings"),
         cuisine=recipe_json.get("cuisine"),

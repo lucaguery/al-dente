@@ -245,7 +245,15 @@ _EXTRACT_PROMPT_THREAD = (
     "Le champ summary_body doit décrire en français en 1-2 phrases ce qui a été "
     "extrait ou modifié par rapport au tour précédent. Maximum 240 caractères. "
     "Pour les CHAMPS ÉPINGLÉS listés en fin de prompt, ne modifie ces valeurs "
-    "que si le fil les contredit explicitement — sinon, conserve la valeur actuelle."
+    "que si le fil les contredit explicitement — sinon, conserve la valeur actuelle. "
+    # Phase 42 STEP-02 — structured steps with ingredient cross-refs.
+    "Liste ensuite les étapes pour cuisiner la recette dans le champ 'steps'. "
+    "Chaque étape est un objet avec 'text' (l'instruction en français, voix "
+    "impérative, ≤2 phrases) et 'ingredient_refs' (un tableau de noms "
+    "d'ingrédients). Utilise les noms d'ingrédients EXACTEMENT comme tu les "
+    "as extraits dans 'ingredients' — pas de paraphrase, pas de pluriels, "
+    "pas d'articles. Référence uniquement des ingrédients présents dans la "
+    "liste 'ingredients' que tu viens d'extraire."
 )
 
 # Phase 29 D-23 — photo token cap across thread (matches extract_from_photos limit).
@@ -413,7 +421,9 @@ def _apply_extracted(recipe: Recipe, extracted: GeminiExtractedRecipe) -> None:
     recipe.ingredients = (
         [i.model_dump() for i in extracted.ingredients] if extracted.ingredients else None
     )
-    recipe.steps = extracted.steps
+    # Phase 42 STEP-02 — StepEntry models must be dumped before JSONB write;
+    # SQLAlchemy cannot JSON-encode Pydantic BaseModel instances directly.
+    recipe.steps = [s.model_dump(mode="json") for s in (extracted.steps or [])]
     recipe.prep_time_minutes = extracted.prep_time_minutes
     # Phase 24 RID-02 — write the three new optional fields (D-13).
     recipe.cook_time_minutes = extracted.cook_time_minutes
@@ -812,7 +822,10 @@ async def _run_thread_llm(
         "ingredients": (
             [i.model_dump() for i in extracted.ingredients] if extracted.ingredients else None
         ),
-        "steps": extracted.steps,
+        # Phase 42 STEP-02 — dump StepEntry to dict so the canonical map matches
+        # the persisted JSONB shape (recipe.steps is list[dict]). is_conflict and
+        # the chip emission both compare against the persisted shape.
+        "steps": [s.model_dump(mode="json") for s in (extracted.steps or [])],
         "prep_time_minutes": extracted.prep_time_minutes,
         "cook_time_minutes": extracted.cook_time_minutes,
         "servings": extracted.servings,
@@ -865,6 +878,10 @@ async def _run_thread_llm(
             safe_extracted.ingredients = [
                 GeminiIngredient(**i) for i in (recipe.ingredients or [])
             ] or None
+        elif f == "steps":
+            # Phase 42 STEP-02 — recipe.steps is list[dict]; convert back to
+            # list[StepEntry] so safe_extracted preserves the Pydantic shape.
+            safe_extracted.steps = [StepEntry(**s) for s in (recipe.steps or [])]
         elif hasattr(safe_extracted, f):
             setattr(safe_extracted, f, getattr(recipe, f, None))
     # _apply_extracted requires a non-empty title (its precondition).
