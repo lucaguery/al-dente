@@ -59,6 +59,20 @@ class IngredientItem(BaseModel):
     unit: str | None = Field(default=None, max_length=40)
 
 
+class StepEntry(BaseModel):
+    """One structured cooking step.
+
+    Phase 42 STEP-01 (D-03) — replaces the legacy flat-string step shape.
+    ``ingredient_refs`` are exact-string matches against ``ingredients[].name``
+    (D-08); the frontend joins by name with a graceful fallback to the
+    ref text if no match (services/llm.py extraction is constrained by
+    the Gemini prompt to reuse the ingredient names verbatim).
+    """
+
+    text: str = Field(..., min_length=1)
+    ingredient_refs: list[str] = Field(default_factory=list)
+
+
 # --- Create requests --------------------------------------------------------
 
 
@@ -91,7 +105,9 @@ class RecipeUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
     status: Literal["draft", "structured", "verified"] | None = None
     ingredients: list[IngredientItem] | None = None
-    steps: list[str] | None = None
+    # Phase 42 STEP-01 — structured steps. Update DTO keeps None-means-no-change
+    # semantics; default-factory empty list applies only to RecipeResponse.
+    steps: list[StepEntry] | None = None
     prep_time_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
     # Phase 24 RID-02 — three optional recipe-identity fields (D-12).
     cook_time_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
@@ -131,7 +147,9 @@ class RecipeResponse(BaseModel):
     title: str
     photo_paths: list[str]
     ingredients: list[IngredientItem] | None = None
-    steps: list[str] | None = None
+    # Phase 42 STEP-01 (D-03) — list[StepEntry] with default []. Never None
+    # on the wire; legacy rows surface via the lazy backfill in plan 42-03.
+    steps: list[StepEntry] = Field(default_factory=list)
     prep_time_minutes: int | None = None
     # Phase 24 RID-02 — three optional recipe-identity fields (D-12).
     cook_time_minutes: int | None = None
