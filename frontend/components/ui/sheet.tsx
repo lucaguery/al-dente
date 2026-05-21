@@ -70,15 +70,21 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
+          // PUNCH-LIST P-01 (260521-l8g) — French-only invariant #6:
+          // aria-label and sr-only text both « Fermer ». Mirrors the same
+          // close-button pattern in ui/dialog.tsx — PhotoMenu / UrlSheet /
+          // VoiceSheet on the « Ajouter » thread surface all render through
+          // this primitive, so the label routes here, not dialog.tsx.
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
             <Button
               variant="ghost"
               className="absolute top-3 right-3"
               size="icon-sm"
+              aria-label="Fermer"
             >
               <XIcon
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">Fermer</span>
             </Button>
           </SheetPrimitive.Close>
         )}
