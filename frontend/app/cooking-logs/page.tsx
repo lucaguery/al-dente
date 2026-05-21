@@ -149,7 +149,7 @@ export default function CookingLogsHistoryPage() {
                 className="flex flex-col gap-3"
                 aria-label={dateLabel}
               >
-                <h2 className="text-title italic text-foreground pt-6 pb-2">
+                <h2 className="text-title text-foreground pt-6 pb-2">
                   {dateLabel}
                 </h2>
                 {logsInGroup.map((log) => (
@@ -194,7 +194,7 @@ function CookingLogHistoryRow({ log }: { log: CookingLogCardData }) {
   return (
     <Link
       href={`/cooking-logs/${log.id}`}
-      className="paper-grain flex flex-col gap-3 p-4 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150"
+      className="flex flex-col gap-3 p-4 bg-card rounded-xl border border-border active:translate-y-px transition-all duration-150"
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL

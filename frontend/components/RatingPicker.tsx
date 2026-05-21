@@ -68,8 +68,8 @@ export function RatingPicker({ value, onChange }: Props) {
             aria-pressed={selected}
             onClick={() => onChange(v)}
             className={[
-              "h-20 w-full flex items-center gap-4 px-4 rounded-xl shadow-card paper-grain",
-              "transition-colors transition-transform duration-100 ease-craft active:scale-95",
+              "h-20 w-full flex items-center gap-4 px-4 rounded-xl",
+              "transition-colors transition-transform duration-100 active:scale-95",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
               selected ? selectedClass : UNSELECTED,
             ].join(" ")}
@@ -84,7 +84,7 @@ export function RatingPicker({ value, onChange }: Props) {
               <span className="text-base font-semibold leading-6">
                 {t(v)}
               </span>
-              <span className="text-sm text-foreground-muted leading-5">
+              <span className="text-sm text-muted-foreground leading-5">
                 {t(`${v}_helper`)}
               </span>
             </div>

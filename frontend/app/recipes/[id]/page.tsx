@@ -14,8 +14,8 @@
 //   - Phase 29 D-22 — summary CTA wire-up (complete / defer)
 //
 // Security: cooking_logs[].notes is user-authored content — rendered as
-// React text children only inside <Marginalia>. React default-escapes text.
-// (T-32-05-01 mitigation — see 32-05-PLAN.md threat_model.)
+// React text children only inside a <span className="text-caption">. React
+// default-escapes text. (T-32-05-01 mitigation — see 32-05-PLAN.md threat_model.)
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -32,7 +32,6 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
-import { Marginalia } from "@/components/Marginalia";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { VoiceModifySheet } from "@/components/VoiceModifySheet";
 import { api } from "@/lib/api";
@@ -775,7 +774,7 @@ export default function RecipeDetailPage() {
           <div className="relative overflow-visible">
             {renderSectionPin("title")}
             <h1
-              className="font-display text-foreground"
+              className="text-foreground"
               style={{
                 fontSize: "26px",
                 fontWeight: 500,
@@ -786,12 +785,12 @@ export default function RecipeDetailPage() {
             >
               {recipe.title}
             </h1>
-            {/* Phase 32 D-13 — identity subhead from cook_count via i18n */}
-            <Marginalia size="sm" slant style={{ marginTop: "4px" }}>
+            {/* ADR-0004 §Marginalia register — Geist Mono caption subhead from cook_count */}
+            <span className="text-caption block" style={{ marginTop: "4px" }}>
               {recipe.cook_count > 0
                 ? tSubhead("cooked", { count: recipe.cook_count })
                 : tSubhead("never")}
-            </Marginalia>
+            </span>
           </div>
 
           {/*
@@ -853,15 +852,12 @@ export default function RecipeDetailPage() {
             >
               <div className="relative overflow-visible" style={{ marginBottom: "8px" }}>
                 {renderSectionPin("ingredients")}
-                <h2
-                  className="font-display"
-                  style={{ fontSize: "17px", fontWeight: 500, margin: 0 }}
-                >
+                <h2 style={{ fontSize: "17px", fontWeight: 500, margin: 0 }}>
                   {t("section_ingredients")}
                   {recipe.servings != null ? (
                     <small
                       className="text-caption"
-                      style={{ fontFamily: "var(--font-body)", fontWeight: 400, marginLeft: "6px" }}
+                      style={{ marginLeft: "6px" }}
                     >
                       <span className="meta-sep">{" · "}</span>{recipe.servings} personnes
                     </small>
@@ -879,8 +875,14 @@ export default function RecipeDetailPage() {
                       className="flex items-baseline"
                       style={{ gap: "10px" }}
                     >
+                      {/* ADR-0004 La Grille — Geist Mono `01`-`NN` index prefix */}
                       <span
-                        className="font-display"
+                        className="text-caption tabular-nums shrink-0"
+                        aria-hidden
+                      >
+                        {String(idx + 1).padStart(2, "0")}
+                      </span>
+                      <span
                         style={{
                           fontSize: "13.5px",
                           fontWeight: 500,
@@ -903,10 +905,7 @@ export default function RecipeDetailPage() {
             <section>
               <div className="relative overflow-visible" style={{ marginBottom: "6px" }}>
                 {renderSectionPin("steps")}
-                <h2
-                  className="font-display"
-                  style={{ fontSize: "17px", fontWeight: 500, margin: 0 }}
-                >
+                <h2 style={{ fontSize: "17px", fontWeight: 500, margin: 0 }}>
                   {t("section_steps")}
                 </h2>
               </div>
@@ -922,17 +921,13 @@ export default function RecipeDetailPage() {
                       }}
                     >
                       <div className="flex items-baseline">
+                        {/* ADR-0004 La Grille — Geist Mono `01`-`NN` index */}
                         <span
-                          className="font-display"
-                          style={{
-                            fontSize: "13.5px",
-                            fontWeight: 500,
-                            color: "var(--primary)",
-                            marginRight: "8px",
-                            flexShrink: 0,
-                          }}
+                          className="text-caption tabular-nums shrink-0"
+                          style={{ marginRight: "8px" }}
+                          aria-hidden
                         >
-                          {idx + 1}.
+                          {String(idx + 1).padStart(2, "0")}
                         </span>
                         <span style={{ fontSize: "13.5px", lineHeight: 1.55 }}>{step}</span>
                       </div>
@@ -954,20 +949,21 @@ export default function RecipeDetailPage() {
                         Kitchen marginalia register (design-system §13).
                       */}
                       {isFirst && recipeLog?.notes ? (
-                        <Marginalia
-                          size="sm"
-                          slant
+                        /* ADR-0004 §Marginalia register — Geist Mono caption.
+                           The dotted-terracotta left border is preserved as a
+                           cookbook-margin gesture; the register is now data-
+                           mono rather than handwritten Caveat. */
+                        <span
+                          className="text-caption block"
                           style={{
-                            display: "block",
                             margin: "4px 0 0 0",
                             paddingLeft: "16px",
                             borderLeft:
                               "1px dotted color-mix(in oklch, var(--primary) 25%, transparent)",
-                            fontSize: "14px",
                           }}
                         >
                           {recipeLog.notes}
-                        </Marginalia>
+                        </span>
                       ) : null}
                     </div>
                   );
@@ -977,7 +973,7 @@ export default function RecipeDetailPage() {
           ) : null}
 
           {/* Footer — last cooked + cook count */}
-          <p className="text-sm text-foreground-muted">
+          <p className="text-sm text-muted-foreground">
             {t("footer_last_cooked", {
               when: recipe.last_cooked_at
                 ? formatRelativeFr(recipe.last_cooked_at)

@@ -73,9 +73,8 @@ export function Composer({
 
         {/* Auto-grow textarea.
             ADR-0004 wave 2 — border-border (#EDEBE4) hairline + focus ring on
-            --ring (#A8523C). The paper-grain layer that used to sit beneath
-            this is gone; the inline color={var(--foreground)} defense is
-            no longer needed and was removed.
+            --ring (#A8523C). The old Sober Kitchen surface layer is gone;
+            the inline color={var(--foreground)} defense is no longer needed.
             gh#36 — font-size 16px on mobile kills iOS Safari focus auto-zoom;
             14px restored at sm+ for desktop density. */}
         <textarea

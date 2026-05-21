@@ -294,7 +294,7 @@ export default function SettingsPage() {
             <Input>; Enter/blur submit, Escape/cancel-X revert. The submit
             path is renameMe() (PATCH /households/me) with toast + canonical
             session refresh on success, optimistic+canonical merge on error. */}
-        <Card className="paper-grain shadow-card p-6 flex flex-col gap-2">
+        <Card className="p-6 flex flex-col gap-2">
           <span className="text-sm text-foreground-muted">
             {t("member_label")}
           </span>
@@ -366,7 +366,7 @@ export default function SettingsPage() {
         {partners.map((partner) => (
           <Card
             key={partner.id}
-            className="paper-grain shadow-card p-6 flex flex-col gap-2"
+            className="p-6 flex flex-col gap-2"
           >
             <span className="text-sm text-foreground-muted">
               {t("partner_label")}
@@ -385,7 +385,7 @@ export default function SettingsPage() {
             (Fraunces italic, terracotta, wide tracking — see the className below).
             This is the single most identity-bearing class string in v0.2 — used
             twice (share-code first-touch + Settings re-find) for recognition. */}
-        <Card className="paper-grain shadow-card p-6 flex flex-col gap-4">
+        <Card className="p-6 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <span className="text-sm text-foreground-muted">
               {t("household_name_label")}
@@ -397,12 +397,13 @@ export default function SettingsPage() {
               {t("invite_code_label")}
             </span>
             <div className="flex items-center gap-3">
-              {/* IDENTITY SIGNATURE — verbatim mirror of share-code (Plan 02 §Surface 4).
-                  Replaces the previous monospace 28px wide-tracked uppercase register.
-                  The terracotta + Fraunces italic + wide-tracking combo is the
-                  "this is YOUR household monogram" gesture. */}
+              {/* IDENTITY SIGNATURE — ADR-0004 La Grille refit (wave 3).
+                  The terracotta + Geist Mono + wide-tracking combo is the
+                  "this is YOUR household monogram" gesture; replaces the
+                  Fraunces italic register dropped per ADR §Type stack. */}
               <span
-                className="font-display italic text-3xl tracking-widest text-primary"
+                className="text-3xl tracking-widest text-primary tabular-nums"
+                style={{ fontFamily: "var(--font-mono), ui-monospace, monospace" }}
                 aria-label={t("invite_code_aria")}
               >
                 {session.invite_code}
@@ -447,7 +448,7 @@ export default function SettingsPage() {
             on canReceivePush() + Notification.permission. Sits between Foyer
             and Historique to follow the semantic order: identity → group →
             notification settings → history → backup. */}
-        <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
+        <Card className="p-6 flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <Bell size={18} className="text-primary" aria-hidden />
             <span className="text-sm text-foreground-muted">
@@ -458,7 +459,7 @@ export default function SettingsPage() {
             {t("notifications.card_subtitle")}
           </p>
           {pushState === "unsupported" && (
-            <p className="text-sm text-foreground-muted italic">
+            <p className="text-sm text-muted-foreground">
               {t("notifications.unsupported_note")}
             </p>
           )}
@@ -501,7 +502,7 @@ export default function SettingsPage() {
             had no navigation entry point). Phase 20 FIX-03: copy routed
             through next-intl (settings.history.*) alongside the HomeDecide
             partner-waiting strings — invariant #6 code-layer break closed. */}
-        <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
+        <Card className="p-6 flex flex-col gap-3">
           <span className="text-sm text-foreground-muted">{t("history.title")}</span>
           <Button asChild className="h-12 w-full" variant="ghost">
             <Link href="/cooking-logs" className="flex items-center justify-between">
@@ -515,7 +516,7 @@ export default function SettingsPage() {
             Replaces the previous flat block (lines 145-161). The
             `settings.export_section_title` field-label inside carries the
             section meaning ("Exporter mes données"). NO new section-heading. */}
-        <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
+        <Card className="p-6 flex flex-col gap-3">
           <span className="text-sm text-foreground-muted">
             {t("export_section_title")}
           </span>
@@ -538,7 +539,7 @@ export default function SettingsPage() {
             disconnecting does NOT delete the household or recipes — the user
             can rejoin with the invite code. Confirmation is inline (no
             modal) to match the rest of the page's interaction language. */}
-        <Card className="paper-grain shadow-card p-6 flex flex-col gap-3">
+        <Card className="p-6 flex flex-col gap-3">
           <span className="text-sm text-foreground-muted">
             {t("disconnect.title")}
           </span>

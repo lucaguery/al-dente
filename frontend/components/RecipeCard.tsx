@@ -1,8 +1,9 @@
 "use client";
 
-// Recipe library card — Direction B (quick-260512-gpl).
-// Vertical photo-grid card: 4:3 photo on top + body below with Cormorant
-// Garamond title (font-display, upright, line-clamp-2).
+// Recipe library card — ADR-0004 La Grille refit (wave 3).
+// Vertical photo-grid card: 4:3 photo on top + body below with Geist 500
+// title (line-clamp-2). Cards exist by hairline border + radius — no patine,
+// no dogear, no shadow (ADR §Patine ledger card + §Shadows).
 // gh#33 — meta row (cuisine Badge · relative last-cooked) was removed
 // from the library card; those signals stay available in the recipe
 // detail view.
@@ -26,14 +27,16 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
 import { getCookingLogSignedPhotoUrl } from "@/lib/cooking";
-import { cookCountToPatina, type PatinaLevel } from "@/lib/recipes";
-import type { Recipe } from "@/lib/recipes";
+import type { Recipe, PatinaLevel } from "@/lib/recipes";
 import { RecipeIllustration } from "@/components/RecipeIllustration";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
-import { LedgerCard } from "@/components/LedgerCard";
 
-export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: PatinaLevel }) {
-  const resolvedPatina: PatinaLevel = patina ?? cookCountToPatina(recipe.cook_count);
+// ADR-0004 wave 3 — `patina` prop kept on the API surface for caller
+// compatibility (patine-view in /recipes still passes it), but no longer
+// drives any visual treatment. The patine ledger system is dropped entirely
+// per ADR §Patine ledger card. Wave 5 will reconcile `cookCountToPatina`
+// and the patine-view layout itself.
+export function RecipeCard({ recipe, patina: _patina }: { recipe: Recipe; patina?: PatinaLevel }) {
   const t = useTranslations("recipes");
   // Derive the photo-path key from props; effect runs only when it changes.
   // D-05 living image: prefer the most recent cooking-log photo over the
@@ -85,20 +88,15 @@ export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: Patina
       href={`/recipes/${recipe.id}`}
       className="relative block hover:opacity-95 active:translate-y-px transition-all duration-150"
     >
-      {/* gh#33 C3 — inline padding: 0 overrides the .ledger-card { padding: 14px }
-          rule in globals.css (Tailwind utility p-0 lost the cascade fight against
-          the @layer components rule). Edge-to-edge image inside the card. */}
-      <LedgerCard
-        patina={resolvedPatina}
-        className="flex flex-col overflow-hidden"
-        style={{ padding: 0 }}
-      >
+      {/* ADR-0004 §Patine ledger card "Dropped entirely" — hairline border +
+          radius only. Edge-to-edge image inside the card. */}
+      <article className="flex flex-col overflow-hidden rounded-lg border border-border bg-card">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- signed URL is short-lived; <Image> with custom loader is overkill
         <img
           src={src}
           alt=""
-          className="w-full aspect-[4/3] object-cover bg-surface-muted"
+          className="w-full aspect-[4/3] object-cover bg-muted"
           onError={(e) => {
             // Production self-heal — fire the hook's one-shot refetch on the
             // recipe-photo branch. The hook tracks the retry budget per mount.
@@ -121,7 +119,7 @@ export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: Patina
       ) : (
         <div
           aria-hidden
-          className="w-full aspect-[4/3] bg-surface-muted flex items-center justify-center text-foreground-muted"
+          className="w-full aspect-[4/3] bg-muted flex items-center justify-center text-muted-foreground"
         >
           <RecipeIllustration recipe={recipe} size={64} />
         </div>
@@ -152,11 +150,11 @@ export function RecipeCard({ recipe, patina }: { recipe: Recipe; patina?: Patina
           this, grid-row stretch creates ragged bottom edges and an
           uneven visual rhythm across the library. */}
       <div className="flex flex-col gap-1 px-2.5 pt-2 pb-2.5 min-w-0">
-        <h3 className="font-display text-base font-medium leading-tight tracking-tight line-clamp-2 min-h-[2lh]">
+        <h3 className="text-base font-medium leading-tight tracking-tight line-clamp-2 min-h-[2lh]">
           {recipe.title}
         </h3>
       </div>
-      </LedgerCard>
+      </article>
     </Link>
   );
 }

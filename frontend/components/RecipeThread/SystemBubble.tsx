@@ -23,9 +23,9 @@ import { formatFieldChip } from "@/lib/format-field";
 import type { AnswerField } from "@/lib/enums";
 import type { PersistedTurn, AnswerTurnSubmission } from "./types";
 
-// Shared system bubble shell classes
+// Shared system bubble shell classes — ADR-0004 §Shadows "Dropped entirely"
 const SYS_BUBBLE_BASE =
-  "self-start max-w-[90%] bg-card text-foreground border border-border shadow-card flex flex-col gap-2 text-[13px] leading-[1.5]";
+  "self-start max-w-[90%] bg-card text-foreground border border-border flex flex-col gap-2 text-[13px] leading-[1.5]";
 const SYS_BUBBLE_RADIUS = "rounded-[18px_18px_18px_4px]";
 
 // Shared CTA styles
@@ -244,7 +244,7 @@ export function SystemBubble({
         // tap on the detail page (Phase 28 DETAIL-04) even after the bubble collapses.
         <div
           data-advisory-id={turn.id}
-          className="self-start px-3 py-1 text-[13px] text-muted-foreground italic"
+          className="self-start px-3 py-1 text-caption"
         >
           {t("advisory_resolved", {
             field: fieldLabel,

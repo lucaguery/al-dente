@@ -19,7 +19,7 @@ import { useSession } from "@/components/SessionProvider";
 // to render the creator's color as a disabled swatch BEFORE submission
 // (ONBOARD-05 client half). T-01-06-06 mitigation: 300ms debounce + only
 // fires when code length === 6.
-// Phase 9 retheme: form-body wrapped in paper-grain Card with Fraunces
+// Phase 9 retheme + ADR-0004 wave 3: form-body wrapped in hairline Card with the wave-1
 // italic display title; back button bumped to h-12 w-12 + spacer to w-12;
 // submit bumped to the h-12 D-08 floor. The invite-code Input keeps its
 // mono uppercase wide-tracked register — that is the ENTRY-time UX
@@ -182,7 +182,7 @@ export default function OnboardingJoinPage() {
   }
 
   if (householdFull) {
-    // IDM-04 / D-18-12: terminal Card — same paper-grain shape as the
+    // IDM-04 / D-18-12: terminal Card — same hairline shape as the
     // form below so the surface feels like a state of the same screen,
     // not a new route. Fraunces italic title = the onboarding identity
     // signature; no second CTA (D-18-12 says single neutral back).
@@ -202,7 +202,7 @@ export default function OnboardingJoinPage() {
           <span className="w-12" aria-hidden />
         </header>
         <div className="px-(--spacing-page-x) pt-6 pb-32">
-          <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-4">
+          <Card className="px-6 py-6 flex flex-col gap-4">
             <h2 className="text-display">{t("capacity.title")}</h2>
             <p className="text-base text-foreground-muted">
               {t("capacity.body")}
@@ -242,8 +242,8 @@ export default function OnboardingJoinPage() {
       </header>
 
       <div className="px-(--spacing-page-x) pt-6 pb-32">
-        <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-6">
-          {/* Form-body editorial title — Fraunces italic display register. */}
+        <Card className="px-6 py-6 flex flex-col gap-6">
+          {/* Form-body title — ADR-0004 wave 3 (Geist 500 24px). */}
           <h2 className="text-display">{t("title")}</h2>
           <div className="flex flex-col gap-2">
             <Label htmlFor="join-code">{t("code_label")}</Label>

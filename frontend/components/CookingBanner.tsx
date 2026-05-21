@@ -32,11 +32,12 @@ export function CookingBanner({
     <div
       role="region"
       aria-labelledby="cooking-banner-title"
-      className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 min-h-16 rounded-2xl bg-primary/8 paper-grain shadow-card border border-border"
+      className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 min-h-16 rounded-2xl border border-border"
+      style={{ background: "var(--valide-tint)" }}
     >
       <ChefHat
         size={24}
-        className="text-[var(--color-cooking-foreground)] shrink-0"
+        className="text-primary shrink-0"
         aria-hidden
       />
       <div className="flex-1 flex flex-col gap-0.5 min-w-0">
@@ -46,7 +47,7 @@ export function CookingBanner({
         >
           {t("title")}
         </span>
-        <span className="text-sm text-foreground-muted leading-5 line-clamp-1">
+        <span className="text-sm text-muted-foreground leading-5 line-clamp-1">
           {recipeTitle}
         </span>
       </div>

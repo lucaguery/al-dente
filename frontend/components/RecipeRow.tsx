@@ -1,33 +1,36 @@
 "use client";
 
-// Phase 32 §15.C (SOBER-03) — horizontal LedgerCard row for the list
+// ADR-0004 La Grille refit (wave 3) — horizontal list row for the list
 // editorial view of Bibliothèque. Mirrors RecipeCard's photo URL self-heal
 // + cooking-log path detection, but laid out as a horizontal flex row with
-// a 72×72 photo on the right.
-// Per CONTEXT D-07 + UI-SPEC §9.2.
-// Per implementation_notes: list-view marginalia OMITTED for Phase 32 (Open Q3 resolution).
+// a 72×72 photo on the right and a Geist Mono numbered index on the left.
+// Hairline border + radius only (no patina, no shadow) per ADR §Patine
+// ledger card + §Shadows.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
-import { LedgerCard } from "@/components/LedgerCard";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeFr } from "@/lib/datetime";
 import { getCookingLogSignedPhotoUrl } from "@/lib/cooking";
-import { cookCountToPatina, type Recipe } from "@/lib/recipes";
+import type { Recipe } from "@/lib/recipes";
 import { RecipeIllustration } from "@/components/RecipeIllustration";
 import { useSignedPhotoUrl } from "@/lib/hooks/useSignedPhotoUrl";
 import { useEnumLabels } from "@/lib/enum-labels";
 
 export interface RecipeRowProps {
   recipe: Recipe;
+  /** ADR-0004 La Grille — Geist Mono `01`-`NN` index prefix.
+   *  Computed by the parent list (recipes/page.tsx) so the index reflects
+   *  position in the filtered/sorted view, not a stable recipe attribute.
+   *  When undefined the row renders without an index (e.g. solo embeds). */
+  index?: number;
 }
 
-export function RecipeRow({ recipe }: RecipeRowProps) {
+export function RecipeRow({ recipe, index }: RecipeRowProps) {
   const t = useTranslations("recipes");
   const labels = useEnumLabels();
-  const patina = cookCountToPatina(recipe.cook_count);
 
   // Photo URL resolution — mirror RecipeCard pattern exactly.
   const firstPath =
@@ -59,14 +62,21 @@ export function RecipeRow({ recipe }: RecipeRowProps) {
       href={`/recipes/${recipe.id}`}
       className="relative block hover:opacity-95 active:translate-y-px transition-all duration-150"
     >
-      <LedgerCard
-        patina={patina}
-        className="flex gap-3 items-center"
+      <article
+        className="flex gap-3 items-center rounded-lg border border-border bg-card"
         style={{ padding: "12px" }}
       >
+        {typeof index === "number" ? (
+          <span
+            className="text-caption tabular-nums shrink-0 self-start pt-1"
+            aria-hidden
+          >
+            {String(index + 1).padStart(2, "0")}
+          </span>
+        ) : null}
         <div className="flex flex-col gap-1 min-w-0 flex-1">
           <h3
-            className="font-display truncate"
+            className="truncate"
             style={{ fontSize: "18px", fontWeight: 500, lineHeight: 1.2 }}
           >
             {recipe.title}
@@ -86,7 +96,7 @@ export function RecipeRow({ recipe }: RecipeRowProps) {
           </div>
         </div>
         <div
-          className="relative shrink-0 overflow-hidden rounded-lg bg-surface-muted"
+          className="relative shrink-0 overflow-hidden rounded-lg bg-muted"
           style={{ width: "72px", height: "72px" }}
         >
           {src ? (
@@ -107,7 +117,7 @@ export function RecipeRow({ recipe }: RecipeRowProps) {
               }}
             />
           ) : (
-            <div aria-hidden className="w-full h-full flex items-center justify-center text-foreground-muted">
+            <div aria-hidden className="w-full h-full flex items-center justify-center text-muted-foreground">
               <RecipeIllustration recipe={recipe} size={36} />
             </div>
           )}
@@ -125,7 +135,7 @@ export function RecipeRow({ recipe }: RecipeRowProps) {
             {t("promotion.failed_badge")}
           </span>
         ) : null}
-      </LedgerCard>
+      </article>
     </Link>
   );
 }

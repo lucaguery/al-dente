@@ -221,7 +221,7 @@ export function PhotoUploader({ recipeId, cookingLogId, paths, onChange }: Props
                   type="button"
                   disabled={(!recipeId && !cookingLogId) || uploading}
                   aria-label={t("add_label")}
-                  className="paper-grain h-24 w-24 rounded-lg border-2 border-dashed border-primary/30 flex items-center justify-center disabled:opacity-50"
+                  className="h-24 w-24 rounded-lg border-2 border-dashed border-primary/30 flex items-center justify-center disabled:opacity-50"
                 >
                   <Plus className="h-6 w-6 text-muted-foreground" />
                 </button>

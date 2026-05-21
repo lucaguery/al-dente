@@ -4,7 +4,8 @@
 // when computeCompleteness().percent < 100. Returns null at 100% — no nagging
 // per CONTEXT.md D-20 and REQ RID-03.
 //
-// Surface: paper-grain shadow-card div matching EmptyState.tsx shell (D-20).
+// Surface: hairline div matching EmptyState.tsx shell (D-20). ADR-0004 wave 3:
+// the prior texture + shadow chain is dropped (ADR §Shadows + §Texture).
 // Each chip is a <Badge variant="outline" asChild><Link> to the edit page with
 // ?focus=<fieldKey>. The French labels come from fr.json completeness.* namespace
 // (D-21). The progressbar element is accessible (role + aria-value*).
@@ -32,7 +33,7 @@ export function CompletenessCard({ recipe }: Props) {
   const filledCount = 11 - missingFields.length;
 
   return (
-    <div className="paper-grain shadow-card flex flex-col gap-3 rounded-lg bg-card border border-border px-5 py-4">
+    <div className="flex flex-col gap-3 rounded-lg bg-card border border-border px-5 py-4">
       {/* Header: editorial display-serif register — "À compléter — 4/11" */}
       <h2 className="text-title">{t("header", { filled: filledCount, total: 11 })}</h2>
 
@@ -43,7 +44,7 @@ export function CompletenessCard({ recipe }: Props) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label={t("progress_aria", { percent })}
-        className="h-2 bg-surface-muted rounded-full overflow-hidden"
+        className="h-2 bg-muted rounded-full overflow-hidden"
       >
         <div
           className="h-full bg-primary/60 rounded-full transition-all"

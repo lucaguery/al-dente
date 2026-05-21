@@ -19,7 +19,8 @@
 // remains; HomeDecide derives unvotedByMe from the rejete-filtered set).
 //
 // POLISH-04 — bottom CTA reads "Cuisiner ce soir" (fixed-length button copy)
-// with the recipe title as Caveat-slant marginalia underneath. 320px-safe.
+// with the recipe title as Geist Mono caption underneath (ADR-0004 §Marginalia
+// register). 320px-safe.
 //
 // Inline-affordance choice: option (a) from PLAN — reuse
 // <ShortlistThumbButtons> from ShortlistCard.tsx. Lower complexity than
@@ -34,7 +35,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { TableVote } from "@/components/TableVote";
-import { Marginalia } from "@/components/Marginalia";
 import { ShortlistThumbButtons } from "@/components/ShortlistCard";
 import {
   computeVoteState,
@@ -181,13 +181,16 @@ export function VoteSummary({
     <div className="flex flex-col flex-1 px-(--spacing-page-x) pb-(--spacing-bottom-safe)">
       {/* Shortlist stack — 10px gap per UI-SPEC §3 */}
       <div className="flex flex-col" style={{ gap: "10px", marginTop: "4px" }}>
-        {rows.map((r) => {
+        {rows.map((r, rowIdx) => {
           const recipeVotes = votes.filter(
             (v) => v.recipe_id === r.id,
           ) as ShortlistVote[];
           const state = stateFor(r.id);
           const isValide = state === "valide";
           const isRejete = state === "rejete";
+          // ADR-0004 numbered index — La Grille keystone composition move.
+          // Geist Mono `01`-`NN` prefix per sketch SKILL.md "Composition keystone".
+          const indexLabel = String(rowIdx + 1).padStart(2, "0");
           // SOBER-09 — inline affordance only on rows the local user hasn't
           // voted on AND that aren't Rejeté (both members already rejected).
           // HomeDecide already excludes rejete from unvotedByMe, so this
@@ -243,28 +246,32 @@ export function VoteSummary({
                 myMemberId={me.id}
                 size="ts-56"
               />
+              <span
+                className="text-caption tabular-nums shrink-0 self-start pt-1"
+                aria-hidden
+              >
+                {indexLabel}
+              </span>
               <div className="shortlist-info flex flex-col gap-0.5 min-w-0 flex-1">
-                {/* Shortlist row title — Cormorant 500 17px per UI-SPEC §4 */}
+                {/* Shortlist row title — Geist 500 per ADR-0004 §Hero sizing */}
                 <h4
-                  className="font-display truncate"
+                  className="truncate"
                   style={{
                     fontSize: "17px",
                     fontWeight: 500,
                     letterSpacing: "-0.005em",
-                    fontStyle: "normal",
                   }}
                 >
                   {r.title}
                 </h4>
                 {isValide ? (
-                  /* Valide row: Caveat 16px in emerald-700 — UI-SPEC §4 + §9.1 */
-                  <Marginalia
-                    size="sm"
-                    as="span"
+                  /* Valide row: Geist Mono caption per ADR-0004 §Marginalia register */
+                  <span
+                    className="text-caption"
                     style={{ color: "var(--color-valide-emphasis)" }}
                   >
                     {tShortlist("valide_meta")}
-                  </Marginalia>
+                  </span>
                 ) : (
                   /* Non-valide meta — cuisine · prep-time caption, IBM Plex 12px.
                      POLISH-01 (Plan 36-07): interleave parts with a .meta-sep
@@ -339,15 +346,9 @@ export function VoteSummary({
             <Flame size={18} className="mr-2" aria-hidden />
             {tHome("cta.cook_short")}
           </Button>
-          <Marginalia
-            size="sm"
-            slant
-            as="span"
-            className="text-center truncate block"
-            style={{ fontSize: "13px" }}
-          >
+          <span className="text-caption text-center truncate block">
             {ctaTarget.title}
-          </Marginalia>
+          </span>
         </div>
       ) : null}
     </div>

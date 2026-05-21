@@ -1,18 +1,17 @@
 "use client";
 
-// Phase 28 DETAIL-04 — Caveat marginalia label for the « épinglé » /
-// « conflit » pin signal. UI-SPEC §Component Specifications locks the
-// visual contract:
-//   - Font: var(--font-marginalia) (Caveat handwritten)
-//   - Size: 12px (inline; sub-register of design system's marginalia-sm 16px)
-//   - Weight: 600 (Phase 27 two-weight system lock — NOT 500)
-//   - Line-height: 1.0
-//   - Color: var(--primary) (épinglé) or var(--destructive) (conflit)
-//   - Slant: rotate(-1.2deg) ONLY when `gutter` prop true (detail-page mount)
+// ADR-0004 La Grille (wave 3) — Geist Mono pin label for « épinglé » /
+// « conflit » per ADR §Marginalia register: "Everywhere marginalia was used,
+// the replacement is Geist Mono — small, structured, data-like rather than
+// hand-written." The Caveat handwriting register is dropped entirely.
 //
 // Used at two mount sites:
-//   1. Detail page sections (gutter=true, absolute-positioned by parent)
-//   2. Edit form inputs (gutter=false, inline next to <Label>)
+//   1. Detail page sections (gutter=true — absolute-positioned by parent)
+//   2. Edit form inputs (gutter=false — inline next to <Label>)
+//
+// The previous rotate(-1.2deg) slant is dropped (no handwriting affordance);
+// color is the only state-distinguishing signal: var(--primary) for épinglé,
+// var(--destructive) for conflit.
 
 import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
@@ -26,35 +25,31 @@ export interface PinLabelProps {
   hasConflict: boolean;
   /** Required when hasConflict is true — tap handler scrolls to advisory bubble. */
   onConflictTap?: () => void;
-  /** When true, apply the cookbook-style rotate(-1.2deg) slant. Detail page only. */
+  /** Kept on the API surface for caller compatibility; ADR-0004 drops the
+   *  rotate(-1.2deg) slant so the value no longer changes rendering. */
   gutter?: boolean;
 }
 
-/**
- * Marginalia pin label. Renders as either:
- *   - non-interactive <span> for « épinglé » (default state)
- *   - <button type="button"> for « conflit » with onConflictTap handler
- *
- * Locked-styling: inline CSS to consume var(--font-marginalia) /
- * var(--primary) / var(--destructive) per UI-SPEC §Color §Typography.
- */
 export function PinLabel({
   field,
   hasConflict,
   onConflictTap,
-  gutter = false,
+  gutter: _gutter = false,
 }: PinLabelProps) {
   const t = useTranslations("recipes.pin");
   const labels = useEnumLabels();
 
+  // Geist Mono via the text-caption utility; weight bumped to 600 so the
+  // pin label sits visually heavier than ambient text-caption meta lines.
   const baseStyle: CSSProperties = {
-    fontFamily: "var(--font-marginalia)",
-    fontSize: "12px",
+    fontFamily: "var(--font-mono), ui-monospace, monospace",
+    fontSize: "11px",
     fontWeight: 600,
     lineHeight: 1,
     display: "inline-block",
     whiteSpace: "nowrap",
-    ...(gutter ? { transform: "rotate(-1.2deg)" } : {}),
+    letterSpacing: "0.02em",
+    textTransform: "uppercase",
   };
 
   if (hasConflict) {

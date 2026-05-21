@@ -4,7 +4,7 @@
 //
 // UI-SPEC §Surface 6 — vertical card with full-width photo on top + Fraunces
 // title + cooked-on date + 3-state rating chip + optional notes. Mirrors the
-// RecipeCard frame (paper-grain bg-card rounded-xl border shadow-card) but
+// RecipeCard frame (bg-card rounded-xl hairline border, no texture) but
 // the photo layout is vertical (aspect-[4/3] full-width, NOT a side
 // thumbnail) — this surfaces "what we ate" as the load-bearing visual.
 //
@@ -90,7 +90,7 @@ export function CookingLogCard({ log }: { log: CookingLogCardData }) {
   return (
     <Link
       href={`/recipes/${log.recipe_id}`}
-      className="paper-grain flex flex-col gap-3 p-4 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover active:translate-y-px transition-all duration-150"
+      className="flex flex-col gap-3 p-4 bg-card rounded-xl border border-border active:translate-y-px transition-all duration-150"
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL; <Image> custom loader is overkill at couple-scale

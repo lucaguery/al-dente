@@ -18,7 +18,7 @@ import { useSession } from "@/components/SessionProvider";
 // Sticky header (ChevronLeft + title) + 3 fields (household name, member
 // name, color) + sticky bottom CTA. No live JS validation per UI-SPEC
 // §"Interaction Patterns > Forms" — server validates on submit.
-// Phase 9 retheme: form-body wrapped in paper-grain Card with Fraunces
+// Phase 9 retheme + ADR-0004 wave 3: form-body wrapped in hairline Card with the wave-1
 // italic display title; back button bumped to h-12 w-12 + spacer to w-12;
 // submit bumped to the h-12 D-08 floor. Form state, validation,
 // handlers, and error toasts preserved verbatim.
@@ -89,9 +89,9 @@ export default function OnboardingCreatePage() {
       </header>
 
       <div className="px-(--spacing-page-x) pt-6 pb-32">
-        <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-6">
-          {/* Form-body editorial title — Fraunces italic display register.
-              Mirrors header chrome label one level deeper inside the form. */}
+        <Card className="px-6 py-6 flex flex-col gap-6">
+          {/* Form-body title — ADR-0004 wave 3 (Geist 500 24px). Mirrors the
+              header chrome label one level deeper inside the form. */}
           <h2 className="text-display">{t("title")}</h2>
           <div className="flex flex-col gap-2">
             <Label htmlFor="create-household-name">

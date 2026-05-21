@@ -11,9 +11,9 @@
 //   Capture mode: chat-body (flex-1, scroll) -> save-bar (>=1 pending) -> composer
 //   Detail mode:  thread-meta -> chat-body (flex-1, scroll) -> manual-link -> composer
 //
-// Visual tokens come from docs/design-system.html (Sober Kitchen):
+// Visual tokens come from ADR-0004 La Grille · Soft warmth:
 // var(--primary), var(--card), var(--background), var(--border),
-// var(--muted-foreground), var(--shadow-card). The state-pill colors are
+// var(--muted-foreground). Shadows dropped entirely. State-pill colors are
 // component-scoped (UI-SPEC.md §"New Token Requests").
 
 import { useEffect, useMemo, useRef } from "react";
@@ -214,12 +214,9 @@ export function RecipeThread(props: RecipeThreadProps) {
               </span>
             );
           })()}
-          {/* Title meta */}
-          <span
-            className={`flex-1 font-display text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap leading-[1.2] ${
-              props.recipeStatus === "draft" ? "italic" : ""
-            }`}
-          >
+          {/* Title meta — ADR-0004 wave 3: drop font-display + italic;
+              draft-state signal comes from the state pill above. */}
+          <span className="flex-1 text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap leading-[1.2]">
             {props.title || t("draft_title_placeholder")}
           </span>
         </div>
@@ -227,7 +224,7 @@ export function RecipeThread(props: RecipeThreadProps) {
 
       {/* Empty-state hint (capture mode, no bubbles yet) */}
       {props.mode === "capture" && props.pendingBubbles.length === 0 && (
-        <p className="self-center text-muted-foreground text-[13px] italic px-3 py-2 text-center mx-4">
+        <p className="self-center text-muted-foreground text-caption px-3 py-2 text-center mx-4">
           {t("empty_capture_hint")}
         </p>
       )}
@@ -317,7 +314,7 @@ export function RecipeThread(props: RecipeThreadProps) {
         {/* Extraction-in-progress row (detail mode, status=draft) */}
         {props.mode === "detail" && props.recipeStatus === "draft" && (
           <li
-            className="self-center text-muted-foreground text-[13px] italic px-3 py-2 text-center list-none"
+            className="self-center text-muted-foreground text-caption px-3 py-2 text-center list-none"
             aria-live="polite"
           >
             {t("extracting")}
@@ -343,8 +340,7 @@ export function RecipeThread(props: RecipeThreadProps) {
                 onClick={props.onSave}
                 className="w-full h-11 rounded-xl flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold text-[14px] disabled:opacity-35 disabled:cursor-not-allowed"
                 style={{
-                  boxShadow: "0 2px 6px oklch(0.595 0.135 35 / 0.25)",
-                  transition: "opacity 150ms var(--ease-craft)",
+                  transition: "opacity 160ms var(--ease)",
                 }}
               >
                 {props.saving ? (

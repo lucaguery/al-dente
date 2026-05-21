@@ -4,7 +4,7 @@
 // Five dots in a horizontal flex row + marginalia caption below.
 //
 // Dot states:
-//   - Voted (index < current) → solid bg-foreground-muted/40 (rejete tokens
+//   - Voted (index < current) → solid bg-muted-foreground/40 (rejete tokens
 //     are NOT introduced by this plan; the partner-unvoted dot uses the same
 //     muted token, so reuse it for both yes/no voted dots — the strip carries
 //     "position in queue," not "what I voted")
@@ -17,7 +17,6 @@
 // the terminal state is the VoteSummary panel.
 
 import { useTranslations } from "next-intl";
-import { Marginalia } from "@/components/Marginalia";
 
 export type ShortlistProgressProps = {
   /** Total dots to render (typically 5 = the shortlist size). */
@@ -81,7 +80,7 @@ export function ShortlistProgress({
                 className={
                   wasYes
                     ? "h-2 w-2 rounded-full bg-[var(--color-valide-foreground)]"
-                    : "h-2 w-2 rounded-full bg-foreground-muted/40"
+                    : "h-2 w-2 rounded-full bg-muted-foreground/40"
                 }
               />
             );
@@ -106,9 +105,7 @@ export function ShortlistProgress({
           );
         })}
       </div>
-      <Marginalia size="sm" slant>
-        {caption}
-      </Marginalia>
+      <span className="text-caption">{caption}</span>
     </div>
   );
 }

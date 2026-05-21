@@ -3,7 +3,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 // ADR-0004 §Shadows + §Patine ledger card — Cards exist by hairline border +
-// radius, not by depth. No shadow utilities. No paper-grain. The only surface
+// radius, not by depth. No shadow utilities. No texture overlay. The only surface
 // allowed an ambient shadow is the ShortlistDeck card (lands in wave 3) and
 // it applies its own LOCAL inline shadow, not a global token.
 function Card({

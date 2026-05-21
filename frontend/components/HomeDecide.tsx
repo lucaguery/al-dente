@@ -15,7 +15,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { RotateCw } from "lucide-react";
 import { BrandLoader } from "@/components/BrandLoader";
-import { Marginalia } from "@/components/Marginalia";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/BrandIcon";
@@ -381,12 +380,12 @@ export function HomeDecide() {
   if (!partner) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center px-(--spacing-page-x) gap-(--spacing-section-y)">
-        <div className="paper-grain shadow-card border-l-[3px] border-primary/60 rounded-xl p-6 max-w-sm w-full flex flex-col gap-4 bg-card">
-          <p className="font-display italic text-base text-foreground">
+        <div className="border-l-[3px] border-primary/60 rounded-xl p-6 max-w-sm w-full flex flex-col gap-4 bg-card border border-border">
+          <p className="text-base text-foreground">
             {tPartnerWaiting("message")}
           </p>
           {session.invite_code ? (
-            <p className="font-display italic text-3xl tracking-widest text-primary text-center">
+            <p className="text-3xl tracking-widest text-primary text-center tabular-nums font-mono">
               {session.invite_code}
             </p>
           ) : null}
@@ -550,26 +549,28 @@ export function HomeDecide() {
             screen; user knows what day it is). Regen icon promoted to a
             larger affordance (40px hit target, 18px glyph). */}
         <div className="flex items-end justify-between gap-3">
-          <h1
-            className="text-display text-foreground flex-1 min-w-0"
-            style={{ fontSize: "28px", fontStyle: "normal" }}
-          >
+          <h1 className="text-display text-foreground flex-1 min-w-0">
             {tHome("hero_question")}
           </h1>
           <button
             type="button"
             aria-label={tSummary("regenerate_cta")}
             onClick={() => setRegenOpen(true)}
-            className="inline-flex items-center justify-center rounded-full text-foreground-muted hover:text-foreground hover:bg-foreground/5 active:scale-95 transition-all duration-fast ease-craft shrink-0 mb-1"
-            style={{ width: "40px", height: "40px" }}
+            className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 active:scale-95 transition-all shrink-0 mb-1"
+            style={{
+              width: "40px",
+              height: "40px",
+              transitionDuration: "var(--duration-fast)",
+              transitionTimingFunction: "var(--ease)",
+            }}
           >
             <RotateCw size={18} aria-hidden />
           </button>
         </div>
-        {/* State-derived Caveat slant subhead (D-13 + UI-SPEC §9.1 step 3) */}
-        <Marginalia size="sm" slant className="mt-[-4px]">
+        {/* State-derived subhead — Geist Mono caption per ADR-0004 §Marginalia register */}
+        <span className="text-caption block mt-1">
           {subheadText}
-        </Marginalia>
+        </span>
       </header>
 
       {shortlistIsEmpty ? (

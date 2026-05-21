@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 
 // ADR-0004 wave 2 — empty-state shell rebased to hairline-only.
-// Previously this surface composed `paper-grain shadow-card` on a bare div
+// Previously this surface composed the dropped Sober Kitchen utilities on a bare div
 // to avoid the Card subtree overhead. Both are dropped per ADR §Shadows +
 // §Texture. The shell is now a plain rounded card with border-border and
 // bg-card; no depth, no texture. Wave 4 will swap any <BrandIcon> passed in

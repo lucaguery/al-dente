@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 // Post-create screen. No back button — once the household exists the
 // user shouldn't undo creation by going back. Done CTA replaces history
 // (router.replace) so back from `/` doesn't bounce here.
-// Phase 9 retheme: paper-grain body Card + Fraunces italic display title
+// Phase 9 retheme + ADR-0004 wave 3: hairline body Card + Geist display title
 // + Fraunces italic terracotta invite-code identity signature — this
 // exact class string is repeated VERBATIM on the Settings invite-code
 // in Plan 03 for first-touch ↔ re-find consistency. h-12 floor on copy
@@ -46,18 +46,20 @@ function ShareCodeInner() {
 
   return (
     <section className="flex flex-col flex-1 bg-background px-(--spacing-page-x) pt-12 pb-32">
-      <Card className="paper-grain shadow-card px-6 py-6 flex flex-col gap-4">
-        {/* Editorial title — Fraunces italic display register. */}
+      <Card className="px-6 py-6 flex flex-col gap-4">
+        {/* Title — ADR-0004 La Grille wave 3 (Geist 500 24px). */}
         <h1 className="text-display">{t("title")}</h1>
-        {/* Body copy — IBM Plex Sans muted. */}
-        <p className="text-base text-foreground-muted">{t("body")}</p>
+        {/* Body copy — Geist 400 muted. */}
+        <p className="text-base text-muted-foreground">{t("body")}</p>
 
         {/* THE invite-code monogram — load-bearing identity element.
-            Repeated VERBATIM on Settings invite-code (Plan 03) for
-            first-touch ↔ re-find consistency. The cookbook-recipe-card-
-            number gesture replaces the previous wide-tracked mono
-            block. */}
-        <div className="font-display italic text-3xl tracking-widest text-primary text-center py-4">
+            Mirrors Settings invite-code (Plan 03) for first-touch ↔ re-find
+            consistency. Geist Mono + terracotta + wide-tracking is the new
+            "this is YOUR household monogram" gesture per ADR-0004. */}
+        <div
+          className="text-3xl tracking-widest text-primary text-center py-4 tabular-nums"
+          style={{ fontFamily: "var(--font-mono), ui-monospace, monospace" }}
+        >
           {code}
         </div>
 

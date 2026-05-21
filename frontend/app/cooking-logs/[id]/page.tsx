@@ -2,7 +2,7 @@
 
 // Phase 17 / HIST-02 — Cooking-log detail page.
 //
-// Per D-17-05: paper-grain Card chrome consistent with the Phase 8
+// Per D-17-05: hairline Card chrome consistent with the Phase 8
 // cookbook-chapter-opener gesture. Header is an absolute French date
 // in Fraunces italic (the gesture the user explicitly named); body
 // shows the cooked-by chip (member name + color from useSession), the
@@ -141,12 +141,12 @@ export default function CookingLogDetailPage() {
             <div aria-hidden className="h-1" />
           ) : log !== null ? (
             <article
-              className="paper-grain flex flex-col gap-4 p-6 bg-card rounded-xl border border-border shadow-card"
+              className="flex flex-col gap-4 p-6 bg-card rounded-xl border border-border"
               /* TODO(productize): i18n — Phase 20 (FIX-03) sweep. aria-label currently French. */
               aria-label="Détail de la cuisson"
             >
               <header className="flex flex-col gap-2">
-                <h1 className="font-display italic text-2xl text-foreground">
+                <h1 className="text-2xl text-foreground" style={{ fontWeight: 500, letterSpacing: "-0.02em" }}>
                   {formatAbsoluteFr(new Date(log.cooked_at))}
                 </h1>
                 {cookedByMember ? (

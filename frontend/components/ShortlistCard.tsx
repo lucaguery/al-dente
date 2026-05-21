@@ -281,6 +281,18 @@ export function ShortlistCard({
       ? { scale: 1, y: 0, opacity: 1 }
       : undefined;
 
+  // ADR-0004 §Shadows: ShortlistCard is THE single exception that keeps a
+  // soft ambient shadow because the deck-stack metaphor needs depth
+  // perception. Applied inline so no global `--shadow-card` token is
+  // reintroduced; the front card gets a stronger shadow than the peeks.
+  const ambientShadow = isFront
+    ? "0 8px 24px -8px rgba(20, 17, 13, 0.18)"
+    : "0 4px 12px -6px rgba(20, 17, 13, 0.12)";
+  const motionStyle =
+    reducedMotion || !isFront
+      ? { boxShadow: ambientShadow }
+      : { x, rotate, boxShadow: ambientShadow };
+
   return (
     <motion.div
       role="article"
@@ -289,11 +301,7 @@ export function ShortlistCard({
       dragConstraints={{ left: 0, right: 0 }}
       dragSnapToOrigin
       dragElastic={0.6}
-      style={
-        reducedMotion || !isFront
-          ? undefined
-          : { x, rotate }
-      }
+      style={motionStyle}
       onDragEnd={dragEnabled ? handleDragEnd : undefined}
       onPanStart={
         isFront
@@ -326,16 +334,11 @@ export function ShortlistCard({
       exit={motionExit}
       transition={isFront && !reducedMotion ? transitions.springSnap : undefined}
       className={
-        // `!absolute !inset-0` defeats `.paper-grain { position: relative }`
-        // in globals.css (defined later in @layer utilities than Tailwind's
-        // .absolute). Without !important, both cards collapse into document
-        // flow and stack vertically instead of overlapping — that's why the
-        // peek covered the thumb buttons and the deck didn't look like a pile.
         isFront
-          ? "!absolute !inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card-hover overflow-hidden flex flex-col touch-pan-y"
+          ? "!absolute !inset-0 bg-card border border-border rounded-2xl overflow-hidden flex flex-col touch-pan-y"
           : peekDepth === 2
-            ? "!absolute !inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col scale-[0.88] translate-y-6 opacity-40 pointer-events-none"
-            : "!absolute !inset-0 paper-grain bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col scale-[0.94] translate-y-3 opacity-60 pointer-events-none"
+            ? "!absolute !inset-0 bg-card border border-border rounded-2xl overflow-hidden flex flex-col scale-[0.88] translate-y-6 opacity-40 pointer-events-none"
+            : "!absolute !inset-0 bg-card border border-border rounded-2xl overflow-hidden flex flex-col scale-[0.94] translate-y-3 opacity-60 pointer-events-none"
       }
     >
       {/* Photo region — quick-260520-hpz UAT: aspect tightened from 4/3 to
@@ -402,10 +405,10 @@ export function ShortlistCard({
               // added a soft tint so the threshold feedback is unmistakable.
               // Doubled-up box-shadow: solid 5px inset border + 30px
               // wash (low-alpha) ramps the affordance gradually.
-              // UAT round 4: `!absolute !inset-0` — `.paper-grain > *`
-              // in globals.css forces position:relative on direct children
-              // by specificity (W-05), collapsing the ring divs to h:0.
-              // Same defeat-the-cascade pattern the front card uses at line 335.
+              // ADR-0004 wave 3: `!absolute !inset-0` — preserved from the
+              // pre-wave-1 cascade-defeat pattern (the texture overlay is gone
+              // but the !important wins are still load-bearing against any
+              // future utility-class specificity collision).
               boxShadow:
                 "inset 0 0 0 5px var(--color-valide-foreground), inset 0 0 30px 0 color-mix(in srgb, var(--color-valide-foreground) 20%, transparent)",
             }}

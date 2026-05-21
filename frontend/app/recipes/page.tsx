@@ -37,7 +37,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { RecipeCard } from "@/components/RecipeCard";
 import { RecipeRow } from "@/components/RecipeRow";
 import { LibraryViewSwitch, type LibraryView } from "@/components/LibraryViewSwitch";
-import { Marginalia } from "@/components/Marginalia";
 import { SearchInput } from "@/components/SearchInput";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { api } from "@/lib/api";
@@ -84,17 +83,17 @@ function PatinaSection({
   return (
     <section>
       <header className="flex items-baseline gap-2 mt-4 mb-2">
-        <h2 className="font-display" style={{ fontSize: "16px", fontWeight: 500 }}>
+        <h2 style={{ fontSize: "16px", fontWeight: 500 }}>
           {label}
         </h2>
-        <Marginalia size="sm" as="span" style={{ fontSize: "15px" }}>
+        <span className="text-caption">
           <span className="meta-sep">{" · "}</span>{count}
-        </Marginalia>
+        </span>
       </header>
       {recipes.length === 0 ? (
-        <Marginalia size="sm" slant as="p">
+        <p className="text-caption">
           {emptyLabel}
-        </Marginalia>
+        </p>
       ) : (
         <div className={columnClass}>
           {recipes.map((r) => (
@@ -296,8 +295,8 @@ export default function RecipesPage() {
                 </div>
               ) : view === "list" ? (
                 <div className="flex flex-col gap-[14px] px-(--spacing-page-x)">
-                  {recipes.map((r) => (
-                    <RecipeRow key={r.id} recipe={r} />
+                  {recipes.map((r, idx) => (
+                    <RecipeRow key={r.id} recipe={r} index={idx} />
                   ))}
                 </div>
               ) : (

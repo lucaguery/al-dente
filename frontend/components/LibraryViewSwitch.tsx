@@ -45,8 +45,8 @@ export function LibraryViewSwitch({ value, onChange, className }: LibraryViewSwi
             style={{
               padding: "5px 9px",
               background: active ? "var(--card)" : "transparent",
-              color: active ? "var(--primary)" : "var(--foreground-muted)",
-              boxShadow: active ? "var(--shadow-card)" : "none",
+              color: active ? "var(--primary)" : "var(--muted-foreground)",
+              border: active ? "1px solid var(--border)" : "1px solid transparent",
               fontSize: "12px",
               fontWeight: 500,
             }}

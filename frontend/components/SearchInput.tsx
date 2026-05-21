@@ -74,7 +74,7 @@ export function SearchInput({ onQueryChange }: Props) {
     scheduleSearch("");
   };
 
-  // ADR-0004 wave 2 — paper-grain sibling layer dropped. The new <Input>
+  // ADR-0004 wave 2 — texture sibling layer dropped. The new <Input>
   // primitive already carries the border-border (#EDEBE4) hairline + focus
   // ring (--ring #A8523C). The Input's bg is transparent; we set bg-card on
   // the wrapper instead so the search-row reads as a card surface against

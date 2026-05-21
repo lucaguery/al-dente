@@ -20,7 +20,7 @@ type BubbleProps =
   | { variant: "persisted"; turn: PersistedTurn; resolvedPhotoUrl?: string | null };
 
 // Shared Tailwind class constants for user bubble shells
-const USER_BUBBLE_BASE = "self-end max-w-[78%] bg-primary text-primary-foreground shadow-card";
+const USER_BUBBLE_BASE = "self-end max-w-[78%] bg-primary text-primary-foreground";
 const USER_BUBBLE_RADIUS = "rounded-[18px_18px_4px_18px]";
 
 // Decorative waveform bar heights for voice bubbles
@@ -109,7 +109,7 @@ export function Bubble(props: BubbleProps): React.JSX.Element | null {
   if (turn.kind === "photo") {
     const src = props.resolvedPhotoUrl;
     return (
-      <div className={`self-end max-w-[78%] ${USER_BUBBLE_RADIUS} overflow-hidden shadow-card`} style={{ background: "var(--card)", border: "1px solid var(--border)", padding: "4px" }}>
+      <div className={`self-end max-w-[78%] ${USER_BUBBLE_RADIUS} overflow-hidden`} style={{ background: "var(--card)", border: "1px solid var(--border)", padding: "4px" }}>
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element -- signed URL; next/Image with custom loader is overkill for dynamic signed URLs
           <img src={src} alt="" className="w-full aspect-[4/3] rounded-[15px] object-cover" />
@@ -209,7 +209,7 @@ function PendingBubbleContent({ bubble }: { bubble: PendingBubble }) {
 
   if (bubble.kind === "photo") {
     return (
-      <div className={`self-end max-w-[78%] ${USER_BUBBLE_RADIUS} overflow-hidden shadow-card`} style={{ background: "var(--card)", border: "1px solid var(--border)", padding: "4px" }}>
+      <div className={`self-end max-w-[78%] ${USER_BUBBLE_RADIUS} overflow-hidden`} style={{ background: "var(--card)", border: "1px solid var(--border)", padding: "4px" }}>
         {bubble.previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- local object URL; next/Image with custom loader is overkill for blob URLs
           <img src={bubble.previewUrl} alt="" className="w-full aspect-[4/3] rounded-[15px] object-cover" />

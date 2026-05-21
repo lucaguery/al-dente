@@ -42,11 +42,11 @@ export default function Home() {
       <div className="flex flex-col flex-1">
         {/* iOS install hint — per-device PWA UX, not part of Decide content. */}
         {showInstallHint ? (
-          <Card className="mx-6 mt-4 bg-card border-border shadow-card p-4 gap-2">
+          <Card className="mx-6 mt-4 bg-card border-border p-4 gap-2">
             <h2 className="text-sm font-medium leading-5">
               {t("install.title")}
             </h2>
-            <p className="text-sm text-foreground-muted leading-5">
+            <p className="text-sm text-muted-foreground leading-5">
               {t("install.body")}
             </p>
           </Card>

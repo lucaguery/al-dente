@@ -40,14 +40,15 @@ export function VoiceSheet({ open, onOpenChange, onConfirm }: VoiceSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-auto">
         <SheetHeader>
-          <SheetTitle className="font-display text-base font-medium">
+          <SheetTitle className="text-base font-medium">
             {t("voice_sheet_title")}
           </SheetTitle>
         </SheetHeader>
 
-        {/* D-Voice helper card — mirrors VoiceCaptureTab pattern (paper-grain card, italic display-serif headline) */}
-        <Card className="paper-grain shadow-card border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-2 mx-4 mt-2">
-          <span className="font-display italic text-base text-foreground">
+        {/* D-Voice helper — ADR-0004 wave 3: hairline card, no texture, no
+            Cormorant italic; left-border accent kept as the editorial gesture. */}
+        <Card className="border-l-[3px] border-primary/60 px-4 py-3 flex flex-col gap-2 mx-4 mt-2">
+          <span className="text-base text-foreground">
             {t("voice_helper")}
           </span>
         </Card>
