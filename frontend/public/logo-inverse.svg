@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Al Dente" style="color:#FAFAF7">
+  <title>Al Dente — inverse</title>
+  <desc>Inverse variant for dark backgrounds. Cream plate + cream seats + terracotta centre dot.</desc>
+  <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+  <circle cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.18"/>
+  <circle cx="32" cy="5" r="4" fill="currentColor"/>
+  <circle cx="32" cy="59" r="4" fill="currentColor"/>
+  <circle cx="32" cy="32" r="3.5" fill="#A8523C"/>
+</svg>

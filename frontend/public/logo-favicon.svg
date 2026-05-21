@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Al Dente">
+  <title>Al Dente — favicon</title>
+  <desc>Simplified mark for tiny sizes (16-32px). Plate edge + centre dot only — seats and well dropped because they become illegible below ~24px.</desc>
+  <!-- Thicker plate edge so it survives at 16px -->
+  <circle cx="32" cy="32" r="25" stroke="currentColor" stroke-width="6"/>
+  <!-- Larger centre dot, hardcoded terracotta -->
+  <circle cx="32" cy="32" r="9" fill="#A8523C"/>
+</svg>

@@ -1,0 +1,72 @@
+/* Al Dente — DIRECTION 2: La Grille · réchauffé (Variant B Soft).
+   ⚠ Sketches only — do NOT import into the real app yet.
+   The retained direction: La Grille's structure + a soft warmth dose.
+   Default theme assumes Variant B (Soft) wins. */
+
+:root {
+  /* ── Surface — off-white, very subtle warmth ───────────────────────── */
+  --color-bg: #FAFAF7;
+  --color-surface: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-card-valide: #F5E5DD;
+  --color-border: #EDEBE4;
+  --color-border-strong: #D8D4C7;
+
+  /* ── Ink — soft warm-black ──────────────────────────────────────────── */
+  --color-text: #14110D;
+  --color-text-muted: #6F6B62;
+  --color-text-faint: #A09A8C;
+
+  /* ── Accent — refined terracotta (cooler/lower-chroma than original) ── */
+  --color-primary: #A8523C;
+  --color-primary-hover: #8E4330;
+  --color-primary-foreground: #FAFAF7;
+  --color-primary-tint: #F5E5DD;
+
+  /* ── Vote states ────────────────────────────────────────────────────── */
+  --color-valide: var(--color-primary);
+  --color-valide-tint: var(--color-primary-tint);
+  --color-pressenti: var(--color-text-muted);
+  --color-conteste-bar: var(--color-primary);
+  --color-rejete: #D8D4C7;
+
+  /* ── Member dots ────────────────────────────────────────────────────── */
+  --color-member-luca: var(--color-text);
+  --color-member-partner: var(--color-text-muted);
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-display: 'Geist', system-ui, sans-serif;
+  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  /* Type usage:
+     - hero: Geist 500, font-size 23px, -0.03em
+     - body / chrome: Geist 400/500
+     - indices, dates, meta, crumbs: Geist Mono 400
+     - mono labels lowercase, never SHOUTY caps */
+
+  /* ── Shape — geometric, slight radius ───────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
+
+  /* ── Shadows — none, hairlines only ─────────────────────────────────── */
+  --shadow-card: none;
+  --shadow-hairline: inset 0 0 0 1px var(--color-border);
+
+  /* ── Motion ─────────────────────────────────────────────────────────── */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+}
+
+/* Notes for migration:
+   - The CTA stays dark ink (#14110D) — warmth comes from surface + accent,
+     not from a colored button. Hover transitions ink → terracotta.
+   - The Validé row signals via small terracotta dot + index color + meta
+     color — no full-bleed accent-tint background (kept Grille's restraint).
+   - Numbered indices (01, 02, 03...) are the Grille keystone move and
+     should stay across Accueil, Recettes, Ajouter, Profil.
+   - Drop Cormorant, Caveat, paper-grain, patine, dog-ear, ledger dots,
+     warm-brown shadows. Drop the marginalia register entirely.
+*/

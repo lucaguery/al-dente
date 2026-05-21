@@ -1,0 +1,61 @@
+/* Al Dente — DIRECTION 2: La Grille (space carries).
+   ⚠ Sketches only — do NOT import into the real app yet.
+   Modern sober. The grid system itself is the personality.
+   Geist + Geist Mono on pure white. Single olive accent for validé. */
+
+:root {
+  /* ── Surface — pure white, no warmth ───────────────────────────────── */
+  --color-bg: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-card-muted: #FAFAF8;
+  --color-card-valide: rgba(95,132,85,0.04);
+  --color-border: #E8E8E5;
+  --color-border-faint: #F0F0EC;
+
+  /* ── Ink ────────────────────────────────────────────────────────────── */
+  --color-text: #0A0A0A;
+  --color-text-muted: #6B6B6B;
+  --color-text-faint: #999999;
+
+  /* ── Accent — olive, used only for state (validé) ───────────────────── */
+  --color-primary: #0A0A0A;          /* CTA is ink, not accent */
+  --color-primary-hover: #5F8455;
+  --color-primary-foreground: #FFFFFF;
+  --color-valide: #5F8455;
+  --color-valide-tint: #F0F4ED;
+
+  /* ── Vote states ────────────────────────────────────────────────────── */
+  --color-pressenti: #6B6B6B;
+  --color-conteste-bar: #5F8455;
+  --color-rejete: #D4D4D0;
+
+  /* ── Member dots ────────────────────────────────────────────────────── */
+  --color-member-luca: #0A0A0A;
+  --color-member-partner: #6B6B6B;
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-display: 'Geist', system-ui, sans-serif;
+  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  /* Type usage:
+     - hero: Geist 500, -0.03em
+     - body: Geist 500/400
+     - indices: Geist Mono 400
+     - meta + IDs: Geist Mono 400 (lowercase) */
+
+  /* ── Shape — geometric, slight radius ───────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
+
+  /* ── Shadows — none, only hairline ──────────────────────────────────── */
+  --shadow-card: none;
+  --shadow-hairline: inset 0 0 0 1px var(--color-border);
+
+  /* ── Motion — fast and deliberate ───────────────────────────────────── */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+}

@@ -1,0 +1,3037 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sketch 002 — La Grille · Soft warmth · 4 écrans</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   PAGE CHROME
+   ───────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Geist', system-ui, sans-serif;
+  background: #ECEAE3;
+  color: #1A1A1A;
+  min-height: 100vh;
+  padding-top: 64px;
+}
+
+#nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: #FAFAF7; color: #14110D;
+  padding: 14px 22px;
+  display: flex; gap: 10px; align-items: center;
+  font-family: 'Geist', sans-serif; font-size: 13px;
+  border-bottom: 1px solid #EDEBE4;
+}
+#nav .brand {
+  font-family: 'Geist', sans-serif; font-weight: 600;
+  font-size: 14px; margin-right: 12px; color: #14110D;
+  letter-spacing: -0.015em;
+}
+#nav .brand .dot { color: #A8523C; }
+#nav .sub {
+  font-family: 'Geist Mono', monospace; font-weight: 400;
+  font-size: 11px; color: #6F6B62;
+}
+#nav .spacer { flex: 1; }
+#nav .badge {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  padding: 4px 10px;
+  background: #F5E5DD; color: #82371F;
+  border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+#nav .badge .d {
+  width: 6px; height: 6px; border-radius: 999px; background: #A8523C;
+}
+
+.stage { padding: 36px 24px 80px; }
+.stage-head {
+  max-width: 1080px; margin: 0 auto 32px;
+  color: #14110D;
+}
+.stage-head h2 {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 26px; line-height: 1.15; margin: 0 0 6px;
+  letter-spacing: -0.025em;
+}
+.stage-head .principle {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #6F6B62;
+}
+.stage-head p {
+  font-family: 'Geist', sans-serif;
+  font-size: 14px; color: #4A4640; line-height: 1.6;
+  margin: 12px 0 0; max-width: 680px;
+}
+.stage-head .tokens {
+  display: flex; gap: 16px; margin-top: 18px; flex-wrap: wrap;
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #6F6B62;
+}
+.stage-head .tok {
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.stage-head .tok .sw {
+  width: 14px; height: 14px; border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* 2x2 phone grid */
+.phone-grid {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 40px 40px;
+  justify-content: center;
+  margin: 0 auto;
+}
+.phone-wrap { display: flex; flex-direction: column; align-items: center; }
+.phone-wrap .label {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: #6F6B62; margin-bottom: 14px;
+}
+.phone-wrap .label strong {
+  font-family: 'Geist', sans-serif; font-weight: 600;
+  color: #14110D; margin-right: 6px;
+  letter-spacing: -0.01em;
+}
+
+/* Floating screen — no device chrome */
+.phone {
+  width: 340px; height: 720px;
+  border-radius: 26px;
+  background: transparent;
+  padding: 0;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 10px 28px rgba(20,17,13,0.07),
+    0 24px 56px rgba(20,17,13,0.05);
+  position: relative;
+  overflow: hidden;
+}
+.phone-inner {
+  width: 100%; height: 100%;
+  border-radius: 26px;
+  overflow: hidden;
+  position: relative;
+}
+.scr {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 28px 22px 0;
+}
+
+/* Sketch toolbar */
+#sketch-tools {
+  position: fixed; bottom: 14px; right: 14px; z-index: 200;
+  background: #14110D; color: #FAFAF7;
+  padding: 8px 12px; border-radius: 10px;
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  display: flex; gap: 10px; align-items: center;
+  opacity: 0.55; transition: opacity 200ms;
+}
+#sketch-tools:hover { opacity: 1; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: #14110D; color: #FAFAF7;
+  font-family: 'Geist', sans-serif; font-size: 13px;
+  padding: 11px 22px; border-radius: 999px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 240ms ease, transform 240ms ease;
+  z-index: 300;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   LA GRILLE · SOFT WARMTH (Variant B tokens)
+   Surface  #FAFAF7   Ink #14110D   Muted #6F6B62   Border #EDEBE4
+   Accent   #A8523C   (refined terracotta · used for state, never CTA bg)
+   CTA      ink-black, hover → terracotta
+   ═════════════════════════════════════════════════════════════════════ */
+.gr {
+  --bg: #FAFAF7;
+  --ink: #14110D;
+  --muted: #6F6B62;
+  --faint: #A09A8C;
+  --border: #EDEBE4;
+  --border-strong: #D8D4C7;
+  --hover: #FFFFFF;
+  --chip: #F1EFE8;
+  --accent: #A8523C;
+  --accent-deep: #8E4330;
+  --valide-chip: #F5E5DD;
+  --valide-chip-fg: #82371F;
+}
+.gr .phone-inner { background: var(--bg); color: var(--ink); font-family: 'Geist', system-ui, sans-serif; }
+
+/* Shared chrome — top bar */
+.gr .top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.gr .top .b {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 13px; color: var(--ink);
+  letter-spacing: -0.015em;
+}
+.gr .top .b .dot { color: var(--accent); }
+.gr .top .d {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted);
+}
+
+/* Hero + sub patterns */
+.gr .hero {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 24px; line-height: 1.18; letter-spacing: -0.03em;
+  color: var(--ink);
+  margin: 24px 0 6px;
+}
+.gr .sub {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+/* Crumbs (Accueil) */
+.gr .crumbs {
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted); margin: 16px 0 20px;
+}
+.gr .crumbs .stat {
+  background: var(--chip); padding: 2px 9px; border-radius: 999px;
+  color: var(--muted);
+}
+.gr .crumbs .stat.v {
+  background: var(--valide-chip); color: var(--valide-chip-fg);
+}
+
+/* Accueil — shortlist rows */
+.gr .stack { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+.gr .r {
+  display: grid; grid-template-columns: 18px 1fr 40px;
+  gap: 14px; align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 220ms cubic-bezier(0.22,1,0.36,1);
+}
+.gr .r:first-of-type { border-top: 0; padding-top: 16px; }
+.gr .r:hover {
+  background: var(--hover);
+  margin: 0 -10px; padding-left: 10px; padding-right: 10px;
+  border-radius: 6px;
+}
+.gr .r .ix {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted); text-align: center;
+}
+.gr .r .name {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 14.5px; line-height: 1.25; letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.gr .r .meta {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: var(--muted); margin-top: 3px;
+}
+.gr .r.valide .ix { color: var(--accent); font-weight: 500; }
+.gr .r.valide .meta { color: var(--accent); }
+.gr .r.valide .name::after {
+  content: ""; display: inline-block;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); margin-left: 8px; vertical-align: 2px;
+}
+
+/* Scene */
+.gr .scene { position: relative; width: 40px; height: 40px; }
+.gr .scene .plate {
+  position: absolute; inset: 9px;
+  border: 1px solid var(--border-strong); border-radius: 50%;
+}
+.gr .r.valide .scene .plate { border-color: var(--accent); }
+.gr .scene .seat {
+  position: absolute; width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+.gr .scene .seat.n { top: 0; left: 50%; transform: translateX(-50%); }
+.gr .scene .seat.s { bottom: 0; left: 50%; transform: translateX(-50%); }
+.gr .scene .seat.luca    { background: var(--ink); }
+.gr .scene .seat.partner { background: var(--muted); }
+.gr .scene .seat.neutral { background: var(--bg); border: 1.5px solid var(--border-strong); }
+.gr .scene .seat.conteste { background: var(--ink); position: relative; }
+.gr .scene .seat.conteste::after {
+  content:""; position:absolute; left:-2px; right:-2px; top:50%; height: 1.5px;
+  background: var(--accent); transform: translateY(-50%);
+}
+.gr .r.valide .scene .seat.luca,
+.gr .r.valide .scene .seat.partner { background: var(--accent); }
+
+/* CTA */
+.gr .cta {
+  margin-top: auto;
+  width: 100%;
+  background: var(--ink); color: var(--bg);
+  border: 0; border-radius: 9px;
+  padding: 15px 18px;
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 14px; letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 200ms cubic-bezier(0.22,1,0.36,1);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.gr .cta:hover { background: var(--accent); }
+.gr .cta .right {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  opacity: 0.6;
+}
+
+/* Bottom nav — compact icon-only with pill-active */
+.gr .nav {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 4px;
+  margin: 10px -22px 0;
+  padding: 8px 14px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.gr .nav-tab {
+  display: flex; align-items: center; justify-content: center;
+  height: 36px;
+  cursor: pointer;
+  border-radius: 10px;
+  color: var(--muted);
+  transition: background 200ms cubic-bezier(0.22,1,0.36,1),
+              color 200ms cubic-bezier(0.22,1,0.36,1);
+}
+.gr .nav-tab:hover {
+  color: var(--ink);
+  background: var(--chip);
+}
+.gr .nav-tab.active {
+  background: var(--valide-chip);
+  color: var(--accent);
+}
+.gr .nav-tab svg {
+  width: 20px; height: 20px; stroke-width: 1.6;
+}
+
+/* RECETTES — search + indexed list */
+.gr .lib-meta {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted); margin-bottom: 18px;
+}
+.gr .search {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  margin-bottom: 14px;
+}
+.gr .search svg { width: 14px; height: 14px; color: var(--muted); }
+.gr .search input {
+  border: 0; background: transparent; outline: none;
+  font-family: 'Geist', sans-serif; font-size: 13px;
+  color: var(--ink); width: 100%;
+  letter-spacing: -0.005em;
+}
+.gr .search input::placeholder { color: var(--faint); }
+.gr .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.gr .filter {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--border-strong); color: var(--muted);
+  background: transparent; cursor: pointer;
+}
+.gr .filter.on {
+  background: var(--ink); color: var(--bg); border-color: var(--ink);
+}
+.gr .lib-list { flex: 1; overflow: hidden; }
+.gr .lib-row {
+  display: grid; grid-template-columns: 22px 1fr auto;
+  gap: 12px; align-items: center;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.gr .lib-row:first-of-type { border-top: 0; }
+.gr .lib-row .ix {
+  font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted);
+}
+.gr .lib-row .nm {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 13.5px; color: var(--ink); letter-spacing: -0.015em;
+}
+.gr .lib-row .mt {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: var(--muted); margin-top: 2px;
+}
+.gr .lib-row .tag {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--chip); color: var(--muted);
+}
+.gr .lib-row .tag.v { background: var(--valide-chip); color: var(--valide-chip-fg); }
+
+/* AJOUTER — capture cards */
+.gr .add-stack { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow: hidden; }
+.gr .add-opt {
+  display: grid; grid-template-columns: 24px 1fr auto;
+  align-items: center; gap: 14px;
+  padding: 13px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  transition: all 220ms cubic-bezier(0.22,1,0.36,1);
+}
+.gr .add-opt:hover { border-color: var(--ink); background: var(--hover); }
+.gr .add-opt .ix {
+  font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted);
+}
+.gr .add-opt .nm {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 14px; color: var(--ink); letter-spacing: -0.015em;
+}
+.gr .add-opt .hp {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: var(--muted); margin-top: 2px;
+}
+.gr .add-opt svg { width: 16px; height: 16px; color: var(--muted); }
+.gr .add-opt:hover svg { color: var(--accent); }
+
+/* PROFIL — members + stats + settings */
+.gr .pf-id {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted); margin-bottom: 20px;
+}
+.gr .pf-mem {
+  display: grid; grid-template-columns: 32px 1fr auto;
+  gap: 14px; align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.gr .pf-mem:first-of-type { border-top: 0; }
+.gr .pf-mem .av {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--ink); color: var(--bg);
+  font-family: 'Geist', sans-serif; font-weight: 600; font-size: 12.5px;
+  display: flex; align-items: center; justify-content: center;
+}
+.gr .pf-mem.partner .av { background: var(--muted); }
+.gr .pf-mem .nm {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 14px; color: var(--ink); letter-spacing: -0.015em;
+}
+.gr .pf-mem .meta {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: var(--muted); margin-top: 2px;
+}
+.gr .pf-mem .you {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: var(--accent-deep); padding: 2px 8px;
+  background: var(--valide-chip);
+  border-radius: 999px;
+}
+.gr .pf-stats {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+  padding: 18px 18px; margin: 18px 0 18px;
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.gr .pf-stat .n {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 22px; color: var(--ink); line-height: 1;
+  letter-spacing: -0.03em;
+}
+.gr .pf-stat .l {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: var(--muted); margin-top: 4px;
+}
+.gr .pf-settings { flex: 1; overflow: hidden; }
+.gr .pf-row {
+  display: grid; grid-template-columns: 22px 1fr auto;
+  gap: 12px; align-items: center;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.gr .pf-row:first-of-type { border-top: 0; }
+.gr .pf-row .ix {
+  font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted);
+}
+.gr .pf-row .l {
+  font-family: 'Geist', sans-serif; font-weight: 500; font-size: 13.5px;
+  color: var(--ink); letter-spacing: -0.015em;
+}
+.gr .pf-row .v {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted);
+}
+.gr .pf-row.danger .v { color: var(--accent); }
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   RECETTE · STRUCTURÉE (cookbook view)
+   ═════════════════════════════════════════════════════════════════════ */
+.gr .det-top {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.gr .det-top .back {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--ink);
+}
+.gr .det-top .back svg { width: 16px; height: 16px; }
+.gr .det-top .crumb {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.gr .det-top .crumb .sep { margin: 0 6px; color: var(--faint); }
+.gr .det-top .pin {
+  margin-left: auto;
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  padding: 3px 9px;
+  background: var(--valide-chip); color: var(--valide-chip-fg);
+  border-radius: 999px;
+}
+
+.gr .rcp-photo {
+  height: 160px;
+  border-radius: 12px;
+  background:
+    radial-gradient(120% 100% at 30% 20%, #F5E5DD 0%, transparent 55%),
+    radial-gradient(80% 80% at 80% 90%, #E8D9C8 0%, transparent 65%),
+    linear-gradient(180deg, #EDEBE4 0%, #E5DFD0 100%);
+  border: 1px solid var(--border);
+  margin: 16px 0 16px;
+  position: relative;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.gr .rcp-photo svg {
+  width: 36px; height: 36px;
+  color: var(--faint); opacity: 0.45;
+  stroke-width: 1.2;
+}
+.gr .rcp-photo .badge {
+  position: absolute; top: 12px; right: 12px;
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  background: rgba(20,17,13,0.7); color: var(--bg);
+  padding: 3px 8px; border-radius: 999px;
+  backdrop-filter: blur(4px);
+}
+
+.gr .rcp-title {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 22px; line-height: 1.18; letter-spacing: -0.025em;
+  color: var(--ink); margin: 0 0 4px;
+}
+.gr .rcp-meta {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted); margin-bottom: 10px;
+}
+.gr .rcp-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.gr .rcp-chip {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--chip); color: var(--muted);
+}
+
+.gr .det-body { flex: 1; overflow: hidden; padding-bottom: 4px; }
+.gr .sec-head {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600;
+  margin: 6px 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.gr .sec-head .count {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: var(--faint); font-weight: 400;
+  letter-spacing: 0; text-transform: none;
+}
+.gr .det-row {
+  display: grid; grid-template-columns: 22px 1fr;
+  gap: 12px; align-items: baseline;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-family: 'Geist', sans-serif;
+}
+.gr .det-row:first-of-type { border-top: 0; padding-top: 4px; }
+.gr .det-row .ix {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: var(--muted);
+}
+.gr .det-row .txt {
+  font-size: 13px; line-height: 1.4; color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.gr .det-row .qty {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted); margin-right: 6px;
+}
+.gr .sec-divider { height: 14px; }
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   RECETTE · THREAD (conversation)
+   ═════════════════════════════════════════════════════════════════════ */
+.gr .thd-head {
+  margin: 18px 0 14px;
+}
+.gr .thd-title {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 18px; letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.gr .thd-sub {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: var(--muted); margin-top: 3px;
+}
+
+.gr .thread { flex: 1; display: flex; flex-direction: column; gap: 14px; overflow: hidden; padding-right: 4px; }
+.gr .turn { display: flex; flex-direction: column; max-width: 84%; }
+.gr .turn.u { align-self: flex-end; align-items: flex-end; }
+.gr .turn.s { align-self: flex-start; align-items: flex-start; }
+.gr .turn .kind {
+  font-family: 'Geist Mono', monospace; font-size: 9.5px;
+  color: var(--faint); margin-bottom: 4px;
+  letter-spacing: 0;
+}
+.gr .turn .kind .k {
+  color: var(--muted); text-transform: lowercase;
+}
+.gr .turn .kind .t { color: var(--faint); }
+.gr .turn .kind .ico {
+  display: inline-flex; vertical-align: middle; margin-right: 4px;
+}
+.gr .turn .kind .ico svg { width: 11px; height: 11px; vertical-align: -2px; }
+.gr .bub {
+  padding: 9px 13px;
+  border-radius: 14px;
+  font-family: 'Geist', sans-serif; font-size: 12.5px;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+}
+.gr .turn.u .bub {
+  background: var(--ink); color: var(--bg);
+  border-bottom-right-radius: 4px;
+}
+.gr .turn.s .bub {
+  background: var(--hover); color: var(--ink);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.gr .turn.s.advisory .bub {
+  border-left: 2px solid var(--accent);
+  padding-left: 11px;
+}
+.gr .turn.s.advisory .kind .k { color: var(--accent); font-weight: 500; }
+.gr .turn.proposal .bub .actions {
+  display: flex; gap: 8px; margin-top: 8px;
+  border-top: 1px solid var(--border); padding-top: 8px;
+}
+.gr .turn.proposal .bub .actions button {
+  font-family: 'Geist', sans-serif; font-weight: 500; font-size: 11px;
+  padding: 5px 11px; border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: -0.005em;
+}
+.gr .turn.proposal .bub .actions .accept {
+  background: var(--ink); color: var(--bg); border: 0;
+}
+.gr .turn.proposal .bub .actions .reject {
+  background: transparent; color: var(--muted); border: 1px solid var(--border);
+}
+.gr .turn.answer .bub {
+  background: var(--valide-chip); color: var(--valide-chip-fg);
+  border: 0;
+}
+.gr .turn.answer .pinned {
+  font-family: 'Geist Mono', monospace; font-size: 9px;
+  color: var(--accent-deep); margin-top: 3px;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+
+.gr .composer {
+  margin: 12px -22px 0;
+  padding: 10px 14px 18px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.gr .composer-row {
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 10px; align-items: center;
+  background: var(--hover);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 6px 6px 6px 14px;
+}
+.gr .composer-row input {
+  border: 0; background: transparent; outline: none;
+  font-family: 'Geist', sans-serif; font-size: 12.5px;
+  color: var(--ink); letter-spacing: -0.005em;
+  width: 100%;
+}
+.gr .composer-row input::placeholder { color: var(--faint); }
+.gr .composer-icons {
+  display: flex; gap: 4px; align-items: center;
+}
+.gr .composer-icons .ic {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  color: var(--muted); cursor: pointer;
+}
+.gr .composer-icons .ic:hover { background: var(--chip); color: var(--ink); }
+.gr .composer-icons .send {
+  background: var(--ink); color: var(--bg);
+}
+.gr .composer-icons .send:hover { background: var(--accent); color: var(--bg); }
+.gr .composer-icons svg { width: 14px; height: 14px; }
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   SHORTLIST · TINDER DECK
+   ═════════════════════════════════════════════════════════════════════ */
+.gr .deck-head {
+  margin: 18px 0 18px;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.gr .deck-title {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 22px; letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.gr .deck-counter {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted);
+}
+.gr .deck-counter strong {
+  color: var(--accent); font-weight: 500;
+}
+
+.gr .deck {
+  flex: 1; position: relative; min-height: 0;
+  margin-bottom: 8px;
+}
+.gr .deck-card {
+  position: absolute;
+  left: 50%; top: 0;
+  width: 270px; height: 360px;
+  margin-left: -135px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 2px 8px rgba(20,17,13,0.06), 0 12px 28px rgba(20,17,13,0.08);
+  transition: transform 280ms cubic-bezier(0.22,1,0.36,1);
+}
+.gr .deck-card.c3 { transform: translateY(18px) scale(0.92); opacity: 0.35; z-index: 1; }
+.gr .deck-card.c2 { transform: translateY(9px) scale(0.96); opacity: 0.70; z-index: 2; }
+.gr .deck-card.c1 { transform: translateY(0) scale(1); z-index: 3; cursor: grab; }
+.gr .deck-card.c1:active { cursor: grabbing; }
+
+.gr .deck-photo {
+  height: 200px;
+  background:
+    radial-gradient(120% 100% at 30% 20%, #F5E5DD 0%, transparent 55%),
+    radial-gradient(80% 80% at 80% 90%, #E8D9C8 0%, transparent 65%),
+    linear-gradient(180deg, #EDEBE4 0%, #E5DFD0 100%);
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.gr .deck-photo svg {
+  width: 38px; height: 38px;
+  color: var(--faint); opacity: 0.4; stroke-width: 1.2;
+}
+.gr .deck-photo .ix {
+  position: absolute; top: 12px; left: 12px;
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  background: rgba(20,17,13,0.7); color: var(--bg);
+  padding: 3px 8px; border-radius: 999px;
+}
+.gr .deck-card .body {
+  padding: 14px 16px; flex: 1;
+  display: flex; flex-direction: column;
+}
+.gr .deck-card .name {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 17px; line-height: 1.2; letter-spacing: -0.02em;
+  color: var(--ink); margin-bottom: 4px;
+}
+.gr .deck-card .meta {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: var(--muted); margin-bottom: 10px;
+}
+.gr .deck-card .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.gr .deck-card .tag {
+  font-family: 'Geist Mono', monospace; font-size: 9.5px;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--chip); color: var(--muted);
+}
+.gr .deck-card .voter {
+  margin-top: auto;
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.gr .deck-card .voter .av {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--ink); color: var(--bg);
+  font-family: 'Geist', sans-serif; font-weight: 600; font-size: 9.5px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.gr .deck-actions {
+  display: flex; gap: 16px; justify-content: center; align-items: center;
+  padding: 12px 0 14px;
+}
+.gr .deck-action {
+  width: 48px; height: 48px; border-radius: 999px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.22,1,0.36,1);
+  color: var(--muted);
+}
+.gr .deck-action:hover { transform: translateY(-2px); border-color: var(--ink); color: var(--ink); }
+.gr .deck-action.no:hover { border-color: var(--ink); }
+.gr .deck-action.yes {
+  border-color: var(--accent); color: var(--accent);
+}
+.gr .deck-action.yes:hover { background: var(--accent); color: var(--bg); }
+.gr .deck-action svg { width: 20px; height: 20px; stroke-width: 1.8; }
+.gr .deck-action.undo svg { width: 16px; height: 16px; }
+.gr .deck-action.undo { width: 38px; height: 38px; }
+
+
+/* ─── Section dividers between phone groups ───────────────────────── */
+.section-bar {
+  max-width: 1180px; margin: 8px auto 22px;
+  display: flex; align-items: center; gap: 14px;
+}
+.section-bar:first-of-type { margin-top: 0; }
+.section-bar .lbl {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #6F6B62; white-space: nowrap;
+  letter-spacing: 0;
+}
+.section-bar .lbl strong {
+  font-family: 'Geist', sans-serif; font-weight: 600;
+  color: #14110D; margin-right: 8px;
+  letter-spacing: -0.01em;
+}
+.section-bar .rule {
+  flex: 1; height: 1px; background: rgba(20,17,13,0.10);
+}
+.section-bar .meta {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: #A09A8C; white-space: nowrap;
+}
+
+.phone-grid-3 {
+  grid-template-columns: repeat(3, max-content);
+  margin-top: 0;
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   TOP TABS (Écrans / Composants)
+   ═════════════════════════════════════════════════════════════════════ */
+#nav .top-tabs {
+  display: flex; gap: 4px;
+  margin-left: 12px;
+}
+#nav .top-tab {
+  border: 0;
+  background: transparent;
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 13px;
+  color: #6F6B62;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  transition: all 200ms cubic-bezier(0.22,1,0.36,1);
+}
+#nav .top-tab:hover { color: #14110D; background: #F1EFE8; }
+#nav .top-tab.active {
+  background: #14110D; color: #FAFAF7;
+}
+
+.tab-page { display: block; }
+.tab-page[hidden] { display: none; }
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   COOKING SESSION
+   ═════════════════════════════════════════════════════════════════════ */
+.gr .cook-head { margin-top: 18px; }
+.gr .cook-title {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 22px; line-height: 1.15; letter-spacing: -0.025em;
+  color: var(--ink); margin: 0 0 4px;
+}
+.gr .cook-timing {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.gr .cook-timing .elapsed { color: var(--accent); font-weight: 500; }
+
+.gr .progress {
+  display: flex; gap: 5px;
+  margin: 18px 0 22px;
+}
+.gr .progress .seg {
+  flex: 1; height: 4px;
+  background: var(--border);
+  border-radius: 999px;
+  position: relative; overflow: hidden;
+}
+.gr .progress .seg.done {
+  background: var(--accent);
+}
+.gr .progress .seg.now {
+  background: var(--border);
+}
+.gr .progress .seg.now::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 60%, transparent 100%);
+  width: 60%;
+  animation: cook-pulse 1.6s infinite;
+  border-radius: 999px;
+}
+@keyframes cook-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+.gr .cook-step {
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 18px 16px;
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+.gr .cook-step .label {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent); font-weight: 600;
+  margin-bottom: 8px;
+}
+.gr .cook-step .text {
+  font-family: 'Geist', sans-serif; font-weight: 400;
+  font-size: 15px; line-height: 1.45; letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.gr .cook-step .ing-ref {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.gr .cook-controls {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 14px;
+}
+.gr .cook-ctrl {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  font-family: 'Geist', sans-serif; font-weight: 500; font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  background: transparent;
+  transition: all 200ms cubic-bezier(0.22,1,0.36,1);
+  letter-spacing: -0.01em;
+}
+.gr .cook-ctrl:hover { background: var(--chip); border-color: var(--ink); }
+.gr .cook-ctrl.prev { color: var(--muted); }
+.gr .cook-ctrl svg { width: 14px; height: 14px; }
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   ONBOARDING WELCOME
+   ═════════════════════════════════════════════════════════════════════ */
+.gr.ob .phone-inner { padding-top: 0; }
+.gr .ob-scr {
+  padding: 36px 22px 0 !important;
+}
+.gr .ob-top {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--faint);
+  text-align: center;
+  padding-top: 8px;
+}
+.gr .ob-mark {
+  margin-top: 76px; text-align: center;
+}
+.gr .ob-mark .word {
+  font-family: 'Geist', sans-serif; font-weight: 600;
+  font-size: 44px; line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+.gr .ob-mark .word .dot { color: var(--accent); }
+.gr .ob-tag {
+  margin-top: 24px; text-align: center;
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 17px; line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.gr .ob-tag em {
+  font-style: normal; color: var(--accent);
+}
+.gr .ob-sub {
+  margin-top: 14px; text-align: center;
+  font-family: 'Geist', sans-serif; font-weight: 400;
+  font-size: 13px; line-height: 1.55;
+  color: var(--muted);
+  max-width: 260px; margin-left: auto; margin-right: auto;
+}
+.gr .ob-actions {
+  margin-top: auto; margin-bottom: 28px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.gr .ob-btn-primary {
+  width: 100%;
+  background: var(--ink); color: var(--bg);
+  border: 0; border-radius: 9px;
+  padding: 15px 18px;
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 14px; letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 200ms cubic-bezier(0.22,1,0.36,1);
+}
+.gr .ob-btn-primary:hover { background: var(--accent); }
+.gr .ob-btn-ghost {
+  width: 100%;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border-strong); border-radius: 9px;
+  padding: 14px 18px;
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 14px; letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.22,1,0.36,1);
+}
+.gr .ob-btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
+.gr .ob-footer {
+  font-family: 'Geist Mono', monospace; font-size: 9.5px;
+  color: var(--faint);
+  text-align: center;
+  letter-spacing: 0.06em;
+  padding-bottom: 22px;
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   RECETTES · GRID VIEW
+   ═════════════════════════════════════════════════════════════════════ */
+.gr .grid-cards {
+  flex: 1; overflow: hidden;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.gr .gcard {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  cursor: pointer;
+  transition: all 240ms cubic-bezier(0.22,1,0.36,1);
+}
+.gr .gcard:hover {
+  border-color: var(--ink);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(20,17,13,0.06);
+}
+.gr .gcard.valide {
+  border-color: var(--accent);
+  background: var(--valide-chip);
+}
+.gr .gcard-photo {
+  height: 100px;
+  background:
+    radial-gradient(120% 100% at 30% 20%, #F5E5DD 0%, transparent 55%),
+    radial-gradient(80% 80% at 80% 90%, #E8D9C8 0%, transparent 65%),
+    linear-gradient(180deg, #EDEBE4 0%, #E5DFD0 100%);
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: 1px solid var(--border);
+}
+.gr .gcard-photo svg {
+  width: 24px; height: 24px;
+  color: var(--faint); opacity: 0.4; stroke-width: 1.2;
+}
+.gr .gcard-photo .v-mark {
+  position: absolute; top: 8px; right: 8px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.gr .gcard-photo .v-mark svg {
+  width: 10px; height: 10px;
+  color: var(--bg); opacity: 1;
+}
+.gr .gcard-body {
+  padding: 9px 10px 10px;
+  flex: 1; display: flex; flex-direction: column;
+}
+.gr .gcard-name {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 12.5px; line-height: 1.2; letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.gr .gcard-meta {
+  font-family: 'Geist Mono', monospace; font-size: 9.5px;
+  color: var(--muted); margin-top: 3px;
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   COMPOSANTS PAGE
+   ═════════════════════════════════════════════════════════════════════ */
+.ds-page {
+  max-width: 1100px; margin: 0 auto;
+  padding: 0 24px 80px;
+}
+.ds-head {
+  padding: 32px 0 36px;
+  border-bottom: 1px solid #DCD8CE;
+  margin-bottom: 36px;
+}
+.ds-head h1 {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 32px; line-height: 1.1; letter-spacing: -0.03em;
+  color: #14110D; margin: 0 0 8px;
+}
+.ds-head h1 .num {
+  font-family: 'Geist Mono', monospace; font-size: 16px;
+  color: #6F6B62; margin-right: 14px;
+  vertical-align: 5px;
+}
+.ds-head p {
+  font-family: 'Geist', sans-serif; font-size: 14px;
+  line-height: 1.6; color: #4A4640;
+  max-width: 700px; margin: 0;
+}
+.ds-head .tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #82371F;
+  background: #F5E5DD;
+  padding: 4px 11px; border-radius: 999px;
+  margin-top: 16px;
+}
+.ds-head .tag .d {
+  width: 6px; height: 6px; border-radius: 50%; background: #A8523C;
+}
+
+.ds-section {
+  margin-bottom: 56px;
+  scroll-margin-top: 80px;
+}
+.ds-section-head {
+  margin-bottom: 22px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #DCD8CE;
+  display: flex; align-items: baseline; gap: 14px;
+  flex-wrap: wrap;
+}
+.ds-section-head h2 {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 22px; letter-spacing: -0.025em;
+  color: #14110D; margin: 0;
+}
+.ds-section-head h2 .num {
+  font-family: 'Geist Mono', monospace; font-size: 12px;
+  color: #6F6B62; margin-right: 12px; font-weight: 400;
+}
+.ds-section-head .desc {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #6F6B62;
+  letter-spacing: 0;
+}
+
+.ds-grid {
+  display: grid; gap: 20px;
+}
+.ds-grid.c2 { grid-template-columns: repeat(2, 1fr); }
+.ds-grid.c3 { grid-template-columns: repeat(3, 1fr); }
+.ds-grid.c4 { grid-template-columns: repeat(4, 1fr); }
+
+.ds-card {
+  background: #FAFAF7;
+  border: 1px solid #EDEBE4;
+  border-radius: 12px;
+  padding: 18px;
+}
+.ds-card .ds-title {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 13.5px; color: #14110D;
+  letter-spacing: -0.015em;
+  margin-bottom: 4px;
+}
+.ds-card .ds-token {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: #6F6B62;
+  margin-bottom: 14px;
+}
+.ds-card .ds-sample {
+  margin-top: 12px;
+}
+
+/* Color palette swatches */
+.ds-swatch-row {
+  display: grid; gap: 10px;
+  margin-bottom: 22px;
+}
+.ds-swatch-row.c5 { grid-template-columns: repeat(5, 1fr); }
+.ds-swatch-row.c4 { grid-template-columns: repeat(4, 1fr); }
+.ds-swatch-row.c3 { grid-template-columns: repeat(3, 1fr); }
+.ds-swatch-row.c2 { grid-template-columns: repeat(2, 1fr); }
+.ds-swatch {
+  border: 1px solid #EDEBE4;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+.ds-swatch .chip {
+  height: 70px;
+  border-bottom: 1px solid #EDEBE4;
+}
+.ds-swatch .info {
+  padding: 9px 12px;
+}
+.ds-swatch .name {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 12px; color: #14110D;
+  letter-spacing: -0.015em;
+}
+.ds-swatch .var {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: #6F6B62; margin-top: 2px;
+}
+.ds-swatch .hex {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: #A09A8C; margin-top: 1px;
+}
+
+.ds-group-label {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: #6F6B62; font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Typography samples */
+.ds-type-sample {
+  display: grid; grid-template-columns: 110px 1fr 200px;
+  gap: 20px; align-items: baseline;
+  padding: 14px 0;
+  border-top: 1px solid #EDEBE4;
+}
+.ds-type-sample:first-of-type { border-top: 0; }
+.ds-type-sample .lab {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #6F6B62;
+}
+.ds-type-sample .tok {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: #A09A8C;
+  text-align: right;
+}
+
+/* Spacing visualizer */
+.ds-space {
+  display: flex; align-items: flex-end; gap: 12px;
+  padding: 18px 0;
+}
+.ds-space-bar {
+  background: #A8523C;
+  width: 22px;
+  border-radius: 3px 3px 0 0;
+}
+.ds-space-row {
+  text-align: center;
+  font-family: 'Geist Mono', monospace; font-size: 9.5px;
+  color: #6F6B62; margin-top: 6px;
+}
+
+/* Shape samples */
+.ds-radius-row { display: flex; gap: 16px; padding: 8px 0; }
+.ds-radius {
+  width: 70px; height: 70px;
+  background: #F5E5DD;
+  border: 1px solid #DCD8CE;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 8px;
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  color: #82371F;
+}
+
+/* Motion samples */
+.ds-motion-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+}
+.ds-motion-card {
+  background: #FAFAF7;
+  border: 1px solid #EDEBE4;
+  border-radius: 12px;
+  padding: 18px;
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #6F6B62;
+}
+.ds-motion-card .label {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 12.5px; color: #14110D; letter-spacing: -0.015em;
+  margin-bottom: 4px;
+}
+
+/* Migration table */
+.ds-migration {
+  width: 100%;
+  border-collapse: collapse;
+  background: #FAFAF7;
+  border: 1px solid #EDEBE4;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ds-migration th, .ds-migration td {
+  text-align: left; padding: 11px 16px;
+  border-bottom: 1px solid #EDEBE4;
+  font-family: 'Geist', sans-serif; font-size: 12.5px;
+  color: #14110D;
+  vertical-align: top;
+  letter-spacing: -0.01em;
+}
+.ds-migration th {
+  background: #F1EFE8;
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: #6F6B62; font-weight: 600;
+}
+.ds-migration td:first-child {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #6F6B62;
+}
+.ds-migration td.del {
+  color: #6F6B62;
+  text-decoration: line-through;
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+}
+.ds-migration td.add {
+  font-family: 'Geist Mono', monospace; font-size: 11px;
+  color: #82371F;
+  font-weight: 500;
+}
+.ds-migration tr:last-child td { border-bottom: 0; }
+
+/* Index sidebar (anchors) */
+.ds-toc {
+  position: sticky; top: 80px;
+  background: #FAFAF7;
+  border: 1px solid #EDEBE4;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-family: 'Geist', sans-serif; font-size: 13px;
+  z-index: 50;
+}
+.ds-toc .lbl {
+  font-family: 'Geist Mono', monospace; font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: #6F6B62; font-weight: 600;
+  margin-bottom: 10px;
+}
+.ds-toc .links {
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.ds-toc a {
+  font-family: 'Geist', sans-serif; font-size: 12px;
+  color: #4A4640;
+  text-decoration: none;
+  padding: 4px 9px;
+  border-radius: 6px;
+  letter-spacing: -0.005em;
+}
+.ds-toc a:hover {
+  background: #F5E5DD; color: #82371F;
+}
+.ds-toc a .ix {
+  font-family: 'Geist Mono', monospace; font-size: 10.5px;
+  color: #A09A8C; margin-right: 4px;
+}
+
+/* Sample render container — applies La Grille tokens to children */
+.ds-render {
+  background: #FAFAF7;
+  border: 1px solid #EDEBE4;
+  border-radius: 12px;
+  padding: 22px;
+}
+.ds-render.dark {
+  background: #14110D;
+  color: #FAFAF7;
+}
+.ds-render.flex {
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+}
+.ds-render.grid {
+  display: grid; gap: 12px;
+}
+
+/* Components-page mini bottom nav (full-width sample, not in phone) */
+.ds-nav-sample {
+  background: #FAFAF7;
+  border: 1px solid #EDEBE4;
+  border-radius: 12px;
+  padding: 14px;
+  max-width: 360px;
+}
+
+/* Components-page table-à-manger gallery */
+.ds-tam-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px;
+}
+.ds-tam-cell {
+  background: #FAFAF7;
+  border: 1px solid #EDEBE4;
+  border-radius: 12px;
+  padding: 20px 14px 14px;
+  text-align: center;
+}
+.ds-tam-cell .scene-wrap {
+  display: flex; justify-content: center;
+  margin-bottom: 14px;
+}
+.ds-tam-cell .nm {
+  font-family: 'Geist', sans-serif; font-weight: 500;
+  font-size: 12px; color: #14110D;
+  letter-spacing: -0.01em;
+}
+.ds-tam-cell .desc {
+  font-family: 'Geist Mono', monospace; font-size: 9.5px;
+  color: #6F6B62;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   LOGOMARK — la table (plate + 2 seats + accent dot)
+   Uses currentColor for ink parts, terracotta hardcoded for center dot.
+   ═════════════════════════════════════════════════════════════════════ */
+.al-dente-logo {
+  display: block;
+  color: #14110D;
+}
+.al-dente-logo .seat-n,
+.al-dente-logo .seat-s {
+  fill: currentColor;
+}
+.al-dente-logo .center-dot {
+  fill: #A8523C;
+  transform-origin: 32px 32px;
+  animation: ad-pulse 1.8s ease-in-out infinite;
+}
+.al-dente-logo.static .center-dot { animation: none; }
+
+.al-dente-logo.valide .seat-n,
+.al-dente-logo.valide .seat-s { fill: #A8523C; }
+
+.al-dente-logo.inverse { color: #FAFAF7; }
+.al-dente-logo.inverse .well { opacity: 0.18; }
+
+@keyframes ad-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.82); }
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   SPLASH / LOADING SCREEN
+   ═════════════════════════════════════════════════════════════════════ */
+.gr .splash-scr {
+  padding: 0 24px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+.gr .splash-top {
+  flex: 0.7;
+}
+.gr .splash-mark {
+  display: flex; justify-content: center;
+  margin-bottom: 28px;
+}
+.gr .splash-word {
+  font-family: 'Geist', sans-serif;
+  font-weight: 600;
+  font-size: 34px;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  line-height: 1;
+}
+.gr .splash-word .dot { color: var(--accent); }
+.gr .splash-tag {
+  font-family: 'Geist', sans-serif;
+  font-weight: 400;
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 10px;
+  letter-spacing: -0.005em;
+}
+.gr .splash-spacer { flex: 1; }
+.gr .splash-loader {
+  display: flex; gap: 6px; align-items: center;
+  margin-bottom: 14px;
+}
+.gr .splash-loader .ld {
+  width: 6px; height: 6px;
+  background: var(--muted);
+  border-radius: 50%;
+  animation: loader-bounce 1.4s infinite ease-in-out both;
+}
+.gr .splash-loader .ld:nth-child(1) { animation-delay: -0.32s; }
+.gr .splash-loader .ld:nth-child(2) { animation-delay: -0.16s; }
+@keyframes loader-bounce {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.7); }
+  40%           { opacity: 1; transform: scale(1); background: var(--accent); }
+}
+.gr .splash-footer {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.08em;
+  padding-bottom: 28px;
+}
+
+
+/* ═════════════════════════════════════════════════════════════════════
+   APP ICON tiles (rounded-square iOS treatment)
+   ═════════════════════════════════════════════════════════════════════ */
+.ds-app-icon {
+  width: 96px; height: 96px;
+  border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(20,17,13,0.05), 0 8px 18px rgba(20,17,13,0.07);
+}
+.ds-app-icon.cream {
+  background: #FAFAF7;
+  border: 1px solid #EDEBE4;
+}
+.ds-app-icon.ink {
+  background: #14110D;
+  border: 1px solid #14110D;
+}
+.ds-app-icon.accent {
+  background: #A8523C;
+  border: 1px solid #A8523C;
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <span class="brand">Al Dente<span class="dot">.</span> <span class="sub">/ Sketch 002 · La Grille · Soft warmth</span></span>
+  <div class="top-tabs">
+    <button class="top-tab active" data-tab="ecrans" onclick="showTab('ecrans', this)">Écrans</button>
+    <button class="top-tab" data-tab="composants" onclick="showTab('composants', this)">Composants</button>
+  </div>
+  <span class="spacer"></span>
+  <span class="badge"><span class="d"></span>★ validé · 2026.05.21 · La Grille · Soft</span>
+</nav>
+
+<div class="tab-page" id="tab-ecrans">
+<div class="stage">
+  <div class="stage-head">
+    <h2>La Grille · Soft warmth</h2>
+    <div class="principle">// direction finale · Accueil · Recettes · Ajouter · Profil</div>
+    <p>Les quatre écrans principaux rendus avec la palette B retenue. Architecture La Grille (Geist + Geist Mono, indices numérotés, hairlines, pas d'ombre) sur surface légèrement réchauffée (#FAFAF7), encre warm-black (#14110D), accent terracotta affiné (#A8523C). C'est cette version que tu peux montrer à ta copine pour le test final.</p>
+    <div class="tokens">
+      <span class="tok"><span class="sw" style="background:#FAFAF7"></span>surface · #FAFAF7</span>
+      <span class="tok"><span class="sw" style="background:#14110D"></span>encre · #14110D</span>
+      <span class="tok"><span class="sw" style="background:#6F6B62"></span>muted · #6F6B62</span>
+      <span class="tok"><span class="sw" style="background:#A8523C"></span>accent · #A8523C</span>
+      <span class="tok"><span class="sw" style="background:#EDEBE4"></span>border · #EDEBE4</span>
+    </div>
+  </div>
+
+  <div class="section-bar">
+    <span class="lbl"><strong>Flow principal</strong>4 écrans · tab bar</span>
+    <span class="rule"></span>
+    <span class="meta">accueil · recettes · ajouter · profil</span>
+  </div>
+
+  <div class="phone-grid">
+
+    <!-- ─── ACCUEIL ─────────────────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Accueil</strong> · décide quotidien</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="top">
+          <span class="b">Al Dente<span class="dot">.</span></span>
+          <span class="d">2026.05.21</span>
+        </div>
+        <h1 class="hero">On mange quoi&nbsp;?</h1>
+        <div class="crumbs">
+          <span class="stat v">1 validé</span>
+          <span class="stat">3 à voter</span>
+          <span>·</span>
+          <span>4 propositions</span>
+        </div>
+        <div class="stack">
+          <div class="r valide" onclick="bump(this)">
+            <span class="ix">01</span>
+            <div>
+              <div class="name">Risotto au safran</div>
+              <div class="meta">italien · 35min · validé</div>
+            </div>
+            <div class="scene"><div class="plate"></div><div class="seat n luca"></div><div class="seat s partner"></div></div>
+          </div>
+          <div class="r" onclick="bump(this)">
+            <span class="ix">02</span>
+            <div>
+              <div class="name">Tagliatelles aux champignons</div>
+              <div class="meta">italien · 25min · M attend</div>
+            </div>
+            <div class="scene"><div class="plate"></div><div class="seat n luca"></div><div class="seat s neutral"></div></div>
+          </div>
+          <div class="r" onclick="bump(this)">
+            <span class="ix">03</span>
+            <div>
+              <div class="name">Bœuf bourguignon</div>
+              <div class="meta">français · 2h · contesté</div>
+            </div>
+            <div class="scene"><div class="plate"></div><div class="seat n luca"></div><div class="seat s conteste"></div></div>
+          </div>
+          <div class="r" onclick="bump(this)">
+            <span class="ix">04</span>
+            <div>
+              <div class="name">Pizza margherita</div>
+              <div class="meta">italien · 35min</div>
+            </div>
+            <div class="scene"><div class="plate"></div><div class="seat n neutral"></div><div class="seat s partner"></div></div>
+          </div>
+        </div>
+        <button class="cta" onclick="toast('Cuisiner Risotto au safran')">
+          <span>Cuisiner — Risotto au safran</span>
+          <span class="right">↵</span>
+        </button>
+        <div class="nav">
+          <div class="nav-tab active"><i data-lucide="house"></i></div>
+          <div class="nav-tab"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab"><i data-lucide="plus"></i></div>
+          <div class="nav-tab"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <!-- ─── RECETTES ────────────────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Recettes</strong> · la bibliothèque</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="top">
+          <span class="b">Al Dente<span class="dot">.</span></span>
+          <span class="d">2026.05.21</span>
+        </div>
+        <h1 class="hero">Recettes</h1>
+        <div class="lib-meta">42 recettes · triées par dernière fois</div>
+        <div class="search">
+          <i data-lucide="search"></i>
+          <input placeholder="chercher…" />
+        </div>
+        <div class="filters">
+          <span class="filter on">tout</span>
+          <span class="filter">printemps</span>
+          <span class="filter">italien</span>
+          <span class="filter">vite</span>
+          <span class="filter">réconfort</span>
+        </div>
+        <div class="lib-list">
+          <div class="lib-row"><span class="ix">01</span><div><div class="nm">Risotto au safran</div><div class="mt">italien · il y a 12 j</div></div><span class="tag v">validé</span></div>
+          <div class="lib-row"><span class="ix">02</span><div><div class="nm">Tagliatelles aux champignons</div><div class="mt">italien · il y a 4 j</div></div><span class="tag">—</span></div>
+          <div class="lib-row"><span class="ix">03</span><div><div class="nm">Bœuf bourguignon</div><div class="mt">français · il y a 21 j</div></div><span class="tag">—</span></div>
+          <div class="lib-row"><span class="ix">04</span><div><div class="nm">Pizza margherita</div><div class="mt">italien · il y a 7 j</div></div><span class="tag">—</span></div>
+          <div class="lib-row"><span class="ix">05</span><div><div class="nm">Tajine d'agneau</div><div class="mt">maghrébin · il y a 38 j</div></div><span class="tag">—</span></div>
+          <div class="lib-row"><span class="ix">06</span><div><div class="nm">Salade niçoise</div><div class="mt">français · il y a 9 j</div></div><span class="tag">—</span></div>
+          <div class="lib-row"><span class="ix">07</span><div><div class="nm">Curry de pois chiches</div><div class="mt">indien · il y a 16 j</div></div><span class="tag">—</span></div>
+        </div>
+        <div class="nav">
+          <div class="nav-tab"><i data-lucide="house"></i></div>
+          <div class="nav-tab active"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab"><i data-lucide="plus"></i></div>
+          <div class="nav-tab"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <!-- ─── AJOUTER ─────────────────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Ajouter</strong> · capture surface</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="top">
+          <span class="b">Al Dente<span class="dot">.</span></span>
+          <span class="d">2026.05.21</span>
+        </div>
+        <h1 class="hero">Nouvelle recette</h1>
+        <div class="sub">5 méthodes · choisis-en une</div>
+        <div class="add-stack">
+          <div class="add-opt" onclick="bump(this)">
+            <span class="ix">01</span>
+            <div>
+              <div class="nm">Note rapide</div>
+              <div class="hp">juste le nom, à compléter plus tard</div>
+            </div>
+            <i data-lucide="zap"></i>
+          </div>
+          <div class="add-opt" onclick="bump(this)">
+            <span class="ix">02</span>
+            <div>
+              <div class="nm">Formulaire</div>
+              <div class="hp">tous les détails à la main</div>
+            </div>
+            <i data-lucide="pen-line"></i>
+          </div>
+          <div class="add-opt" onclick="bump(this)">
+            <span class="ix">03</span>
+            <div>
+              <div class="nm">Voix</div>
+              <div class="hp">dicte, on transcrit</div>
+            </div>
+            <i data-lucide="mic"></i>
+          </div>
+          <div class="add-opt" onclick="bump(this)">
+            <span class="ix">04</span>
+            <div>
+              <div class="nm">Photo</div>
+              <div class="hp">photographie un plat, on lit</div>
+            </div>
+            <i data-lucide="camera"></i>
+          </div>
+          <div class="add-opt" onclick="bump(this)">
+            <span class="ix">05</span>
+            <div>
+              <div class="nm">Lien</div>
+              <div class="hp">colle une URL, on extrait</div>
+            </div>
+            <i data-lucide="link-2"></i>
+          </div>
+        </div>
+        <div class="nav">
+          <div class="nav-tab"><i data-lucide="house"></i></div>
+          <div class="nav-tab"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab active"><i data-lucide="plus"></i></div>
+          <div class="nav-tab"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <!-- ─── PROFIL ──────────────────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Profil</strong> · household</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="top">
+          <span class="b">Al Dente<span class="dot">.</span></span>
+          <span class="d">2026.05.21</span>
+        </div>
+        <h1 class="hero">Profil</h1>
+        <div class="pf-id">maison · MGRY-13 · depuis 2026.03</div>
+        <div class="pf-mem">
+          <div class="av">L</div>
+          <div>
+            <div class="nm">Luca</div>
+            <div class="meta">membre · admin</div>
+          </div>
+          <span class="you">vous</span>
+        </div>
+        <div class="pf-mem partner">
+          <div class="av">M</div>
+          <div>
+            <div class="nm">Marie</div>
+            <div class="meta">membre</div>
+          </div>
+        </div>
+        <div class="pf-stats">
+          <div class="pf-stat"><div class="n">42</div><div class="l">recettes</div></div>
+          <div class="pf-stat"><div class="n">18</div><div class="l">cuisinées</div></div>
+          <div class="pf-stat"><div class="n">127</div><div class="l">votes</div></div>
+        </div>
+        <div class="pf-settings">
+          <div class="pf-row"><span class="ix">01</span><span class="l">Notifications</span><span class="v">activées</span></div>
+          <div class="pf-row"><span class="ix">02</span><span class="l">Heure du décide</span><span class="v">19:00</span></div>
+          <div class="pf-row"><span class="ix">03</span><span class="l">Inviter quelqu'un</span><span class="v">→</span></div>
+          <div class="pf-row"><span class="ix">04</span><span class="l">Exporter les données</span><span class="v">→</span></div>
+          <div class="pf-row danger"><span class="ix">05</span><span class="l">Déconnexion</span><span class="v">→</span></div>
+        </div>
+        <div class="nav">
+          <div class="nav-tab"><i data-lucide="house"></i></div>
+          <div class="nav-tab"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab"><i data-lucide="plus"></i></div>
+          <div class="nav-tab active"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+  </div>
+
+  <div class="section-bar" style="margin-top:48px;">
+    <span class="lbl"><strong>Écrans détails</strong>accédés depuis le flow principal</span>
+    <span class="rule"></span>
+    <span class="meta">recette structurée · thread · shortlist deck</span>
+  </div>
+
+  <div class="phone-grid phone-grid-3">
+
+    <!-- ─── RECETTE · STRUCTURÉE ────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Recette · structurée</strong> · vue cookbook</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="det-top">
+          <span class="back"><i data-lucide="arrow-left"></i></span>
+          <span class="crumb">Recettes<span class="sep">/</span>Risotto</span>
+          <span class="pin">validé · ce soir</span>
+        </div>
+        <div class="rcp-photo">
+          <i data-lucide="utensils"></i>
+          <span class="badge">italien</span>
+        </div>
+        <h2 class="rcp-title">Risotto au safran</h2>
+        <div class="rcp-meta">35 min · 2 personnes · dernière fois il y a 12 j</div>
+        <div class="rcp-chips">
+          <span class="rcp-chip">réconfort</span>
+          <span class="rcp-chip">facile</span>
+          <span class="rcp-chip">printemps</span>
+        </div>
+        <div class="det-body">
+          <div class="sec-head">Ingrédients <span class="count">5</span></div>
+          <div class="det-row"><span class="ix">01</span><span class="txt"><span class="qty">200g</span>riz arborio</span></div>
+          <div class="det-row"><span class="ix">02</span><span class="txt"><span class="qty">1g</span>safran (filaments)</span></div>
+          <div class="det-row"><span class="ix">03</span><span class="txt"><span class="qty">1L</span>bouillon de volaille</span></div>
+          <div class="det-row"><span class="ix">04</span><span class="txt"><span class="qty">1</span>oignon émincé</span></div>
+          <div class="det-row"><span class="ix">05</span><span class="txt"><span class="qty">50g</span>parmesan râpé</span></div>
+          <div class="sec-divider"></div>
+          <div class="sec-head">Étapes <span class="count">4</span></div>
+          <div class="det-row"><span class="ix">01</span><span class="txt">Faire revenir l'oignon jusqu'à translucide.</span></div>
+          <div class="det-row"><span class="ix">02</span><span class="txt">Ajouter le riz, nacrer 1 min sans coloration.</span></div>
+          <div class="det-row"><span class="ix">03</span><span class="txt">Verser le bouillon louche par louche, en remuant.</span></div>
+        </div>
+        <button class="cta" onclick="toast('Marquer comme cuisinée')">
+          <span>Marquer comme cuisinée</span>
+          <span class="right">↵</span>
+        </button>
+        <div class="nav">
+          <div class="nav-tab"><i data-lucide="house"></i></div>
+          <div class="nav-tab active"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab"><i data-lucide="plus"></i></div>
+          <div class="nav-tab"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <!-- ─── RECETTE · THREAD ────────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Recette · thread</strong> · conversation</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="det-top">
+          <span class="back"><i data-lucide="arrow-left"></i></span>
+          <span class="crumb">Risotto<span class="sep">·</span>thread</span>
+          <span class="pin">4 tours</span>
+        </div>
+        <div class="thd-head">
+          <div class="thd-title">Risotto au safran</div>
+          <div class="thd-sub">conversation · depuis le 9 mai</div>
+        </div>
+        <div class="thread">
+          <div class="turn u">
+            <div class="kind"><span class="ico"><i data-lucide="mic"></i></span><span class="k">voix · 9 mai 14:22</span></div>
+            <div class="bub">Risotto au safran avec champignons en accompagnement, 200g de riz arborio, bouillon de volaille…</div>
+          </div>
+          <div class="turn s">
+            <div class="kind"><span class="k">système</span><span class="t"> · question</span></div>
+            <div class="bub">Tu utilises du parmesan ou du pecorino ?</div>
+          </div>
+          <div class="turn u answer">
+            <div class="kind"><span class="k">réponse</span></div>
+            <div class="bub">Parmesan.</div>
+            <div class="pinned">épinglé · cheese</div>
+          </div>
+          <div class="turn s advisory">
+            <div class="kind"><span class="k">advisory</span></div>
+            <div class="bub">Remplacer le bouillon par du vin blanc casserait la base. Suggère : 100ml de vin + reste bouillon.</div>
+          </div>
+        </div>
+        <div class="composer">
+          <div class="composer-row">
+            <input placeholder="écris ou parle…" />
+            <div class="composer-icons">
+              <span class="ic"><i data-lucide="mic"></i></span>
+              <span class="ic"><i data-lucide="camera"></i></span>
+              <span class="ic"><i data-lucide="link-2"></i></span>
+              <span class="ic send"><i data-lucide="arrow-up"></i></span>
+            </div>
+          </div>
+        </div>
+        <div class="nav">
+          <div class="nav-tab"><i data-lucide="house"></i></div>
+          <div class="nav-tab active"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab"><i data-lucide="plus"></i></div>
+          <div class="nav-tab"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <!-- ─── SHORTLIST · TINDER DECK ─────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Shortlist · deck</strong> · vote tinder</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="top">
+          <span class="b">Al Dente<span class="dot">.</span></span>
+          <span class="d">2026.05.21</span>
+        </div>
+        <div class="deck-head">
+          <div>
+            <div class="deck-title">Sélection du soir</div>
+            <div class="deck-counter"><strong>3</strong> à voter · 1 déjà validé</div>
+          </div>
+        </div>
+        <div class="deck">
+          <div class="deck-card c3">
+            <div class="deck-photo"><i data-lucide="pizza"></i></div>
+            <div class="body">
+              <div class="name">Pizza margherita</div>
+            </div>
+          </div>
+          <div class="deck-card c2">
+            <div class="deck-photo"><i data-lucide="beef"></i></div>
+            <div class="body">
+              <div class="name">Bœuf bourguignon</div>
+            </div>
+          </div>
+          <div class="deck-card c1">
+            <div class="deck-photo">
+              <i data-lucide="utensils"></i>
+              <span class="ix">02 / 04</span>
+            </div>
+            <div class="body">
+              <div class="name">Tagliatelles aux champignons</div>
+              <div class="meta">italien · 25 min</div>
+              <div class="tags">
+                <span class="tag">printemps</span>
+                <span class="tag">facile</span>
+                <span class="tag">réconfort</span>
+              </div>
+              <div class="voter">
+                <span class="av">L</span>
+                <span>vote en cours · M en attente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="deck-actions">
+          <span class="deck-action no" onclick="toast('Passer')"><i data-lucide="x"></i></span>
+          <span class="deck-action undo" onclick="toast('Annuler')"><i data-lucide="rotate-ccw"></i></span>
+          <span class="deck-action yes" onclick="toast('Validé !')"><i data-lucide="heart"></i></span>
+        </div>
+        <div class="nav">
+          <div class="nav-tab active"><i data-lucide="house"></i></div>
+          <div class="nav-tab"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab"><i data-lucide="plus"></i></div>
+          <div class="nav-tab"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+
+  </div>
+
+  <div class="section-bar" style="margin-top:48px;">
+    <span class="lbl"><strong>Variantes &amp; flux</strong>états et premiers contacts</span>
+    <span class="rule"></span>
+    <span class="meta">splash · cuisine · onboarding · recettes grille</span>
+  </div>
+
+  <div class="phone-grid">
+
+    <!-- ─── SPLASH / LOADING ────────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Splash</strong> · ouverture de l'app</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr splash-scr">
+        <div class="splash-top"></div>
+        <div class="splash-mark">
+          <svg class="al-dente-logo" width="128" height="128" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+            <circle class="well" cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+            <circle class="seat-n" cx="32" cy="5" r="4"/>
+            <circle class="seat-s" cx="32" cy="59" r="4"/>
+            <circle class="center-dot" cx="32" cy="32" r="3.5"/>
+          </svg>
+        </div>
+        <div class="splash-word">Al Dente<span class="dot">.</span></div>
+        <div class="splash-tag">On mange quoi ce soir&nbsp;?</div>
+        <div class="splash-spacer"></div>
+        <div class="splash-loader">
+          <span class="ld"></span>
+          <span class="ld"></span>
+          <span class="ld"></span>
+        </div>
+        <div class="splash-footer">v0.2 · 2026</div>
+      </div></div></div>
+    </div>
+
+    <!-- ─── COOKING SESSION ─────────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Cuisine</strong> · session active</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="det-top">
+          <span class="back"><i data-lucide="x"></i></span>
+          <span class="crumb">démarrée à 19:18<span class="sep">·</span>14 min</span>
+          <span class="pin">étape 03/04</span>
+        </div>
+        <div class="cook-head">
+          <h2 class="cook-title">Risotto au safran</h2>
+          <div class="cook-timing">
+            <span class="elapsed">14 min écoulées</span>
+            <span>·</span>
+            <span>21 min restantes</span>
+          </div>
+        </div>
+        <div class="progress">
+          <div class="seg done"></div>
+          <div class="seg done"></div>
+          <div class="seg now"></div>
+          <div class="seg"></div>
+        </div>
+        <div class="cook-step">
+          <div class="label">étape 03 sur 04</div>
+          <p class="text">Verser le bouillon louche par louche en remuant constamment. Attendre l'absorption complète avant la suivante.</p>
+          <div class="ing-ref">utilise : 1L bouillon · 200g riz arborio</div>
+        </div>
+        <div class="cook-controls">
+          <button class="cook-ctrl prev"><i data-lucide="chevron-left"></i><span>Étape 02</span></button>
+          <button class="cook-ctrl"><span>Étape 04</span><i data-lucide="chevron-right"></i></button>
+        </div>
+        <button class="cta" onclick="toast('Cuisinée !')">
+          <span>Terminé · marquer cuisinée</span>
+          <span class="right">↵</span>
+        </button>
+        <div class="nav">
+          <div class="nav-tab active"><i data-lucide="house"></i></div>
+          <div class="nav-tab"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab"><i data-lucide="plus"></i></div>
+          <div class="nav-tab"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <!-- ─── ONBOARDING WELCOME ──────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Onboarding</strong> · premier contact</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr ob-scr">
+        <div class="ob-top">v0.2 · printemps 2026</div>
+        <div class="ob-mark">
+          <div class="word">Al Dente<span class="dot">.</span></div>
+        </div>
+        <div class="ob-tag">On mange quoi <em>ce soir</em> ?</div>
+        <div class="ob-sub">Une app pour deux. Pour décider ensemble, sans se relancer toute la soirée.</div>
+        <div class="ob-actions">
+          <button class="ob-btn-primary" onclick="toast('Créer notre foyer')">Créer notre foyer</button>
+          <button class="ob-btn-ghost" onclick="toast('Rejoindre avec un code')">Rejoindre avec un code</button>
+        </div>
+        <div class="ob-footer">cuisine partagée · 0 frais · 0 pub</div>
+      </div></div></div>
+    </div>
+
+    <!-- ─── RECETTES · GRID VIEW ────────────────────────────────────── -->
+    <div class="phone-wrap">
+      <div class="label"><strong>Recettes · grille</strong> · vue visuelle</div>
+      <div class="phone"><div class="phone-inner gr"><div class="scr">
+        <div class="top">
+          <span class="b">Al Dente<span class="dot">.</span></span>
+          <span class="d">2026.05.21</span>
+        </div>
+        <h1 class="hero">Recettes</h1>
+        <div class="lib-meta">42 recettes · vue grille</div>
+        <div class="search">
+          <i data-lucide="search"></i>
+          <input placeholder="chercher…" />
+        </div>
+        <div class="filters">
+          <span class="filter on">tout</span>
+          <span class="filter">italien</span>
+          <span class="filter">français</span>
+          <span class="filter">vite</span>
+        </div>
+        <div class="grid-cards">
+          <div class="gcard valide" onclick="bump(this)">
+            <div class="gcard-photo">
+              <i data-lucide="utensils"></i>
+              <span class="v-mark"><i data-lucide="check"></i></span>
+            </div>
+            <div class="gcard-body">
+              <div class="gcard-name">Risotto au safran</div>
+              <div class="gcard-meta">italien · 35 min</div>
+            </div>
+          </div>
+          <div class="gcard" onclick="bump(this)">
+            <div class="gcard-photo"><i data-lucide="utensils"></i></div>
+            <div class="gcard-body">
+              <div class="gcard-name">Tagliatelles aux champignons</div>
+              <div class="gcard-meta">italien · 25 min</div>
+            </div>
+          </div>
+          <div class="gcard" onclick="bump(this)">
+            <div class="gcard-photo"><i data-lucide="beef"></i></div>
+            <div class="gcard-body">
+              <div class="gcard-name">Bœuf bourguignon</div>
+              <div class="gcard-meta">français · 2 h</div>
+            </div>
+          </div>
+          <div class="gcard" onclick="bump(this)">
+            <div class="gcard-photo"><i data-lucide="pizza"></i></div>
+            <div class="gcard-body">
+              <div class="gcard-name">Pizza margherita</div>
+              <div class="gcard-meta">italien · 35 min</div>
+            </div>
+          </div>
+          <div class="gcard" onclick="bump(this)">
+            <div class="gcard-photo"><i data-lucide="utensils"></i></div>
+            <div class="gcard-body">
+              <div class="gcard-name">Tajine d'agneau</div>
+              <div class="gcard-meta">maghrébin · 1 h 30</div>
+            </div>
+          </div>
+          <div class="gcard" onclick="bump(this)">
+            <div class="gcard-photo"><i data-lucide="utensils"></i></div>
+            <div class="gcard-body">
+              <div class="gcard-name">Curry de pois chiches</div>
+              <div class="gcard-meta">indien · 40 min</div>
+            </div>
+          </div>
+        </div>
+        <div class="nav">
+          <div class="nav-tab"><i data-lucide="house"></i></div>
+          <div class="nav-tab active"><i data-lucide="library-big"></i></div>
+          <div class="nav-tab"><i data-lucide="plus"></i></div>
+          <div class="nav-tab"><i data-lucide="users-round"></i></div>
+        </div>
+      </div></div></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="tab-page" id="tab-composants" hidden>
+  <div class="ds-page">
+
+    <div class="ds-head">
+      <h1><span class="num">DS-002</span>La Grille — composants</h1>
+      <p>Le système de design de l'app, après refresh. Cette page remplacera <code style="font-family:'Geist Mono',monospace;font-size:13px;background:#F1EFE8;padding:1px 6px;border-radius:4px;">docs/design-system.html</code> au moment du merge. Tokens, typographie et composants à porter dans <code style="font-family:'Geist Mono',monospace;font-size:13px;background:#F1EFE8;padding:1px 6px;border-radius:4px;">frontend/app/globals.css</code>.</p>
+      <span class="tag"><span class="d"></span>direction retenue · La Grille · Soft warmth</span>
+    </div>
+
+    <div class="ds-toc">
+      <div class="lbl">Sommaire</div>
+      <div class="links">
+        <a href="#brand"><span class="ix">01</span>Logo &amp; brand</a>
+        <a href="#color"><span class="ix">02</span>Couleur</a>
+        <a href="#type"><span class="ix">03</span>Typographie</a>
+        <a href="#space"><span class="ix">04</span>Espace</a>
+        <a href="#radii"><span class="ix">05</span>Rayons</a>
+        <a href="#motion"><span class="ix">06</span>Mouvement</a>
+        <a href="#buttons"><span class="ix">07</span>Boutons</a>
+        <a href="#inputs"><span class="ix">08</span>Champs</a>
+        <a href="#chips"><span class="ix">09</span>Pastilles</a>
+        <a href="#navbar"><span class="ix">10</span>Nav bar</a>
+        <a href="#tam"><span class="ix">11</span>Table-à-manger</a>
+        <a href="#bubbles"><span class="ix">12</span>Bulles thread</a>
+        <a href="#cards"><span class="ix">13</span>Cartes</a>
+        <a href="#lists"><span class="ix">14</span>Listes</a>
+        <a href="#photos"><span class="ix">15</span>Photos</a>
+        <a href="#migration"><span class="ix">16</span>Migration</a>
+      </div>
+    </div>
+
+    <!-- §01 — LOGO & BRAND -->
+    <section id="brand" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§01</span>Logo &amp; brand</h2>
+        <span class="desc">logomark · app icon · wordmark · tagline</span>
+      </div>
+
+      <p style="font-family:'Geist',sans-serif;font-size:14px;color:#4A4640;line-height:1.6;margin:0 0 24px;max-width:680px;"><strong style="color:#14110D;font-weight:500;">Le logo <em>est</em> la table-à-manger.</strong> Même géométrie que la scène de vote : assiette (cercle), deux sièges (nord + sud), un point central terracotta. Le concept central de l'app — deux voix décident ensemble — est donc inscrit dans la marque elle-même. Aucun glyph supplémentaire à mémoriser : la table c'est le logo, le logo c'est la table.</p>
+
+      <div class="ds-group-label">Logomark — tailles</div>
+      <div class="ds-grid c4">
+        <div class="ds-card" style="text-align:center;">
+          <div class="ds-title">Hero · 128</div>
+          <div class="ds-token">app icon source</div>
+          <div style="display:flex;justify-content:center;padding:18px 0 8px;">
+            <svg class="al-dente-logo static" width="128" height="128" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+              <circle class="well" cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+              <circle class="seat-n" cx="32" cy="5" r="4"/>
+              <circle class="seat-s" cx="32" cy="59" r="4"/>
+              <circle class="center-dot" cx="32" cy="32" r="3.5"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ds-card" style="text-align:center;">
+          <div class="ds-title">Mark · 64</div>
+          <div class="ds-token">avatar · favicon · marketing</div>
+          <div style="display:flex;justify-content:center;padding:18px 0 8px;">
+            <svg class="al-dente-logo static" width="64" height="64" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+              <circle class="well" cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+              <circle class="seat-n" cx="32" cy="5" r="4"/>
+              <circle class="seat-s" cx="32" cy="59" r="4"/>
+              <circle class="center-dot" cx="32" cy="32" r="3.5"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ds-card" style="text-align:center;">
+          <div class="ds-title">Inline · 32</div>
+          <div class="ds-token">UI · inline avec wordmark</div>
+          <div style="display:flex;justify-content:center;padding:18px 0 8px;align-items:center;height:60px;">
+            <svg class="al-dente-logo static" width="32" height="32" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2.5"/>
+              <circle class="seat-n" cx="32" cy="5" r="5"/>
+              <circle class="seat-s" cx="32" cy="59" r="5"/>
+              <circle class="center-dot" cx="32" cy="32" r="4.5"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ds-card" style="text-align:center;">
+          <div class="ds-title">Tiny · 16</div>
+          <div class="ds-token">favicon · tab icon</div>
+          <div style="display:flex;justify-content:center;padding:18px 0 8px;align-items:center;height:60px;">
+            <svg class="al-dente-logo static" width="16" height="16" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="25" stroke="currentColor" stroke-width="6"/>
+              <circle class="center-dot" cx="32" cy="32" r="9"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="ds-group-label" style="margin-top:28px;">Variantes d'état</div>
+      <div class="ds-grid c3">
+        <div class="ds-card" style="text-align:center;">
+          <div style="display:flex;justify-content:center;padding:14px 0;">
+            <svg class="al-dente-logo static" width="96" height="96" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+              <circle class="well" cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+              <circle class="seat-n" cx="32" cy="5" r="4"/>
+              <circle class="seat-s" cx="32" cy="59" r="4"/>
+              <circle class="center-dot" cx="32" cy="32" r="3.5"/>
+            </svg>
+          </div>
+          <div class="ds-title">Default</div>
+          <div class="ds-token">ink plate + ink seats + accent dot</div>
+        </div>
+        <div class="ds-card" style="text-align:center;background:#F5E5DD;">
+          <div style="display:flex;justify-content:center;padding:14px 0;">
+            <svg class="al-dente-logo static valide" width="96" height="96" viewBox="0 0 64 64" fill="none" style="color:#14110D;">
+              <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+              <circle class="well" cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+              <circle class="seat-n" cx="32" cy="5" r="4"/>
+              <circle class="seat-s" cx="32" cy="59" r="4"/>
+              <circle class="center-dot" cx="32" cy="32" r="3.5"/>
+            </svg>
+          </div>
+          <div class="ds-title">Validé</div>
+          <div class="ds-token">deux sièges en accent · le foyer aligné</div>
+        </div>
+        <div class="ds-card" style="text-align:center;background:#14110D;color:#FAFAF7;">
+          <div style="display:flex;justify-content:center;padding:14px 0;">
+            <svg class="al-dente-logo static inverse" width="96" height="96" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+              <circle class="well" cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+              <circle class="seat-n" cx="32" cy="5" r="4"/>
+              <circle class="seat-s" cx="32" cy="59" r="4"/>
+              <circle class="center-dot" cx="32" cy="32" r="3.5"/>
+            </svg>
+          </div>
+          <div class="ds-title" style="color:#FAFAF7;">Inverse</div>
+          <div class="ds-token" style="color:#A09A8C;">cream sur ink · usages dark mode</div>
+        </div>
+      </div>
+
+      <div class="ds-group-label" style="margin-top:28px;">App icon — iOS "Add to Home Screen"</div>
+      <div class="ds-grid c3">
+        <div class="ds-card" style="text-align:center;">
+          <div style="display:flex;justify-content:center;padding:14px 0;">
+            <div class="ds-app-icon cream">
+              <svg class="al-dente-logo static" width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2.5"/>
+                <circle class="seat-n" cx="32" cy="5" r="4.5"/>
+                <circle class="seat-s" cx="32" cy="59" r="4.5"/>
+                <circle class="center-dot" cx="32" cy="32" r="4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="ds-title">Cream · primaire</div>
+          <div class="ds-token">#FAFAF7 fond · ink logo · valeur par défaut</div>
+        </div>
+        <div class="ds-card" style="text-align:center;">
+          <div style="display:flex;justify-content:center;padding:14px 0;">
+            <div class="ds-app-icon ink">
+              <svg class="al-dente-logo static inverse" width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2.5"/>
+                <circle class="seat-n" cx="32" cy="5" r="4.5"/>
+                <circle class="seat-s" cx="32" cy="59" r="4.5"/>
+                <circle class="center-dot" cx="32" cy="32" r="4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="ds-title">Ink · alternative</div>
+          <div class="ds-token">#14110D fond · cream logo · home screen contrasté</div>
+        </div>
+        <div class="ds-card" style="text-align:center;">
+          <div style="display:flex;justify-content:center;padding:14px 0;">
+            <div class="ds-app-icon accent">
+              <svg class="al-dente-logo static" width="64" height="64" viewBox="0 0 64 64" fill="none" style="color:#FAFAF7;">
+                <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2.5"/>
+                <circle cx="32" cy="5" r="4.5" fill="#FAFAF7"/>
+                <circle cx="32" cy="59" r="4.5" fill="#FAFAF7"/>
+                <circle cx="32" cy="32" r="4" fill="#FAFAF7"/>
+              </svg>
+            </div>
+          </div>
+          <div class="ds-title">Accent · campaign</div>
+          <div class="ds-token">#A8523C fond · cream logo · marketing only</div>
+        </div>
+      </div>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin:14px 0 0;line-height:1.6;">L'icône iOS native est arrondie automatiquement par le système (radius ~22.4% du côté). Le SVG source garde des coins carrés ; iOS applique le rounded-square. Les trois variantes ci-dessus reflètent ce rendu final.</p>
+
+      <div class="ds-group-label" style="margin-top:28px;">Wordmark</div>
+      <div class="ds-grid c3">
+        <div class="ds-card">
+          <div class="ds-title">Hero</div>
+          <div class="ds-token">Geist 600 · 44px · -0.04em</div>
+          <div class="ds-sample" style="font-family:'Geist',sans-serif;font-weight:600;font-size:44px;letter-spacing:-0.04em;color:#14110D;line-height:1;">Al Dente<span style="color:#A8523C;">.</span></div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-title">Masthead</div>
+          <div class="ds-token">Geist 600 · 14px</div>
+          <div class="ds-sample" style="font-family:'Geist',sans-serif;font-weight:600;font-size:14px;letter-spacing:-0.015em;color:#14110D;">Al Dente<span style="color:#A8523C;">.</span> <span style="font-family:'Geist Mono',monospace;font-weight:400;font-size:11px;color:#6F6B62;">/ recettes</span></div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-title">Tagline</div>
+          <div class="ds-token">Geist 500 · 17px · italic accent</div>
+          <div class="ds-sample" style="font-family:'Geist',sans-serif;font-weight:500;font-size:17px;letter-spacing:-0.02em;color:#14110D;">On mange quoi <em style="font-style:normal;color:#A8523C;">ce soir</em> ?</div>
+        </div>
+      </div>
+
+      <div class="ds-group-label" style="margin-top:28px;">Loader · motion sur le centre</div>
+      <div class="ds-grid c2">
+        <div class="ds-card" style="text-align:center;">
+          <div style="display:flex;justify-content:center;padding:18px 0;">
+            <svg class="al-dente-logo" width="80" height="80" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+              <circle class="well" cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+              <circle class="seat-n" cx="32" cy="5" r="4"/>
+              <circle class="seat-s" cx="32" cy="59" r="4"/>
+              <circle class="center-dot" cx="32" cy="32" r="3.5"/>
+            </svg>
+          </div>
+          <div class="ds-title">Pulse au centre</div>
+          <div class="ds-token">--duration 1.8s · scale 1 ↔ 0.82 · opacity 1 ↔ 0.55</div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-title">Règle d'usage</div>
+          <div class="ds-token" style="margin-bottom:10px;">comportement</div>
+          <p style="font-family:'Geist',sans-serif;font-size:12.5px;color:#4A4640;line-height:1.55;margin:0;">Le pulse central remplace l'ancien brand-mark loader (SVG stroke-draw 3.2s). Plus court, plus discret, ne mobilise qu'un seul élément. Visible sur splash (au lancement) et sur les états de chargement courts (promotion d'une recette draft → structured, génération d'une shortlist, etc.).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §02 — COLOR -->
+    <section id="color" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§02</span>Couleur</h2>
+        <span class="desc">4 groupes · accent uniquement pour l'état, jamais pour décorer</span>
+      </div>
+
+      <div class="ds-group-label">Surface</div>
+      <div class="ds-swatch-row c4">
+        <div class="ds-swatch">
+          <div class="chip" style="background:#FAFAF7"></div>
+          <div class="info"><div class="name">Background</div><div class="var">--bg</div><div class="hex">#FAFAF7</div></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="chip" style="background:#FFFFFF"></div>
+          <div class="info"><div class="name">Surface / hover</div><div class="var">--surface · --hover</div><div class="hex">#FFFFFF</div></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="chip" style="background:#F1EFE8"></div>
+          <div class="info"><div class="name">Chip muted</div><div class="var">--chip</div><div class="hex">#F1EFE8</div></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="chip" style="background:#F5E5DD"></div>
+          <div class="info"><div class="name">Validé tint</div><div class="var">--valide-chip</div><div class="hex">#F5E5DD</div></div>
+        </div>
+      </div>
+
+      <div class="ds-group-label">Ink</div>
+      <div class="ds-swatch-row c3">
+        <div class="ds-swatch">
+          <div class="chip" style="background:#14110D"></div>
+          <div class="info"><div class="name">Ink</div><div class="var">--ink</div><div class="hex">#14110D</div></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="chip" style="background:#6F6B62"></div>
+          <div class="info"><div class="name">Muted</div><div class="var">--muted</div><div class="hex">#6F6B62</div></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="chip" style="background:#A09A8C"></div>
+          <div class="info"><div class="name">Faint</div><div class="var">--faint</div><div class="hex">#A09A8C</div></div>
+        </div>
+      </div>
+
+      <div class="ds-group-label">Accent · terracotta affiné</div>
+      <div class="ds-swatch-row c3">
+        <div class="ds-swatch">
+          <div class="chip" style="background:#A8523C"></div>
+          <div class="info"><div class="name">Accent</div><div class="var">--accent</div><div class="hex">#A8523C</div></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="chip" style="background:#8E4330"></div>
+          <div class="info"><div class="name">Accent deep</div><div class="var">--accent-deep</div><div class="hex">#8E4330</div></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="chip" style="background:#82371F"></div>
+          <div class="info"><div class="name">Validé fg</div><div class="var">--valide-chip-fg</div><div class="hex">#82371F</div></div>
+        </div>
+      </div>
+
+      <div class="ds-group-label">Border</div>
+      <div class="ds-swatch-row c2">
+        <div class="ds-swatch">
+          <div class="chip" style="background:#EDEBE4"></div>
+          <div class="info"><div class="name">Border</div><div class="var">--border</div><div class="hex">#EDEBE4</div></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="chip" style="background:#D8D4C7"></div>
+          <div class="info"><div class="name">Border strong</div><div class="var">--border-strong</div><div class="hex">#D8D4C7</div></div>
+        </div>
+      </div>
+
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:18px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">Règle d'usage du terracotta —</strong> l'accent <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F1EFE8;padding:1px 6px;border-radius:4px;">#A8523C</code> n'apparaît jamais comme couleur de fond d'un bouton ou comme décoration. Il signale exclusivement un <strong>état</strong> : validé, vous-êtes-ici (nav active), advisory (bar gauche), hover sur CTA. C'est la grammaire qui maintient la sobriété : un seul signal terracotta = "ici, l'app dit quelque chose d'important".</p>
+    </section>
+
+    <!-- §03 — TYPOGRAPHY -->
+    <section id="type" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§03</span>Typographie</h2>
+        <span class="desc">2 familles · Geist (sans) + Geist Mono (chiffres, indices, meta)</span>
+      </div>
+      <div class="ds-render">
+        <div class="ds-type-sample">
+          <span class="lab">.hero</span>
+          <span style="font-family:'Geist',sans-serif;font-weight:500;font-size:24px;letter-spacing:-0.03em;color:#14110D;">On mange quoi ce soir&nbsp;?</span>
+          <span class="tok">Geist 500 · 24/29 · -0.03em</span>
+        </div>
+        <div class="ds-type-sample">
+          <span class="lab">.title</span>
+          <span style="font-family:'Geist',sans-serif;font-weight:500;font-size:18px;letter-spacing:-0.02em;color:#14110D;">Risotto au safran</span>
+          <span class="tok">Geist 500 · 18/22 · -0.02em</span>
+        </div>
+        <div class="ds-type-sample">
+          <span class="lab">.name</span>
+          <span style="font-family:'Geist',sans-serif;font-weight:500;font-size:14.5px;letter-spacing:-0.02em;color:#14110D;">Tagliatelles aux champignons</span>
+          <span class="tok">Geist 500 · 14.5/18 · -0.02em</span>
+        </div>
+        <div class="ds-type-sample">
+          <span class="lab">.body</span>
+          <span style="font-family:'Geist',sans-serif;font-weight:400;font-size:13px;letter-spacing:-0.005em;color:#14110D;">Une app pour deux. Pour décider ensemble.</span>
+          <span class="tok">Geist 400 · 13/19 · -0.005em</span>
+        </div>
+        <div class="ds-type-sample">
+          <span class="lab">.meta / mono</span>
+          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#6F6B62;">italien · 35min · validé · 12 j</span>
+          <span class="tok">Geist Mono 400 · 11px</span>
+        </div>
+        <div class="ds-type-sample">
+          <span class="lab">.micro / index</span>
+          <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;">01  02  03  04 — 2026.05.21</span>
+          <span class="tok">Geist Mono 400 · 10.5px</span>
+        </div>
+      </div>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:16px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">Discipline —</strong> Geist sans pour tout ce qui se lit comme prose ; Geist Mono pour tout ce qui se lit comme <em>donnée</em> (indices, timestamps, IDs, dimensions, métadonnées). Cette dualité remplace l'ancien trio Cormorant + IBM Plex Sans + Caveat.</p>
+    </section>
+
+    <!-- §04 — SPACING -->
+    <section id="space" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§04</span>Espace</h2>
+        <span class="desc">grille 4-pt · padding plats 14–18px · gap entre rangées 4–10px</span>
+      </div>
+      <div class="ds-render">
+        <div class="ds-space">
+          <div><div class="ds-space-bar" style="height:4px"></div><div class="ds-space-row">4</div></div>
+          <div><div class="ds-space-bar" style="height:8px"></div><div class="ds-space-row">8</div></div>
+          <div><div class="ds-space-bar" style="height:12px"></div><div class="ds-space-row">12</div></div>
+          <div><div class="ds-space-bar" style="height:16px"></div><div class="ds-space-row">16</div></div>
+          <div><div class="ds-space-bar" style="height:20px"></div><div class="ds-space-row">20</div></div>
+          <div><div class="ds-space-bar" style="height:24px"></div><div class="ds-space-row">24</div></div>
+          <div><div class="ds-space-bar" style="height:32px"></div><div class="ds-space-row">32</div></div>
+          <div><div class="ds-space-bar" style="height:48px"></div><div class="ds-space-row">48</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §05 — RADII -->
+    <section id="radii" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§05</span>Rayons</h2>
+        <span class="desc">3 tailles · pas d'ombre — l'épaisseur du contour porte l'objet</span>
+      </div>
+      <div class="ds-render">
+        <div class="ds-radius-row">
+          <div class="ds-radius" style="border-radius:4px;">sm · 4</div>
+          <div class="ds-radius" style="border-radius:8px;">md · 8</div>
+          <div class="ds-radius" style="border-radius:10px;">lg · 10</div>
+          <div class="ds-radius" style="border-radius:18px;">xl · 18</div>
+          <div class="ds-radius" style="border-radius:999px;">pill · ∞</div>
+        </div>
+      </div>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:14px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">Usage —</strong> 4px pour les badges/tags, 8–10px pour les boutons et inputs, 12–14px pour les cartes, 18–22px pour les deck cards (Tinder), 999 pour les pastilles d'état et les avatars. <strong>Pas d'ombre dans le système</strong> — l'objet existe par son contour hairline, pas par sa profondeur.</p>
+    </section>
+
+    <!-- §06 — MOTION -->
+    <section id="motion" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§06</span>Mouvement</h2>
+        <span class="desc">1 courbe · 3 durées · pas de spring overshoot</span>
+      </div>
+      <div class="ds-motion-row">
+        <div class="ds-motion-card">
+          <div class="label">--ease</div>
+          cubic-bezier(0.22, 1, 0.36, 1)<br/>
+          <span style="color:#A09A8C;font-size:10.5px;">deliberate ease-out · accélère vite, ralentit longtemps</span>
+        </div>
+        <div class="ds-motion-card">
+          <div class="label">durations</div>
+          --duration-fast · <span style="color:#14110D;font-weight:500;">160ms</span> · feedback bouton<br/>
+          --duration-base · <span style="color:#14110D;font-weight:500;">240ms</span> · transitions de carte<br/>
+          --duration-slow · <span style="color:#14110D;font-weight:500;">380ms</span> · ouvertures de sheet
+        </div>
+      </div>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:14px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">Pas de springs élastiques</strong> — l'ancien ease-craft (0.32, 0.72, 0, 1) avait un caractère "potier" qui contribuait au registre artisanal. La nouvelle courbe est plus quotidienne, plus moderne.</p>
+    </section>
+
+    <!-- §07 — BUTTONS -->
+    <section id="buttons" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§07</span>Boutons</h2>
+        <span class="desc">CTA ink · ghost · pill onboarding · action round</span>
+      </div>
+      <div class="ds-render flex">
+        <div class="gr" style="background:transparent;">
+          <button class="cta" style="width:auto;min-width:280px;">
+            <span>Cuisiner — Risotto au safran</span>
+            <span class="right">↵</span>
+          </button>
+        </div>
+      </div>
+      <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin:6px 0 18px;">.cta — ink #14110D · hover → terracotta #A8523C · radius 8 · padding 15/18</div>
+
+      <div class="ds-render flex">
+        <div class="gr" style="background:transparent;">
+          <button class="ob-btn-primary" style="width:240px;">Créer notre foyer</button>
+          <button class="ob-btn-ghost" style="width:240px;">Rejoindre avec un code</button>
+        </div>
+      </div>
+      <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin:6px 0 18px;">.ob-btn-primary · .ob-btn-ghost — onboarding · radius 9</div>
+
+      <div class="ds-render flex">
+        <div class="gr" style="background:transparent;">
+          <span class="deck-action no"><i data-lucide="x"></i></span>
+          <span class="deck-action undo"><i data-lucide="rotate-ccw"></i></span>
+          <span class="deck-action yes"><i data-lucide="heart"></i></span>
+        </div>
+      </div>
+      <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin:6px 0;">.deck-action — round 48 · border 1.5 · .yes accent border</div>
+    </section>
+
+    <!-- §08 — INPUTS -->
+    <section id="inputs" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§08</span>Champs</h2>
+        <span class="desc">search · composer · text fields</span>
+      </div>
+      <div class="ds-render">
+        <div class="gr" style="background:transparent;max-width:360px;">
+          <div class="search" style="margin-bottom:14px;">
+            <i data-lucide="search"></i>
+            <input placeholder="chercher une recette…" />
+          </div>
+        </div>
+        <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;">.search — radius 9 · border 1px strong · lucide icon left</div>
+      </div>
+
+      <div class="ds-render" style="margin-top:16px;">
+        <div class="gr" style="background:transparent;max-width:360px;">
+          <div class="composer-row">
+            <input placeholder="écris ou parle…" />
+            <div class="composer-icons">
+              <span class="ic"><i data-lucide="mic"></i></span>
+              <span class="ic"><i data-lucide="camera"></i></span>
+              <span class="ic"><i data-lucide="link-2"></i></span>
+              <span class="ic send"><i data-lucide="arrow-up"></i></span>
+            </div>
+          </div>
+        </div>
+        <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin-top:8px;">.composer-row — pill input · 5 capture icons inline · send ink → accent on hover</div>
+      </div>
+    </section>
+
+    <!-- §09 — CHIPS & PILLS -->
+    <section id="chips" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§09</span>Pastilles &amp; étiquettes</h2>
+        <span class="desc">6 variantes · état, filtre, métadonnée, badge</span>
+      </div>
+      <div class="ds-render flex">
+        <div class="gr" style="background:transparent;display:contents;">
+          <span class="crumbs" style="display:inline-flex;margin:0;">
+            <span class="stat v">1 validé</span>
+          </span>
+          <span class="crumbs" style="display:inline-flex;margin:0;">
+            <span class="stat">3 à voter</span>
+          </span>
+          <span class="filter on" style="background:#14110D;color:#FAFAF7;border:1px solid #14110D;font-family:'Geist Mono',monospace;font-size:10.5px;padding:4px 10px;border-radius:999px;letter-spacing:0;">tout</span>
+          <span class="filter" style="background:transparent;border:1px solid #D8D4C7;color:#6F6B62;font-family:'Geist Mono',monospace;font-size:10.5px;padding:4px 10px;border-radius:999px;">italien</span>
+          <span style="font-family:'Geist Mono',monospace;font-size:10px;padding:2px 8px;border-radius:999px;background:#F5E5DD;color:#82371F;">validé</span>
+          <span style="font-family:'Geist Mono',monospace;font-size:10px;padding:2px 8px;border-radius:999px;background:#F1EFE8;color:#6F6B62;">—</span>
+        </div>
+      </div>
+      <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin-top:14px;line-height:1.7;">
+        .stat.v — validé crumb · valide-chip bg + 82371F fg<br/>
+        .stat — meta crumb · chip bg #F1EFE8<br/>
+        .filter.on — filter pill active · ink fill<br/>
+        .filter — filter pill resting · border-strong<br/>
+        .tag.v / .tag — list-row tags · radius 999
+      </div>
+    </section>
+
+    <!-- §10 — NAV BAR -->
+    <section id="navbar" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§10</span>Nav bar</h2>
+        <span class="desc">compact · icons only · pill-active terracotta</span>
+      </div>
+      <div class="ds-render" style="padding:0;">
+        <div class="gr" style="background:#FAFAF7;border-radius:12px;overflow:hidden;max-width:360px;">
+          <div class="nav" style="margin:0;border-top:1px solid #EDEBE4;">
+            <div class="nav-tab active"><i data-lucide="house"></i></div>
+            <div class="nav-tab"><i data-lucide="library-big"></i></div>
+            <div class="nav-tab"><i data-lucide="plus"></i></div>
+            <div class="nav-tab"><i data-lucide="users-round"></i></div>
+          </div>
+        </div>
+        <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin-top:10px;line-height:1.7;">
+          .nav-tab — height 36 · radius 10 · icons 20px / stroke 1.6<br/>
+          .nav-tab.active — bg valide-chip + accent icon · pas de texte<br/>
+          icônes lucide : house · library-big · plus · users-round
+        </div>
+      </div>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:14px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">À ajouter en prod —</strong> chaque <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F1EFE8;padding:1px 6px;border-radius:4px;">.nav-tab</code> doit recevoir un <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F1EFE8;padding:1px 6px;border-radius:4px;">aria-label="Accueil"</code> (etc.) puisqu'il n'y a plus de texte visuel. Sans aria, VoiceOver lit "image" et la nav devient inutilisable au screen reader.</p>
+    </section>
+
+    <!-- §11 — TABLE-À-MANGER -->
+    <section id="tam" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§11</span>Table-à-manger</h2>
+        <span class="desc">5 états de vote · une scène, deux sièges</span>
+      </div>
+      <div class="ds-tam-grid">
+        <div class="ds-tam-cell">
+          <div class="scene-wrap">
+            <div class="gr" style="background:#F5E5DD;border-radius:8px;padding:10px;">
+              <div class="scene" style="width:42px;height:42px;">
+                <div class="plate" style="position:absolute;inset:9px;border:1px solid #A8523C;border-radius:50%;"></div>
+                <span class="seat n luca" style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:#A8523C;width:11px;height:11px;border-radius:50%;border:2px solid #F5E5DD;"></span>
+                <span class="seat s partner" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:#A8523C;width:11px;height:11px;border-radius:50%;border:2px solid #F5E5DD;"></span>
+              </div>
+            </div>
+          </div>
+          <div class="nm">Validé</div>
+          <div class="desc">deux oui</div>
+        </div>
+        <div class="ds-tam-cell">
+          <div class="scene-wrap">
+            <div class="gr" style="background:#FAFAF7;border-radius:8px;padding:10px;">
+              <div class="scene" style="width:42px;height:42px;">
+                <div class="plate" style="position:absolute;inset:9px;border:1px solid #D8D4C7;border-radius:50%;"></div>
+                <span style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:#14110D;width:11px;height:11px;border-radius:50%;border:2px solid #FAFAF7;"></span>
+                <span style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:#FAFAF7;border:1.5px solid #D8D4C7;width:11px;height:11px;border-radius:50%;"></span>
+              </div>
+            </div>
+          </div>
+          <div class="nm">Pressenti</div>
+          <div class="desc">un oui, un en attente</div>
+        </div>
+        <div class="ds-tam-cell">
+          <div class="scene-wrap">
+            <div class="gr" style="background:#FAFAF7;border-radius:8px;padding:10px;">
+              <div class="scene" style="width:42px;height:42px;">
+                <div class="plate" style="position:absolute;inset:9px;border:1px solid #D8D4C7;border-radius:50%;"></div>
+                <span style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:#14110D;width:11px;height:11px;border-radius:50%;border:2px solid #FAFAF7;"></span>
+                <span style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:#14110D;width:11px;height:11px;border-radius:50%;border:2px solid #FAFAF7;"><span style="position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:#A8523C;transform:translateY(-50%);"></span></span>
+              </div>
+            </div>
+          </div>
+          <div class="nm">Contesté</div>
+          <div class="desc">un oui, un non (barré)</div>
+        </div>
+        <div class="ds-tam-cell">
+          <div class="scene-wrap">
+            <div class="gr" style="background:#FAFAF7;border-radius:8px;padding:10px;">
+              <div class="scene" style="width:42px;height:42px;">
+                <div class="plate" style="position:absolute;inset:9px;border:1px solid #D8D4C7;border-radius:50%;"></div>
+                <span style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:#14110D;width:11px;height:11px;border-radius:50%;border:2px solid #FAFAF7;"><span style="position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:#A8523C;transform:translateY(-50%);"></span></span>
+                <span style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:#14110D;width:11px;height:11px;border-radius:50%;border:2px solid #FAFAF7;"><span style="position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:#A8523C;transform:translateY(-50%);"></span></span>
+              </div>
+            </div>
+          </div>
+          <div class="nm">Rejeté</div>
+          <div class="desc">deux non</div>
+        </div>
+        <div class="ds-tam-cell">
+          <div class="scene-wrap">
+            <div class="gr" style="background:#FAFAF7;border-radius:8px;padding:10px;">
+              <div class="scene" style="width:42px;height:42px;">
+                <div class="plate" style="position:absolute;inset:9px;border:1px solid #D8D4C7;border-radius:50%;"></div>
+                <span style="position:absolute;top:0;left:50%;transform:translateX(-50%);background:#FAFAF7;border:1.5px solid #D8D4C7;width:11px;height:11px;border-radius:50%;"></span>
+                <span style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:#FAFAF7;border:1.5px solid #D8D4C7;width:11px;height:11px;border-radius:50%;"></span>
+              </div>
+            </div>
+          </div>
+          <div class="nm">Sans avis</div>
+          <div class="desc">aucun vote</div>
+        </div>
+      </div>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:18px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">Pas une couleur d'état, deux —</strong> la grammaire reste : terracotta = aligné (validé : assiettes + sièges en terracotta, fond terracotta-tint), ink = voix présente, hollow = en attente, ink + bar terracotta = vote négatif. Ces 5 états dérivent de <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F1EFE8;padding:1px 6px;border-radius:4px;">services/voting.compute_vote_state</code> (invariant #2) — jamais stockés en base.</p>
+    </section>
+
+    <!-- §12 — BULLES THREAD -->
+    <section id="bubbles" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§12</span>Bulles thread</h2>
+        <span class="desc">conversation recette · 5 variantes de turn</span>
+      </div>
+      <div class="ds-render">
+        <div class="gr" style="background:#FAFAF7;max-width:380px;display:flex;flex-direction:column;gap:14px;">
+          <div class="turn u">
+            <div class="kind"><span class="ico"><i data-lucide="mic"></i></span><span class="k">voix · 9 mai 14:22</span></div>
+            <div class="bub">Risotto au safran avec champignons, 200g riz arborio…</div>
+          </div>
+          <div class="turn s">
+            <div class="kind"><span class="k">système</span><span class="t"> · question</span></div>
+            <div class="bub">Parmesan ou pecorino ?</div>
+          </div>
+          <div class="turn u answer">
+            <div class="kind"><span class="k">réponse</span></div>
+            <div class="bub">Parmesan.</div>
+            <div class="pinned">épinglé · cheese</div>
+          </div>
+          <div class="turn s advisory">
+            <div class="kind"><span class="k">advisory</span></div>
+            <div class="bub">Remplacer le bouillon par du vin casserait la base.</div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin-top:12px;line-height:1.7;">
+        .turn.u — user · bulle ink-noir · radius 14 (4 en bas droite)<br/>
+        .turn.s — system · paper sur hover bg + border 1px<br/>
+        .turn.s.advisory — system + bar gauche terracotta · "système dit attention"<br/>
+        .turn.u.answer — réponse épinglée · fond valide-chip · label .pinned dessous<br/>
+        .turn.proposal — system avec boutons accept/refuse inline
+      </div>
+    </section>
+
+    <!-- §13 — CARDS -->
+    <section id="cards" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§13</span>Cartes</h2>
+        <span class="desc">recipe row · deck card · grid card</span>
+      </div>
+
+      <div class="ds-render" style="padding:14px;">
+        <div class="gr" style="background:transparent;max-width:380px;">
+          <div class="stack" style="overflow:visible;">
+            <div class="r valide">
+              <span class="ix">01</span>
+              <div>
+                <div class="name">Risotto au safran</div>
+                <div class="meta">italien · 35min · validé</div>
+              </div>
+              <div class="scene"><div class="plate"></div><div class="seat n luca"></div><div class="seat s partner"></div></div>
+            </div>
+            <div class="r">
+              <span class="ix">02</span>
+              <div>
+                <div class="name">Tagliatelles aux champignons</div>
+                <div class="meta">italien · 25min · M attend</div>
+              </div>
+              <div class="scene"><div class="plate"></div><div class="seat n luca"></div><div class="seat s neutral"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin:10px 0 22px;line-height:1.7;">
+        .r — shortlist row · grid 18 / 1fr / 38 · indice mono left<br/>
+        .r.valide — index + meta en accent · dot accent après .name · plate en accent · sièges en accent
+      </div>
+
+      <div class="ds-render" style="padding:18px;">
+        <div class="gr" style="background:transparent;">
+          <div class="deck" style="position:relative;width:270px;height:360px;flex:none;">
+            <div class="deck-card c1" style="position:relative;margin:0;left:0;width:270px;height:360px;">
+              <div class="deck-photo">
+                <i data-lucide="utensils"></i>
+                <span class="ix">02 / 04</span>
+              </div>
+              <div class="body">
+                <div class="name">Tagliatelles aux champignons</div>
+                <div class="meta">italien · 25 min</div>
+                <div class="tags">
+                  <span class="tag">printemps</span>
+                  <span class="tag">facile</span>
+                </div>
+                <div class="voter">
+                  <span class="av">L</span>
+                  <span>vote en cours · M attend</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ds-token" style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#6F6B62;margin-top:10px;line-height:1.7;">
+        .deck-card — Tinder · 270×360 · radius 18 · ombre douce (seule de tout le système)<br/>
+        Photo placeholder (gradient terracotta-cream + lucide icon centré) + ix top-left · name + meta + tags + voter footer
+      </div>
+    </section>
+
+    <!-- §14 — LISTS -->
+    <section id="lists" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§14</span>Listes numérotées</h2>
+        <span class="desc">le keystone de La Grille · indices mono partout</span>
+      </div>
+      <div class="ds-render">
+        <div class="gr" style="background:transparent;max-width:380px;">
+          <div class="lib-list">
+            <div class="lib-row"><span class="ix">01</span><div><div class="nm">Risotto au safran</div><div class="mt">italien · il y a 12 j</div></div><span class="tag v">validé</span></div>
+            <div class="lib-row"><span class="ix">02</span><div><div class="nm">Tagliatelles aux champignons</div><div class="mt">italien · il y a 4 j</div></div><span class="tag">—</span></div>
+            <div class="lib-row"><span class="ix">03</span><div><div class="nm">Bœuf bourguignon</div><div class="mt">français · il y a 21 j</div></div><span class="tag">—</span></div>
+          </div>
+        </div>
+      </div>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:14px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">Le mouvement signature —</strong> chaque liste de l'app (shortlist Accueil, library, settings, ingrédients, étapes, capture options) commence par un indice mono <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F1EFE8;padding:1px 6px;border-radius:4px;">01 02 03…</code>. C'est la grammaire qui dit "ceci est une donnée structurée, pas du texte qui flotte". Le numéro porte une partie de l'identité La Grille — sans lui, le système se dilue.</p>
+    </section>
+
+    <!-- §15 — PHOTOS -->
+    <section id="photos" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§15</span>Photos placeholder</h2>
+        <span class="desc">en l'absence d'image · gradient terracotta-cream + lucide icon</span>
+      </div>
+      <div class="ds-render" style="padding:18px;">
+        <div class="gr" style="background:transparent;display:flex;gap:14px;align-items:flex-start;">
+          <div class="rcp-photo" style="width:200px;height:140px;margin:0;">
+            <i data-lucide="utensils"></i>
+            <span class="badge">italien</span>
+          </div>
+          <div class="gcard" style="width:140px;">
+            <div class="gcard-photo">
+              <i data-lucide="pizza"></i>
+            </div>
+            <div class="gcard-body">
+              <div class="gcard-name">Pizza margherita</div>
+              <div class="gcard-meta">italien · 35 min</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:14px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">Pourquoi un placeholder dessiné, pas vide —</strong> Supabase Storage n'est pas configuré en dev (TESTING.md). Plutôt qu'un trou blanc, le gradient terracotta-cream + lucide icon donne au placeholder une présence qui s'efface dès que la vraie photo charge. Le badge optionnel en haut-droite (ex. "italien") sert d'identifier cuisine. <em>Productize-later</em> : le composant <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F1EFE8;padding:1px 6px;border-radius:4px;">useSignedPhotoUrl</code> bascule automatiquement vers le placeholder si le fetch échoue.</p>
+    </section>
+
+    <!-- §16 — MIGRATION -->
+    <section id="migration" class="ds-section">
+      <div class="ds-section-head">
+        <h2><span class="num">§16</span>Migration depuis Sober Kitchen</h2>
+        <span class="desc">deltas pour le port dans globals.css</span>
+      </div>
+      <table class="ds-migration">
+        <thead>
+          <tr>
+            <th style="width:18%;">Catégorie</th>
+            <th style="width:38%;">Ancien (Sober Kitchen)</th>
+            <th style="width:38%;">Nouveau (La Grille · Soft)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Font display</td>
+            <td class="del">Cormorant Garamond 500 italic</td>
+            <td class="add">Geist 500 · 24px hero · -0.03em</td>
+          </tr>
+          <tr>
+            <td>Font body</td>
+            <td class="del">IBM Plex Sans 400</td>
+            <td class="add">Geist 400 · 13px body</td>
+          </tr>
+          <tr>
+            <td>Font marginalia</td>
+            <td class="del">Caveat 500 slant</td>
+            <td class="add">— supprimé · pas de handwriting</td>
+          </tr>
+          <tr>
+            <td>Données / indices</td>
+            <td class="del">— pas de stack mono</td>
+            <td class="add">Geist Mono · 10.5–11px partout</td>
+          </tr>
+          <tr>
+            <td>Surface bg</td>
+            <td class="del">oklch(0.975 0.006 75) — warm cream</td>
+            <td class="add">#FAFAF7 — off-white tiède (un poil moins chaud)</td>
+          </tr>
+          <tr>
+            <td>Surface card</td>
+            <td class="del">oklch(0.99 0.005 75) avec paper-grain SVG</td>
+            <td class="add">#FFFFFF — flat · pas de noise overlay</td>
+          </tr>
+          <tr>
+            <td>Encre</td>
+            <td class="del">oklch(0.21 0.014 55) — warm umber</td>
+            <td class="add">#14110D — warm-black (un poil plus contrasté)</td>
+          </tr>
+          <tr>
+            <td>Accent terracotta</td>
+            <td class="del">#C8553D (oklch 0.50 0.10 32)</td>
+            <td class="add">#A8523C — affiné · cooler · lower chroma</td>
+          </tr>
+          <tr>
+            <td>Ombres</td>
+            <td class="del">2-layer warm-brown (74, 56, 40)</td>
+            <td class="add">— supprimées · hairline + radius portent l'objet</td>
+          </tr>
+          <tr>
+            <td>Paper-grain texture</td>
+            <td class="del">SVG noise overlay sur cards / dialogs</td>
+            <td class="add">— supprimé · plus de noise</td>
+          </tr>
+          <tr>
+            <td>Patine ledger card</td>
+            <td class="del">.ledger-card · dot grid · dog-ear · stamp</td>
+            <td class="add">— supprimé · flat row + hairline + numbered index</td>
+          </tr>
+          <tr>
+            <td>Marginalia register</td>
+            <td class="del">.marginalia .slant · Caveat italique</td>
+            <td class="add">— supprimé · meta passe en Geist Mono</td>
+          </tr>
+          <tr>
+            <td>Brand-mark loader</td>
+            <td class="del">SVG draw-stroke 3.2s</td>
+            <td class="add">à reconcevoir · spinner mono ou wordmark fade</td>
+          </tr>
+          <tr>
+            <td>Boutons</td>
+            <td class="del">terracotta filled + radius 10</td>
+            <td class="add">ink filled · hover → terracotta · radius 8–9</td>
+          </tr>
+          <tr>
+            <td>Nav bar</td>
+            <td class="del">icon + text · 18px icon + 10.5px label</td>
+            <td class="add">icon only · 20px · pill-active valide-chip</td>
+          </tr>
+          <tr>
+            <td>Validé tint</td>
+            <td class="del">oklch(0.91 0.045 35) — wash terracotta</td>
+            <td class="add">#F5E5DD — pastille pleine sur ligne + dot</td>
+          </tr>
+          <tr>
+            <td>Member colors</td>
+            <td class="del">5 slots (rose/amber/emerald/sky/violet)</td>
+            <td class="add">2 slots (ink/muted) · 5 slots préservés en token pour productize-later</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-family:'Geist',sans-serif;font-size:13px;color:#4A4640;margin-top:18px;line-height:1.6;"><strong style="color:#14110D;font-weight:500;">Ce qui survit de Sober Kitchen —</strong> la <strong>terracotta DNA</strong> (raffinée, pas remplacée) et la <strong>table-à-manger</strong> (redessinée plus quiet, mais le concept reste). Le reste de Sober Kitchen (marginalia, patine, paper-grain, Cormorant, Caveat, warm-brown shadows) est explicitement remplacé.</p>
+    </section>
+
+  </div>
+</div>
+
+<div id="sketch-tools">
+  <span>Sketch 002 · final view</span>
+</div>
+
+<div id="toast" class="toast">→ action</div>
+
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-page').forEach(p => p.hidden = true);
+  document.getElementById('tab-' + name).hidden = false;
+  document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  // re-init lucide for newly-revealed icons
+  if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+  // scroll to top of revealed page
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+function bump(el) {
+  el.style.transition = 'transform 200ms ease';
+  el.style.transform = 'scale(0.985)';
+  setTimeout(() => el.style.transform = '', 140);
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '→ ' + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+});
+</script>
+</body>
+</html>

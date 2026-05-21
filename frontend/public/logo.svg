@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Al Dente">
+  <title>Al Dente</title>
+  <desc>The household table — a plate seen from above with two seats and a centred accent dot. Same geometry as the in-app voting scene.</desc>
+  <!-- Plate edge -->
+  <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="2"/>
+  <!-- Plate inner well (subtle, omit at sizes &lt; 32px) -->
+  <circle cx="32" cy="32" r="19" stroke="currentColor" stroke-width="1" opacity="0.22"/>
+  <!-- North seat (member 1) -->
+  <circle cx="32" cy="5" r="4" fill="currentColor"/>
+  <!-- South seat (member 2) -->
+  <circle cx="32" cy="59" r="4" fill="currentColor"/>
+  <!-- Centre accent dot — terracotta brand color, hardcoded -->
+  <circle cx="32" cy="32" r="3.5" fill="#A8523C"/>
+</svg>

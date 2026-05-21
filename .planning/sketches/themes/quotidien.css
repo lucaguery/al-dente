@@ -1,0 +1,61 @@
+/* Al Dente — DIRECTION 1: Le Quotidien (color carries).
+   ⚠ Sketches only — do NOT import into the real app yet.
+   Modern sober. One refined accent does the brand work.
+   Mona Sans variable + bone-warm surface + modernized terracotta. */
+
+:root {
+  /* ── Surface — bone-warm, almost neutral ───────────────────────────── */
+  --color-bg: #FAF9F5;
+  --color-surface: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-card-valide: #FBEFE9;
+  --color-border: #EBE6DC;
+  --color-border-faint: #F2EDDF;
+
+  /* ── Ink ────────────────────────────────────────────────────────────── */
+  --color-text: #1B1916;            /* soft warm-black, not pure #000 */
+  --color-text-muted: #5C594F;
+  --color-text-faint: #84807A;
+
+  /* ── Accent — refined terracotta (pushed cooler + lower chroma) ─────── */
+  --color-primary: #A8523C;
+  --color-primary-hover: #8E4330;
+  --color-primary-foreground: #FAF9F5;
+  --color-primary-tint: #F5E5DD;     /* validé pill bg */
+  --color-primary-deep: #82371F;     /* validé pill text */
+
+  /* ── Vote states ────────────────────────────────────────────────────── */
+  --color-valide: var(--color-primary);
+  --color-valide-tint: var(--color-card-valide);
+  --color-pressenti: var(--color-primary);
+  --color-conteste-bar: var(--color-primary);
+  --color-rejete: #C7C2B4;
+
+  /* ── Member dots ────────────────────────────────────────────────────── */
+  --color-member-luca: #A8523C;
+  --color-member-partner: #1B1916;
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-display: 'Mona Sans', system-ui, sans-serif;
+  --font-sans: 'Mona Sans', system-ui, sans-serif;
+  /* Use variable axes:
+     - hero: wdth 90, wght 500
+     - body: wdth 100, wght 400
+     - brand mark: wdth 95, wght 500
+     - large numerics: wdth 85, wght 500 */
+
+  /* ── Shape — soft, not pill, not sharp ──────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* ── Shadows — none, only hairline ──────────────────────────────────── */
+  --shadow-card: none;
+  --shadow-hairline: inset 0 0 0 1px var(--color-border);
+
+  /* ── Motion — gentle, deliberate ────────────────────────────────────── */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+}

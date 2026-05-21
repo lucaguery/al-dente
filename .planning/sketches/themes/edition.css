@@ -1,0 +1,63 @@
+/* Al Dente — DIRECTION 3: L'Édition (type carries).
+   ⚠ Sketches only — do NOT import into the real app yet.
+   Modern sober. A small type pair does the brand work.
+   Geist sans body + Newsreader italic accents. Single ink-blue. */
+
+:root {
+  /* ── Surface — warm off-white ──────────────────────────────────────── */
+  --color-bg: #F7F5F0;
+  --color-surface: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-border: #E1DDD4;
+  --color-border-faint: #ECE7DA;
+
+  /* ── Ink ────────────────────────────────────────────────────────────── */
+  --color-text: #1A1814;             /* soft warm-black */
+  --color-text-muted: #5A564C;
+  --color-text-faint: #7A766C;
+
+  /* ── Accent — deep ink blue (not terracotta, deliberate brand shift) ── */
+  --color-primary: #1F3A5F;
+  --color-primary-hover: #112A4A;
+  --color-primary-foreground: #F7F5F0;
+  --color-primary-tint: rgba(31,58,95,0.03);
+  --color-secondary: #8B6F47;        /* warm taupe for partner role */
+
+  /* ── Vote states ────────────────────────────────────────────────────── */
+  --color-valide: var(--color-primary);
+  --color-valide-bar: var(--color-primary);
+  --color-valide-tint: var(--color-primary-tint);
+  --color-pressenti: var(--color-secondary);
+  --color-conteste-bar: var(--color-primary);
+  --color-rejete: #BEB6A1;
+  --color-danger: #8B3A2E;
+
+  /* ── Member dots ────────────────────────────────────────────────────── */
+  --color-member-luca: #1F3A5F;
+  --color-member-partner: #8B6F47;
+
+  /* ── Typography — a deliberate small pair ───────────────────────────── */
+  --font-display: 'Newsreader', Georgia, serif;          /* italic only */
+  --font-sans: 'Geist', system-ui, sans-serif;
+  /* Type usage:
+     - hero: Newsreader italic 400, -0.015em
+     - recipe names: Newsreader italic 400
+     - body / chrome / meta: Geist 400/500
+     - brand mark: Newsreader italic
+     - italic is used SPARINGLY — only where warmth is needed */
+
+  /* ── Shape ──────────────────────────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
+
+  /* ── Shadows — none, only hairlines and a single accent bar ─────────── */
+  --shadow-card: none;
+  --shadow-validé-bar: inset 2px 0 0 var(--color-primary);
+
+  /* ── Motion ─────────────────────────────────────────────────────────── */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+}
