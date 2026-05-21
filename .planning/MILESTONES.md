@@ -2,6 +2,26 @@
 
 _Source-of-truth for milestone outcomes. Cross-references: `.planning/PROJECT.md` for locked decisions per milestone, `.planning/ROADMAP.md` for the rolled-up index._
 
+## v0.8 Backend Coverage Until Done (Shipped: 2026-05-21)
+
+**Phases completed:** 3 phases (37–39), 9 plans, 33/33 requirements validated
+
+**Stats:**
+
+- Timeline: 2026-05-19 → 2026-05-21 (3 calendar days)
+- Baseline (quick-260519-uxn, 2026-05-19): 35.9% line / 6.8% branch, 96 tests failing on missing seed, rules files at 17.6 / 22.0 / 35.5 / 82.5%
+- Final: 85.08% line coverage repo-wide, 540 pass / 3 skip / 3 xfail, 4 rules files at 100% line
+- Closes: gh#28 (test coverage — deferred from v0.7)
+- Deferred to next milestone: none (all 33 requirements closed; 6 user-goal items met)
+
+**Key accomplishments:**
+
+- **Phase 37 — Test Infrastructure + Service Branch Coverage (3 plans):** Autouse session-scoped seed fixture unblocked all 96 previously-failing tests (Plan 37-01); `voting.py` + `auth.py` driven to 100% line coverage via targeted unit tests (Plan 37-02); `algorithm.py` + `shortlist.py` + `llm.py` covered with `SimpleNamespace` stand-ins for pure-function tests (Recipe `__new__` lacks SQLAlchemy instrumentation), `AsyncMock` for broadcast paths, `ENVIRONMENT=test` short-circuit + `_gemini()` monkeypatch belt-and-suspenders for LLM TurnKind coverage (Plan 37-03). `svg_sanitizer_test.py` relocated from `app/services/` to `backend/tests/test_svg_sanitizer.py` per the cleaner-than-omit decision. Repo coverage 35.9% → ~73% after Phase 37 lands.
+- **Phase 38 — Endpoint Contract + Invariant Coverage (4 plans):** Savepoint-based connection-scoped transaction rollback fixture established as prerequisite for parallel router tests (Plan 38-01). 10 routers each get the verifiable 4-test contract — happy-path, 401-on-missing-auth, **404-on-cross-household (NOT 403)** per invariant #1, validation-failure — split across data routers (households / recipes / votes / cooking_logs / shortlist, Plan 38-02) and infra routers (ws / auth_session / photos / push / exports, Plan 38-03) with WebSocket close-code assertions for the infra surface. 16 architecture-invariant regression tests with D-38-03 break-observe-revert proof for all 8 CLAUDE.md invariants, plus 155 gap-closure tests pushing repo-wide line coverage from 73.1% to **85.0%** (COV-01 closed, Plan 38-04).
+- **Phase 39 — Migration Safety + CI Gate (2 plans):** Throwaway-DB fixture in `backend/tests/migrations/conftest.py` — separate from connection-scoped txn rollback fixture per the locked decision — drives parametrized `upgrade <rev>` + `downgrade <prev>` tests for all 11 Alembic revisions: **10 pass clean, 1 xfailed by-design** (Migration 0006: non-downgradeable Postgres `ALTER TYPE DROP VALUE` limitation, Plan 39-01). `.github/workflows/backend-tests.yml` spins up Postgres 16 service container (native GHA, matches Railway prod env), applies migrations, runs `pytest --cov`, uploads HTML artifact, fails the PR build on `coverage report --fail-under=85` OR any of 4 rules files dropping below per-file `fail_under = 100` — enforced via `scripts/check_rules_files_coverage.py`; 2 known failures held in `pyproject.toml` xfails (CI-01, CI-02, Plan 39-02). `fail_under = 85` floor + per-file 100% floor both live in pyproject.
+
+**Known deferred items at close:** 17 quick-task tracking-layout drift entries (see STATE.md §Deferred Items) — all 17 directories exist on disk with SUMMARY.md and matching commits; the audit reports them as `missing` only because the file-tracking layout differs from the expected status frontmatter. Underlying work shipped in earlier milestones (9 entries) and during v0.8 (8 entries).
+
 ## v0.7 Sober Kitchen + Polish (Shipped: 2026-05-18)
 
 **Phases completed:** 4 phases (30–33), 9 plans, 12/12 requirements validated

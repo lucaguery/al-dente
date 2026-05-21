@@ -8,48 +8,31 @@ A shared recipe + decision app for couples, built as an installable PWA with a P
 
 Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable on both iPhones with no App Store, no $99/year, no native build.
 
-## Current Milestone: v0.8 Backend Coverage Until Done
+## Current Milestone: _(none — awaiting next milestone scaffold)_
 
-**Goal:** Backend has a test suite that catches any regression to a documented architectural invariant, endpoint contract, or business-logic state machine — with line coverage as a sanity floor (≥85% repo, 100% on the 4 named rules files), not the target.
+Run `/gsd-new-milestone` to scaffold the next milestone. Leading candidate: **v0.9 — La Grille Completion** (8 unimplemented sketch screens from sketch 002 + `cooking-logs/[id]/page.tsx` token drift fix, recommended 3-phase split: pure-frontend restyles / cross-cutting features w/ first backend touch / new-data-model + active cooking session).
 
-**Target features (the 6 user-defined DoD items):**
+## Previous Milestone Outcome: v0.8 Backend Coverage Until Done (shipped 2026-05-21)
 
-1. **Invariant coverage** — every CLAUDE.md architecture invariant (#1–#8) has ≥1 named regression test that fails if the invariant is violated.
-2. **Endpoint contract coverage** — every router (households, auth_session, recipes, exports, photos, shortlist, votes, cooking_logs, push, ws) has: happy path, 401 on missing/invalid auth, 404 on cross-household access (not 403 — invariant), and validation failure cases.
-3. **Service branch coverage** — `services/voting.compute_vote_state` covers all 5 vote states across household sizes 1 and 2; `services/algorithm` scoring covers every weight/penalty branch; `services/shortlist.generate_daily_shortlist` covers empty/partial/full pool + idempotent re-run; `services/llm` thread-processing covers each `TurnKind`.
-4. **Migration safety** — every Alembic migration in `alembic/versions/` runs forward + back on a clean test DB.
-5. **Coverage floor** — ≥85% line coverage repo-wide; 100% line on `services/voting.py` + `services/algorithm.py` + `services/shortlist.py` + `auth.py`.
-6. **CI gate** — `pytest --cov` runs in GitHub Actions on every PR; floors block merge if they regress.
+**Outcome:** All 33 requirements closed, all 6 user-defined DoD items met. Repo line coverage **35.9% → 85.08%** (baseline → final); 540 pass / 3 skip / 3 xfail. Four named rules files (`auth.py`, `services/voting.py`, `services/algorithm.py`, `services/shortlist.py`) at 100% line coverage with per-file `fail_under = 100` enforced. All 8 CLAUDE.md architecture invariants now have ≥1 named regression test with D-38-03 break-observe-revert proof. All 11 Alembic revisions tested upgrade+downgrade on throwaway DB (10 clean, 1 by-design xfail on migration 0006 `ALTER TYPE DROP VALUE` Postgres limit). GHA `backend-tests.yml` Postgres 16 service-container workflow enforces both floors on every PR; CI fails on regression. 3 phases (37-39), 9 plans. Closes gh#28.
 
-**Baseline (captured 2026-05-19 in quick-260519-uxn):**
+**Goal (at scoping):** Backend has a test suite that catches any regression to a documented architectural invariant, endpoint contract, or business-logic state machine — with line coverage as a sanity floor (≥85% repo, 100% on the 4 named rules files), not the target.
 
-| Metric | Value | Notes |
-|---|---|---|
-| Repo line coverage | 35.9% | with 96 tests failing on missing seed |
-| Branch coverage | 6.8% | 49 / 722 branches |
-| `app/auth.py` | 82.5% | 4-line gap — cheapest 100% |
-| `app/services/voting.py` | 35.5% | 12-line gap |
-| `app/services/shortlist.py` | 22.0% | 48-line gap |
-| `app/services/algorithm.py` | 17.6% | 60-line gap — hardest 100% |
-| Biggest opportunity | `app/services/llm.py` | 481 stmts @ 13.4% — covered by LLM-04 + SERV-04 |
-| Anomaly | `app/services/svg_sanitizer_test.py` | misplaced test (77 stmts @ 0%) — relocate or omit |
+**Locked decisions (resolved during execution):**
 
-**Locked decisions (milestone-level, captured at scaffold time):**
+| Decision | Choice (at scaffold) | Outcome |
+|----------|----------------------|---------|
+| Seed dependency for 96 failing tests | TBD during Phase 37 discuss-phase | ✓ Autouse session-scoped seed fixture in `conftest.py` (path a) — Plan 37-01 |
+| Coverage floor enforcement | `fail_under = 85` repo + per-file `fail_under = 100` (4 rules files) | ✓ Shipped in `backend/pyproject.toml` + asserted in `scripts/check_rules_files_coverage.py` (Plan 39-02) |
+| Migration safety test pattern | Throwaway-DB fixture in `backend/tests/migrations/conftest.py` — separate from txn rollback fixture | ✓ Shipped Plan 39-01; 10 clean + 1 xfail (migration 0006) |
+| CI runtime | GHA with Postgres service container (not docker compose) | ✓ `backend-tests.yml` Postgres 16 service — Plan 39-02 |
+| svg_sanitizer_test relocation | Move to `backend/tests/test_svg_sanitizer.py` (cleaner than pyproject `omit`) | ✓ Shipped Plan 37-01 |
+| Algorithm pure-function test pattern | TBD | ✓ `SimpleNamespace` stand-ins for pure-function score_recipe tests (Recipe `__new__` lacks SQLAlchemy instrumentation) — Plan 37-03 |
+| LLM TurnKind test isolation | TBD | ✓ `ENVIRONMENT=test` short-circuit + `_gemini()` belt-and-suspenders monkeypatch + canned JPEG bytes for photo kind — Plan 37-03 |
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Milestone shape | 3 phases (37, 38, 39): infra+service-branch → router+invariant → migration+CI gate | Mirrors v0.2.1 patch-milestone discipline; high-leverage phase first (closes 4 rules files); CI gate ships last so coverage history exists when threshold lands |
-| Seed dependency for 96 failing tests | TBD during Phase 37 discuss-phase — choose between (a) autouse session-scoped seed fixture in `conftest.py`, or (b) rewrite the 96 tests to insert their own data and not depend on `test-token-luca` | Operator pick — (a) is faster but couples test isolation to a global seed; (b) is cleaner per pytest-best-practice but is N×96 test surgery |
-| Coverage floor enforcement | `fail_under = 85` (repo) + per-file `fail_under = 100` (4 rules files) in `backend/pyproject.toml`, asserted in CI gate (Phase 39) | Single source of truth; both local `uv run pytest --cov` and CI red-line on same threshold |
-| Migration safety test pattern | Separate `backend/tests/migrations/` with throwaway-DB fixture (create/drop a dedicated DB per test) — does NOT reuse the connection-scoped txn rollback fixture | Migration tests need a clean schema baseline; rollback fixture assumes schema is fixed |
-| CI runtime | GitHub Actions with Postgres service container (not docker compose) | Native to GHA; matches Railway's prod env (`alembic upgrade head` on push) — per backend/CLAUDE.md |
-| svg_sanitizer_test relocation vs omit | Move to `backend/tests/test_svg_sanitizer.py` (proper home) | Cleaner than `omit` in pyproject; one more file in the proper test location lifts repo % honestly |
+**Architecture invariants:** No new invariants. v0.8 made all 8 existing CLAUDE.md invariants enforceable via regression tests.
 
-**Phase numbering:** continues from v0.7.1 → starts at Phase 37.
-
-**Closes:** gh#28 (test coverage deferred from v0.7).
-
-**Out of scope:** testing trivial Pydantic schemas, SQLAlchemy column definitions, or dependency-injection wiring without behavior. Performance/load testing. Frontend test coverage (Playwright suite stays as-is per `TESTING.md`). UI-REVIEW / UI-AUDIT regeneration (orthogonal to backend coverage). Productize-later items in `# TODO(productize)` markers.
+**Out of scope (held to plan):** Pydantic schema tests, SQLAlchemy column tests, dependency-injection wiring tests. Performance/load testing. Frontend test coverage (Playwright suite stays as-is per `TESTING.md`). UI-REVIEW / UI-AUDIT regeneration. Productize-later items in `# TODO(productize)` markers.
 
 ## Previous Milestone Outcome: v0.7.1 Sober Kitchen Finish (shipped 2026-05-18)
 
@@ -351,4 +334,4 @@ Candidates from v0.1 v2 backlog, NOT in v0.2 scope:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-19 — v0.8 Backend Coverage Until Done scaffolded. 3 phases (37, 38, 39), 6 DoD items, anchored on baseline 35.9% line / 6.8% branch (captured in quick-260519-uxn). Closes gh#28. Cumulative through v0.7.1: 9 milestones shipped · 37 phases · 162 plans · 193 requirements validated. Next: define REQUIREMENTS.md and run gsd-roadmapper for v0.8 phase structure.*
+*Last updated: 2026-05-21 — v0.8 Backend Coverage Until Done shipped (3 phases, 9 plans, 33/33 requirements; 35.9% → 85.08% repo line coverage; 4 rules files at 100%; 8 CLAUDE.md invariants regression-tested; 11 Alembic migrations safe; GHA backend-tests.yml enforces floors on every PR). Closes gh#28. Cumulative through v0.8: 10 milestones shipped · 40 phases · 171 plans · 226 requirements validated. Next: `/gsd-new-milestone` to scaffold v0.9 (recommended scope: La Grille Completion — 8 unimplemented sketch screens + cooking-logs token drift fix, 3-phase split).*

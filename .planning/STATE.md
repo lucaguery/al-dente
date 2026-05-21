@@ -2,45 +2,43 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: Backend Coverage Until Done
-status: Phase 39 Plan 01 complete; MIG-01 + MIG-02 closed. Ready for Plan 39-02 (CI gate).
-stopped_at: 39-01 committed (c39b367 + 95f31e3). SUMMARY.md written. 11 migration tests: 10 passed, 1 xfailed (0006 intentional non-downgradeable).
-last_updated: "2026-05-21T13:17:21.716Z"
-last_activity: 2026-05-21 — Quick task 260521-l8g shipped — UAT punch-list 12 findings landed in 5 atomic commits, bringing production into alignment with the La Grille sketches per ADR-0004. Wave 3 + 5 PARTIAL gaps closed (Patine IA, Ingrédients terracotta border-left, Accueil ink+muted member-color collapse, safe-area + central CTA shadow + heart-off no-vote + Fermer aria-label). Preceded by a tooling commit trio: uat-stack-up/down scripts, uat-tester agent rewrite (D-05), UAT cross-check punch-list capture.
+status: Awaiting next milestone
+stopped_at: 6-task quick complete; SUMMARY at .planning/quick/260521-g26-modern-sober-ui-refresh-port-adr-0004-la/260521-g26-SUMMARY.md. The 13-commit window from `260520-hpz` (swipe deck) → `260520-lit` (OpenAPI hook) → `260521-g26` wave 1-5 (UI migration) is still local.
+last_updated: "2026-05-21T14:47:51.948Z"
+last_activity: 2026-05-21 — Milestone v0.8 completed and archived
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 8
-  percent: 75
+  completed_phases: 3
+  total_plans: 9
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-19 — v0.8 Backend Coverage Until Done scaffolded)
+See: .planning/PROJECT.md (updated 2026-05-21 — v0.8 Backend Coverage Until Done shipped)
 
 **Core value:** Eliminate the daily "on mange quoi ?" debate via a shared library, async voting, and voice/photo capture — installable PWA on both iPhones with no App Store, no $99/year, no native build.
-**Current focus:** v0.8 — Backend Coverage Until Done
+**Current focus:** Awaiting next milestone scaffold (leading candidate: v0.9 La Grille Completion — 8 sketch screens + cooking-logs token drift fix)
 
 ## Current Position
 
-Phase: 39 (Migration Safety + CI Gate) — **complete**
-Plan: 39-02 shipped (06f7975 — floor closure; c164c36 — GHA workflow; 9988b9e — gate script; ba17783 — pyproject fail_under + xfails)
-Status: **v0.8 milestone COMPLETE.** All 33 requirements closed; all 6 user-goal items met. Ready for `/gsd-complete-milestone v0.8`.
-Last activity: 2026-05-20 — Phase 39 closed. 11 migrations (10 clean upgrade+downgrade, 1 by-design xfail per Postgres `ALTER TYPE DROP VALUE` limit). GHA `backend-tests.yml` with Postgres 16 service + `alembic upgrade head` + seed + `pytest --cov` + per-file rules-files gate (`scripts/check_rules_files_coverage.py`). `fail_under = 85` in `backend/pyproject.toml`. Final repo coverage **85.08%** (540 pass / 3 skip / 3 xfail). Closes gh#28.
-
-Progress: `[x] [x] [x]` — 3/3 phases complete (33/33 requirements closed)
+Phase: Milestone v0.8 complete and archived
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-21 — Milestone v0.8 completed and archived; ROADMAP.md / MILESTONES.md / PROJECT.md updated; REQUIREMENTS.md archived to milestones/v0.8-REQUIREMENTS.md
 
 ## Performance Metrics
 
-**Velocity (cumulative through v0.7.1):**
+**Velocity (cumulative through v0.8):**
 
-- Total milestones shipped: 9 (v0.1 → v0.7.1)
-- Total phases shipped: 36
-- Total plans shipped: 162
-- Total requirements validated: 193 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6 + 12 v0.7 + 22 v0.7.1)
-- v0.7.1 timeline: 2026-05-18 → 2026-05-18 (1 calendar day)
+- Total milestones shipped: 10 (v0.1 → v0.8)
+- Total phases shipped: 40
+- Total plans shipped: 171
+- Total requirements validated: 226 (49 v0.1 + 31 v0.2 + 4 v0.2.1 + 16 v0.3 + 24 v0.4 + 12 v0.5 + 23 v0.6 + 12 v0.7 + 22 v0.7.1 + 33 v0.8)
+- v0.8 timeline: 2026-05-19 → 2026-05-21 (3 calendar days)
 
 **By Milestone:**
 
@@ -55,8 +53,7 @@ Progress: `[x] [x] [x]` — 3/3 phases complete (33/33 requirements closed)
 | v0.6 (Phases 25-29) | 5 | ✅ Complete (shipped 2026-05-17) |
 | v0.7 (Phases 30-33) | 4 | ✅ Complete (shipped 2026-05-18) |
 | v0.7.1 (Phases 34-36) | 3 | ✅ Complete (shipped 2026-05-18) |
-| v0.8 (Phases 37-39) | 3 | 🔄 In progress |
-| Phase 38 P03 | 25 | 3 tasks | 5 files |
+| v0.8 (Phases 37-39) | 3 | ✅ Complete (shipped 2026-05-21) |
 
 ## Accumulated Context
 
@@ -118,7 +115,7 @@ None. Baseline captured in quick-260519-uxn (2026-05-19). Coverage numbers and f
 
 ## Deferred Items
 
-Items acknowledged and deferred at v0.7.1 milestone close on 2026-05-18:
+Items acknowledged and deferred at v0.7.1 milestone close on 2026-05-18 and re-acknowledged at v0.8 close on 2026-05-21:
 
 | Category | Item | Status | Notes |
 |----------|------|--------|-------|
@@ -135,8 +132,16 @@ Items acknowledged and deferred at v0.7.1 milestone close on 2026-05-18:
 | quick_task | 260512-gpl-ui-cormorant-garamond-font-swap-directio | missing | Pre-v0.7 (May 12), orphaned tracking. |
 | quick_task | 260512-l0l-harmonize-typography-and-spacing-across- | missing | Pre-v0.7 (May 12), orphaned tracking. |
 | quick_task | 260512-lif-harmonize-capture-tab-summary-components | missing | Pre-v0.7 (May 12), orphaned tracking. |
+| quick_task | 260519-ucl-align-claude-md-invariant-5-and-snake-ca | missing | v0.8 era — Align CLAUDE.md Invariant 5 + snake_case example with ADR-0001 (d85ecd9). Shipped. |
+| quick_task | 260519-uxn-add-pytest-cov-to-backend-run-baseline-c | missing | v0.8 era — pytest-cov baseline capture (4e24da6). Shipped. |
+| quick_task | 260520-dip-fix-2-d-39-05-xfails-process-thread-turn | missing | v0.8 era — D-39-05 xfail follow-up. Shipped (has PLAN + SUMMARY on disk). |
+| quick_task | 260520-hpz-bring-back-swipe-deck-on-accueil-variant | missing | v0.8 era — Swipe deck on Accueil per sketch 001 winner (4b3d61b). Shipped. |
+| quick_task | 260520-lit-wire-openapi-auto-generation-into-pre-co | missing | v0.8 era — OpenAPI auto-gen pre-commit hook (87cf5ea). Shipped. |
+| quick_task | 260521-g26-modern-sober-ui-refresh-port-adr-0004-la | missing | v0.8 era — ADR-0004 La Grille UI migration, 5-commit wave (c50e7b0). Shipped. |
+| quick_task | 260521-l8g-implement-uat-punch-list-bring-productio | missing | v0.8 era — UAT punch-list 12 findings in 5 atomic commits (d792072). Shipped. |
+| quick_task | 260521-uat-living-system-cross-check | missing | v0.8 era — UAT living-system cross-check. Documentation pass. |
 
-UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surface via `/gsd-audit-uat`. The 9 quick-task entries are pre-v0.7 — the audit reports them as `missing` because tracking files aren't in the expected layout; the underlying work shipped in earlier milestones.
+UAT and verification gaps are persisted in their `HUMAN-UAT.md` files and surface via `/gsd-audit-uat`. The 17 quick-task entries are tracking-layout drift — directories exist on disk with SUMMARY.md files and matching commits referenced above; the audit reports them as `missing` because the expected status-tracking layout differs from what was used. The underlying work shipped.
 
 ## Session Continuity
 
@@ -146,8 +151,4 @@ Next: Follow-up quick task to port ADR-0004 supersession into `docs/design-syste
 
 ## Operator Next Steps
 
-- Run `/gsd:plan-phase 37` to define plans for Phase 37 (unblock 96 failing tests + 4 rules files to 100%)
-- Key discuss-phase decision for Phase 37: seed-dependency fix mechanism — autouse fixture (a) or test rewrite (b)
-- After Phase 37 closes, advance to `/gsd:plan-phase 38` for router + invariant coverage
-- After Phase 38 closes, advance to `/gsd:plan-phase 39` for migration safety + CI gate
-- Close gh#28 after Phase 39 ships
+- Start the next milestone with /gsd-new-milestone
