@@ -15,6 +15,9 @@
       "minimal": "Vue texte"
     }
   },
+  "splash": {
+    "tagline": "On mange quoi ce soir ?"
+  },
   "nav": {
     "home": "Accueil",
     "recipes": "Recettes",
