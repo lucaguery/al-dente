@@ -23,8 +23,11 @@
 // `recipe.promoted` subscription is needed — promote_draft broadcasts
 // `recipe.updated` which covers the status flip.
 //
-// Phase 32 §15.C (SOBER-03) — 3-view switcher (grid / list / patina) with
-// localStorage["aldente.library.view"] persistence (D-09, D-10).
+// Bibliothèque view switcher — Grille + Liste only.
+// PUNCH-LIST D-01 (quick 260521-l8g): the Patine view + Héritage/Habitudes/À l'essai
+// sectioning IA was dropped in the ADR-0004 cleanup wave.
+// localStorage["aldente.library.view"] persistence preserved; stale "patina" reads
+// coerce to "grid" (the single mandated MVP backcompat shim — see CLAUDE.md MVP rule).
 // Anti-flash: SSR pre-renders grid; useEffect hydrates from storage post-mount
 // with 150ms opacity transition (RESEARCH Pattern 7).
 
@@ -41,7 +44,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { OnboardingGuard } from "@/lib/onboarding-guard";
 import { api } from "@/lib/api";
 import { useRealtime } from "@/components/RealtimeProvider";
-import { groupByPatina, type Recipe } from "@/lib/recipes";
+import { type Recipe } from "@/lib/recipes";
 
 function dedupeReplace(prev: Recipe[], next: Recipe): Recipe[] {
   const idx = prev.findIndex((p) => p.id === next.id);
@@ -59,93 +62,9 @@ function dedupeReplace(prev: Recipe[], next: Recipe): Recipe[] {
 // results never touch this variable.
 let recipesCache: Recipe[] | null = null;
 
-// Phase 32 §15.C (D-09/D-10) — patine view sub-components.
-// Defined outside RecipesPage so they don't re-create on every render.
-
-// SOBER-11 (Plan 36-02): all three Patine sections render unconditionally,
-// including empty buckets. The section structure is part of the Bibliothèque
-// visual contract — a single-bucket distribution must NOT collapse to a blank
-// container (B-06 + D-08 walkthrough findings). Empty buckets render a
-// Geist Mono caption line in place of the empty grid (per ADR-0004 §Marginalia
-// register — the prior handwriting variant is dropped).
-function PatinaSection({
-  label,
-  count,
-  recipes,
-  columnClass,
-  emptyLabel,
-}: {
-  label: string;
-  count: number;
-  recipes: Recipe[];
-  columnClass: string;
-  emptyLabel: string;
-}) {
-  return (
-    <section>
-      <header className="flex items-baseline gap-2 mt-4 mb-2">
-        <h2 style={{ fontSize: "16px", fontWeight: 500 }}>
-          {label}
-        </h2>
-        <span className="text-caption">
-          <span className="meta-sep">{" · "}</span>{count}
-        </span>
-      </header>
-      {recipes.length === 0 ? (
-        <p className="text-caption">
-          {emptyLabel}
-        </p>
-      ) : (
-        <div className={columnClass}>
-          {recipes.map((r) => (
-            <RecipeCard key={r.id} recipe={r} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function PatinaView({
-  recipes,
-  tPatina,
-}: {
-  recipes: Recipe[];
-  tPatina: ReturnType<typeof useTranslations>;
-}) {
-  const grouped = groupByPatina(recipes);
-  const emptyLabel = tPatina("empty");
-  return (
-    <div className="flex flex-col gap-[8px] px-(--spacing-page-x)">
-      <PatinaSection
-        label={tPatina("heritage")}
-        count={grouped.heritage.length}
-        recipes={grouped.heritage}
-        columnClass="grid grid-cols-1 gap-[10px]"
-        emptyLabel={emptyLabel}
-      />
-      <PatinaSection
-        label={tPatina("habitudes")}
-        count={grouped.habitudes.length}
-        recipes={grouped.habitudes}
-        columnClass="grid grid-cols-2 gap-[10px]"
-        emptyLabel={emptyLabel}
-      />
-      <PatinaSection
-        label={tPatina("essai")}
-        count={grouped.essai.length}
-        recipes={grouped.essai}
-        columnClass="grid grid-cols-3 gap-[8px]"
-        emptyLabel={emptyLabel}
-      />
-    </div>
-  );
-}
-
 export default function RecipesPage() {
   const t = useTranslations("recipes");
   const tErr = useTranslations("onboarding.errors");
-  const tPatina = useTranslations("home.library.patina_section");
   const realtime = useRealtime();
   const [recipes, setRecipes] = useState<Recipe[]>(recipesCache ?? []);
   const [query, setQuery] = useState("");
@@ -160,9 +79,13 @@ export default function RecipesPage() {
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem("aldente.library.view");
+      // PUNCH-LIST D-01 (260521-l8g): coerce stale "patina" reads to "grid".
+      // This is the single mandated MVP backcompat shim — existing test fixtures
+      // may have "patina" persisted from before the Patine view was dropped.
       // TODO(productize): refactor to lazy-init useState to avoid effect-driven render.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (stored === "list" || stored === "patina") setView(stored);
+      if (stored === "list") setView("list");
+      // any other stored value (including stale "patina") → default "grid"
     } catch {
       /* localStorage may throw in private-mode Safari; degrade silently */
     }
@@ -294,14 +217,12 @@ export default function RecipesPage() {
                     <RecipeCard key={r.id} recipe={r} />
                   ))}
                 </div>
-              ) : view === "list" ? (
+              ) : (
                 <div className="flex flex-col gap-[14px] px-(--spacing-page-x)">
                   {recipes.map((r, idx) => (
                     <RecipeRow key={r.id} recipe={r} index={idx} />
                   ))}
                 </div>
-              ) : (
-                <PatinaView recipes={recipes} tPatina={tPatina} />
               )}
             </div>
           </>

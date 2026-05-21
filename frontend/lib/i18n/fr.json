@@ -107,16 +107,9 @@
       "refresh_cta": "Actualiser"
     },
     "library": {
-      "patina_section": {
-        "heritage": "Héritage",
-        "habitudes": "Habitudes",
-        "essai": "À l'essai",
-        "empty": "Encore aucune recette dans cette section."
-      },
       "view": {
         "grid": { "aria": "Grille" },
-        "list": { "aria": "Liste" },
-        "patina": { "aria": "Patine" }
+        "list": { "aria": "Liste" }
       }
     }
   },

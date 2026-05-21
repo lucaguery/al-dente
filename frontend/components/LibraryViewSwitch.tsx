@@ -1,14 +1,16 @@
 "use client";
 
-// Phase 32 §15.C (SOBER-03) — segmented control for the 3 Bibliothèque views.
-// Per CONTEXT D-09 + D-10 + UI-SPEC §9.2.
+// Bibliothèque view switcher — Grille + Liste only.
+// PUNCH-LIST D-01 (quick 260521-l8g): the Patine view + Héritage/Habitudes/À l'essai
+// IA was dropped in the ADR-0004 cleanup wave (only the CSS class was removed in
+// the initial wave; the radio + sectioning survived until this commit).
 // State persistence (localStorage["aldente.library.view"]) is owned by the
 // PARENT page — this component is a pure controlled segmented input.
 
 import { useTranslations } from "next-intl";
-import { LayoutGrid, List, Layers } from "lucide-react";
+import { LayoutGrid, List } from "lucide-react";
 
-export type LibraryView = "grid" | "list" | "patina";
+export type LibraryView = "grid" | "list";
 
 export interface LibraryViewSwitchProps {
   value: LibraryView;
@@ -19,7 +21,6 @@ export interface LibraryViewSwitchProps {
 const VIEWS: { key: LibraryView; Icon: typeof LayoutGrid }[] = [
   { key: "grid", Icon: LayoutGrid },
   { key: "list", Icon: List },
-  { key: "patina", Icon: Layers },
 ];
 
 export function LibraryViewSwitch({ value, onChange, className }: LibraryViewSwitchProps) {
