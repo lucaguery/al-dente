@@ -199,6 +199,21 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     return off;
   }, [client]);
 
+  // Phase 41 — vote.deleted (UNDO-01). Partner removed a vote via the deck
+  // undo button; receiving clients update their local votes cache so the
+  // deck card UI reverts to the unvoted state. Re-fires as a window
+  // CustomEvent mirroring the vote.created pattern.
+  useEffect(() => {
+    if (!client) return;
+    const off = client.onEvent<Phase41VoteDeletedEvent>("vote.deleted", (payload) => {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(VOTE_DELETED_DOM_EVENT, { detail: payload }),
+      );
+    });
+    return off;
+  }, [client]);
+
   // Phase 3 — shortlist.created (APScheduler daily job OR /regenerate).
   useEffect(() => {
     if (!client) return;
@@ -285,6 +300,14 @@ export type Phase3VoteEvent = {
   state: "valide" | "pressenti" | "conteste" | "rejete" | "sans_avis";
 };
 
+export type Phase41VoteDeletedEvent = {
+  vote_id: string;
+  shortlist_id: string;
+  recipe_id: string;
+  member_id: string;
+  shortlist_date: string;
+};
+
 export type Phase3ShortlistCreatedEvent = {
   shortlist_id: string;
   date: string;
@@ -298,6 +321,7 @@ export type Phase3CookingStartedEvent = {
 };
 
 export const VOTE_CREATED_DOM_EVENT = "aldente:vote.created";
+export const VOTE_DELETED_DOM_EVENT = "aldente:vote.deleted";
 export const SHORTLIST_CREATED_DOM_EVENT = "aldente:shortlist.created";
 export const COOKING_STARTED_DOM_EVENT = "aldente:cooking.started";
 
