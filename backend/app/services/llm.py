@@ -127,6 +127,24 @@ class GeminiIngredient(BaseModel):
     unit: str | None = None
 
 
+class StepEntry(BaseModel):
+    """One structured cooking step (Phase 42 STEP-02).
+
+    Mirrored from app/schemas/recipe.py — `text` is the human-readable
+    instruction (French, imperative voice, ≤2 sentences per CONTEXT.md
+    specifics); `ingredient_refs` is a list of ingredient name strings
+    that MUST appear verbatim in the same recipe's `ingredients[].name`
+    (graceful fallback to raw ref text on the frontend if no match).
+
+    Per CLAUDE.md §Locked vocabularies, this declaration intentionally
+    mirrors `app/schemas/recipe.py:StepEntry` — drift between the two is
+    a bug category. Update both in the same change.
+    """
+
+    text: str = Field(..., min_length=1)
+    ingredient_refs: list[str] = Field(default_factory=list)
+
+
 class GeminiExtractedRecipe(BaseModel):
     """Schema constraining Gemini's structured output.
 
@@ -142,7 +160,8 @@ class GeminiExtractedRecipe(BaseModel):
 
     title: str
     ingredients: list[GeminiIngredient] | None = None
-    steps: list[str] | None = None
+    # Phase 42 STEP-02 — structured steps with ingredient cross-refs.
+    steps: list[StepEntry] = Field(default_factory=list)
     prep_time_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
     # Phase 24 RID-02 — three new optional fields (D-13).
     cook_time_minutes: int | None = Field(default=None, ge=0, le=24 * 60)
