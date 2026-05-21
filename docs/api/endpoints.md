@@ -1,5 +1,5 @@
 ---
-last_generated_at: 2026-05-21T15:47:00Z
+last_generated_at: 2026-05-21T16:41:00Z
 source: backend/scripts/dump_openapi.py
 auto_generated: true
 ---

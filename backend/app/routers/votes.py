@@ -81,7 +81,18 @@ async def cast_vote(
     )
     state = compute_vote_state(votes_for_recipe, member_count)
 
+    # Resolve the persisted vote row to surface its id (Phase 41 UNDO-01 D-07).
+    # The frontend stores this id and uses it later to call DELETE /votes/{vote_id}.
+    vote_row = db.scalar(
+        select(Vote).where(
+            Vote.shortlist_id == shortlist_id,
+            Vote.recipe_id == recipe_id,
+            Vote.member_id == member.id,
+        )
+    )
+
     payload = {
+        "vote_id": str(vote_row.id),
         "shortlist_id": str(shortlist_id),
         "recipe_id": str(recipe_id),
         "member_id": str(member.id),

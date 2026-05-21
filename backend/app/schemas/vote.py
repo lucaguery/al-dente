@@ -21,8 +21,14 @@ class VoteRequest(BaseModel):
 class VoteResponse(BaseModel):
     """Mirrors the broadcast payload — frontend uses this shape unchanged
     for both HTTP response and `vote.created` WS event handling.
+
+    Phase 41 (UNDO-01): `vote_id` added — the frontend stores this on a
+    successful POST so it can later call DELETE /votes/{vote_id} for undo.
+    Per CLAUDE.md architecture invariant #2, voting state stays computed
+    (no `state` column); the undo flow is a row delete, not a state flip.
     """
 
+    vote_id: UUID
     shortlist_id: UUID
     recipe_id: UUID
     member_id: UUID
