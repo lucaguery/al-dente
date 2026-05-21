@@ -87,28 +87,26 @@ Explicit exclusions for v0.9, with reasoning:
 
 ## Traceability
 
-To be filled by `gsd-roadmapper` during Step 10.
-
 | REQ-ID | Phase | Plan | Status |
 |--------|-------|------|--------|
-| PROF-01 | 40 | TBD | Not started |
-| ONBO-01 | 40 | TBD | Not started |
-| LIB-01 | 40 | TBD | Not started |
-| SPLA-01 | 40 | TBD | Not started |
-| SPLA-02 | 40 | TBD | Not started |
-| DRIFT-01 | 40 | TBD | Not started |
-| THRD-01 | 41 | TBD | Not started |
-| THRD-02 | 41 | TBD | Not started |
-| PICK-01 | 41 | TBD | Not started |
-| PICK-02 | 41 | TBD | Not started |
-| UNDO-01 | 41 | TBD | Not started |
-| UNDO-02 | 41 | TBD | Not started |
-| UNDO-03 | 41 | TBD | Not started |
-| STEP-01 | 42 | TBD | Not started |
-| STEP-02 | 42 | TBD | Not started |
-| STEP-03 | 42 | TBD | Not started |
-| ACTV-01 | 42 | TBD | Not started |
-| ACTV-02 | 42 | TBD | Not started |
-| ACTV-03 | 42 | TBD | Not started |
+| PROF-01 | 40 | 0/N planned | Not started |
+| ONBO-01 | 40 | 0/N planned | Not started |
+| LIB-01 | 40 | 0/N planned | Not started |
+| SPLA-01 | 40 | 0/N planned | Not started |
+| SPLA-02 | 40 | 0/N planned | Not started |
+| DRIFT-01 | 40 | 0/N planned | Not started |
+| THRD-01 | 41 | 0/N planned | Not started |
+| THRD-02 | 41 | 0/N planned | Not started |
+| PICK-01 | 41 | 0/N planned | Not started |
+| PICK-02 | 41 | 0/N planned | Not started |
+| UNDO-01 | 41 | 0/N planned | Not started |
+| UNDO-02 | 41 | 0/N planned | Not started |
+| UNDO-03 | 41 | 0/N planned | Not started |
+| STEP-01 | 42 | 0/N planned | Not started |
+| STEP-02 | 42 | 0/N planned | Not started |
+| STEP-03 | 42 | 0/N planned | Not started |
+| ACTV-01 | 42 | 0/N planned | Not started |
+| ACTV-02 | 42 | 0/N planned | Not started |
+| ACTV-03 | 42 | 0/N planned | Not started |
 
 **Total: 19 requirements** mapped across 3 phases (Phase 40: 6, Phase 41: 7, Phase 42: 6).
