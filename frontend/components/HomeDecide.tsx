@@ -277,16 +277,28 @@ export function HomeDecide() {
   }, []);
 
   // ── Optimistic vote application from the deck ───────────────────────────
-  const handleVoteApplied = useCallback((vote: ShortlistVote) => {
-    setShortlist((prev) => {
-      if (!prev) return prev;
-      const others = prev.votes.filter(
-        (v) =>
-          !(v.recipe_id === vote.recipe_id && v.member_id === vote.member_id),
-      );
-      return { ...prev, votes: [...others, vote] };
-    });
-  }, []);
+  // The deck calls back with either a normal vote (append/replace) or a
+  // delete-shaped payload carrying `deleted: true` (undo path). On delete we
+  // drop the row entirely so the derived `unvotedByMe` re-includes the recipe
+  // at its original position and the deck re-pile the card as the new front.
+  const handleVoteApplied = useCallback(
+    (vote: ShortlistVote & { deleted?: boolean }) => {
+      setShortlist((prev) => {
+        if (!prev) return prev;
+        const others = prev.votes.filter(
+          (v) =>
+            !(
+              v.recipe_id === vote.recipe_id && v.member_id === vote.member_id
+            ),
+        );
+        if (vote.deleted) {
+          return { ...prev, votes: others };
+        }
+        return { ...prev, votes: [...others, vote] };
+      });
+    },
+    [],
+  );
 
   // ── Regenerate flow ─────────────────────────────────────────────────────
   const handleRegenerate = useCallback(
@@ -543,7 +555,7 @@ export function HomeDecide() {
           quick-260520-hpz UAT — page-label eyebrow removed (duplicated the
           bottom-nav "Accueil" tab); H1 now sits higher and the date+regen
           row aligns to the right. */}
-      <header className="px-(--spacing-page-x) pt-6 pb-2">
+      <header className="px-(--spacing-page-x) pt-4 pb-2">
         {/* H1 + regen icon on ONE row — quick-260520-hpz UAT round 3:
             date removed (the date adds no functional value on the daily-decide
             screen; user knows what day it is). Regen icon promoted to a

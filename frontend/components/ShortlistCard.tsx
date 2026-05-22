@@ -487,27 +487,22 @@ export function ShortlistCard({
 
 /** Stand-alone thumb buttons component. Used by Plan 04's deck container under the stack.
  *
- *  Phase 41 UNDO-02 — 3-button stable layout: HeartOff / RotateCcw / Heart.
- *  Middle button (RotateCcw) is always rendered so the layout never shifts
- *  mid-vote. It's enabled iff the parent passes canUndo=true (current
- *  member has cast a vote on the front card AND the veto window is open).
- *  When disabled with a lockedTooltip the title attr surfaces the
- *  "Vote verrouillé · décision déjà cuisinée" copy on long-press / hover
- *  (mobile-first; no Radix tooltip provider needed). */
+ *  Two stable buttons (HeartOff / Heart) plus an optional undo (RotateCcw)
+ *  that slides in between them once the user has cast at least one vote in
+ *  this session AND the veto window is still open. The previous always-
+ *  rendered-but-greyed undo created a permanent ghost button at first paint
+ *  that visually competed with the deck without ever being interactive. */
 export function ShortlistThumbButtons({
   onVote,
   onUndo,
   canUndo,
-  lockedTooltip,
   disabled,
 }: {
   onVote: (value: VoteValue) => void;
-  /** Phase 41 UNDO-02 — undo handler (tap of middle button). */
+  /** Undo handler (tap of middle button when shown). */
   onUndo?: () => void;
-  /** Phase 41 UNDO-02 — when false, middle button renders disabled. */
+  /** Drives whether the middle button is rendered at all. */
   canUndo?: boolean;
-  /** Phase 41 UNDO-03 — when set AND !canUndo, surfaces via title attr. */
-  lockedTooltip?: string;
   disabled?: boolean;
 }) {
   const t = useTranslations("home.shortlist");
@@ -528,31 +523,19 @@ export function ShortlistThumbButtons({
             reads unambiguously. */}
         <HeartOff size={24} className="text-foreground-muted" />
       </Button>
-      {/* Phase 41 UNDO-02 — undo button always present, disabled-state per
-          canUndo. opacity-40 + pointer-events-none drives the muted look
-          (D-06). Wrapping <span> carries the title for the locked tooltip
-          even when the inner button is non-interactive. */}
-      <span
-        title={!canUndo && lockedTooltip ? lockedTooltip : undefined}
-        className="inline-flex"
-      >
+      {canUndo && (
         <Button
           type="button"
           variant="outline"
           size="icon"
-          disabled={disabled || !canUndo}
+          disabled={disabled}
           onClick={() => onUndo?.()}
           aria-label={tUndo("aria")}
-          aria-disabled={!canUndo || disabled}
-          className={
-            !canUndo
-              ? "h-14 w-14 rounded-full border-2 border-border opacity-40 pointer-events-none"
-              : "h-14 w-14 rounded-full border-2 border-border hover:bg-foreground-muted/10 active:scale-95 transition-transform"
-          }
+          className="h-14 w-14 rounded-full border-2 border-border hover:bg-foreground-muted/10 active:scale-95 transition-transform"
         >
           <RotateCcw size={22} className="text-foreground-muted" />
         </Button>
-      </span>
+      )}
       <Button
         type="button"
         variant="outline"

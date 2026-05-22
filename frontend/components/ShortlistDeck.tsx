@@ -62,6 +62,13 @@ export function ShortlistDeck({
   const [voteIdByRecipe, setVoteIdByRecipe] = useState<
     Record<string, string>
   >({});
+  // Last recipe the local user just voted on this session — drives the undo
+  // affordance independently of which card is currently front. Without this,
+  // undo always targeted `front.id`, which is the NEXT card (queue advanced
+  // optimistically), so the button was effectively dead.
+  const [lastVotedRecipeId, setLastVotedRecipeId] = useState<string | null>(
+    null,
+  );
   // Snap-back hint flag — true for ~1.4s after the card shakes, then clears.
   const [snapbackHint, setSnapbackHint] = useState(false);
   // Total dots on the progress strip — captured on first render with a
@@ -122,6 +129,9 @@ export function ShortlistDeck({
       if (result.vote_id) {
         setVoteIdByRecipe((prev) => ({ ...prev, [recipeId]: result.vote_id }));
       }
+      // Promote this recipe to the undo target. Done AFTER the server returns
+      // so we don't surface an undo button for a vote that never landed.
+      setLastVotedRecipeId(recipeId);
     } catch {
       // Rare path: roll back local optimistic state. Parent surfaces toast.
       setVoteHistory((h) => h.slice(0, -1));
@@ -176,51 +186,52 @@ export function ShortlistDeck({
     };
   }, []);
 
-  // Phase 41 UNDO-02 + UNDO-03 — compute the undo state per render.
-  // front-card vote: the row from votes[] keyed by (front.id, me.id).
-  // veto window open: zero cooking_logs today.
-  const currentMemberVote = front
-    ? votes.find((v) => v.recipe_id === front.id && v.member_id === me.id)
+  // Undo target — the recipe the user most recently voted on (regardless of
+  // which card is currently front). Previously this looked at `front.id`,
+  // but the queue advances optimistically on vote so the front is always the
+  // NEXT card; undo never had anything to delete in practice.
+  const undoVoteId = lastVotedRecipeId
+    ? voteIdByRecipe[lastVotedRecipeId]
     : undefined;
   const vetoWindowOpen = cookingLogs.length === 0;
-  // The vote_id either rides on the vote row (older fetches don't carry it)
-  // or sits in voteIdByRecipe from a fresh postVote in this session.
-  const undoVoteId =
-    currentMemberVote?.id ??
-    (front ? voteIdByRecipe[front.id] : undefined);
   const canUndo =
-    !!currentMemberVote && !!undoVoteId && vetoWindowOpen && !voteInFlight;
-  const lockedTooltip = !vetoWindowOpen ? tUndo("locked") : undefined;
+    !!lastVotedRecipeId && !!undoVoteId && vetoWindowOpen && !voteInFlight;
 
   async function handleUndo() {
-    if (!currentMemberVote || !undoVoteId || !canUndo) return;
+    if (!lastVotedRecipeId || !undoVoteId || !canUndo) return;
+    const recipeId = lastVotedRecipeId;
     setVoteInFlight(true);
     try {
       await deleteVote(undoVoteId);
-      // Optimistic: pop voteHistory; signal the parent to remove the vote
-      // from its votes[] state. The parent reads the optional `deleted`
-      // flag on ShortlistVote-shaped payloads (HomeDecide handles this).
+      // Optimistic local cleanup: pop voteHistory, drop the vote_id mapping,
+      // clear the undo target.
       setVoteHistory((h) => h.slice(0, -1));
       setVoteIdByRecipe((prev) => {
         const next = { ...prev };
-        delete next[currentMemberVote.recipe_id];
+        delete next[recipeId];
         return next;
       });
-      // Synthesize a delete-shaped vote for the parent. HomeDecide filters
-      // its votes[] state on this shape (Plan 41-04 Task 3 contract).
+      setLastVotedRecipeId(null);
+      // Tell the parent to drop the vote from its state. The parent reads the
+      // `deleted` flag and filters the row out instead of re-appending it.
+      // Once the vote is gone from shortlist.votes, the derived `unvotedByMe`
+      // re-includes the recipe at its original position → it becomes the new
+      // front card automatically.
       onVoteApplied({
-        ...currentMemberVote,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as ShortlistVote & { deleted: true } as any);
-      // Dispatch a window event so RealtimeProvider-fed listeners get the
-      // same signal regardless of whether the WS vote.deleted lands first.
+        shortlist_id: shortlistId,
+        recipe_id: recipeId,
+        member_id: me.id,
+        vote: "yes",
+        deleted: true,
+      } as ShortlistVote & { deleted: true });
+      // Cross-component sync hook (mirrors the realtime path).
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("shortlist:vote-undo", {
             detail: {
               vote_id: undoVoteId,
-              recipe_id: currentMemberVote.recipe_id,
-              member_id: currentMemberVote.member_id,
+              recipe_id: recipeId,
+              member_id: me.id,
             },
           }),
         );
@@ -251,9 +262,10 @@ export function ShortlistDeck({
   if (!front) return null;
 
   return (
-    // quick-260520-hpz UAT round 2 — tightened gap-4 → gap-2 to keep the
-    // thumb buttons within thumb's-reach of the card edge.
-    <div className="flex flex-col gap-2 px-(--spacing-page-x) pb-6">
+    // `flex-1 min-h-0` makes the deck fill all available vertical space below
+    // the header so the card grows with the viewport instead of leaving a
+    // dead band of off-white above the BottomNav.
+    <div className="flex flex-col flex-1 min-h-0 gap-2 px-(--spacing-page-x) pb-4">
       {/* Progress strip — sits above the deck so the user always knows where
           they are in the 5-card walk. UAT round 3: index is now derived from
           voteHistory.length (single source of truth — see handleVote rewrite).
@@ -275,10 +287,7 @@ export function ShortlistDeck({
           DOM order is peek FIRST, front LAST — DOM order = paint order, so the
           opaque front card paints on top of the translucent peek (UAT 260520
           finding: with front first, the peek's title bled through). */}
-      <div
-        className="relative"
-        style={{ height: "clamp(280px, 48dvh, 380px)" }}
-      >
+      <div className="relative flex-1 min-h-0">
         <AnimatePresence mode="popLayout">
           {/* Peek card — rendered FIRST so the front paints on top. */}
           {peek && (
@@ -321,7 +330,6 @@ export function ShortlistDeck({
         onVote={handleThumbVote}
         onUndo={handleUndo}
         canUndo={canUndo}
-        lockedTooltip={lockedTooltip}
         disabled={voteInFlight || !front}
       />
 
